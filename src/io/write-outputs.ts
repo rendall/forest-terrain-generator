@@ -1,6 +1,7 @@
-import { mkdir, rm, stat, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
-import { InputValidationError } from "../domain/errors.js";
+import { randomUUID } from "node:crypto";
+import { mkdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { FileIoError, InputValidationError } from "../domain/errors.js";
 import type { Mode, TerrainEnvelope } from "../domain/types.js";
 import { serializeEnvelope } from "./serialize-envelope.js";
 
@@ -45,12 +46,27 @@ function buildPhaseTiles(
   }));
 }
 
+function messageFromUnknown(error: unknown): string {
+  if (error instanceof Error && error.message.length > 0) {
+    return error.message;
+  }
+  return "Unknown filesystem error.";
+}
+
 async function pathExists(path: string): Promise<boolean> {
   try {
     await stat(path);
     return true;
   } catch {
     return false;
+  }
+}
+
+async function writeJsonFile(path: string, payload: unknown, context: string): Promise<void> {
+  try {
+    await writeFile(path, serializeJson(payload), "utf8");
+  } catch (error) {
+    throw new FileIoError(`I/O error during ${context} at "${path}": ${messageFromUnknown(error)}`);
   }
 }
 
@@ -67,26 +83,85 @@ async function prepareFileTarget(path: string, force: boolean): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
 }
 
-async function prepareDirectoryTarget(path: string, force: boolean): Promise<void> {
-  if (await pathExists(path)) {
-    if (!force) {
-      throw new InputValidationError(
-        `Output directory already exists: "${path}". Re-run with --force to replace.`
-      );
-    }
-    await rm(path, { recursive: true, force: true });
-  }
-
-  await mkdir(path, { recursive: true });
-}
-
 export async function writeStandardOutput(
   outputFile: string,
   envelope: TerrainEnvelope,
   force: boolean
 ): Promise<void> {
   await prepareFileTarget(outputFile, force);
-  await writeFile(outputFile, serializeEnvelope(envelope), "utf8");
+  try {
+    await writeFile(outputFile, serializeEnvelope(envelope), "utf8");
+  } catch (error) {
+    throw new FileIoError(
+      `I/O error during terrain output write at "${outputFile}": ${messageFromUnknown(error)}`
+    );
+  }
+}
+
+async function writeDebugArtifacts(
+  targetDir: string,
+  envelope: TerrainEnvelope
+): Promise<void> {
+  const { width, height } = deriveGridDimensions(envelope);
+  const debugManifest = {
+    mode: "debug",
+    specVersion: envelope.meta.specVersion,
+    width,
+    height,
+    tileCount: envelope.tiles.length,
+    artifacts: [...DEBUG_ARTIFACT_FILES]
+  };
+  await writeJsonFile(join(targetDir, "debug-manifest.json"), debugManifest, "debug manifest write");
+  await writeJsonFile(
+    join(targetDir, "topography.json"),
+    { tiles: buildPhaseTiles(envelope, "topography") },
+    "topography debug artifact write"
+  );
+  await writeJsonFile(
+    join(targetDir, "hydrology.json"),
+    { tiles: buildPhaseTiles(envelope, "hydrology") },
+    "hydrology debug artifact write"
+  );
+  await writeJsonFile(
+    join(targetDir, "ecology.json"),
+    { tiles: buildPhaseTiles(envelope, "ecology") },
+    "ecology debug artifact write"
+  );
+  await writeJsonFile(
+    join(targetDir, "navigation.json"),
+    { tiles: buildPhaseTiles(envelope, "navigation") },
+    "navigation debug artifact write"
+  );
+}
+
+async function publishDebugDirectory(
+  stagingDir: string,
+  outputDir: string,
+  force: boolean
+): Promise<void> {
+  if (await pathExists(outputDir)) {
+    if (!force) {
+      throw new InputValidationError(
+        `Output directory already exists: "${outputDir}". Re-run with --force to replace.`
+      );
+    }
+    try {
+      await rm(outputDir, { recursive: true, force: true });
+    } catch (error) {
+      throw new FileIoError(
+        `I/O error during debug output replace at "${outputDir}": ${messageFromUnknown(error)}`
+      );
+    }
+  }
+
+  await mkdir(dirname(outputDir), { recursive: true });
+  try {
+    await rename(stagingDir, outputDir);
+  } catch (error) {
+    throw new FileIoError(
+      `I/O error during debug output publish to "${outputDir}": ${messageFromUnknown(error)}`
+    );
+  }
 }
 
 export async function writeDebugOutputs(
@@ -95,52 +170,30 @@ export async function writeDebugOutputs(
   debugOutputFile: string | undefined,
   force: boolean
 ): Promise<void> {
-  await prepareDirectoryTarget(outputDir, force);
+  if (await pathExists(outputDir) && !force) {
+    throw new InputValidationError(
+      `Output directory already exists: "${outputDir}". Re-run with --force to replace.`
+    );
+  }
 
-  const { width, height } = deriveGridDimensions(envelope);
-  const debugManifest = {
-    mode: "debug",
-    specVersion: envelope.meta.specVersion,
-    width,
-    height,
-    tileCount: envelope.tiles.length
-    ,
-    artifacts: [...DEBUG_ARTIFACT_FILES]
-  };
-  const debugManifestPath = `${outputDir}/debug-manifest.json`;
-  await writeFile(debugManifestPath, serializeJson(debugManifest), "utf8");
+  await mkdir(dirname(outputDir), { recursive: true });
+  const stagingDir = join(dirname(outputDir), `.ftg-debug-staging-${randomUUID()}`);
+  await mkdir(stagingDir, { recursive: false });
+  let published = false;
 
-  await writeFile(
-    `${outputDir}/topography.json`,
-    serializeJson({
-      tiles: buildPhaseTiles(envelope, "topography")
-    }),
-    "utf8"
-  );
-  await writeFile(
-    `${outputDir}/hydrology.json`,
-    serializeJson({
-      tiles: buildPhaseTiles(envelope, "hydrology")
-    }),
-    "utf8"
-  );
-  await writeFile(
-    `${outputDir}/ecology.json`,
-    serializeJson({
-      tiles: buildPhaseTiles(envelope, "ecology")
-    }),
-    "utf8"
-  );
-  await writeFile(
-    `${outputDir}/navigation.json`,
-    serializeJson({
-      tiles: buildPhaseTiles(envelope, "navigation")
-    }),
-    "utf8"
-  );
+  try {
+    await writeDebugArtifacts(stagingDir, envelope);
 
-  if (debugOutputFile) {
-    await writeStandardOutput(debugOutputFile, envelope, force);
+    if (debugOutputFile) {
+      await writeStandardOutput(debugOutputFile, envelope, force);
+    }
+
+    await publishDebugDirectory(stagingDir, outputDir, force);
+    published = true;
+  } finally {
+    if (!published) {
+      await rm(stagingDir, { recursive: true, force: true });
+    }
   }
 }
 
