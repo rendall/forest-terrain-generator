@@ -120,7 +120,7 @@ Rules:
 - [x] Implement flow direction with deterministic tie-break logic (`Dir8` + `NONE=255`, canonical neighbor order, and exact `tieBreakHash64` behavior).
 - [x] Implement flow accumulation with deterministic Kahn/FIFO processing, overflow-protected `FA` updates, and spec-accurate `FA_N` normalization.
 - [x] Implement lakes, streams, moisture, and water-class derivations with exact threshold operators and precedence rules.
-- [ ] Implement explicit no-water/no-stream fallback behavior for proximity maps and downstream moisture/proximity terms.
+- [x] Implement explicit no-water/no-stream fallback behavior for proximity maps and downstream moisture/proximity terms.
 - [ ] Implement single hydrology facade module `src/pipeline/hydrology.ts` with stable named exports used by tests and orchestration.
 - [ ] Implement hydrology fail-fast diagnostics policy (internal failure / exit `5`) with clear stage/invariant/reason messaging and relevant context values.
 - [ ] Add fixed-seed hydrology golden regressions for balanced scope seeds/sizes/artifacts.

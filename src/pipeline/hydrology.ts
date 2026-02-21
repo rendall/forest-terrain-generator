@@ -48,6 +48,14 @@ export interface WaterClassParams {
   marshSlopeThreshold: number;
 }
 
+export interface DistWaterParams {
+  waterProxMaxDist: number;
+}
+
+export interface DistStreamParams {
+  streamProxMaxDist: number;
+}
+
 const U32_MAX = 0xffffffff;
 
 function u64(value: bigint): bigint {
@@ -379,6 +387,78 @@ export function classifyWaterClass(
     waterClass[i] = WATER_CLASS_CODE.none;
   }
   return waterClass;
+}
+
+function deriveDistanceFromSources(
+  shape: GridShape,
+  sources: Uint8Array,
+  maxDist: number
+): Uint32Array {
+  const out = new Uint32Array(shape.size).fill(maxDist);
+  const queue: number[] = [];
+
+  for (let i = 0; i < shape.size; i += 1) {
+    if (sources[i] === 1) {
+      out[i] = 0;
+      queue.push(i);
+    }
+  }
+
+  if (queue.length === 0) {
+    return out;
+  }
+
+  let head = 0;
+  while (head < queue.length) {
+    const tile = queue[head];
+    head += 1;
+    const baseDist = out[tile];
+    if (baseDist >= maxDist) {
+      continue;
+    }
+
+    const x = tile % shape.width;
+    const y = Math.floor(tile / shape.width);
+    for (const neighbor of DIR8_NEIGHBORS) {
+      const nx = x + neighbor.dx;
+      const ny = y + neighbor.dy;
+      if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
+        continue;
+      }
+      const next = ny * shape.width + nx;
+      if (out[next] !== maxDist) {
+        continue;
+      }
+      out[next] = Math.min(maxDist, baseDist + 1);
+      queue.push(next);
+    }
+  }
+
+  return out;
+}
+
+export function deriveDistWater(
+  shape: GridShape,
+  lakeMask: Uint8Array,
+  isStream: Uint8Array,
+  params: DistWaterParams
+): Uint32Array {
+  validateMapLength(shape, lakeMask, "LakeMask");
+  validateMapLength(shape, isStream, "isStream");
+  const source = new Uint8Array(shape.size);
+  for (let i = 0; i < shape.size; i += 1) {
+    source[i] = lakeMask[i] === 1 || isStream[i] === 1 ? 1 : 0;
+  }
+  return deriveDistanceFromSources(shape, source, params.waterProxMaxDist);
+}
+
+export function deriveDistStream(
+  shape: GridShape,
+  isStream: Uint8Array,
+  params: DistStreamParams
+): Uint32Array {
+  validateMapLength(shape, isStream, "isStream");
+  return deriveDistanceFromSources(shape, isStream, params.streamProxMaxDist);
 }
 
 export { DIR8_NONE };
