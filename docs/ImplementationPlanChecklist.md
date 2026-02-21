@@ -78,7 +78,7 @@ Rules:
 - [x] Decide topography regression-test strategy (hybrid: committed/versioned golden snapshots for a fixed deterministic seed set, plus float epsilon assertions and targeted boundary/threshold fixtures).
 - [x] Confirm v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); defer any resolution-model change to a future ADR.
 - [x] Decide exact Perlin constants and algorithm details to lock for implementation (Improved Perlin 2002 variant; fixed fade `6t^5 - 15t^4 + 10t^3`; fixed `lerp(a,b,t)`; fixed 2D gradient-set/dot-product logic; fixed 256-entry permutation expanded to 512; per-octave noise output normalized to `[-1,1]`).
-- [ ] Decide canonical seed-to-Perlin initialization mapping from `uint64`/`subSeed` values.
+- [x] Decide canonical seed-to-Perlin initialization mapping from `uint64`/`subSeed` values (use normative `subSeed(seed,mapId,octaveIndex)`; initialize SplitMix64 state with that `uint64`; build `perm[0..255]` via seeded Fisher-Yates using `j = rand % (i+1)`; expand to 512 by repetition).
 - [ ] Decide fixed `Landform` enum-code mapping for `Uint8Array` storage.
 - [ ] Decide `AspectDeg` behavior for zero-slope/flat tiles.
 - [ ] Decide Phase 2 golden snapshot scope details (fixed seed list, grid sizes, and artifact set).

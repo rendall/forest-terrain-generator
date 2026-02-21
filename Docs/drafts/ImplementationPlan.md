@@ -355,7 +355,8 @@ Locked decisions:
 16. v1 Perlin uses the Improved Perlin (2002) variant with fixed fade function `6t^5 - 15t^4 + 10t^3`, fixed linear interpolation, and fixed 2D gradient/dot-product behavior.
 17. v1 Perlin uses a deterministic 256-entry permutation table expanded to 512 entries; seed mapping into permutation initialization is fixed by a separate Phase-2 decision.
 18. Per-octave Perlin noise outputs are treated as `[-1,1]` inputs to the normative multi-octave composition step.
-19. v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); any future change to this model requires an ADR and normative-spec update before implementation.
+19. Per-octave permutation initialization is canonical: `seed_octave = subSeed(seed,mapId,octaveIndex)`; SplitMix64 state starts at `seed_octave`; `perm[0..255]` is produced by Fisher-Yates with `j = rand % (i+1)`; table is expanded to 512 by repetition.
+20. v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); any future change to this model requires an ADR and normative-spec update before implementation.
 
 Done criteria:
 
