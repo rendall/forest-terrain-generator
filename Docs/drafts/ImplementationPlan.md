@@ -379,6 +379,8 @@ Locked decisions:
 2. Internal flow-accumulation indegree storage uses `Uint8Array` (max 8 upstream contributors in D8).
 3. `FD` storage is canonical `Dir8` numeric encoding (`0..7`) with `NONE=255`.
 4. Hydrology neighbor traversal and tie-candidate enumeration use one shared canonical `Dir8` order helper: `E,SE,S,SW,W,NW,N,NE`.
+5. Section 6.1 tie-break hashing uses exact `uint64` semantics with `BigInt` operations and wraparound, following normative `tieBreakHash64(seed,x,y)` constants/steps verbatim.
+6. For tied downhill candidates, list `T` is constructed in canonical `Dir8` order and selection uses `i = tieBreakHash64(seed,x,y) mod |T|`.
 
 Done criteria:
 

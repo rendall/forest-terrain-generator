@@ -103,7 +103,7 @@ Rules:
 
 - [x] Decide hydrology in-memory map model and numeric types (`FD`, `FA`, `FA_N`, `LakeMask`, `isStream`, `distWater`, `Moisture`, `WaterClass`) (`FD`: `Uint8Array`; `FA`: `Uint32Array`; `FA_N`: `Float32Array`; `LakeMask`: `Uint8Array`; `isStream`: `Uint8Array`; `distWater`: `Uint32Array`; `Moisture`: `Float32Array`; `WaterClass`: `Uint8Array`; internal `InDeg`: `Uint8Array`).
 - [x] Decide canonical `FD` storage contract (`Dir8` encoding and `NONE=255`) and neighbor-iteration helper contract for hydrology passes (`FD` uses `Dir8` numeric encoding `0..7`, `NONE=255`; hydrology traversal/enumeration uses one shared canonical neighbor-order helper: `E,SE,S,SW,W,NW,N,NE`).
-- [ ] Decide exact hash/tie-break implementation details for Section 6.1 flow-direction tie resolution (bit-width, hash function inputs, and modulo/indexing behavior).
+- [x] Decide exact hash/tie-break implementation details for Section 6.1 flow-direction tie resolution (bit-width, hash function inputs, and modulo/indexing behavior) (spec-accurate `uint64` math via `BigInt`; `tieBreakHash64(seed,x,y)` exactly as normative formula; tied-candidate list `T` kept in canonical `Dir8` order; selection index `i = hash % |T|`).
 - [ ] Decide flow-accumulation numeric limits/overflow policy and deterministic topological queue implementation details.
 - [ ] Decide `FA_N` normalization behavior for degenerate cases (`FAmax == FAmin`) and clamp/epsilon conventions.
 - [ ] Decide lake/stream/moisture/water-class threshold comparison conventions (strict vs inclusive per threshold) and shared comparator helpers.
