@@ -4,6 +4,47 @@ import { InputValidationError } from "../domain/errors.js";
 import type { Mode, TerrainEnvelope } from "../domain/types.js";
 import { serializeEnvelope } from "./serialize-envelope.js";
 
+const DEBUG_ARTIFACT_FILES = [
+  "topography.json",
+  "hydrology.json",
+  "ecology.json",
+  "navigation.json"
+] as const;
+
+function serializeJson(value: unknown): string {
+  return `${JSON.stringify(value, null, 2)}\n`;
+}
+
+function deriveGridDimensions(envelope: TerrainEnvelope): { width: number; height: number } {
+  let maxX = -1;
+  let maxY = -1;
+
+  for (const tile of envelope.tiles) {
+    if (typeof tile.x === "number" && Number.isInteger(tile.x) && tile.x >= 0) {
+      maxX = Math.max(maxX, tile.x);
+    }
+    if (typeof tile.y === "number" && Number.isInteger(tile.y) && tile.y >= 0) {
+      maxY = Math.max(maxY, tile.y);
+    }
+  }
+
+  return {
+    width: maxX + 1,
+    height: maxY + 1
+  };
+}
+
+function buildPhaseTiles(
+  envelope: TerrainEnvelope,
+  phaseKey: "topography" | "hydrology" | "ecology" | "navigation"
+) {
+  return envelope.tiles.map((tile) => ({
+    x: tile.x,
+    y: tile.y,
+    [phaseKey]: tile[phaseKey]
+  }));
+}
+
 async function pathExists(path: string): Promise<boolean> {
   try {
     await stat(path);
@@ -56,13 +97,47 @@ export async function writeDebugOutputs(
 ): Promise<void> {
   await prepareDirectoryTarget(outputDir, force);
 
+  const { width, height } = deriveGridDimensions(envelope);
   const debugManifest = {
     mode: "debug",
-    artifacts: ["debug-manifest.json"],
+    specVersion: envelope.meta.specVersion,
+    width,
+    height,
     tileCount: envelope.tiles.length
+    ,
+    artifacts: [...DEBUG_ARTIFACT_FILES]
   };
   const debugManifestPath = `${outputDir}/debug-manifest.json`;
-  await writeFile(debugManifestPath, `${JSON.stringify(debugManifest, null, 2)}\n`, "utf8");
+  await writeFile(debugManifestPath, serializeJson(debugManifest), "utf8");
+
+  await writeFile(
+    `${outputDir}/topography.json`,
+    serializeJson({
+      tiles: buildPhaseTiles(envelope, "topography")
+    }),
+    "utf8"
+  );
+  await writeFile(
+    `${outputDir}/hydrology.json`,
+    serializeJson({
+      tiles: buildPhaseTiles(envelope, "hydrology")
+    }),
+    "utf8"
+  );
+  await writeFile(
+    `${outputDir}/ecology.json`,
+    serializeJson({
+      tiles: buildPhaseTiles(envelope, "ecology")
+    }),
+    "utf8"
+  );
+  await writeFile(
+    `${outputDir}/navigation.json`,
+    serializeJson({
+      tiles: buildPhaseTiles(envelope, "navigation")
+    }),
+    "utf8"
+  );
 
   if (debugOutputFile) {
     await writeStandardOutput(debugOutputFile, envelope, force);
