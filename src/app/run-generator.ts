@@ -10,7 +10,7 @@ import type {
 } from "../domain/types.js";
 import { validateResolvedInputs } from "./validate-input.js";
 import { buildEnvelopeSkeleton } from "./build-envelope.js";
-import { serializeEnvelope } from "../io/serialize-envelope.js";
+import { writeModeOutputs } from "../io/write-outputs.js";
 
 function resolveFromCwd(cwd: string, maybeRelativePath: string | undefined): string | undefined {
   if (!maybeRelativePath) {
@@ -51,9 +51,15 @@ export async function resolveInputs(request: RunRequest): Promise<ResolvedInputs
 
 export async function runGenerator(request: RunRequest): Promise<void> {
   const resolved = await resolveInputs(request);
-  validateResolvedInputs(resolved, request.mode);
+  const validated = validateResolvedInputs(resolved, request.mode);
 
   const envelope: TerrainEnvelope = buildEnvelopeSkeleton();
-  const serializedEnvelope = serializeEnvelope(envelope);
-  void serializedEnvelope;
+  await writeModeOutputs(
+    request.mode,
+    validated.outputFile,
+    validated.outputDir,
+    validated.debugOutputFile,
+    envelope,
+    validated.force
+  );
 }

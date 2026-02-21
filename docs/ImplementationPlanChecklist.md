@@ -59,7 +59,7 @@ Rules:
 - [x] Implement exit code mapping for validation/shape/IO/internal failures.
 - [x] Add integration tests for help behavior (`help`, `--help`, `-h`, no command) and command-error behavior (unknown/invalid -> exit `2`).
 - [x] Add integration tests for stream behavior (`stdout` for help/version, `stderr` for errors/status).
-- [ ] Add integration tests for overwrite policy (existing outputs fail without `--force`, succeed with `--force`).
+- [x] Add integration tests for overwrite policy (existing outputs fail without `--force`, succeed with `--force`).
 - [ ] Add integration tests for command wiring and contract failures.
 - [ ] Update CLI help/docs to reflect canonical flag names, path-resolution rules, and debug output semantics.
 - [ ] Review gate: explicit approval to proceed to Phase 2.
