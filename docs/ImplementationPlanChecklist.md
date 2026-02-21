@@ -93,7 +93,7 @@ Rules:
 - [x] Implement authored-map override flow (`H`, `R`, `V`) with deterministic precedence and shape compatibility checks.
 - [x] Implement slope magnitude and aspect derivation with clamped boundary sampling and `AspectDeg=0` sentinel for `Hx==0 && Hy==0`.
 - [x] Implement landform classification with strict threshold comparisons and fixed enum mapping (`0=flat`, `1=slope`, `2=ridge`, `3=valley`, `4=basin`).
-- [ ] Add deterministic tests for ordering and tie-break behavior used by this phase.
+- [x] Add deterministic tests for ordering and tie-break behavior used by this phase.
 - [ ] Add fixed-seed hybrid topography regression tests using committed/versioned golden snapshots (balanced scope seeds/sizes/artifacts) plus targeted boundary/threshold fixtures.
 - [ ] Review gate: explicit approval to proceed to Phase 3.
 
