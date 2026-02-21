@@ -1,6 +1,12 @@
-import { BIOME_CODE, SPECIES_CODE, SPECIES_NONE } from "../domain/ecology.js";
+import {
+  BIOME_CODE,
+  SOIL_TYPE_CODE,
+  SPECIES_CODE,
+  SPECIES_NONE,
+  SURFACE_FLAG_BIT
+} from "../domain/ecology.js";
 import { WATER_CLASS_CODE } from "../domain/hydrology.js";
-import type { GridShape } from "../domain/topography.js";
+import { LANDFORM_CODE, type GridShape } from "../domain/topography.js";
 
 function clamp01(value: number): number {
   if (value <= 0) {
@@ -122,6 +128,22 @@ export interface DominantSpeciesSlots {
   dominantSecondary: Uint8Array;
 }
 
+export interface GroundParams {
+  peatMoistureThreshold: number;
+  standingWaterMoistureThreshold: number;
+  standingWaterSlopeMax: number;
+  lichenMoistureMax: number;
+  exposedSandMoistureMax: number;
+  bedrockHeightMin: number;
+  bedrockRoughnessMin: number;
+}
+
+export interface GroundMaps {
+  soilType: Uint8Array;
+  firmness: Float32Array;
+  surfaceFlags: Uint16Array;
+}
+
 const SPECIES_NAME_BY_CODE: Record<number, string> = {
   [SPECIES_CODE.scots_pine]: "scots_pine",
   [SPECIES_CODE.norway_spruce]: "norway_spruce",
@@ -223,4 +245,69 @@ export function dominantSlotsToOrderedList(primary: number, secondary: number): 
     out.push(name);
   }
   return out;
+}
+
+export function deriveGround(
+  shape: GridShape,
+  moisture: Float32Array,
+  slopeMag: Float32Array,
+  h: Float32Array,
+  r: Float32Array,
+  landform: Uint8Array,
+  params: GroundParams
+): GroundMaps {
+  validateMapLength(shape, moisture, "Moisture");
+  validateMapLength(shape, slopeMag, "SlopeMag");
+  validateMapLength(shape, h, "H");
+  validateMapLength(shape, r, "R");
+  validateMapLength(shape, landform, "Landform");
+
+  const peatMoistureThreshold = Math.fround(params.peatMoistureThreshold);
+  const standingWaterMoistureThreshold = Math.fround(params.standingWaterMoistureThreshold);
+  const standingWaterSlopeMax = Math.fround(params.standingWaterSlopeMax);
+  const lichenMoistureMax = Math.fround(params.lichenMoistureMax);
+  const exposedSandMoistureMax = Math.fround(params.exposedSandMoistureMax);
+  const bedrockHeightMin = Math.fround(params.bedrockHeightMin);
+  const bedrockRoughnessMin = Math.fround(params.bedrockRoughnessMin);
+
+  const soilType = new Uint8Array(shape.size);
+  const firmness = new Float32Array(shape.size);
+  const surfaceFlags = new Uint16Array(shape.size);
+
+  for (let i = 0; i < shape.size; i += 1) {
+    if (moisture[i] >= peatMoistureThreshold) {
+      soilType[i] = SOIL_TYPE_CODE.peat;
+    } else if (
+      moisture[i] <= exposedSandMoistureMax &&
+      (landform[i] === LANDFORM_CODE.ridge || h[i] >= bedrockHeightMin)
+    ) {
+      soilType[i] = SOIL_TYPE_CODE.sandy_till;
+    } else {
+      soilType[i] = SOIL_TYPE_CODE.rocky_till;
+    }
+
+    firmness[i] = clamp01(
+      1 - 0.85 * moisture[i] + 0.15 * clamp01(slopeMag[i] / Math.fround(0.2))
+    );
+
+    let flags = 0;
+    if (moisture[i] >= standingWaterMoistureThreshold && slopeMag[i] < standingWaterSlopeMax) {
+      flags |= SURFACE_FLAG_BIT.standing_water;
+    }
+    if (soilType[i] === SOIL_TYPE_CODE.peat) {
+      flags |= SURFACE_FLAG_BIT.sphagnum;
+    }
+    if (moisture[i] <= lichenMoistureMax) {
+      flags |= SURFACE_FLAG_BIT.lichen;
+    }
+    if (soilType[i] === SOIL_TYPE_CODE.sandy_till && moisture[i] <= exposedSandMoistureMax) {
+      flags |= SURFACE_FLAG_BIT.exposed_sand;
+    }
+    if (h[i] >= bedrockHeightMin && r[i] >= bedrockRoughnessMin) {
+      flags |= SURFACE_FLAG_BIT.bedrock;
+    }
+    surfaceFlags[i] = flags;
+  }
+
+  return { soilType, firmness, surfaceFlags };
 }

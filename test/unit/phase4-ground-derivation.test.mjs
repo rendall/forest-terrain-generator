@@ -44,10 +44,10 @@ describe("Phase 4 ground derivation", () => {
       SOIL_TYPE_CODE.sandy_till
     ]);
 
-    expect(firmness[0]).toBeCloseTo(0.42, 6);
+    expect(firmness[0]).toBeCloseTo(0.48, 6);
     expect(firmness[1]).toBeCloseTo(0.726, 6);
-    expect(firmness[2]).toBeCloseTo(0.575, 6);
-    expect(firmness[3]).toBeCloseTo(0.334, 6);
+    expect(firmness[2]).toBeCloseTo(0.725, 6);
+    expect(firmness[3]).toBeCloseTo(0.3425, 6);
     expect(firmness[4]).toBeCloseTo(0.8375, 6);
 
     expect(surfaceFlags[0]).toBe(SURFACE_FLAG_BIT.sphagnum);

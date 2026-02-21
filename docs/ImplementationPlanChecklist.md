@@ -149,7 +149,7 @@ Rules:
 - [x] Implement biome assignment with canonical perturbation-strength binding (`vegVarianceNoise.strength` primary, `vegVarianceStrength` fallback), exact classification order, and `Math.fround` threshold normalization.
 - [x] Implement vegetation attribute derivations (`TreeDensity`, `CanopyCover`) with exact normative formulas and clamp behavior.
 - [x] Implement dominant-species derivation into internal primary/secondary slots and deterministic mapping to ordered output lists.
-- [ ] Implement ground derivations (`SoilType`, `Firmness`, `SurfaceFlags`) using the locked deterministic rule table and canonical surface-flag order.
+- [x] Implement ground derivations (`SoilType`, `Firmness`, `SurfaceFlags`) using the locked deterministic rule table and canonical surface-flag order.
 - [ ] Implement roughness derivations (`Obstruction`, `FeatureFlags`) using the locked deterministic rule table and canonical feature-flag order.
 - [ ] Implement a single Phase 4 facade module with stable named exports for orchestration/tests and shared serialization mapping helpers for enum/bit/slot -> envelope fields.
 - [ ] Add targeted Phase 4 sanity fixtures (threshold-edge behavior, mixed-forest species boundary, deterministic list ordering, multi-flag combinations, empty-list cases, and float32 threshold-boundary cases).
