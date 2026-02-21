@@ -53,6 +53,13 @@ Configuration precedence follows normative Section 2.1:
 2. Parameter file values.
 3. Built-in defaults.
 
+Seed parsing/storage/validation decision (Phase 1):
+
+1. Treat `seed` as a strict base-10 unsigned integer token representing normative `uint64`.
+2. Accept range `0` to `18446744073709551615` only.
+3. Parse and store `seed` internally as `bigint`.
+4. Reject non-decimal or non-integer forms (for example signs, floats, scientific notation, hex).
+
 ### 3.3 Output Contract
 
 1. `generate` and `derive` write the terrain envelope JSON to `--output-file`.
