@@ -32,6 +32,22 @@ Rules:
 
 ## Phase 1 - Foundations and Contracts
 
+### Phase 1 Decisions
+
+- [ ] Decide `seed` parsing/storage/validation for normative `uint64` input.
+- [ ] Decide config merge semantics for `CLI > file > defaults` (deep merge rules, array behavior, and scalar override behavior).
+- [ ] Decide unknown-input policy (unknown CLI flags and unknown params-file keys).
+- [ ] Decide params-file format support (for example JSON-only vs additional formats).
+- [ ] Decide path-resolution rules for file inputs (CWD-relative vs params-file-relative).
+- [ ] Decide mode-specific required/allowed inputs for `generate`, `derive`, and `debug`.
+- [ ] Decide output-argument validation by mode (`--output-file` vs `--output-dir` requirements).
+- [ ] Decide defaults-source policy and Appendix A alignment.
+- [ ] Decide validation/error taxonomy mapping to exit codes (`2`, `3`, `4`, `5`).
+- [ ] Decide duplicate-flag behavior (last value wins vs hard error).
+- [ ] Review the Phase 1 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 1 implementation.
+
+### Phase 1 Implementation
+
 - [ ] Implement CLI input parsing and config precedence (CLI > file > defaults).
 - [ ] Implement input schema and validation errors.
 - [ ] Implement envelope skeleton builder and serializer boundary.
