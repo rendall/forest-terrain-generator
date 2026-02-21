@@ -110,6 +110,27 @@ Phase 0 package metadata baseline for `package.json`:
 6. `bin` entry for the CLI command
 7. scripts: `build`, `typecheck`, `test`
 
+### 3.8 Initial Dependency Set and Versioning Policy
+
+Phase 0 dependency decisions:
+
+1. Runtime dependency: `commander`.
+2. Dev dependencies: `typescript`, `@types/node`, `vitest`, `tsx`.
+3. Additional dependencies are added only when implementation needs are concrete.
+
+Versioning policy:
+
+1. Initialize from latest stable versions at adoption time.
+2. Pin exact dependency versions in `package.json` (`x.y.z`, no floating ranges).
+3. Commit lockfile and use `npm ci` in CI for reproducible installs.
+4. Update dependencies intentionally (not continuously), with focus on stability and deterministic behavior.
+
+TypeScript toolchain policy:
+
+1. The project requires local `typescript` via `devDependencies`.
+2. Global TypeScript installations are optional personal convenience and are not part of project requirements.
+3. Project scripts and CI must run against the local dependency version.
+
 ## 4. Architecture Contract
 
 The implementation uses TypeScript, ESM, and functional-first design.

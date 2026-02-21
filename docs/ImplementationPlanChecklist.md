@@ -16,9 +16,9 @@ Rules:
 - [x] Confirm overwrite policy: existing outputs fail by default; `--force` allows overwrite/replace.
 - [x] Confirm help/empty-command equivalence: `help`, `--help`, `-h`, and no command all print top-level help and exit `0`.
 - [x] Confirm CLI stream behavior policy (`stdout` for help/version, `stderr` for errors/status).
-- [ ] Decide initial dependency set and versioning approach for runtime and test tooling.
-- [ ] Define dependency policy (selection criteria, update cadence, pinning strategy, and license/security expectations).
-- [ ] Document major dependency choices and dependency policy in `docs/ADR.md`.
+- [x] Decide initial dependency set and versioning approach for runtime and test tooling.
+- [x] Define dependency policy (selection criteria, update cadence, pinning strategy, and license/security expectations).
+- [x] Document major dependency choices and dependency policy in `docs/ADR.md`.
 - [x] Approve repository scaffold and module boundaries (`domain`, `pipeline`, `lib`, `io`, `cli`).
 - [ ] Establish tooling baseline (TypeScript strict, lint, test runner).
 - [x] Define determinism policy baseline (seed handling, tie-break conventions, float/epsilon rules) and matching utility/test coverage expectations.
