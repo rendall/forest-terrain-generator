@@ -1,5 +1,5 @@
 import { InputValidationError } from "../domain/errors.js";
-import type { JsonObject, ResolvedInputs } from "../domain/types.js";
+import type { JsonObject, Mode, ResolvedInputs } from "../domain/types.js";
 
 const UINT64_MAX = 18446744073709551615n;
 const UINT64_DECIMAL = /^[0-9]+$/;
@@ -49,7 +49,52 @@ function validateParams(params: JsonObject | undefined): JsonObject {
   return params;
 }
 
-export function validateResolvedInputs(resolved: ResolvedInputs): ValidatedInputs {
+function validateModeOutputRules(mode: Mode, resolved: ResolvedInputs): void {
+  if (mode === "debug") {
+    if (!resolved.outputDir) {
+      throw new InputValidationError(
+        "Missing required output argument for debug mode: --output-dir."
+      );
+    }
+
+    if (resolved.outputFile) {
+      throw new InputValidationError(
+        "--output-file is not valid in debug mode. You might mean --debug-output-file."
+      );
+    }
+
+    return;
+  }
+
+  if (!resolved.outputFile) {
+    throw new InputValidationError(
+      `Missing required output argument for ${mode} mode: --output-file.`
+    );
+  }
+
+  if (resolved.outputDir) {
+    throw new InputValidationError(
+      `--output-dir is not valid in ${mode} mode. Use --output-file.`
+    );
+  }
+
+  if (resolved.debugOutputFile) {
+    throw new InputValidationError(`--debug-output-file is not valid in ${mode} mode.`);
+  }
+
+  if (mode === "derive" && !resolved.mapHPath) {
+    throw new InputValidationError(
+      "Missing required authored map for derive mode: --map-h."
+    );
+  }
+}
+
+export function validateResolvedInputs(
+  resolved: ResolvedInputs,
+  mode: Mode
+): ValidatedInputs {
+  validateModeOutputRules(mode, resolved);
+
   return {
     ...resolved,
     seed: validateSeed(resolved.seed),

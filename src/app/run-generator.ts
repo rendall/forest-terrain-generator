@@ -44,5 +44,5 @@ export async function resolveInputs(request: RunRequest): Promise<ResolvedInputs
 
 export async function runGenerator(request: RunRequest): Promise<void> {
   const resolved = await resolveInputs(request);
-  validateResolvedInputs(resolved);
+  validateResolvedInputs(resolved, request.mode);
 }
