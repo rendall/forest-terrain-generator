@@ -87,6 +87,24 @@ export interface TrailSeedParams {
   seedTilesPerTrail: number;
 }
 
+export interface TrailEndpointInputs {
+  waterClass: Uint8Array;
+  faN: Float32Array;
+  landform: Uint8Array;
+  slopeMag: Float32Array;
+}
+
+export interface TrailEndpointParams {
+  streamEndpointAccumThreshold: number;
+  ridgeEndpointMaxSlope: number;
+}
+
+export interface TrailRouteRequest {
+  kind: "seed_to_water" | "seed_to_ridge";
+  seedIndex: number;
+  endpointIndex: number;
+}
+
 export function deriveTrailDistStream(
   shape: GridShape,
   isStream: Uint8Array,
@@ -309,6 +327,95 @@ export function selectTrailSeeds(
 
   const selectedCount = Math.min(seedCount, candidates.length);
   return candidates.slice(0, selectedCount).map((entry) => entry.index);
+}
+
+function chebyshevDistance(shape: GridShape, fromIndex: number, toIndex: number): number {
+  const fx = fromIndex % shape.width;
+  const fy = Math.floor(fromIndex / shape.width);
+  const tx = toIndex % shape.width;
+  const ty = Math.floor(toIndex / shape.width);
+  return Math.max(Math.abs(fx - tx), Math.abs(fy - ty));
+}
+
+function selectNearestEndpoint(
+  shape: GridShape,
+  seedIndex: number,
+  candidates: number[]
+): number | undefined {
+  if (candidates.length === 0) {
+    return undefined;
+  }
+
+  let bestIndex = candidates[0];
+  let bestDistance = chebyshevDistance(shape, seedIndex, bestIndex);
+
+  for (let i = 1; i < candidates.length; i += 1) {
+    const candidateIndex = candidates[i];
+    const candidateDistance = chebyshevDistance(shape, seedIndex, candidateIndex);
+    if (candidateDistance < bestDistance) {
+      bestDistance = candidateDistance;
+      bestIndex = candidateIndex;
+      continue;
+    }
+
+    if (candidateDistance === bestDistance && candidateIndex < bestIndex) {
+      bestIndex = candidateIndex;
+    }
+  }
+
+  return bestIndex;
+}
+
+export function buildTrailRouteRequests(
+  shape: GridShape,
+  seedIndices: number[],
+  inputs: TrailEndpointInputs,
+  params: TrailEndpointParams
+): TrailRouteRequest[] {
+  validateMapLength(shape, inputs.waterClass, "WaterClass");
+  validateMapLength(shape, inputs.faN, "FA_N");
+  validateMapLength(shape, inputs.landform, "Landform");
+  validateMapLength(shape, inputs.slopeMag, "SlopeMag");
+
+  const streamCandidates: number[] = [];
+  const ridgeCandidates: number[] = [];
+  for (let i = 0; i < shape.size; i += 1) {
+    if (
+      inputs.waterClass[i] === WATER_CLASS_CODE.stream &&
+      inputs.faN[i] >= params.streamEndpointAccumThreshold
+    ) {
+      streamCandidates.push(i);
+    }
+    if (
+      inputs.landform[i] === LANDFORM_CODE.ridge &&
+      inputs.slopeMag[i] < params.ridgeEndpointMaxSlope
+    ) {
+      ridgeCandidates.push(i);
+    }
+  }
+
+  const routeRequests: TrailRouteRequest[] = [];
+  for (const seedIndex of seedIndices) {
+    const waterEndpoint = selectNearestEndpoint(shape, seedIndex, streamCandidates);
+    if (waterEndpoint !== undefined) {
+      routeRequests.push({
+        kind: "seed_to_water",
+        seedIndex,
+        endpointIndex: waterEndpoint
+      });
+    }
+
+    const ridgeEndpoint = selectNearestEndpoint(shape, seedIndex, ridgeCandidates);
+    if (ridgeEndpoint !== undefined) {
+      routeRequests.push({
+        kind: "seed_to_ridge",
+        seedIndex,
+        endpointIndex: ridgeEndpoint
+      });
+    }
+  }
+
+  return routeRequests;
 }
 
 export function deriveTrailPreferenceCost(

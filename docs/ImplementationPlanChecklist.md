@@ -180,7 +180,7 @@ Rules:
 
 - [x] Implement trail preference cost field `C` (Section 10.2), including `distStream` 8-way BFS, no-stream fallback, and immutable cost-field behavior during routing.
 - [x] Implement deterministic seed candidate filtering/scoring/selection (Section 10.3), including `seedCount` calculation and tie-breaks.
-- [ ] Implement deterministic endpoint selection and route request ordering (Section 10.4) using geometric 8-way nearest distance and `(y,x)` tie-breaks.
+- [x] Implement deterministic endpoint selection and route request ordering (Section 10.4) using geometric 8-way nearest distance and `(y,x)` tie-breaks.
 - [ ] Implement least-cost routing (Section 10.5) with float64 cumulative costs, `tieEps` equality handling, strict-better relaxation (`newCost < oldCost - tieEps`), and deterministic queue ordering.
 - [ ] Implement no-op fallback behavior for no-seed and unreachable-route cases; skip only affected routes and continue pipeline.
 - [ ] Implement trail marking semantics: `GameTrail` union and first-writer-wins `GameTrailId` assignment.
