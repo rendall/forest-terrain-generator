@@ -202,7 +202,7 @@ Rules:
 - [x] Decide final output-envelope completeness metadata policy for v1 (`meta` contains only `specVersion`; do not emit `implementationStatus`, `implementedPhases`, or draft notes in v1 output).
 - [x] Decide canonical JSON serialization policy for standard/debug outputs (emit pretty JSON with two-space indentation and trailing newline for standard and debug JSON artifacts; rely on stable insertion-order serialization, with deterministic field population in emitters).
 - [x] Decide debug artifact contract for v1 (`debug-manifest.json` required; fixed required artifact files `topography.json`, `hydrology.json`, `ecology.json`, `navigation.json` in output-dir root; deterministic naming/path contract; manifest includes mode/specVersion/width/height/tileCount/artifacts list).
-- [ ] Decide debug-write failure policy (atomic all-or-nothing vs best-effort partial output) and resulting exit/error behavior.
+- [x] Decide debug-write failure policy (atomic all-or-nothing: stage debug artifacts in a temp directory and publish only after full success; on failure, do not publish partial output and surface file-write/rename failures as exit `4` with actionable path/context details).
 - [ ] Decide end-to-end golden scope details (modes, seeds, sizes, asserted artifacts/fields, and update workflow).
 - [ ] Decide CLI integration-test matrix details for mode/flag/error-path coverage (`generate`, `derive`, `debug`).
 - [ ] Decide final error-diagnostics quality bar (required context payload in messages for validation, shape, I/O, and internal failures).

@@ -519,6 +519,8 @@ Locked decisions:
 5. v1 debug output always includes `debug-manifest.json` at the output-directory root.
 6. v1 debug output includes a fixed required artifact set in the output-directory root: `topography.json`, `hydrology.json`, `ecology.json`, and `navigation.json`.
 7. `debug-manifest.json` includes deterministic core metadata (`mode`, `specVersion`, `width`, `height`, `tileCount`) and a deterministic `artifacts` list naming emitted debug files.
+8. Debug writes are atomic all-or-nothing: write all debug artifacts to a staging directory and publish to `--output-dir` only after full success.
+9. If any debug artifact write or final publish step fails, the run surfaces a file I/O failure (exit `4`) with actionable path/context details and does not leave partial published debug output.
 
 Done criteria:
 
