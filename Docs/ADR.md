@@ -2,6 +2,32 @@
 
 This document is a living ledger of significant technical decisions made within this project. Each entry captures the context in which a decision was made, the options considered, the decision itself, and its consequences. The purpose is not to justify past choices defensively, but to preserve intent and reasoning so future contributors can understand why the system is shaped the way it is. Over time, this file forms a chronological record of trade-offs, constraints, and design direction, providing continuity as the codebase and team evolve.
 
+## Adopt Balanced End-to-End Golden Scope for Phase 6
+
+**Timestamp:** 2026-02-21 20:42 (UTC)
+
+### Decision
+For Phase 6, adopt a balanced end-to-end golden regression scope.
+
+- Modes: `generate`, `derive`, and `debug`.
+- Seeds: `1`, `42`, `123456789`, and `18446744073709551615`.
+- Grid sizes: `16x16` and `64x64`.
+- Assertions cover full envelope output and debug artifact presence/invariants.
+- Golden updates are opt-in only via an explicit update workflow flag.
+
+### Rationale
+This scope provides high confidence in deterministic behavior across commands while keeping runtime and maintenance cost reasonable for v1.
+
+### Alternatives Considered
+- Minimal scope (single seed/size per mode) – rejected because it risks missing regressions.
+- Heavy exhaustive scope (many seeds/sizes/artifacts) – rejected for v1 due to runtime/maintenance overhead.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): Docs/drafts/ImplementationPlan.md
+- Related ADRs: Use Atomic Debug Output Publication (v1)
+
 ## Use Atomic Debug Output Publication (v1)
 
 **Timestamp:** 2026-02-21 20:38 (UTC)

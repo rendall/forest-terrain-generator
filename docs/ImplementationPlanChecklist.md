@@ -203,7 +203,7 @@ Rules:
 - [x] Decide canonical JSON serialization policy for standard/debug outputs (emit pretty JSON with two-space indentation and trailing newline for standard and debug JSON artifacts; rely on stable insertion-order serialization, with deterministic field population in emitters).
 - [x] Decide debug artifact contract for v1 (`debug-manifest.json` required; fixed required artifact files `topography.json`, `hydrology.json`, `ecology.json`, `navigation.json` in output-dir root; deterministic naming/path contract; manifest includes mode/specVersion/width/height/tileCount/artifacts list).
 - [x] Decide debug-write failure policy (atomic all-or-nothing: stage debug artifacts in a temp directory and publish only after full success; on failure, do not publish partial output and surface file-write/rename failures as exit `4` with actionable path/context details).
-- [ ] Decide end-to-end golden scope details (modes, seeds, sizes, asserted artifacts/fields, and update workflow).
+- [x] Decide end-to-end golden scope details (balanced v1 scope: modes `generate`, `derive`, `debug`; seeds `1`, `42`, `123456789`, `18446744073709551615`; sizes `16x16`, `64x64`; assert full envelope plus debug manifest/artifact presence with key invariants; golden updates only via explicit `--update-goldens` workflow).
 - [ ] Decide CLI integration-test matrix details for mode/flag/error-path coverage (`generate`, `derive`, `debug`).
 - [ ] Decide final error-diagnostics quality bar (required context payload in messages for validation, shape, I/O, and internal failures).
 - [ ] Review gate: review the implementation plan and ensure that there are no more undecideds or ambiguities.

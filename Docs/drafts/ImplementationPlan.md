@@ -521,6 +521,9 @@ Locked decisions:
 7. `debug-manifest.json` includes deterministic core metadata (`mode`, `specVersion`, `width`, `height`, `tileCount`) and a deterministic `artifacts` list naming emitted debug files.
 8. Debug writes are atomic all-or-nothing: write all debug artifacts to a staging directory and publish to `--output-dir` only after full success.
 9. If any debug artifact write or final publish step fails, the run surfaces a file I/O failure (exit `4`) with actionable path/context details and does not leave partial published debug output.
+10. Phase 6 end-to-end golden scope is balanced: modes `generate`, `derive`, and `debug`; seeds `1`, `42`, `123456789`, and `18446744073709551615`; sizes `16x16` and `64x64`.
+11. End-to-end golden assertions include full terrain envelope content plus debug manifest/artifact presence and key invariants.
+12. Golden baselines are updated only via an explicit opt-in workflow (`--update-goldens`), never implicitly during normal test runs.
 
 Done criteria:
 
