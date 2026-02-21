@@ -68,9 +68,9 @@ describe("CLI command wiring and contract failures", () => {
     const written = await readFile(outputFile, "utf8");
     const parsed = JSON.parse(written);
     expect(parsed.meta.specVersion).toBe("forest-terrain-v1");
-    expect(parsed.meta.implementationStatus).toBe("draft-incomplete");
-    expect(Array.isArray(parsed.meta.implementedPhases)).toBe(true);
-    expect(parsed.meta.implementedPhases).toEqual(["topography", "hydrology", "ecology"]);
+    expect(Object.keys(parsed.meta)).toEqual(["specVersion"]);
+    expect(written).toContain('\n  "meta": {\n    "specVersion": "forest-terrain-v1"\n  },\n');
+    expect(written.endsWith("\n")).toBe(true);
     expect(Array.isArray(parsed.tiles)).toBe(true);
     expect(parsed.tiles.length).toBeGreaterThan(0);
   });
@@ -144,7 +144,8 @@ describe("CLI command wiring and contract failures", () => {
     const envelope = await readFile(debugOutputFile, "utf8");
     const parsed = JSON.parse(envelope);
     expect(parsed.meta.specVersion).toBe("forest-terrain-v1");
-    expect(parsed.meta.implementationStatus).toBe("draft-incomplete");
+    expect(Object.keys(parsed.meta)).toEqual(["specVersion"]);
+    expect(envelope.endsWith("\n")).toBe(true);
     expect(Array.isArray(parsed.tiles)).toBe(true);
     expect(parsed.tiles.length).toBeGreaterThan(0);
   });
