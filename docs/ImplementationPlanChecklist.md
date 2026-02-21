@@ -86,7 +86,7 @@ Rules:
 
 ### Phase 2 Implementation
 
-- [ ] Implement Phase 2 typed-array map model and shared `GridShape` contract (row-major SoA for `H`, `R`, `V`, `SlopeMag`, `AspectDeg`, `Landform`).
+- [x] Implement Phase 2 typed-array map model and shared `GridShape` contract (row-major SoA for `H`, `R`, `V`, `SlopeMag`, `AspectDeg`, `Landform`).
 - [ ] Implement Improved Perlin (2002) primitives and deterministic permutation initialization (`subSeed` + SplitMix64 + Fisher-Yates).
 - [ ] Implement multi-octave base-map generation for `H`, `R`, and `V` using Appendix A parameters and generation-time `[0,1]` clamp policy.
 - [ ] Implement authored-map JSON parsing/validation for `--map-h`, `--map-r`, `--map-v` with strict `[0,1]` value checks, no resampling/interpolation, and exit-code mapping (`2`/`3`) per policy.
