@@ -173,6 +173,12 @@ export interface DirectionalPassabilityMaps {
   cliffEdgePacked: Uint8Array;
 }
 
+export interface FollowableInputs {
+  waterClass: Uint8Array;
+  landform: Uint8Array;
+  gameTrail: Uint8Array;
+}
+
 interface FrontierEntry {
   index: number;
   cost: number;
@@ -194,6 +200,20 @@ const PASS_DIR_ORDER = [
   { key: "SW", dx: -1, dy: 1 },
   { key: "W", dx: -1, dy: 0 },
   { key: "NW", dx: -1, dy: -1 }
+] as const;
+
+const FOLLOWABLE_FLAG_BIT = {
+  stream: 1 << 0,
+  ridge: 1 << 1,
+  game_trail: 1 << 2,
+  shore: 1 << 3
+} as const;
+
+const FOLLOWABLE_ORDER = [
+  { bit: FOLLOWABLE_FLAG_BIT.stream, name: "stream" },
+  { bit: FOLLOWABLE_FLAG_BIT.ridge, name: "ridge" },
+  { bit: FOLLOWABLE_FLAG_BIT.game_trail, name: "game_trail" },
+  { bit: FOLLOWABLE_FLAG_BIT.shore, name: "shore" }
 ] as const;
 
 export function deriveTrailDistStream(
@@ -763,6 +783,62 @@ export function deriveDirectionalPassability(
     passabilityPacked,
     cliffEdgePacked
   };
+}
+
+export function followableFlagsToOrderedList(flags: number): string[] {
+  const out: string[] = [];
+  for (const item of FOLLOWABLE_ORDER) {
+    if ((flags & item.bit) !== 0) {
+      out.push(item.name);
+    }
+  }
+  return out;
+}
+
+export function deriveFollowableFlags(shape: GridShape, inputs: FollowableInputs): Uint8Array {
+  validateMapLength(shape, inputs.waterClass, "WaterClass");
+  validateMapLength(shape, inputs.landform, "Landform");
+  validateMapLength(shape, inputs.gameTrail, "GameTrail");
+
+  const out = new Uint8Array(shape.size);
+  for (let i = 0; i < shape.size; i += 1) {
+    const x = i % shape.width;
+    const y = Math.floor(i / shape.width);
+
+    let flags = 0;
+    if (inputs.waterClass[i] === WATER_CLASS_CODE.stream) {
+      flags |= FOLLOWABLE_FLAG_BIT.stream;
+    }
+    if (inputs.landform[i] === LANDFORM_CODE.ridge) {
+      flags |= FOLLOWABLE_FLAG_BIT.ridge;
+    }
+    if (inputs.gameTrail[i] === 1) {
+      flags |= FOLLOWABLE_FLAG_BIT.game_trail;
+    }
+
+    if (inputs.waterClass[i] !== WATER_CLASS_CODE.lake) {
+      let hasLakeNeighbor = false;
+      for (const step of DIR8_STEPS) {
+        const nx = x + step.dx;
+        const ny = y + step.dy;
+        if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
+          continue;
+        }
+        const nIndex = ny * shape.width + nx;
+        if (inputs.waterClass[nIndex] === WATER_CLASS_CODE.lake) {
+          hasLakeNeighbor = true;
+          break;
+        }
+      }
+      if (hasLakeNeighbor) {
+        flags |= FOLLOWABLE_FLAG_BIT.shore;
+      }
+    }
+
+    out[i] = flags;
+  }
+
+  return out;
 }
 
 export function markTrailPaths(shape: GridShape, paths: number[][]): TrailMarkedMaps {

@@ -186,7 +186,7 @@ Rules:
 - [x] Implement trail marking semantics: `GameTrail` union and first-writer-wins `GameTrailId` assignment.
 - [x] Implement movement cost derivation (Section 13.1) with ordered multiplier application and trail modifier applied last.
 - [x] Implement directional passability and `CliffEdge` derivation (Section 13.2), including packed internal representation and deterministic envelope serialization mapping.
-- [ ] Implement followable derivation (Section 13.3) with canonical order/dedup and 8-way `shore` adjacency behavior.
+- [x] Implement followable derivation (Section 13.3) with canonical order/dedup and 8-way `shore` adjacency behavior.
 - [ ] Implement standard payload emission of optional `navigation.gameTrailId` (`-1` internal sentinel maps to field omission).
 - [ ] Add deterministic tests for route ordering/tie-break behavior, including `tieEps` boundary/equality fixtures.
 - [ ] Add targeted Phase 5 fixtures for endpoint-selection ties, no-seed fallback, unreachable-route skipping, and overlap `GameTrailId` behavior.
