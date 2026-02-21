@@ -1,0 +1,19 @@
+{
+  "default": true,
+
+  // Enforce consistent spacing around structure blocks.
+  "MD022": {
+    "lines_above": 1,
+    "lines_below": 1
+  },
+  "MD031": true,
+  "MD032": true,
+
+  // Keep docs readable without forcing hard wraps.
+  "MD013": false,
+
+  // Allow duplicate headings across different nesting levels.
+  "MD024": {
+    "siblings_only": true
+  }
+}
