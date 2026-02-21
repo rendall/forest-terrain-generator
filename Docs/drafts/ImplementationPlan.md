@@ -390,6 +390,8 @@ Locked decisions:
 13. No-water fallback is explicit: if no water tile exists, set `distWater[x,y] = hydrology.waterProxMaxDist` for all tiles before moisture calculations.
 14. No-stream fallback is explicit for downstream proximity consumers: if no stream tile exists, set `distStream[x,y] = gameTrails.streamProxMaxDist` for all tiles.
 15. Proximity-derived wetness/score terms consume capped fallback distances directly (no special-case branching after fallback assignment).
+16. Phase-3 hydrology regression scope is balanced: committed/versioned golden snapshots for seeds `1`, `42`, `123456789`, `18446744073709551615` at `16x16` and `64x64`, covering `FD`, `FA`, `FA_N`, `LakeMask`, `isStream`, `distWater`, `Moisture`, and `WaterClass`.
+17. Targeted hydrology fixtures are required for tie-heavy flow choice determinism, no-water fallback, threshold-edge comparisons, water-class precedence (`lake > stream > marsh > none`), and acyclic `FD` invariants.
 
 Done criteria:
 
