@@ -36,7 +36,7 @@ Rules:
 
 - [x] Decide `seed` parsing/storage/validation for normative `uint64` input.
 - [x] Decide config merge semantics for `CLI > file > defaults` (deep merge rules, array behavior, and scalar override behavior).
-- [ ] Decide unknown-input policy (unknown CLI flags and unknown params-file keys).
+- [x] Decide unknown-input policy (unknown CLI flags and unknown params-file keys).
 - [ ] Decide params-file format support (for example JSON-only vs additional formats).
 - [ ] Decide path-resolution rules for file inputs (CWD-relative vs params-file-relative).
 - [ ] Decide mode-specific required/allowed inputs for `generate`, `derive`, and `debug`.

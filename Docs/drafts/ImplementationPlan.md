@@ -69,6 +69,13 @@ Configuration merge semantics decision (Phase 1):
 5. Explicit falsy values (`0`, `false`, and empty string) are treated as provided overrides.
 6. `undefined` is treated as not provided.
 
+Unknown-input policy decision (Phase 1):
+
+1. Unknown CLI flags are hard validation errors (exit `2`).
+2. Unknown params-file keys are hard validation errors (exit `2`).
+3. Error messages MUST be precise and actionable, explicitly identifying the unknown key/flag and where it was found.
+4. Error messages SHOULD include close valid alternatives when available (for example nearest valid key/flag names).
+
 ### 3.3 Output Contract
 
 1. `generate` and `derive` write the terrain envelope JSON to `--output-file`.
