@@ -124,4 +124,29 @@ describe("CLI overwrite policy", () => {
     const manifest = await readFile(join(outputDir, "debug-manifest.json"), "utf8");
     expect(manifest).toContain("\"mode\": \"debug\"");
   });
+
+  it("does not publish debug output directory when optional debug output file precondition fails", async () => {
+    const dir = await makeTempDir();
+    const outputDir = join(dir, "debug-output");
+    const debugOutputFile = join(dir, "existing-debug-envelope.json");
+    await writeFile(debugOutputFile, "existing-content", "utf8");
+
+    const result = await runCli([
+      "debug",
+      "--seed",
+      "1",
+      "--width",
+      "2",
+      "--height",
+      "2",
+      "--output-dir",
+      outputDir,
+      "--debug-output-file",
+      debugOutputFile
+    ]);
+    expect(result.code).toBe(2);
+    expect(result.stderr).toContain("Output file already exists");
+    await expect(stat(outputDir)).rejects.toBeDefined();
+    expect(await readFile(debugOutputFile, "utf8")).toBe("existing-content");
+  });
 });
