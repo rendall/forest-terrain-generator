@@ -218,7 +218,7 @@ Rules:
 - [x] Add end-to-end fixed-seed golden tests for balanced Phase 6 scope (modes/seeds/sizes/artifacts/invariants).
 - [x] Implement explicit golden update workflow (`--update-goldens`) and ensure standard test runs fail on drift instead of rewriting baselines.
 - [x] Validate error messages and exit-code behavior against the locked diagnostics quality bar (`2`/`3`/`4`/`5` required context payload).
-- [ ] Final review gate: explicit approval to mark implementation complete.
+- [x] Final review gate: explicit approval to mark implementation complete.
 
 ## Cross-Cutting Policy Checks
 
