@@ -139,7 +139,7 @@ Rules:
 - [x] Decide Phase 4 regression scope and assertions (fixed seeds/sizes, golden artifacts, targeted fixtures, and float epsilon policy).
 - [x] Decide whether Phase 4 rule concretization requires ADR and/or draft-spec updates before implementation, and record required artifacts.
 - [x] Decide internal enum/bit assignments for `Biome`, `SoilType`, `SurfaceFlags`, and `FeatureFlags`.
-- [ ] Decide in-memory storage contract for `dominant` before envelope mapping.
+- [x] Decide in-memory storage contract for `dominant` before envelope mapping.
 - [ ] Decide canonical params binding for biome perturbation strength (`vegVarianceStrength` source path).
 - [ ] Review the Phase 4 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 4 implementation.
 
