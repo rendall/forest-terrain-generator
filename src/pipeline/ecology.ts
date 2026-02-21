@@ -27,6 +27,21 @@ export interface BiomeParams {
   vegVarianceStrength?: number;
 }
 
+interface VegetationBase {
+  baseDensity: number;
+  baseCanopy: number;
+}
+
+const VEGETATION_BASE_BY_BIOME: Record<number, VegetationBase> = {
+  [BIOME_CODE.pine_heath]: { baseDensity: 0.35, baseCanopy: 0.4 },
+  [BIOME_CODE.esker_pine]: { baseDensity: 0.3, baseCanopy: 0.35 },
+  [BIOME_CODE.mixed_forest]: { baseDensity: 0.55, baseCanopy: 0.6 },
+  [BIOME_CODE.spruce_swamp]: { baseDensity: 0.8, baseCanopy: 0.78 },
+  [BIOME_CODE.open_bog]: { baseDensity: 0.1, baseCanopy: 0.15 },
+  [BIOME_CODE.stream_bank]: { baseDensity: 0.6, baseCanopy: 0.55 },
+  [BIOME_CODE.lake]: { baseDensity: 0, baseCanopy: 0 }
+};
+
 export function resolveVegVarianceStrength(params: BiomeParams): number {
   const nested = params.vegVarianceNoise?.strength;
   if (typeof nested === "number" && Number.isFinite(nested)) {
@@ -95,4 +110,38 @@ export function deriveBiome(
   }
 
   return out;
+}
+
+export interface VegetationAttributes {
+  treeDensity: Float32Array;
+  canopyCover: Float32Array;
+}
+
+export function deriveVegetationAttributes(
+  shape: GridShape,
+  biome: Uint8Array,
+  moisture: Float32Array,
+  v: Float32Array
+): VegetationAttributes {
+  validateMapLength(shape, biome, "Biome");
+  validateMapLength(shape, moisture, "Moisture");
+  validateMapLength(shape, v, "V");
+
+  const treeDensity = new Float32Array(shape.size);
+  const canopyCover = new Float32Array(shape.size);
+
+  for (let i = 0; i < shape.size; i += 1) {
+    const base = VEGETATION_BASE_BY_BIOME[biome[i]];
+    if (!base) {
+      throw new Error(`Unknown Biome code ${biome[i]} at index ${i}.`);
+    }
+
+    const density = clamp01(
+      base.baseDensity + (v[i] - 0.5) * 0.1 + (moisture[i] - 0.5) * 0.08
+    );
+    treeDensity[i] = density;
+    canopyCover[i] = clamp01(base.baseCanopy + (density - base.baseDensity) * 0.6);
+  }
+
+  return { treeDensity, canopyCover };
 }

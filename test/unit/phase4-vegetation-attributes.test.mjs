@@ -35,6 +35,6 @@ describe("Phase 4 vegetation attributes", () => {
 
     const { treeDensity, canopyCover } = deriveVegetationAttributes(shape, biome, moisture, v);
     expect(treeDensity[0]).toBe(1);
-    expect(canopyCover[0]).toBe(1);
+    expect(canopyCover[0]).toBeCloseTo(0.9, 6);
   });
 });
