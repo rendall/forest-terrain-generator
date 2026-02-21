@@ -89,7 +89,7 @@ Rules:
 - [x] Implement Phase 2 typed-array map model and shared `GridShape` contract (row-major SoA for `H`, `R`, `V`, `SlopeMag`, `AspectDeg`, `Landform`).
 - [x] Implement Improved Perlin (2002) primitives and deterministic permutation initialization (`subSeed` + SplitMix64 + Fisher-Yates).
 - [x] Implement multi-octave base-map generation for `H`, `R`, and `V` using Appendix A parameters and generation-time `[0,1]` clamp policy.
-- [ ] Implement authored-map JSON parsing/validation for `--map-h`, `--map-r`, `--map-v` with strict `[0,1]` value checks, no resampling/interpolation, and exit-code mapping (`2`/`3`) per policy.
+- [x] Implement authored-map JSON parsing/validation for `--map-h`, `--map-r`, `--map-v` with strict `[0,1]` value checks, no resampling/interpolation, and exit-code mapping (`2`/`3`) per policy.
 - [ ] Implement authored-map override flow (`H`, `R`, `V`) with deterministic precedence and shape compatibility checks.
 - [ ] Implement slope magnitude and aspect derivation with clamped boundary sampling and `AspectDeg=0` sentinel for `Hx==0 && Hy==0`.
 - [ ] Implement landform classification with strict threshold comparisons and fixed enum mapping (`0=flat`, `1=slope`, `2=ridge`, `3=valley`, `4=basin`).
