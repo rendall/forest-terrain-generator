@@ -116,7 +116,7 @@ Rules:
 
 ### Phase 3 Implementation
 
-- [ ] Implement Phase 3 typed-array hydrology map model with row-major storage contracts (`FD`, `FA`, `FA_N`, `LakeMask`, `isStream`, `distWater`, `Moisture`, `WaterClass`, and internal `InDeg`).
+- [x] Implement Phase 3 typed-array hydrology map model with row-major storage contracts (`FD`, `FA`, `FA_N`, `LakeMask`, `isStream`, `distWater`, `Moisture`, `WaterClass`, and internal `InDeg`).
 - [ ] Implement flow direction with deterministic tie-break logic (`Dir8` + `NONE=255`, canonical neighbor order, and exact `tieBreakHash64` behavior).
 - [ ] Implement flow accumulation with deterministic Kahn/FIFO processing, overflow-protected `FA` updates, and spec-accurate `FA_N` normalization.
 - [ ] Implement lakes, streams, moisture, and water-class derivations with exact threshold operators and precedence rules.
