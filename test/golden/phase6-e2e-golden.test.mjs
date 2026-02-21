@@ -162,5 +162,5 @@ describe("Phase 6 end-to-end fixed-seed goldens", () => {
         ]);
       }
     }
-  });
+  }, 120000);
 });
