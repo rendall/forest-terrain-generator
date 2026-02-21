@@ -49,7 +49,7 @@ Rules:
 ### Phase 1 Implementation
 
 - [x] Implement CLI input parsing and config precedence (CLI > file > defaults).
-- [ ] Implement input schema and validation errors.
+- [x] Implement input schema and validation errors.
 - [ ] Implement canonical CLI flags (`--params`, `--map-h`, `--map-r`, `--map-v`, `--output-file`, `--output-dir`, `--debug-output-file`, `--force`).
 - [ ] Implement params-file JSON-only enforcement and malformed-JSON classification as exit `2`.
 - [ ] Implement path-resolution behavior (CLI relative paths from CWD; params-file relative paths from params-file directory).
