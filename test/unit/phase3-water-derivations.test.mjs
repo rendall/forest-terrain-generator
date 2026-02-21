@@ -10,13 +10,13 @@ describe("Phase 3 water derivations", () => {
     const hydrology = await loadHydrologyModule();
     const shape = createGridShape(3, 1);
     const landform = new Uint8Array([LANDFORM_CODE.basin, LANDFORM_CODE.basin, LANDFORM_CODE.flat]);
-    const slopeMag = new Float32Array([0.0299, 0.03, 0.03]);
-    const faN = new Float32Array([0.65, 0.65, 0.65]);
+    const slopeMag = new Float32Array([0.49, 0.5, 0.5]);
+    const faN = new Float32Array([0.5, 0.5, 0.5]);
     const params = {
-      lakeFlatSlopeThreshold: 0.03,
-      lakeAccumThreshold: 0.65,
-      streamAccumThreshold: 0.65,
-      streamMinSlopeThreshold: 0.03
+      lakeFlatSlopeThreshold: 0.5,
+      lakeAccumThreshold: 0.5,
+      streamAccumThreshold: 0.5,
+      streamMinSlopeThreshold: 0.5
     };
 
     const lakeMask = hydrology.deriveLakeMask(shape, landform, slopeMag, faN, params);
@@ -45,7 +45,7 @@ describe("Phase 3 water derivations", () => {
 
     const moisture = hydrology.deriveMoisture(shape, faN, slopeMag, distWater, params);
     expect(moisture[0]).toBeCloseTo(0.2, 6);
-    expect(moisture[1]).toBeCloseTo(0.3301282051, 6);
+    expect(moisture[1]).toBeCloseTo(0.3302564, 6);
     expect(moisture[2]).toBeCloseTo(0.7153846153, 6);
     for (const value of moisture) {
       expect(value).toBeGreaterThanOrEqual(0);

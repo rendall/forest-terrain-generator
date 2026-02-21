@@ -1,5 +1,5 @@
-import { DIR8_NONE } from "../domain/hydrology.js";
-import type { GridShape } from "../domain/topography.js";
+import { DIR8_NONE, WATER_CLASS_CODE } from "../domain/hydrology.js";
+import { LANDFORM_CODE, type GridShape } from "../domain/topography.js";
 import { mix64 } from "../lib/sub-seed.js";
 
 const U64_MASK = 0xffffffffffffffffn;
@@ -20,6 +20,32 @@ export const DIR8_NEIGHBORS = [
 export interface FlowDirectionParams {
   minDropThreshold: number;
   tieEps: number;
+}
+
+export interface LakeMaskParams {
+  lakeFlatSlopeThreshold: number;
+  lakeAccumThreshold: number;
+}
+
+export interface StreamMaskParams {
+  streamAccumThreshold: number;
+  streamMinSlopeThreshold: number;
+}
+
+export interface MoistureParams {
+  moistureAccumStart: number;
+  flatnessThreshold: number;
+  waterProxMaxDist: number;
+  weights: {
+    accum: number;
+    flat: number;
+    prox: number;
+  };
+}
+
+export interface WaterClassParams {
+  marshMoistureThreshold: number;
+  marshSlopeThreshold: number;
 }
 
 const U32_MAX = 0xffffffff;
@@ -207,6 +233,152 @@ export function normalizeFlowAccumulation(fa: Uint32Array): Float32Array {
     out[i] = clamp01(normalized);
   }
   return out;
+}
+
+function floodFillMask(shape: GridShape, candidate: Uint8Array): Uint8Array {
+  const mask = new Uint8Array(shape.size);
+
+  for (let start = 0; start < shape.size; start += 1) {
+    if (candidate[start] === 0 || mask[start] === 1) {
+      continue;
+    }
+
+    const queue: number[] = [start];
+    mask[start] = 1;
+    let head = 0;
+    while (head < queue.length) {
+      const tile = queue[head];
+      head += 1;
+      const x = tile % shape.width;
+      const y = Math.floor(tile / shape.width);
+
+      for (const neighbor of DIR8_NEIGHBORS) {
+        const nx = x + neighbor.dx;
+        const ny = y + neighbor.dy;
+        if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
+          continue;
+        }
+        const next = ny * shape.width + nx;
+        if (candidate[next] === 1 && mask[next] === 0) {
+          mask[next] = 1;
+          queue.push(next);
+        }
+      }
+    }
+  }
+
+  return mask;
+}
+
+export function deriveLakeMask(
+  shape: GridShape,
+  landform: Uint8Array,
+  slopeMag: Float32Array,
+  faN: Float32Array,
+  params: LakeMaskParams
+): Uint8Array {
+  validateMapLength(shape, landform, "Landform");
+  validateMapLength(shape, slopeMag, "SlopeMag");
+  validateMapLength(shape, faN, "FA_N");
+
+  const candidate = new Uint8Array(shape.size);
+  for (let i = 0; i < shape.size; i += 1) {
+    if (
+      landform[i] === LANDFORM_CODE.basin &&
+      slopeMag[i] < params.lakeFlatSlopeThreshold &&
+      faN[i] >= params.lakeAccumThreshold
+    ) {
+      candidate[i] = 1;
+    }
+  }
+
+  return floodFillMask(shape, candidate);
+}
+
+export function deriveStreamMask(
+  shape: GridShape,
+  lakeMask: Uint8Array,
+  faN: Float32Array,
+  slopeMag: Float32Array,
+  params: StreamMaskParams
+): Uint8Array {
+  validateMapLength(shape, lakeMask, "LakeMask");
+  validateMapLength(shape, faN, "FA_N");
+  validateMapLength(shape, slopeMag, "SlopeMag");
+
+  const stream = new Uint8Array(shape.size);
+  for (let i = 0; i < shape.size; i += 1) {
+    if (
+      lakeMask[i] === 0 &&
+      faN[i] >= params.streamAccumThreshold &&
+      slopeMag[i] >= params.streamMinSlopeThreshold
+    ) {
+      stream[i] = 1;
+    }
+  }
+  return stream;
+}
+
+export function deriveMoisture(
+  shape: GridShape,
+  faN: Float32Array,
+  slopeMag: Float32Array,
+  distWater: Uint32Array,
+  params: MoistureParams
+): Float32Array {
+  validateMapLength(shape, faN, "FA_N");
+  validateMapLength(shape, slopeMag, "SlopeMag");
+  validateMapLength(shape, distWater, "distWater");
+
+  const out = new Float32Array(shape.size);
+  for (let i = 0; i < shape.size; i += 1) {
+    const wetAccum = clamp01(
+      (faN[i] - params.moistureAccumStart) / (1 - params.moistureAccumStart)
+    );
+    const wetFlat = clamp01((params.flatnessThreshold - slopeMag[i]) / params.flatnessThreshold);
+    const wetProx = clamp01(1 - distWater[i] / params.waterProxMaxDist);
+    out[i] = clamp01(
+      params.weights.accum * wetAccum +
+        params.weights.flat * wetFlat +
+        params.weights.prox * wetProx
+    );
+  }
+  return out;
+}
+
+export function classifyWaterClass(
+  shape: GridShape,
+  lakeMask: Uint8Array,
+  isStream: Uint8Array,
+  moisture: Float32Array,
+  slopeMag: Float32Array,
+  params: WaterClassParams
+): Uint8Array {
+  validateMapLength(shape, lakeMask, "LakeMask");
+  validateMapLength(shape, isStream, "isStream");
+  validateMapLength(shape, moisture, "Moisture");
+  validateMapLength(shape, slopeMag, "SlopeMag");
+
+  const waterClass = new Uint8Array(shape.size);
+  for (let i = 0; i < shape.size; i += 1) {
+    if (lakeMask[i] === 1) {
+      waterClass[i] = WATER_CLASS_CODE.lake;
+      continue;
+    }
+    if (isStream[i] === 1) {
+      waterClass[i] = WATER_CLASS_CODE.stream;
+      continue;
+    }
+    if (
+      moisture[i] >= params.marshMoistureThreshold &&
+      slopeMag[i] < params.marshSlopeThreshold
+    ) {
+      waterClass[i] = WATER_CLASS_CODE.marsh;
+      continue;
+    }
+    waterClass[i] = WATER_CLASS_CODE.none;
+  }
+  return waterClass;
 }
 
 export { DIR8_NONE };
