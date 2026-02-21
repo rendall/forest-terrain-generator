@@ -105,6 +105,18 @@ export interface TrailRouteRequest {
   endpointIndex: number;
 }
 
+export interface TrailRoutingParams {
+  inf: number;
+  diagWeight: number;
+  tieEps: number;
+}
+
+interface FrontierEntry {
+  index: number;
+  cost: number;
+  stepDir: number;
+}
+
 export function deriveTrailDistStream(
   shape: GridShape,
   isStream: Uint8Array,
@@ -416,6 +428,105 @@ export function buildTrailRouteRequests(
   }
 
   return routeRequests;
+}
+
+function compareFrontier(a: FrontierEntry, b: FrontierEntry, tieEps: number): number {
+  const costDelta = a.cost - b.cost;
+  if (Math.abs(costDelta) > tieEps) {
+    return costDelta;
+  }
+
+  // Row-major index is equivalent to (y, x) ascending for fixed width.
+  if (a.index !== b.index) {
+    return a.index - b.index;
+  }
+
+  return a.stepDir - b.stepDir;
+}
+
+function reconstructPath(prev: Int32Array, startIndex: number, endIndex: number): number[] {
+  const path: number[] = [];
+  let cursor = endIndex;
+
+  while (cursor !== -1) {
+    path.push(cursor);
+    if (cursor === startIndex) {
+      path.reverse();
+      return path;
+    }
+    cursor = prev[cursor];
+  }
+
+  return [];
+}
+
+export function findLeastCostPath(
+  shape: GridShape,
+  costField: Float32Array,
+  startIndex: number,
+  endIndex: number,
+  params: TrailRoutingParams
+): number[] | null {
+  validateMapLength(shape, costField, "C");
+  if (startIndex < 0 || startIndex >= shape.size || endIndex < 0 || endIndex >= shape.size) {
+    throw new Error(
+      `Navigation route endpoint out of bounds: start=${startIndex}, end=${endIndex}, size=${shape.size}.`
+    );
+  }
+
+  if (costField[startIndex] >= params.inf || costField[endIndex] >= params.inf) {
+    return null;
+  }
+
+  const dist = new Float64Array(shape.size).fill(Number.POSITIVE_INFINITY);
+  const prev = new Int32Array(shape.size).fill(-1);
+  const frontier: FrontierEntry[] = [];
+
+  dist[startIndex] = 0;
+  frontier.push({ index: startIndex, cost: 0, stepDir: -1 });
+
+  while (frontier.length > 0) {
+    frontier.sort((a, b) => compareFrontier(a, b, params.tieEps));
+    const current = frontier.shift() as FrontierEntry;
+
+    if (current.cost > dist[current.index] + params.tieEps) {
+      continue;
+    }
+
+    if (current.index === endIndex) {
+      const path = reconstructPath(prev, startIndex, endIndex);
+      return path.length > 0 ? path : null;
+    }
+
+    const x = current.index % shape.width;
+    const y = Math.floor(current.index / shape.width);
+
+    for (let dir = 0; dir < DIR8_STEPS.length; dir += 1) {
+      const step = DIR8_STEPS[dir];
+      const nx = x + step.dx;
+      const ny = y + step.dy;
+      if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
+        continue;
+      }
+
+      const nextIndex = ny * shape.width + nx;
+      const nextTileCost = Number(costField[nextIndex]);
+      if (nextTileCost >= params.inf) {
+        continue;
+      }
+
+      const dirWeight = step.dx === 0 || step.dy === 0 ? 1 : params.diagWeight;
+      const newCost = dist[current.index] + nextTileCost * dirWeight;
+      const oldCost = dist[nextIndex];
+      if (newCost < oldCost - params.tieEps) {
+        dist[nextIndex] = newCost;
+        prev[nextIndex] = current.index;
+        frontier.push({ index: nextIndex, cost: newCost, stepDir: dir });
+      }
+    }
+  }
+
+  return null;
 }
 
 export function deriveTrailPreferenceCost(
