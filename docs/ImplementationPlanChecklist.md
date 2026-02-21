@@ -138,6 +138,9 @@ Rules:
 - [x] Decide deterministic ordering and shape contracts for list outputs (`dominant`, `surfaceFlags`, `featureFlags`) including ordering guarantees for multi-flag tiles.
 - [x] Decide Phase 4 regression scope and assertions (fixed seeds/sizes, golden artifacts, targeted fixtures, and float epsilon policy).
 - [x] Decide whether Phase 4 rule concretization requires ADR and/or draft-spec updates before implementation, and record required artifacts.
+- [x] Decide internal enum/bit assignments for `Biome`, `SoilType`, `SurfaceFlags`, and `FeatureFlags`.
+- [ ] Decide in-memory storage contract for `dominant` before envelope mapping.
+- [ ] Decide canonical params binding for biome perturbation strength (`vegVarianceStrength` source path).
 - [ ] Review the Phase 4 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 4 implementation.
 
 ### Phase 4 Implementation
@@ -150,6 +153,14 @@ Rules:
 
 ## Phase 5 - Navigation and Trails
 
+### Decisions
+
+- [ ] Review the implementation list, and add uncertain, ambiguous or unknown implementation details as decision items just below this one, above the review gate.
+- [ ] Review gate: review the implementation plan and ensure that there are no more undecideds or ambiguities.
+- [ ] Review gate: review the implementation checklist and add missing steps and details.
+
+### Implementation
+
 - [ ] Implement movement cost and directional passability.
 - [ ] Implement followable flags.
 - [ ] Implement deterministic trail seed selection and least-cost routing.
@@ -158,6 +169,14 @@ Rules:
 - [ ] Review gate: explicit approval to proceed to Phase 6.
 
 ## Phase 6 - Output, Debug, and Hardening
+
+### Decisions
+
+- [ ] Review the implementation list, and add uncertain, ambiguous or unknown implementation details as decision items just below this one, above the review gate.
+- [ ] Review gate: review the implementation plan and ensure that there are no more undecideds or ambiguities.
+- [ ] Review gate: review the implementation checklist and add missing steps and details.
+
+### Implementation
 
 - [ ] Finalize output envelope emission to `--output-file`.
 - [ ] Implement debug artifact emission to `--output-dir`.

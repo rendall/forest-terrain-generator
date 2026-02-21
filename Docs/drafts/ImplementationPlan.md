@@ -444,6 +444,11 @@ Locked decisions:
 16. Targeted Phase-4 fixtures are required for threshold-edge comparisons, deterministic list ordering (`dominant`, `surfaceFlags`, `featureFlags`), mixed-forest dominant-species split boundaries, multi-flag combinations, and empty-list cases.
 17. Float assertions for Phase-4 derived float maps use epsilon-based comparisons with default epsilon `1e-6`.
 18. Phase-4 rule concretization remains implementation-plan scoped for now: no ADR or spec update is required before implementation; reassess ADR/spec elevation after Phase-4 behavior has been exercised in tests.
+19. Internal enum/bit assignments are fixed:
+   - `Biome` codes: `0=open_bog`, `1=spruce_swamp`, `2=mixed_forest`, `3=pine_heath`, `4=esker_pine`, `5=lake`, `6=stream_bank`
+   - `SoilType` codes: `0=peat`, `1=sandy_till`, `2=rocky_till`
+   - `SurfaceFlags` bits: `bit0=standing_water`, `bit1=sphagnum`, `bit2=lichen`, `bit3=exposed_sand`, `bit4=bedrock`
+   - `FeatureFlags` bits: `bit0=fallen_log`, `bit1=root_tangle`, `bit2=boulder`, `bit3=windthrow`
 
 Done criteria:
 
