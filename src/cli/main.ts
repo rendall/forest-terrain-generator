@@ -49,8 +49,8 @@ function addCommonInputOptions(command: Command): Command {
     .option("--map-h <path>", "Path to authored H map")
     .option("--map-r <path>", "Path to authored R map")
     .option("--map-v <path>", "Path to authored V map")
-    .option("--output-file <path>", "Path to terrain output JSON file")
-    .option("--output-dir <path>", "Path to debug output directory")
+    .option("--output-file <path>", "Path to terrain output JSON file (generate/derive only)")
+    .option("--output-dir <path>", "Path to debug output directory (debug only)")
     .option("--debug-output-file <path>", "Optional terrain output file in debug mode")
     .option("--force", "Allow replacing existing output targets", false);
 }
