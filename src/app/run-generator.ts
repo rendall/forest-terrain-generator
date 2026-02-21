@@ -295,9 +295,6 @@ export async function runGenerator(request: RunRequest): Promise<void> {
   validateNavigationMaps(shape, navigationMaps);
 
   const envelope: TerrainEnvelope = buildEnvelopeSkeleton();
-  envelope.meta.implementationStatus = "draft-incomplete";
-  envelope.meta.implementedPhases = ["topography", "hydrology", "ecology"];
-  envelope.meta.notes = ["Partial output: phases 5-6 are not implemented yet."];
 
   const tiles = [];
   for (let i = 0; i < shape.size; i += 1) {

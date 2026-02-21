@@ -211,7 +211,7 @@ Rules:
 
 ### Implementation
 
-- [ ] Finalize output envelope emission to `--output-file` (emit `meta.specVersion` only; remove draft metadata fields; preserve deterministic field population order and canonical pretty JSON with trailing newline).
+- [x] Finalize output envelope emission to `--output-file` (emit `meta.specVersion` only; remove draft metadata fields; preserve deterministic field population order and canonical pretty JSON with trailing newline).
 - [ ] Implement debug artifact emission to `--output-dir` (fixed root artifacts: `debug-manifest.json`, `topography.json`, `hydrology.json`, `ecology.json`, `navigation.json`; manifest schema locked by Phase 6 decisions).
 - [ ] Implement atomic debug-output publication (stage writes in temp dir, publish on full success only, no partial published outputs on failure, map write/publish failures to exit `4` with path/context details).
 - [ ] Add CLI integration tests for `generate`, `derive`, and `debug` modes per locked Phase 6 matrix.
