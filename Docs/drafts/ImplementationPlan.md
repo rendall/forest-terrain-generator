@@ -487,6 +487,9 @@ Locked decisions:
 17. `followable` output is deduplicated by flag identity; each flag appears at most once per tile in emitted payloads.
 18. Optional trail post-processing (Section 10.6) is disabled in v1; no simplification pass is applied during Phase 5 implementation.
 19. Any future enablement of trail post-processing requires locking one deterministic algorithm and adding targeted regressions before activation.
+20. Trail routing cumulative path-cost math uses `Number` (`float64`) accumulators; `C` tile-cost inputs may remain `Float32Array` but are promoted to `Number` at arithmetic boundaries.
+21. `tieEps` is applied only to cumulative-cost equality comparisons in queue ordering and equal-cost predecessor/tie resolution; it is not applied to unrelated threshold classifiers.
+22. Relaxation/update behavior is fixed for determinism: treat candidate path as strictly better only when `newCost < oldCost - tieEps`; otherwise treat as equal/worse and resolve by locked tie-break order.
 
 Done criteria:
 

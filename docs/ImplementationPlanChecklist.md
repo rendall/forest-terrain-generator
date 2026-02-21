@@ -169,7 +169,7 @@ Rules:
 - [x] Decide passability representation contract (internal encoding, 8-direction key order, and blocked/difficult/passable enum mapping).
 - [x] Decide deterministic `followable` list ordering and deduplication contract for multi-source flags (`stream`, `ridge`, `game_trail`, `shore`).
 - [x] Decide whether optional trail post-processing (Section 10.6) is disabled in v1 or enabled with a locked deterministic algorithm.
-- [ ] Decide numeric precision and tie policy for trail routing costs (cost accumulator type, `tieEps` comparator usage boundaries, and reproducibility constraints).
+- [x] Decide numeric precision and tie policy for trail routing costs (cost accumulator type, `tieEps` comparator usage boundaries, and reproducibility constraints).
 - [ ] Decide Phase 5 regression-test scope (fixed seeds/sizes, golden artifacts, and targeted edge fixtures for endpoint selection, tie-breaks, unreachable routes, and overlap).
 - [ ] Review gate: review the implementation plan and ensure that there are no more undecideds or ambiguities.
 - [ ] Review gate: review the implementation checklist and add missing steps and details.
