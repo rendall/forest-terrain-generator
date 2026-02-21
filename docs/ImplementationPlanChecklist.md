@@ -146,7 +146,7 @@ Rules:
 ### Phase 4 Implementation
 
 - [x] Implement Phase 4 typed-array ecology/grounding map model (`Biome`, `SoilType`, `TreeDensity`, `CanopyCover`, `Obstruction`, `SurfaceFlags`, `FeatureFlags`, `dominantPrimary`, `dominantSecondary`) with fixed enum/bit/species code contracts.
-- [ ] Implement biome assignment with canonical perturbation-strength binding (`vegVarianceNoise.strength` primary, `vegVarianceStrength` fallback), exact classification order, and `Math.fround` threshold normalization.
+- [x] Implement biome assignment with canonical perturbation-strength binding (`vegVarianceNoise.strength` primary, `vegVarianceStrength` fallback), exact classification order, and `Math.fround` threshold normalization.
 - [ ] Implement vegetation attribute derivations (`TreeDensity`, `CanopyCover`) with exact normative formulas and clamp behavior.
 - [ ] Implement dominant-species derivation into internal primary/secondary slots and deterministic mapping to ordered output lists.
 - [ ] Implement ground derivations (`SoilType`, `Firmness`, `SurfaceFlags`) using the locked deterministic rule table and canonical surface-flag order.
