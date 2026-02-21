@@ -1,5 +1,6 @@
 import {
   BIOME_CODE,
+  FEATURE_FLAG_BIT,
   SOIL_TYPE_CODE,
   SPECIES_CODE,
   SPECIES_NONE,
@@ -142,6 +143,20 @@ export interface GroundMaps {
   soilType: Uint8Array;
   firmness: Float32Array;
   surfaceFlags: Uint16Array;
+}
+
+export interface RoughnessParams {
+  obstructionMoistureMix: number;
+  windthrowThreshold: number;
+  fallenLogThreshold: number;
+  rootTangleMoistureThreshold: number;
+  boulderHeightMin: number;
+  boulderRoughnessMin: number;
+}
+
+export interface RoughnessMaps {
+  obstruction: Float32Array;
+  featureFlags: Uint16Array;
 }
 
 const SPECIES_NAME_BY_CODE: Record<number, string> = {
@@ -310,4 +325,48 @@ export function deriveGround(
   }
 
   return { soilType, firmness, surfaceFlags };
+}
+
+export function deriveRoughness(
+  shape: GridShape,
+  r: Float32Array,
+  moisture: Float32Array,
+  h: Float32Array,
+  params: RoughnessParams
+): RoughnessMaps {
+  validateMapLength(shape, r, "R");
+  validateMapLength(shape, moisture, "Moisture");
+  validateMapLength(shape, h, "H");
+
+  const mix = Math.fround(params.obstructionMoistureMix);
+  const windthrowThreshold = Math.fround(params.windthrowThreshold);
+  const fallenLogThreshold = Math.fround(params.fallenLogThreshold);
+  const rootTangleMoistureThreshold = Math.fround(params.rootTangleMoistureThreshold);
+  const boulderHeightMin = Math.fround(params.boulderHeightMin);
+  const boulderRoughnessMin = Math.fround(params.boulderRoughnessMin);
+
+  const obstruction = new Float32Array(shape.size);
+  const featureFlags = new Uint16Array(shape.size);
+
+  for (let i = 0; i < shape.size; i += 1) {
+    const obs = clamp01(r[i] * (1 - mix) + moisture[i] * mix);
+    obstruction[i] = obs;
+
+    let flags = 0;
+    if (obs >= fallenLogThreshold) {
+      flags |= FEATURE_FLAG_BIT.fallen_log;
+    }
+    if (moisture[i] >= rootTangleMoistureThreshold) {
+      flags |= FEATURE_FLAG_BIT.root_tangle;
+    }
+    if (h[i] >= boulderHeightMin && r[i] >= boulderRoughnessMin) {
+      flags |= FEATURE_FLAG_BIT.boulder;
+    }
+    if (obs >= windthrowThreshold) {
+      flags |= FEATURE_FLAG_BIT.windthrow;
+    }
+    featureFlags[i] = flags;
+  }
+
+  return { obstruction, featureFlags };
 }
