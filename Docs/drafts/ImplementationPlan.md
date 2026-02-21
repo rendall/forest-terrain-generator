@@ -443,6 +443,7 @@ Locked decisions:
 15. Phase-4 regression scope is balanced: committed/versioned golden snapshots for seeds `1`, `42`, `123456789`, `18446744073709551615` at `16x16` and `64x64`, covering `Biome`, `SoilType`, `TreeDensity`, `CanopyCover`, `Obstruction`, `SurfaceFlags`, `FeatureFlags`, and `dominant`.
 16. Targeted Phase-4 fixtures are required for threshold-edge comparisons, deterministic list ordering (`dominant`, `surfaceFlags`, `featureFlags`), mixed-forest dominant-species split boundaries, multi-flag combinations, and empty-list cases.
 17. Float assertions for Phase-4 derived float maps use epsilon-based comparisons with default epsilon `1e-6`.
+18. Phase-4 rule concretization remains implementation-plan scoped for now: no ADR or spec update is required before implementation; reassess ADR/spec elevation after Phase-4 behavior has been exercised in tests.
 
 Done criteria:
 

@@ -137,7 +137,7 @@ Rules:
 - [x] Decide threshold-operator and boundary conventions for all Phase 4 classifiers/formulas (`>=` vs `>`, `<` vs `<=`, and float-comparison precision policy).
 - [x] Decide deterministic ordering and shape contracts for list outputs (`dominant`, `surfaceFlags`, `featureFlags`) including ordering guarantees for multi-flag tiles.
 - [x] Decide Phase 4 regression scope and assertions (fixed seeds/sizes, golden artifacts, targeted fixtures, and float epsilon policy).
-- [ ] Decide whether Phase 4 rule concretization requires ADR and/or draft-spec updates before implementation, and record required artifacts.
+- [x] Decide whether Phase 4 rule concretization requires ADR and/or draft-spec updates before implementation, and record required artifacts.
 - [ ] Review the Phase 4 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 4 implementation.
 
 ### Phase 4 Implementation
