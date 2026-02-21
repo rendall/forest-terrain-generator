@@ -132,7 +132,7 @@ Rules:
 
 ### Phase 4 Decisions
 
-- [ ] Decide Phase 4 in-memory map model and enum/storage contracts (`Biome`, `SoilType`, `TreeDensity`, `CanopyCover`, `Obstruction`, `SurfaceFlags`, `FeatureFlags`) and serialization mapping into the output envelope.
+- [x] Decide Phase 4 in-memory map model and enum/storage contracts (`Biome`, `SoilType`, `TreeDensity`, `CanopyCover`, `Obstruction`, `SurfaceFlags`, `FeatureFlags`) and serialization mapping into the output envelope.
 - [ ] Decide deterministic rule tables for under-specified Ground/Roughness derivations (explicit `SoilType` mapping and explicit threshold rules for each `SurfaceFlags`/`FeatureFlags` member).
 - [ ] Decide threshold-operator and boundary conventions for all Phase 4 classifiers/formulas (`>=` vs `>`, `<` vs `<=`, and float-comparison precision policy).
 - [ ] Decide deterministic ordering and shape contracts for list outputs (`dominant`, `surfaceFlags`, `featureFlags`) including ordering guarantees for multi-flag tiles.
