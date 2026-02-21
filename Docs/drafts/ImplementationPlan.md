@@ -480,6 +480,9 @@ Locked decisions:
 10. These fallback cases are not internal failures and do not produce exit `5`; implementations SHOULD expose deterministic debug counters for skipped/no-op routing outcomes.
 11. Route overlap behavior is fixed as first-writer-wins for `GameTrailId`: `GameTrail` is the union of all marked route tiles, and a tile's `GameTrailId` is assigned only when first marked.
 12. If a later route touches an already-marked tile, `GameTrail` remains `true` and existing `GameTrailId` MUST NOT be overwritten.
+13. Passability internal representation is fixed as bit-packed directional state: 2 bits per direction in canonical order `N, NE, E, SE, S, SW, W, NW` (16 bits total per tile).
+14. Passability enum mapping is fixed as `0=passable`, `1=difficult`, `2=blocked`; code `3` is reserved/invalid and MUST NOT be emitted.
+15. Envelope serialization maps the packed internal representation deterministically to the normative string-key object form.
 
 Done criteria:
 

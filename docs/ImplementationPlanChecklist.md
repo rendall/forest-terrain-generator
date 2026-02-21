@@ -166,7 +166,7 @@ Rules:
 - [x] Decide nearest-node distance metric and tie behavior for Section 10.4 endpoint selection (`Seed -> WaterNode`, `Seed -> RidgeNode`) and define exact implementation algorithm.
 - [x] Decide fallback behavior when candidate filtering yields no seeds or when selected seeds have no reachable endpoints/routes.
 - [x] Decide route-overlap and `GameTrailId` assignment behavior when multiple routes mark the same tiles.
-- [ ] Decide passability representation contract (internal encoding, 8-direction key order, and blocked/difficult/passable enum mapping).
+- [x] Decide passability representation contract (internal encoding, 8-direction key order, and blocked/difficult/passable enum mapping).
 - [ ] Decide deterministic `followable` list ordering and deduplication contract for multi-source flags (`stream`, `ridge`, `game_trail`, `shore`).
 - [ ] Decide whether optional trail post-processing (Section 10.6) is disabled in v1 or enabled with a locked deterministic algorithm.
 - [ ] Decide numeric precision and tie policy for trail routing costs (cost accumulator type, `tieEps` comparator usage boundaries, and reproducibility constraints).
