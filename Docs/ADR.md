@@ -2,6 +2,31 @@
 
 This document is a living ledger of significant technical decisions made within this project. Each entry captures the context in which a decision was made, the options considered, the decision itself, and its consequences. The purpose is not to justify past choices defensively, but to preserve intent and reasoning so future contributors can understand why the system is shaped the way it is. Over time, this file forms a chronological record of trade-offs, constraints, and design direction, providing continuity as the codebase and team evolve.
 
+## Use Atomic Debug Output Publication (v1)
+
+**Timestamp:** 2026-02-21 20:38 (UTC)
+
+### Decision
+For v1 `debug` mode, adopt atomic all-or-nothing publication for `--output-dir`.
+
+- Stage all debug artifacts in a temporary directory.
+- Publish to the final output directory only after all artifact writes succeed.
+- On write/publish failure, do not leave partially published debug outputs.
+- Surface failures as file I/O errors (exit `4`) with actionable path/context details.
+
+### Rationale
+Atomic publication gives deterministic and trustworthy debug outputs for both users and tests. Downstream tooling can assume either a complete debug artifact set or a failed run, never a partial ambiguous state.
+
+### Alternatives Considered
+- Best-effort partial writes – rejected because partial output states are harder to reason about and increase troubleshooting ambiguity.
+- Hybrid atomic/partial behavior – rejected for v1 to keep failure semantics simple and predictable.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): Docs/drafts/ImplementationPlan.md
+- Related ADRs: Define v1 Debug Artifact Output Contract
+
 ## Define v1 Debug Artifact Output Contract
 
 **Timestamp:** 2026-02-21 20:36 (UTC)
