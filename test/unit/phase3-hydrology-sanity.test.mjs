@@ -73,6 +73,7 @@ describe("Phase 3 hydrology sanity (red tests before implementation)", () => {
       "deriveLakeMask",
       "deriveStreamMask",
       "deriveDistWater",
+      "deriveDistStream",
       "deriveMoisture",
       "classifyWaterClass"
     ];
@@ -153,5 +154,148 @@ describe("Phase 3 hydrology sanity (red tests before implementation)", () => {
     });
     // lake override + inclusive stream thresholds
     expect(Array.from(isStream)).toEqual([1, 0]);
+  });
+
+  it("uses FA_N=0 when FAmax equals FAmin", async () => {
+    const hydrology = await loadHydrologyModule();
+    const fa = new Uint32Array([7, 7, 7, 7]);
+    const faN = hydrology.normalizeFlowAccumulation(fa);
+    expect(Array.from(faN)).toEqual([0, 0, 0, 0]);
+  });
+
+  it("keeps FD values in Dir8 domain or NONE", async () => {
+    const hydrology = await loadHydrologyModule();
+    const shape = createGridShape(5, 5);
+    const h = new Float32Array([
+      1.0, 0.9, 0.8, 0.7, 0.6,
+      1.0, 0.9, 0.8, 0.7, 0.6,
+      1.0, 0.9, 0.8, 0.7, 0.6,
+      1.0, 0.9, 0.8, 0.7, 0.6,
+      1.0, 0.9, 0.8, 0.7, 0.6
+    ]);
+    const fd = hydrology.deriveFlowDirection(shape, h, 99n, {
+      minDropThreshold: 0.0005,
+      tieEps: 0.000001
+    });
+    for (const dir of fd) {
+      expect((dir >= 0 && dir <= 7) || dir === 255).toBe(true);
+    }
+  });
+
+  it("applies no-stream fallback for distStream", async () => {
+    const hydrology = await loadHydrologyModule();
+    const shape = createGridShape(4, 4);
+    const isStream = new Uint8Array(shape.size).fill(0);
+    const distStream = hydrology.deriveDistStream(shape, isStream, {
+      streamProxMaxDist: 5
+    });
+    for (let i = 0; i < shape.size; i += 1) {
+      expect(distStream[i]).toBe(5);
+    }
+  });
+
+  it("applies water-class precedence lake > stream > marsh > none", async () => {
+    const hydrology = await loadHydrologyModule();
+    const shape = createGridShape(1, 1);
+    const slopeLow = new Float32Array([0.01]);
+    const slopeHigh = new Float32Array([0.2]);
+    const moistureHigh = new Float32Array([0.9]);
+    const moistureLow = new Float32Array([0.1]);
+    const params = {
+      marshMoistureThreshold: 0.78,
+      marshSlopeThreshold: 0.04
+    };
+
+    const lakeOverAll = hydrology.classifyWaterClass(
+      shape,
+      new Uint8Array([1]),
+      new Uint8Array([1]),
+      moistureHigh,
+      slopeLow,
+      params
+    )[0];
+    const streamOverMarsh = hydrology.classifyWaterClass(
+      shape,
+      new Uint8Array([0]),
+      new Uint8Array([1]),
+      moistureHigh,
+      slopeLow,
+      params
+    )[0];
+    const marshOnly = hydrology.classifyWaterClass(
+      shape,
+      new Uint8Array([0]),
+      new Uint8Array([0]),
+      moistureHigh,
+      slopeLow,
+      params
+    )[0];
+    const none = hydrology.classifyWaterClass(
+      shape,
+      new Uint8Array([0]),
+      new Uint8Array([0]),
+      moistureLow,
+      slopeHigh,
+      params
+    )[0];
+
+    expect(lakeOverAll).not.toBe(streamOverMarsh);
+    expect(streamOverMarsh).not.toBe(marshOnly);
+    expect(marshOnly).not.toBe(none);
+  });
+
+  it("is deterministic across repeated full hydrology runs", async () => {
+    const hydrology = await loadHydrologyModule();
+    const shape = createGridShape(4, 4);
+    const h = new Float32Array([
+      1.0, 0.9, 0.8, 0.7,
+      1.0, 0.9, 0.8, 0.7,
+      1.0, 0.9, 0.8, 0.7,
+      1.0, 0.9, 0.8, 0.7
+    ]);
+    const slopeMag = new Float32Array(shape.size).fill(0.02);
+    const landform = new Uint8Array(shape.size).fill(LANDFORM_CODE.flat);
+    const params = {
+      minDropThreshold: 0.0005,
+      tieEps: 0.000001,
+      lakeFlatSlopeThreshold: 0.03,
+      lakeAccumThreshold: 0.65,
+      streamAccumThreshold: 0.55,
+      streamMinSlopeThreshold: 0.01,
+      waterProxMaxDist: 6,
+      moistureAccumStart: 0.35,
+      flatnessThreshold: 0.06,
+      weights: { accum: 0.55, flat: 0.25, prox: 0.2 },
+      marshMoistureThreshold: 0.78,
+      marshSlopeThreshold: 0.04
+    };
+    const seed = 123n;
+
+    const fdA = hydrology.deriveFlowDirection(shape, h, seed, params);
+    const faA = hydrology.deriveFlowAccumulation(shape, fdA);
+    const faNA = hydrology.normalizeFlowAccumulation(faA);
+    const lakeA = hydrology.deriveLakeMask(shape, landform, slopeMag, faNA, params);
+    const streamA = hydrology.deriveStreamMask(shape, lakeA, faNA, slopeMag, params);
+    const distWaterA = hydrology.deriveDistWater(shape, lakeA, streamA, params);
+    const moistureA = hydrology.deriveMoisture(shape, faNA, slopeMag, distWaterA, params);
+    const wcA = hydrology.classifyWaterClass(shape, lakeA, streamA, moistureA, slopeMag, params);
+
+    const fdB = hydrology.deriveFlowDirection(shape, h, seed, params);
+    const faB = hydrology.deriveFlowAccumulation(shape, fdB);
+    const faNB = hydrology.normalizeFlowAccumulation(faB);
+    const lakeB = hydrology.deriveLakeMask(shape, landform, slopeMag, faNB, params);
+    const streamB = hydrology.deriveStreamMask(shape, lakeB, faNB, slopeMag, params);
+    const distWaterB = hydrology.deriveDistWater(shape, lakeB, streamB, params);
+    const moistureB = hydrology.deriveMoisture(shape, faNB, slopeMag, distWaterB, params);
+    const wcB = hydrology.classifyWaterClass(shape, lakeB, streamB, moistureB, slopeMag, params);
+
+    expect(Array.from(fdA)).toEqual(Array.from(fdB));
+    expect(Array.from(faA)).toEqual(Array.from(faB));
+    expect(Array.from(faNA)).toEqual(Array.from(faNB));
+    expect(Array.from(lakeA)).toEqual(Array.from(lakeB));
+    expect(Array.from(streamA)).toEqual(Array.from(streamB));
+    expect(Array.from(distWaterA)).toEqual(Array.from(distWaterB));
+    expect(Array.from(moistureA)).toEqual(Array.from(moistureB));
+    expect(Array.from(wcA)).toEqual(Array.from(wcB));
   });
 });
