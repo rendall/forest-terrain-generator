@@ -2,6 +2,33 @@
 
 This document is a living ledger of significant technical decisions made within this project. Each entry captures the context in which a decision was made, the options considered, the decision itself, and its consequences. The purpose is not to justify past choices defensively, but to preserve intent and reasoning so future contributors can understand why the system is shaped the way it is. Over time, this file forms a chronological record of trade-offs, constraints, and design direction, providing continuity as the codebase and team evolve.
 
+## Define Final CLI Error-Diagnostics Quality Bar (v1)
+
+**Timestamp:** 2026-02-21 20:43 (UTC)
+
+### Decision
+For v1, non-zero CLI exits must meet a minimum diagnostics contract.
+
+- Include error category, mode/stage context, and primary failing subject.
+- Exit `2` diagnostics include offending flag/key and expected form.
+- Exit `3` diagnostics include expected vs actual dimensions/shapes.
+- Exit `4` diagnostics include failed operation and path.
+- Exit `5` diagnostics include failing invariant/stage and relevant values.
+- Include corrective hints when available and suppress raw stack traces in normal CLI output.
+
+### Rationale
+Consistent, context-rich diagnostics reduce troubleshooting time and keep CLI behavior predictable for both users and automated tests.
+
+### Alternatives Considered
+- Minimal free-form error text – rejected because it leads to inconsistent, low-actionability diagnostics.
+- Structured machine-readable diagnostics only – rejected for v1 because primary CLI UX remains human-oriented.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): Docs/drafts/ImplementationPlan.md
+- Related ADRs: Lock Phase 6 CLI Integration Test Matrix
+
 ## Lock Phase 6 CLI Integration Test Matrix
 
 **Timestamp:** 2026-02-21 20:43 (UTC)

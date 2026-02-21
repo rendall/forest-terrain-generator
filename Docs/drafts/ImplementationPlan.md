@@ -527,6 +527,9 @@ Locked decisions:
 13. Phase 6 CLI integration coverage uses a locked matrix across `generate`, `derive`, and `debug` for happy paths, invalid mode/flag combinations, overwrite behavior, and unknown-input handling.
 14. `derive` integration coverage must include missing required authored-input failures and shape-mismatch failures with exit-code assertions.
 15. `debug` integration coverage must include both standard debug output and optional `--debug-output-file`, invalid `--output-file` hint behavior, and atomic-write failure behavior.
+16. Final diagnostics quality bar: every non-zero CLI exit includes error category, mode/stage context, and the primary failing subject in human-readable text.
+17. Exit-specific required context: `2` includes offending flag/key and expected form; `3` includes expected vs actual dimensions/shapes; `4` includes operation and path; `5` includes failing invariant/stage and relevant values.
+18. Diagnostics include corrective hints when available and omit raw stack traces in normal CLI output.
 
 Done criteria:
 
