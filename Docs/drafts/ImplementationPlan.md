@@ -68,6 +68,7 @@ Configuration merge semantics decision (Phase 1):
 4. Scalar values are replaced by the higher-precedence source.
 5. Explicit falsy values (`0`, `false`, and empty string) are treated as provided overrides.
 6. `undefined` is treated as not provided.
+7. `null` is treated as an explicitly provided value and is validated against schema/type rules (invalid `null` values fail with validation error `2`).
 
 Unknown-input policy decision (Phase 1):
 
