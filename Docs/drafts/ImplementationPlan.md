@@ -493,6 +493,8 @@ Locked decisions:
 23. Phase-5 regression scope is balanced: committed/versioned golden snapshots for seeds `1`, `42`, `123456789`, and `18446744073709551615` at dimensions `16x16` and `64x64`.
 24. Golden artifacts for Phase 5 include `C`, `GameTrail`, `GameTrailId`, `MoveCost`, `Passability`, `CliffEdge`, and `Followable`.
 25. Targeted Phase-5 fixtures are required for endpoint-selection ties, no-seed fallback, unreachable-endpoint route skipping, and overlap behavior (`GameTrail` union plus first-writer-wins `GameTrailId`).
+26. `shore` followable derivation uses 8-way adjacency: a non-lake tile gets `shore` when any of its 8 neighbors is a lake tile.
+27. v1 standard tile output includes `navigation.gameTrailId` as an optional integer field derived from internal `GameTrailId` storage (`-1` maps to field omission); `trailManifest` is not emitted in v1.
 
 Done criteria:
 

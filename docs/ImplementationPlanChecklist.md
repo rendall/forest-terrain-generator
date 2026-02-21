@@ -171,6 +171,8 @@ Rules:
 - [x] Decide whether optional trail post-processing (Section 10.6) is disabled in v1 or enabled with a locked deterministic algorithm.
 - [x] Decide numeric precision and tie policy for trail routing costs (cost accumulator type, `tieEps` comparator usage boundaries, and reproducibility constraints).
 - [x] Decide Phase 5 regression-test scope (fixed seeds/sizes, golden artifacts, and targeted edge fixtures for endpoint selection, tie-breaks, unreachable routes, and overlap).
+- [x] Decide `shore` adjacency neighborhood for followable-flag derivation (8-way adjacency to lake tiles).
+- [x] Decide `GameTrailId` exposure contract for v1 payloads (emit `navigation.gameTrailId` in standard tile output; no `trailManifest` in v1).
 - [ ] Review gate: review the implementation plan and ensure that there are no more undecideds or ambiguities.
 - [ ] Review gate: review the implementation checklist and add missing steps and details.
 
