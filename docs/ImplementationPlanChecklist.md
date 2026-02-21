@@ -191,7 +191,7 @@ Rules:
 - [x] Add deterministic tests for route ordering/tie-break behavior, including `tieEps` boundary/equality fixtures.
 - [x] Add targeted Phase 5 fixtures for endpoint-selection ties, no-seed fallback, unreachable-route skipping, and overlap `GameTrailId` behavior.
 - [x] Add fixed-seed Phase 5 golden regressions for balanced scope seeds/sizes/artifacts (`C`, `GameTrail`, `GameTrailId`, `MoveCost`, `Passability`, `CliffEdge`, `Followable`).
-- [ ] Validate navigation payload shape/invariants and assert v1 post-processing remains disabled.
+- [x] Validate navigation payload shape/invariants and assert v1 post-processing remains disabled.
 - [ ] Review gate: explicit approval to proceed to Phase 6.
 
 ## Phase 6 - Output, Debug, and Hardening

@@ -24,6 +24,7 @@ import {
   surfaceFlagsToOrderedList
 } from "../pipeline/ecology.js";
 import {
+  assertPostProcessingDisabled,
   buildTrailPlan,
   deriveDirectionalPassability,
   deriveFollowableFlags,
@@ -31,7 +32,8 @@ import {
   deriveTrailPreferenceCost,
   executeTrailRouteRequests,
   markTrailPaths,
-  navigationTilePayloadAt
+  navigationTilePayloadAt,
+  validateNavigationMaps
 } from "../pipeline/navigation.js";
 
 const LANDFORM_NAME_BY_CODE: Record<number, string> = {
@@ -147,6 +149,10 @@ export async function runGenerator(request: RunRequest): Promise<void> {
   const grid = validated.params.grid as Record<string, unknown>;
   const hydrologyParamsRaw = validated.params.hydrology as Record<string, unknown>;
 
+  assertPostProcessingDisabled(
+    gameTrails.postProcessEnabled === true || gameTrails.enablePostProcess === true
+  );
+
   const trailCost = deriveTrailPreferenceCost(
     shape,
     {
@@ -243,6 +249,13 @@ export async function runGenerator(request: RunRequest): Promise<void> {
     landform: topography.landform,
     gameTrail: trailMarked.gameTrail
   });
+  const navigationMaps = {
+    moveCost,
+    passabilityPacked: directionalPassability.passabilityPacked,
+    followableFlags,
+    gameTrailId: trailMarked.gameTrailId
+  };
+  validateNavigationMaps(shape, navigationMaps);
 
   const envelope: TerrainEnvelope = buildEnvelopeSkeleton();
   envelope.meta.implementationStatus = "draft-incomplete";
@@ -292,12 +305,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
           featureFlags: featureFlagsToOrderedList(ecology.featureFlags[i])
         }
       },
-      navigation: navigationTilePayloadAt(i, {
-        moveCost,
-        passabilityPacked: directionalPassability.passabilityPacked,
-        followableFlags,
-        gameTrailId: trailMarked.gameTrailId
-      })
+      navigation: navigationTilePayloadAt(i, navigationMaps)
     });
   }
   envelope.tiles = tiles;

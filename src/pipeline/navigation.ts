@@ -876,6 +876,53 @@ export function navigationTilePayloadAt(
   return payload;
 }
 
+export function validateNavigationMaps(shape: GridShape, maps: NavigationTilePayloadInputs): void {
+  validateMapLength(shape, maps.moveCost, "MoveCost");
+  validateMapLength(shape, maps.passabilityPacked, "PassabilityPacked");
+  validateMapLength(shape, maps.followableFlags, "FollowableFlags");
+  validateMapLength(shape, maps.gameTrailId, "GameTrailId");
+
+  const knownFollowableMask =
+    FOLLOWABLE_FLAG_BIT.stream |
+    FOLLOWABLE_FLAG_BIT.ridge |
+    FOLLOWABLE_FLAG_BIT.game_trail |
+    FOLLOWABLE_FLAG_BIT.shore;
+
+  for (let i = 0; i < shape.size; i += 1) {
+    const moveCost = maps.moveCost[i];
+    if (!Number.isFinite(moveCost) || moveCost <= 0) {
+      throw new Error(`Navigation invariant violated: invalid_move_cost index=${i} value=${moveCost}`);
+    }
+
+    const packed = maps.passabilityPacked[i];
+    for (let dirIndex = 0; dirIndex < PASS_DIR_ORDER.length; dirIndex += 1) {
+      const code = getPackedPassabilityCode(packed, dirIndex);
+      if (code > PASSABILITY_CODE.blocked) {
+        throw new Error(
+          `Navigation invariant violated: invalid_passability_code index=${i} dir=${PASS_DIR_ORDER[dirIndex].key} code=${code}`
+        );
+      }
+    }
+
+    if ((maps.followableFlags[i] & ~knownFollowableMask) !== 0) {
+      throw new Error(
+        `Navigation invariant violated: invalid_followable_flags index=${i} flags=${maps.followableFlags[i]}`
+      );
+    }
+
+    const trailId = maps.gameTrailId[i];
+    if (trailId < -1) {
+      throw new Error(`Navigation invariant violated: invalid_game_trail_id index=${i} id=${trailId}`);
+    }
+  }
+}
+
+export function assertPostProcessingDisabled(enabled: boolean): void {
+  if (enabled) {
+    throw new Error("Navigation invariant violated: post_processing_disabled_v1");
+  }
+}
+
 export function markTrailPaths(shape: GridShape, paths: number[][]): TrailMarkedMaps {
   const gameTrail = new Uint8Array(shape.size);
   const gameTrailId = new Int32Array(shape.size).fill(-1);
