@@ -44,18 +44,24 @@ Rules:
 - [x] Decide defaults-source policy and Appendix A alignment.
 - [x] Decide validation/error taxonomy mapping to exit codes (`2`, `3`, `4`, `5`).
 - [x] Decide duplicate-flag behavior (last value wins vs hard error).
-- [ ] Review the Phase 1 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 1 implementation.
+- [x] Review the Phase 1 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 1 implementation.
 
 ### Phase 1 Implementation
 
 - [ ] Implement CLI input parsing and config precedence (CLI > file > defaults).
 - [ ] Implement input schema and validation errors.
+- [ ] Implement canonical CLI flags (`--params`, `--map-h`, `--map-r`, `--map-v`, `--output-file`, `--output-dir`, `--debug-output-file`, `--force`).
+- [ ] Implement params-file JSON-only enforcement and malformed-JSON classification as exit `2`.
+- [ ] Implement path-resolution behavior (CLI relative paths from CWD; params-file relative paths from params-file directory).
+- [ ] Implement mode/output validation details, including rejecting `--output-file` in `debug` with hint: `You might mean --debug-output-file.`
+- [ ] Implement duplicate-flag hard errors and unknown-input diagnostics with precise key/flag reporting and close-match suggestions when available.
 - [ ] Implement envelope skeleton builder and serializer boundary.
 - [ ] Implement exit code mapping for validation/shape/IO/internal failures.
 - [ ] Add integration tests for help behavior (`help`, `--help`, `-h`, no command) and command-error behavior (unknown/invalid -> exit `2`).
 - [ ] Add integration tests for stream behavior (`stdout` for help/version, `stderr` for errors/status).
 - [ ] Add integration tests for overwrite policy (existing outputs fail without `--force`, succeed with `--force`).
 - [ ] Add integration tests for command wiring and contract failures.
+- [ ] Update CLI help/docs to reflect canonical flag names, path-resolution rules, and debug output semantics.
 - [ ] Review gate: explicit approval to proceed to Phase 2.
 
 ## Phase 2 - Topography
