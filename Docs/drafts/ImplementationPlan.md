@@ -476,6 +476,8 @@ Locked decisions:
 6. Exact per-direction encoding and emitted key order are decided separately in the dedicated Phase 5 passability/followable decision items.
 7. Endpoint selection in Section 10.4 uses geometric nearest-node distance only: 8-way grid distance (cardinal and diagonal step cost `1`) with deterministic tie-break by `(y, x)` ascending.
 8. Endpoint selection does not account for routing barriers (`C >= INF`) during nearest-node choice; reachability is resolved in routing, and unreachable route requests are skipped per fallback policy.
+9. Fallback behavior is graceful no-op for empty/unreachable routing conditions: if candidate filtering yields no seeds, generate zero trails and continue; if a selected seed has no reachable endpoint/path for one or both route requests, skip only those routes and continue.
+10. These fallback cases are not internal failures and do not produce exit `5`; implementations SHOULD expose deterministic debug counters for skipped/no-op routing outcomes.
 
 Done criteria:
 
