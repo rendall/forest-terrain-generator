@@ -207,15 +207,17 @@ Rules:
 - [x] Decide CLI integration-test matrix details for mode/flag/error-path coverage (`generate`: happy path + invalid-output-arg combos + overwrite behavior; `derive`: happy path + missing required authored inputs + shape mismatch path; `debug`: happy path with/without `--debug-output-file` + invalid `--output-file` rejection hint + atomic write behavior; all modes include unknown-input and exit-code assertions).
 - [x] Decide final error-diagnostics quality bar (all non-zero exits MUST include error category + mode/stage context + primary failing subject; exit `2` includes offending flag/key/value expectation, exit `3` includes expected vs actual dimensions, exit `4` includes operation + path, exit `5` includes failing invariant/stage + relevant values; include corrective hints when available; avoid raw stack traces in normal CLI output).
 - [x] Review gate: review the implementation plan and ensure that there are no more undecideds or ambiguities.
-- [ ] Review gate: review the implementation checklist and add missing steps and details.
+- [x] Review gate: review the implementation checklist and add missing steps and details.
 
 ### Implementation
 
-- [ ] Finalize output envelope emission to `--output-file`.
-- [ ] Implement debug artifact emission to `--output-dir`.
-- [ ] Add CLI integration tests for `generate`, `derive`, and `debug` modes.
-- [ ] Add end-to-end fixed-seed golden tests.
-- [ ] Validate error messages and exit-code behavior.
+- [ ] Finalize output envelope emission to `--output-file` (emit `meta.specVersion` only; remove draft metadata fields; preserve deterministic field population order and canonical pretty JSON with trailing newline).
+- [ ] Implement debug artifact emission to `--output-dir` (fixed root artifacts: `debug-manifest.json`, `topography.json`, `hydrology.json`, `ecology.json`, `navigation.json`; manifest schema locked by Phase 6 decisions).
+- [ ] Implement atomic debug-output publication (stage writes in temp dir, publish on full success only, no partial published outputs on failure, map write/publish failures to exit `4` with path/context details).
+- [ ] Add CLI integration tests for `generate`, `derive`, and `debug` modes per locked Phase 6 matrix.
+- [ ] Add end-to-end fixed-seed golden tests for balanced Phase 6 scope (modes/seeds/sizes/artifacts/invariants).
+- [ ] Implement explicit golden update workflow (`--update-goldens`) and ensure standard test runs fail on drift instead of rewriting baselines.
+- [ ] Validate error messages and exit-code behavior against the locked diagnostics quality bar (`2`/`3`/`4`/`5` required context payload).
 - [ ] Final review gate: explicit approval to mark implementation complete.
 
 ## Cross-Cutting Policy Checks
