@@ -437,6 +437,8 @@ Locked decisions:
    - `windthrow` when `Obstruction >= roughnessFeatures.windthrowThreshold`
 10. Canonical emission order for `surfaceFlags` is fixed as: `standing_water`, `sphagnum`, `lichen`, `exposed_sand`, `bedrock`.
 11. Canonical emission order for `featureFlags` is fixed as: `fallen_log`, `root_tangle`, `boulder`, `windthrow`.
+12. Phase-4 threshold operators remain exact as specified (`>=`, `<=`, `<`, `>`); no epsilon-based comparator offsets are introduced.
+13. To avoid float32 boundary drift, all threshold parameters used in Phase-4 comparisons are normalized with `Math.fround(...)` before applying exact operators against typed-array values.
 
 Done criteria:
 
