@@ -335,6 +335,12 @@ Goals:
 1. Implement base map generation/authored override flow.
 2. Implement slope/aspect/landform derivations.
 
+Locked decisions:
+
+1. v1 base-map generation uses an in-repo deterministic 2D Perlin implementation.
+2. v1 does not depend on an external noise-generation library for base-map generation.
+3. v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); any future change to this model requires an ADR and normative-spec update before implementation.
+
 Done criteria:
 
 1. Fixed-seed regression tests for topography pass.
