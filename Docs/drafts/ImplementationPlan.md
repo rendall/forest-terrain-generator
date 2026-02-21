@@ -439,6 +439,7 @@ Locked decisions:
 11. Canonical emission order for `featureFlags` is fixed as: `fallen_log`, `root_tangle`, `boulder`, `windthrow`.
 12. Phase-4 threshold operators remain exact as specified (`>=`, `<=`, `<`, `>`); no epsilon-based comparator offsets are introduced.
 13. To avoid float32 boundary drift, all threshold parameters used in Phase-4 comparisons are normalized with `Math.fround(...)` before applying exact operators against typed-array values.
+14. List-output shape and ordering are fixed: `dominant` is an ordered list of length `0..2` following the deterministic species table (primary first, optional secondary second); `surfaceFlags` and `featureFlags` are emitted as ordered string lists in their canonical fixed orders, filtered to active flags only, with no duplicates.
 
 Done criteria:
 
