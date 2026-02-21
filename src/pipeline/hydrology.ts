@@ -22,6 +22,8 @@ export const DIR8_NEIGHBORS = [
   { dir: 7, dx: 1, dy: -1 } // NE
 ] as const;
 
+export const CANONICAL_DIR8_ORDER = DIR8_NEIGHBORS.map((entry) => entry.dir);
+
 export interface FlowDirectionParams {
   minDropThreshold: number;
   tieEps: number;
@@ -114,6 +116,33 @@ export function tieBreakHash64(seed: bigint, x: number, y: number): bigint {
   z = u64(z ^ u64(BigInt(x) * X_MIX));
   z = u64(z ^ u64(BigInt(y) * Y_MIX));
   return mix64(z);
+}
+
+export function enumerateRowMajorIndices(shape: GridShape): number[] {
+  const out: number[] = [];
+  for (let y = 0; y < shape.height; y += 1) {
+    for (let x = 0; x < shape.width; x += 1) {
+      out.push(y * shape.width + x);
+    }
+  }
+  return out;
+}
+
+export function enumerateNeighborIndices(shape: GridShape, index: number): number[] {
+  const x = index % shape.width;
+  const y = Math.floor(index / shape.width);
+  const out: number[] = [];
+
+  for (const neighbor of DIR8_NEIGHBORS) {
+    const nx = x + neighbor.dx;
+    const ny = y + neighbor.dy;
+    if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
+      continue;
+    }
+    out.push(ny * shape.width + nx);
+  }
+
+  return out;
 }
 
 export function deriveFlowDirection(

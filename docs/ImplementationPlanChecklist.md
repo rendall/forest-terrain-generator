@@ -125,7 +125,7 @@ Rules:
 - [x] Implement hydrology fail-fast diagnostics policy (internal failure / exit `5`) with clear stage/invariant/reason messaging and relevant context values.
 - [x] Add fixed-seed hydrology golden regressions for balanced scope seeds/sizes/artifacts.
 - [x] Add targeted hydrology sanity fixtures (tie-heavy flow, no-water fallback, no-stream fallback, threshold-edge behavior, water-class precedence, `FD` domain, `FA_N` degenerate case, and `FD` acyclic invariant) and resolve red tests to green.
-- [ ] Verify traversal-order conformance to normative Section 1.7.
+- [x] Verify traversal-order conformance to normative Section 1.7.
 - [ ] Review gate: explicit approval to proceed to Phase 4.
 
 ## Phase 4 - Ecology and Grounding
