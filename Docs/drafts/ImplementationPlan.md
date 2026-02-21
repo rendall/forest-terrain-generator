@@ -490,6 +490,9 @@ Locked decisions:
 20. Trail routing cumulative path-cost math uses `Number` (`float64`) accumulators; `C` tile-cost inputs may remain `Float32Array` but are promoted to `Number` at arithmetic boundaries.
 21. `tieEps` is applied only to cumulative-cost equality comparisons in queue ordering and equal-cost predecessor/tie resolution; it is not applied to unrelated threshold classifiers.
 22. Relaxation/update behavior is fixed for determinism: treat candidate path as strictly better only when `newCost < oldCost - tieEps`; otherwise treat as equal/worse and resolve by locked tie-break order.
+23. Phase-5 regression scope is balanced: committed/versioned golden snapshots for seeds `1`, `42`, `123456789`, and `18446744073709551615` at dimensions `16x16` and `64x64`.
+24. Golden artifacts for Phase 5 include `C`, `GameTrail`, `GameTrailId`, `MoveCost`, `Passability`, `CliffEdge`, and `Followable`.
+25. Targeted Phase-5 fixtures are required for endpoint-selection ties, no-seed fallback, unreachable-endpoint route skipping, and overlap behavior (`GameTrail` union plus first-writer-wins `GameTrailId`).
 
 Done criteria:
 
