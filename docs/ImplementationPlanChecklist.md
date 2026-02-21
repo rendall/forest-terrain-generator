@@ -141,14 +141,20 @@ Rules:
 - [x] Decide internal enum/bit assignments for `Biome`, `SoilType`, `SurfaceFlags`, and `FeatureFlags`.
 - [x] Decide in-memory storage contract for `dominant` before envelope mapping.
 - [x] Decide canonical params binding for biome perturbation strength (`vegVarianceStrength` source path).
-- [ ] Review the Phase 4 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 4 implementation.
+- [x] Review the Phase 4 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 4 implementation.
 
 ### Phase 4 Implementation
 
-- [ ] Implement biome assignment and vegetation attributes.
-- [ ] Implement dominant species derivation.
-- [ ] Implement ground and roughness feature derivations.
-- [ ] Add regression tests for categorical and float outputs.
+- [ ] Implement Phase 4 typed-array ecology/grounding map model (`Biome`, `SoilType`, `TreeDensity`, `CanopyCover`, `Obstruction`, `SurfaceFlags`, `FeatureFlags`, `dominantPrimary`, `dominantSecondary`) with fixed enum/bit/species code contracts.
+- [ ] Implement biome assignment with canonical perturbation-strength binding (`vegVarianceNoise.strength` primary, `vegVarianceStrength` fallback), exact classification order, and `Math.fround` threshold normalization.
+- [ ] Implement vegetation attribute derivations (`TreeDensity`, `CanopyCover`) with exact normative formulas and clamp behavior.
+- [ ] Implement dominant-species derivation into internal primary/secondary slots and deterministic mapping to ordered output lists.
+- [ ] Implement ground derivations (`SoilType`, `Firmness`, `SurfaceFlags`) using the locked deterministic rule table and canonical surface-flag order.
+- [ ] Implement roughness derivations (`Obstruction`, `FeatureFlags`) using the locked deterministic rule table and canonical feature-flag order.
+- [ ] Implement a single Phase 4 facade module with stable named exports for orchestration/tests and shared serialization mapping helpers for enum/bit/slot -> envelope fields.
+- [ ] Add targeted Phase 4 sanity fixtures (threshold-edge behavior, mixed-forest species boundary, deterministic list ordering, multi-flag combinations, empty-list cases, and float32 threshold-boundary cases).
+- [ ] Add fixed-seed Phase 4 golden regressions for balanced scope seeds/sizes/artifacts.
+- [ ] Validate categorical and float regression assertions (including default float epsilon `1e-6`) for all Phase 4 outputs.
 - [ ] Review gate: explicit approval to proceed to Phase 5.
 
 ## Phase 5 - Navigation and Trails
