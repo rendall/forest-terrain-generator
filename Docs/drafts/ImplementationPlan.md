@@ -478,6 +478,8 @@ Locked decisions:
 8. Endpoint selection does not account for routing barriers (`C >= INF`) during nearest-node choice; reachability is resolved in routing, and unreachable route requests are skipped per fallback policy.
 9. Fallback behavior is graceful no-op for empty/unreachable routing conditions: if candidate filtering yields no seeds, generate zero trails and continue; if a selected seed has no reachable endpoint/path for one or both route requests, skip only those routes and continue.
 10. These fallback cases are not internal failures and do not produce exit `5`; implementations SHOULD expose deterministic debug counters for skipped/no-op routing outcomes.
+11. Route overlap behavior is fixed as first-writer-wins for `GameTrailId`: `GameTrail` is the union of all marked route tiles, and a tile's `GameTrailId` is assigned only when first marked.
+12. If a later route touches an already-marked tile, `GameTrail` remains `true` and existing `GameTrailId` MUST NOT be overwritten.
 
 Done criteria:
 

@@ -165,7 +165,7 @@ Rules:
 - [x] Decide Phase 5 in-memory map model and storage contracts (`C`, `GameTrail`, `GameTrailId`, `MoveCost`, `Passability`, `CliffEdge`, `FollowableFlags`) and deterministic mapping to envelope payload fields.
 - [x] Decide nearest-node distance metric and tie behavior for Section 10.4 endpoint selection (`Seed -> WaterNode`, `Seed -> RidgeNode`) and define exact implementation algorithm.
 - [x] Decide fallback behavior when candidate filtering yields no seeds or when selected seeds have no reachable endpoints/routes.
-- [ ] Decide route-overlap and `GameTrailId` assignment behavior when multiple routes mark the same tiles.
+- [x] Decide route-overlap and `GameTrailId` assignment behavior when multiple routes mark the same tiles.
 - [ ] Decide passability representation contract (internal encoding, 8-direction key order, and blocked/difficult/passable enum mapping).
 - [ ] Decide deterministic `followable` list ordering and deduplication contract for multi-source flags (`stream`, `ridge`, `game_trail`, `shore`).
 - [ ] Decide whether optional trail post-processing (Section 10.6) is disabled in v1 or enabled with a locked deterministic algorithm.
