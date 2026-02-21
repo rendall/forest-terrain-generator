@@ -198,7 +198,14 @@ Rules:
 
 ### Decisions
 
-- [ ] Review the implementation list, and add uncertain, ambiguous or unknown implementation details as decision items just below this one, above the review gate.
+- [x] Review the implementation list, and add uncertain, ambiguous or unknown implementation details as decision items just below this one, above the review gate.
+- [x] Decide final output-envelope completeness metadata policy for v1 (`meta` contains only `specVersion`; do not emit `implementationStatus`, `implementedPhases`, or draft notes in v1 output).
+- [x] Decide canonical JSON serialization policy for standard/debug outputs (emit pretty JSON with two-space indentation and trailing newline for standard and debug JSON artifacts; rely on stable insertion-order serialization, with deterministic field population in emitters).
+- [ ] Decide debug artifact contract for v1 (`debug-manifest.json` schema, required artifact set, and stable naming/path conventions).
+- [ ] Decide debug-write failure policy (atomic all-or-nothing vs best-effort partial output) and resulting exit/error behavior.
+- [ ] Decide end-to-end golden scope details (modes, seeds, sizes, asserted artifacts/fields, and update workflow).
+- [ ] Decide CLI integration-test matrix details for mode/flag/error-path coverage (`generate`, `derive`, `debug`).
+- [ ] Decide final error-diagnostics quality bar (required context payload in messages for validation, shape, I/O, and internal failures).
 - [ ] Review gate: review the implementation plan and ensure that there are no more undecideds or ambiguities.
 - [ ] Review gate: review the implementation checklist and add missing steps and details.
 

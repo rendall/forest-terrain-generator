@@ -510,6 +510,13 @@ Goals:
 2. Implement debug artifact emission layout.
 3. Harden CLI UX, diagnostics, and test coverage.
 
+Locked decisions:
+
+1. v1 output envelope metadata is minimal: `meta` contains only `specVersion`.
+2. Draft-only metadata fields (`implementationStatus`, `implementedPhases`, and draft notes) are not emitted in final v1 output.
+3. Canonical JSON serialization for v1 uses pretty JSON (`2` spaces) with a trailing newline for both standard envelope and debug JSON artifacts.
+4. Emitters must populate fields in deterministic order so insertion-order JSON serialization remains stable across runs.
+
 Done criteria:
 
 1. CLI integration tests cover `generate`, `derive`, `debug`.
