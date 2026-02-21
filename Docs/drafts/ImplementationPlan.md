@@ -60,6 +60,15 @@ Seed parsing/storage/validation decision (Phase 1):
 3. Parse and store `seed` internally as `bigint`.
 4. Reject non-decimal or non-integer forms (for example signs, floats, scientific notation, hex).
 
+Configuration merge semantics decision (Phase 1):
+
+1. Apply precedence in this order: CLI arguments override params file values, which override built-in defaults.
+2. Merge plain objects recursively (deep merge).
+3. Arrays are replaced as whole values by the higher-precedence source (no concatenation/union behavior).
+4. Scalar values are replaced by the higher-precedence source.
+5. Explicit falsy values (`0`, `false`, and empty string) are treated as provided overrides.
+6. `undefined` is treated as not provided.
+
 ### 3.3 Output Contract
 
 1. `generate` and `derive` write the terrain envelope JSON to `--output-file`.

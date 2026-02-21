@@ -35,7 +35,7 @@ Rules:
 ### Phase 1 Decisions
 
 - [x] Decide `seed` parsing/storage/validation for normative `uint64` input.
-- [ ] Decide config merge semantics for `CLI > file > defaults` (deep merge rules, array behavior, and scalar override behavior).
+- [x] Decide config merge semantics for `CLI > file > defaults` (deep merge rules, array behavior, and scalar override behavior).
 - [ ] Decide unknown-input policy (unknown CLI flags and unknown params-file keys).
 - [ ] Decide params-file format support (for example JSON-only vs additional formats).
 - [ ] Decide path-resolution rules for file inputs (CWD-relative vs params-file-relative).
