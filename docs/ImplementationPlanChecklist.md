@@ -41,7 +41,7 @@ Rules:
 - [x] Decide path-resolution rules for file inputs (CWD-relative vs params-file-relative).
 - [x] Decide mode-specific required/allowed inputs for `generate`, `derive`, and `debug`.
 - [x] Decide output-argument validation by mode (`--output-file` vs `--output-dir` requirements).
-- [ ] Decide defaults-source policy and Appendix A alignment.
+- [x] Decide defaults-source policy and Appendix A alignment.
 - [ ] Decide validation/error taxonomy mapping to exit codes (`2`, `3`, `4`, `5`).
 - [ ] Decide duplicate-flag behavior (last value wins vs hard error).
 - [ ] Review the Phase 1 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 1 implementation.

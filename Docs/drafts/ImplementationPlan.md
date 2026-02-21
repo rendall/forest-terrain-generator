@@ -111,6 +111,15 @@ Output-argument validation decision (Phase 1):
 4. Existing output targets fail by default.
 5. `--force` overrides existing-target checks and allows overwrite/replace behavior.
 
+Defaults-source and Appendix A alignment decision (Phase 1):
+
+1. The CLI includes built-in default params in code.
+2. Built-in defaults align to Appendix A recommended defaults for v1.
+3. A flagged params file is optional and overrides built-in defaults using the configured merge semantics.
+4. Explicit CLI arguments override params file values.
+5. Effective precedence remains: `CLI > file > built-in defaults`.
+6. Any future divergence from Appendix A defaults MUST be explicitly documented.
+
 ### 3.3 Output Contract
 
 1. `generate` and `derive` write the terrain envelope JSON to `--output-file`.
