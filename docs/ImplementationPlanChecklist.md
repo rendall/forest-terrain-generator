@@ -101,26 +101,46 @@ Rules:
 
 ### Phase 3 Decisions
 
-- [ ] Decide hydrology in-memory map model and numeric types (`FD`, `FA`, `FA_N`, `LakeMask`, `isStream`, `distWater`, `Moisture`, `WaterClass`).
-- [ ] Decide canonical `FD` storage contract (`Dir8` encoding and `NONE=255`) and neighbor-iteration helper contract for hydrology passes.
-- [ ] Decide exact hash/tie-break implementation details for Section 6.1 flow-direction tie resolution (bit-width, hash function inputs, and modulo/indexing behavior).
-- [ ] Decide flow-accumulation numeric limits/overflow policy and deterministic topological queue implementation details.
-- [ ] Decide `FA_N` normalization behavior for degenerate cases (`FAmax == FAmin`) and clamp/epsilon conventions.
-- [ ] Decide lake/stream/moisture/water-class threshold comparison conventions (strict vs inclusive per threshold) and shared comparator helpers.
-- [ ] Decide explicit no-water and no-stream fallback handling details for proximity maps (`distWater`, `distStream`) and downstream moisture behavior.
-- [ ] Decide hydrology regression-test scope (golden seeds/sizes/artifacts and targeted tie-case fixtures).
-- [ ] Review the Phase 3 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 3 implementation.
+- [x] Decide hydrology in-memory map model and numeric types (`FD`, `FA`, `FA_N`, `LakeMask`, `isStream`, `distWater`, `Moisture`, `WaterClass`) (`FD`: `Uint8Array`; `FA`: `Uint32Array`; `FA_N`: `Float32Array`; `LakeMask`: `Uint8Array`; `isStream`: `Uint8Array`; `distWater`: `Uint32Array`; `Moisture`: `Float32Array`; `WaterClass`: `Uint8Array`; internal `InDeg`: `Uint8Array`).
+- [x] Decide canonical `FD` storage contract (`Dir8` encoding and `NONE=255`) and neighbor-iteration helper contract for hydrology passes (`FD` uses `Dir8` numeric encoding `0..7`, `NONE=255`; hydrology traversal/enumeration uses one shared canonical neighbor-order helper: `E,SE,S,SW,W,NW,N,NE`).
+- [x] Decide exact hash/tie-break implementation details for Section 6.1 flow-direction tie resolution (bit-width, hash function inputs, and modulo/indexing behavior) (spec-accurate `uint64` math via `BigInt`; `tieBreakHash64(seed,x,y)` exactly as normative formula; tied-candidate list `T` kept in canonical `Dir8` order; selection index `i = hash % |T|`).
+- [x] Decide flow-accumulation numeric limits/overflow policy and deterministic topological queue implementation details (Kahn-style indegree reduction with FIFO queue; initial enqueue in row-major order; queue implemented as array+head-index; `FA` stored as `Uint32Array`; overflow-protection checks required on accumulation adds with fail-fast error if exceeded).
+- [x] Decide `FA_N` normalization behavior for degenerate cases (`FAmax == FAmin`) and clamp/epsilon conventions (if `FAmax == FAmin`, set all `FA_N=0` exactly; otherwise apply normative log formula and `clamp01`; no additional hidden epsilon adjustments).
+- [x] Decide lake/stream/moisture/water-class threshold comparison conventions (strict vs inclusive per threshold) and shared comparator helpers (use spec operators exactly: lake `SlopeMag < lakeFlatSlopeThreshold` and `FA_N >= lakeAccumThreshold`; stream `FA_N >= streamAccumThreshold` and `SlopeMag >= streamMinSlopeThreshold`; marsh `Moisture >= marshMoistureThreshold` and `SlopeMag < marshSlopeThreshold`; no hidden epsilon comparator offsets).
+- [x] Decide explicit no-water and no-stream fallback handling details for proximity maps (`distWater`, `distStream`) and downstream moisture behavior (no-water: set all `distWater = hydrology.waterProxMaxDist`; no-stream: set all `distStream = gameTrails.streamProxMaxDist`; downstream wetness/proximity terms use these capped values deterministically).
+- [x] Decide hydrology regression-test scope (balanced scope: seeds `1`, `42`, `123456789`, `18446744073709551615`; sizes `16x16` and `64x64`; committed/versioned golden artifacts `FD`, `FA`, `FA_N`, `LakeMask`, `isStream`, `distWater`, `Moisture`, `WaterClass`; targeted fixtures for tie-heavy flow, no-water fallback, threshold-edge behavior, water-class precedence, and `FD` acyclic invariant).
+- [x] Decide hydrology module surface contract (single facade module `src/pipeline/hydrology.ts` with stable named exports for Phase 3 hydrology entrypoints).
+- [x] Decide hydrology fail-fast error policy (hydrology fail-fast conditions map to exit code `5` and error messages MUST clearly describe what failed and why, including stage/context and relevant values where available).
+- [x] Run a Phase 3 decision sanity check on targeted fixtures (tie-heavy flow, no-water/no-stream cases, and threshold-edge cases) and confirm behavior is not pathological before starting implementation (`FD` acyclic; valid `FD` domain; no `NaN`/`Infinity`; `FA>=1`; `FA_N` in `[0,1]`; water-class precedence holds; no-water/no-stream fallbacks applied as decided).
+- [x] Review the Phase 3 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 3 implementation.
 
 ### Phase 3 Implementation
 
-- [ ] Implement flow direction with deterministic tie-break logic.
-- [ ] Implement flow accumulation and normalization.
-- [ ] Implement lakes, streams, moisture, and water class derivations.
-- [ ] Add fixed-seed regression tests for hydrology outputs.
-- [ ] Verify traversal-order conformance to normative Section 1.7.
+- [x] Implement Phase 3 typed-array hydrology map model with row-major storage contracts (`FD`, `FA`, `FA_N`, `LakeMask`, `isStream`, `distWater`, `Moisture`, `WaterClass`, and internal `InDeg`).
+- [x] Implement flow direction with deterministic tie-break logic (`Dir8` + `NONE=255`, canonical neighbor order, and exact `tieBreakHash64` behavior).
+- [x] Implement flow accumulation with deterministic Kahn/FIFO processing, overflow-protected `FA` updates, and spec-accurate `FA_N` normalization.
+- [x] Implement lakes, streams, moisture, and water-class derivations with exact threshold operators and precedence rules.
+- [x] Implement explicit no-water/no-stream fallback behavior for proximity maps and downstream moisture/proximity terms.
+- [x] Implement single hydrology facade module `src/pipeline/hydrology.ts` with stable named exports used by tests and orchestration.
+- [x] Implement hydrology fail-fast diagnostics policy (internal failure / exit `5`) with clear stage/invariant/reason messaging and relevant context values.
+- [x] Add fixed-seed hydrology golden regressions for balanced scope seeds/sizes/artifacts.
+- [x] Add targeted hydrology sanity fixtures (tie-heavy flow, no-water fallback, no-stream fallback, threshold-edge behavior, water-class precedence, `FD` domain, `FA_N` degenerate case, and `FD` acyclic invariant) and resolve red tests to green.
+- [x] Verify traversal-order conformance to normative Section 1.7.
 - [ ] Review gate: explicit approval to proceed to Phase 4.
 
 ## Phase 4 - Ecology and Grounding
+
+### Phase 4 Decisions
+
+- [ ] Decide Phase 4 in-memory map model and enum/storage contracts (`Biome`, `SoilType`, `TreeDensity`, `CanopyCover`, `Obstruction`, `SurfaceFlags`, `FeatureFlags`) and serialization mapping into the output envelope.
+- [ ] Decide deterministic rule tables for under-specified Ground/Roughness derivations (explicit `SoilType` mapping and explicit threshold rules for each `SurfaceFlags`/`FeatureFlags` member).
+- [ ] Decide threshold-operator and boundary conventions for all Phase 4 classifiers/formulas (`>=` vs `>`, `<` vs `<=`, and float-comparison precision policy).
+- [ ] Decide deterministic ordering and shape contracts for list outputs (`dominant`, `surfaceFlags`, `featureFlags`) including ordering guarantees for multi-flag tiles.
+- [ ] Decide Phase 4 regression scope and assertions (fixed seeds/sizes, golden artifacts, targeted fixtures, and float epsilon policy).
+- [ ] Decide whether Phase 4 rule concretization requires ADR and/or draft-spec updates before implementation, and record required artifacts.
+- [ ] Review the Phase 4 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 4 implementation.
+
+### Phase 4 Implementation
 
 - [ ] Implement biome assignment and vegetation attributes.
 - [ ] Implement dominant species derivation.

@@ -373,6 +373,28 @@ Goals:
 1. Implement flow direction, accumulation, normalization.
 2. Implement lakes, streams, moisture, and water class.
 
+Locked decisions:
+
+1. Hydrology map storage uses typed row-major arrays with explicit contracts: `FD` as `Uint8Array`, `FA` as `Uint32Array`, `FA_N` as `Float32Array`, `LakeMask` as `Uint8Array`, `isStream` as `Uint8Array`, `distWater` as `Uint32Array`, `Moisture` as `Float32Array`, and `WaterClass` as `Uint8Array`.
+2. Internal flow-accumulation indegree storage uses `Uint8Array` (max 8 upstream contributors in D8).
+3. `FD` storage is canonical `Dir8` numeric encoding (`0..7`) with `NONE=255`.
+4. Hydrology neighbor traversal and tie-candidate enumeration use one shared canonical `Dir8` order helper: `E,SE,S,SW,W,NW,N,NE`.
+5. Section 6.1 tie-break hashing uses exact `uint64` semantics with `BigInt` operations and wraparound, following normative `tieBreakHash64(seed,x,y)` constants/steps verbatim.
+6. For tied downhill candidates, list `T` is constructed in canonical `Dir8` order and selection uses `i = tieBreakHash64(seed,x,y) mod |T|`.
+7. Flow accumulation uses deterministic Kahn-style indegree reduction with FIFO queue semantics; zero-indegree tiles are enqueued in canonical row-major order and queue mechanics are implemented with array-plus-head-index (no unstable container ordering).
+8. `FA` accumulation uses `Uint32Array` with explicit overflow checks on `FA[u] += FA[t]`; overflow is treated as fail-fast error rather than silent wraparound.
+9. `FA_N` normalization follows Section 6.3 exactly: if `FAmax == FAmin`, all `FA_N` values are `0`; otherwise apply the normative logarithmic formula and clamp result to `[0,1]`.
+10. No extra normalization epsilon/fudge factors are introduced beyond explicit spec thresholds.
+11. Hydrology threshold operators are fixed to normative comparisons: lake (`SlopeMag < lakeFlatSlopeThreshold` and `FA_N >= lakeAccumThreshold`), stream (`FA_N >= streamAccumThreshold` and `SlopeMag >= streamMinSlopeThreshold`), marsh (`Moisture >= marshMoistureThreshold` and `SlopeMag < marshSlopeThreshold`).
+12. Threshold comparisons use shared helper predicates for consistency, but helpers must preserve exact operator semantics (no hidden epsilon offsets).
+13. No-water fallback is explicit: if no water tile exists, set `distWater[x,y] = hydrology.waterProxMaxDist` for all tiles before moisture calculations.
+14. No-stream fallback is explicit for downstream proximity consumers: if no stream tile exists, set `distStream[x,y] = gameTrails.streamProxMaxDist` for all tiles.
+15. Proximity-derived wetness/score terms consume capped fallback distances directly (no special-case branching after fallback assignment).
+16. Phase-3 hydrology regression scope is balanced: committed/versioned golden snapshots for seeds `1`, `42`, `123456789`, `18446744073709551615` at `16x16` and `64x64`, covering `FD`, `FA`, `FA_N`, `LakeMask`, `isStream`, `distWater`, `Moisture`, and `WaterClass`.
+17. Targeted hydrology fixtures are required for tie-heavy flow choice determinism, no-water fallback, threshold-edge comparisons, water-class precedence (`lake > stream > marsh > none`), and acyclic `FD` invariants.
+18. Phase-3 hydrology implementation is surfaced through a single facade module, `src/pipeline/hydrology.ts`, exporting the stable named hydrology entrypoints used by tests and orchestration.
+19. Hydrology fail-fast conditions are classified as internal failures (exit code `5`) and MUST emit diagnostics that clearly state failing stage/invariant and reason, including relevant values/context and mitigation hints where possible.
+
 Done criteria:
 
 1. Hydrology fixed-seed regressions pass.
