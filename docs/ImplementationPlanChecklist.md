@@ -122,7 +122,7 @@ Rules:
 - [x] Implement lakes, streams, moisture, and water-class derivations with exact threshold operators and precedence rules.
 - [x] Implement explicit no-water/no-stream fallback behavior for proximity maps and downstream moisture/proximity terms.
 - [x] Implement single hydrology facade module `src/pipeline/hydrology.ts` with stable named exports used by tests and orchestration.
-- [ ] Implement hydrology fail-fast diagnostics policy (internal failure / exit `5`) with clear stage/invariant/reason messaging and relevant context values.
+- [x] Implement hydrology fail-fast diagnostics policy (internal failure / exit `5`) with clear stage/invariant/reason messaging and relevant context values.
 - [ ] Add fixed-seed hydrology golden regressions for balanced scope seeds/sizes/artifacts.
 - [ ] Add targeted hydrology sanity fixtures (tie-heavy flow, no-water fallback, no-stream fallback, threshold-edge behavior, water-class precedence, `FD` domain, `FA_N` degenerate case, and `FD` acyclic invariant) and resolve red tests to green.
 - [ ] Verify traversal-order conformance to normative Section 1.7.

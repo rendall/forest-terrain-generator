@@ -88,10 +88,25 @@ function clamp01(value: number): number {
 
 function validateMapLength(shape: GridShape, map: ArrayLike<unknown>, mapName: string): void {
   if (map.length !== shape.size) {
-    throw new Error(
-      `Hydrology ${mapName} length mismatch: expected ${shape.size}, got ${map.length}.`
-    );
+    hydrologyFail("input_contract", "map_length_matches_shape", "map_length_mismatch", {
+      map: mapName,
+      expected: shape.size,
+      actual: map.length
+    });
   }
+}
+
+function hydrologyFail(
+  stage: string,
+  invariant: string,
+  reason: string,
+  context: Record<string, number | string> = {}
+): never {
+  const contextFields = Object.entries(context).map(([key, value]) => `${key}=${value}`);
+  const suffix = contextFields.length > 0 ? ` ${contextFields.join(" ")}` : "";
+  throw new Error(
+    `Hydrology fail-fast: stage=${stage} invariant=${invariant} reason=${reason}${suffix}`
+  );
 }
 
 export function tieBreakHash64(seed: bigint, x: number, y: number): bigint {
@@ -154,9 +169,9 @@ export function deriveFlowDirection(
   return fd;
 }
 
-function downstreamIndex(shape: GridShape, index: number, dir: number): number {
+function downstreamIndex(shape: GridShape, index: number, dir: number, stage: string): number {
   if (dir < 0 || dir > 7) {
-    throw new Error(`Invalid FD direction code ${dir} at index ${index}.`);
+    hydrologyFail(stage, "fd_domain", "invalid_fd_code", { index, dir });
   }
 
   const x = index % shape.width;
@@ -165,7 +180,12 @@ function downstreamIndex(shape: GridShape, index: number, dir: number): number {
   const nx = x + step.dx;
   const ny = y + step.dy;
   if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
-    throw new Error(`FD points outside map bounds at index ${index} with direction ${dir}.`);
+    hydrologyFail(stage, "downstream_in_bounds", "fd_points_outside_grid", {
+      index,
+      dir,
+      width: shape.width,
+      height: shape.height
+    });
   }
   return ny * shape.width + nx;
 }
@@ -181,7 +201,7 @@ export function deriveFlowAccumulation(shape: GridShape, fd: Uint8Array): Uint32
     if (dir === DIR8_NONE) {
       continue;
     }
-    const downstream = downstreamIndex(shape, i, dir);
+    const downstream = downstreamIndex(shape, i, dir, "flow_accumulation");
     inDeg[downstream] += 1;
   }
 
@@ -204,12 +224,14 @@ export function deriveFlowAccumulation(shape: GridShape, fd: Uint8Array): Uint32
       continue;
     }
 
-    const downstream = downstreamIndex(shape, tile, dir);
+    const downstream = downstreamIndex(shape, tile, dir, "flow_accumulation");
     const sum = fa[downstream] + fa[tile];
     if (sum > U32_MAX) {
-      throw new Error(
-        `Flow accumulation overflow at tile ${downstream}: ${fa[downstream]} + ${fa[tile]} exceeds uint32.`
-      );
+      hydrologyFail("flow_accumulation", "uint32_no_overflow", "fa_overflow", {
+        tile: downstream,
+        current: fa[downstream],
+        incoming: fa[tile]
+      });
     }
     fa[downstream] = sum;
 
@@ -220,9 +242,10 @@ export function deriveFlowAccumulation(shape: GridShape, fd: Uint8Array): Uint32
   }
 
   if (processed !== shape.size) {
-    throw new Error(
-      `Flow accumulation invariant failed: processed ${processed}/${shape.size} tiles (cycle detected).`
-    );
+    hydrologyFail("flow_accumulation", "acyclic_fd", "cycle_detected", {
+      processed,
+      size: shape.size
+    });
   }
 
   return fa;
@@ -236,7 +259,7 @@ export function deriveInDegree(shape: GridShape, fd: Uint8Array): Uint8Array {
     if (dir === DIR8_NONE) {
       continue;
     }
-    const downstream = downstreamIndex(shape, i, dir);
+    const downstream = downstreamIndex(shape, i, dir, "flow_accumulation");
     inDeg[downstream] += 1;
   }
   return inDeg;
