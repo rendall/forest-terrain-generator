@@ -130,6 +130,12 @@ Validation/error taxonomy decision (Phase 1):
 6. Malformed JSON params are classified as invalid input (`2`), not file I/O (`4`).
 7. Exit-code mapping is performed by normalized error category at the CLI boundary, not by raw thrown exception type.
 
+Duplicate-flag behavior decision (Phase 1):
+
+1. Duplicate CLI flags are validation errors (exit `2`).
+2. The CLI does not apply last-value-wins behavior for duplicate flags.
+3. Error messages MUST identify the duplicated flag and advise providing it only once.
+
 ### 3.3 Output Contract
 
 1. `generate` and `derive` write the terrain envelope JSON to `--output-file`.

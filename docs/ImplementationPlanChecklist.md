@@ -43,7 +43,7 @@ Rules:
 - [x] Decide output-argument validation by mode (`--output-file` vs `--output-dir` requirements).
 - [x] Decide defaults-source policy and Appendix A alignment.
 - [x] Decide validation/error taxonomy mapping to exit codes (`2`, `3`, `4`, `5`).
-- [ ] Decide duplicate-flag behavior (last value wins vs hard error).
+- [x] Decide duplicate-flag behavior (last value wins vs hard error).
 - [ ] Review the Phase 1 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 1 implementation.
 
 ### Phase 1 Implementation
