@@ -105,6 +105,27 @@ export interface TrailRouteRequest {
   endpointIndex: number;
 }
 
+export interface TrailPlanInputs {
+  seed: TrailSeedInputs;
+  endpoint: TrailEndpointInputs;
+}
+
+export interface TrailPlanParams {
+  seed: TrailSeedParams;
+  endpoint: TrailEndpointParams;
+}
+
+export interface TrailPlan {
+  seedIndices: number[];
+  routeRequests: TrailRouteRequest[];
+}
+
+export interface TrailRouteExecutionResult {
+  requested: number;
+  skippedUnreachable: number;
+  successfulPaths: number[][];
+}
+
 export interface TrailRoutingParams {
   inf: number;
   diagWeight: number;
@@ -527,6 +548,50 @@ export function findLeastCostPath(
   }
 
   return null;
+}
+
+export function buildTrailPlan(
+  shape: GridShape,
+  inputs: TrailPlanInputs,
+  params: TrailPlanParams
+): TrailPlan {
+  const seedIndices = selectTrailSeeds(shape, inputs.seed, params.seed);
+  const routeRequests = buildTrailRouteRequests(shape, seedIndices, inputs.endpoint, params.endpoint);
+  return {
+    seedIndices,
+    routeRequests
+  };
+}
+
+export function executeTrailRouteRequests(
+  shape: GridShape,
+  costField: Float32Array,
+  routeRequests: TrailRouteRequest[],
+  params: TrailRoutingParams
+): TrailRouteExecutionResult {
+  const successfulPaths: number[][] = [];
+  let skippedUnreachable = 0;
+
+  for (const request of routeRequests) {
+    const path = findLeastCostPath(
+      shape,
+      costField,
+      request.seedIndex,
+      request.endpointIndex,
+      params
+    );
+    if (path === null) {
+      skippedUnreachable += 1;
+      continue;
+    }
+    successfulPaths.push(path);
+  }
+
+  return {
+    requested: routeRequests.length,
+    skippedUnreachable,
+    successfulPaths
+  };
 }
 
 export function deriveTrailPreferenceCost(
