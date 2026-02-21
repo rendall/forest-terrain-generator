@@ -73,7 +73,7 @@ Rules:
 - [x] Decide in-memory grid representation and indexing contract for `H`, `R`, `V`, `SlopeMag`, `AspectDeg`, and `Landform` (row-major struct-of-arrays; `i = y * width + x`; `Float32Array` for numeric maps; `Uint8Array` for `Landform` enum codes; shared `GridShape` for all maps).
 - [x] Decide authored-map file shape/format contract and parsing/validation behavior for `--map-h`, `--map-r`, and `--map-v` (JSON object: `{ "width": number, "height": number, "data": number[] }`; row-major `data`; length must equal `width * height`; finite values in `[0,1]`; no resampling/interpolation; schema/type/range errors -> exit `2`; shape/dimension mismatches -> exit `3`; diagnostics include map flag/file and failing key/index).
 - [x] Decide range/clamping policy for base maps after generation and for authored-map validation (generated maps are clamped to `[0,1]` after normalization without warnings; authored maps remain strict and fail validation on out-of-range values with exit `2`).
-- [ ] Decide exact boundary-sampling implementation for slope/aspect clamping at map edges.
+- [x] Decide exact boundary-sampling implementation for slope/aspect clamping at map edges (clamped-coordinate sampling per spec 5.1: `xL=max(0,x-1)`, `xR=min(width-1,x+1)`, `yU=max(0,y-1)`, `yD=min(height-1,y+1)`; `Hx=H[xR,y]-H[xL,y]`; `Hy=H[x,yD]-H[x,yU]`; no special edge/corner branches).
 - [ ] Decide comparison conventions for landform thresholds (`eps`, `flatSlopeThreshold`) to prevent equality-edge drift.
 - [ ] Decide topography regression-test strategy (fixtures, float epsilon assertions, and deterministic seed set).
 - [x] Confirm v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); defer any resolution-model change to a future ADR.

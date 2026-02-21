@@ -348,7 +348,8 @@ Locked decisions:
 9. Generated base-map values are clamped to `[0,1]` after normalization; v1 does not emit warnings for clamp events.
 10. Authored map `data` length must equal `width * height`, all values must be finite and within `[0,1]`, and implementations must not resample/interpolate authored maps.
 11. Authored map schema/type/range errors map to exit `2`; authored map shape/dimension mismatches map to exit `3`; errors must identify map input and failing key/index.
-12. v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); any future change to this model requires an ADR and normative-spec update before implementation.
+12. Slope/aspect boundary handling follows clamped-coordinate sampling from normative Section 5.1 with no separate edge/corner algorithm branches.
+13. v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); any future change to this model requires an ADR and normative-spec update before implementation.
 
 Done criteria:
 
