@@ -339,13 +339,15 @@ export function deriveLakeMask(
   validateMapLength(shape, landform, "Landform");
   validateMapLength(shape, slopeMag, "SlopeMag");
   validateMapLength(shape, faN, "FA_N");
+  const flatSlopeThreshold = Math.fround(params.lakeFlatSlopeThreshold);
+  const accumThreshold = Math.fround(params.lakeAccumThreshold);
 
   const candidate = new Uint8Array(shape.size);
   for (let i = 0; i < shape.size; i += 1) {
     if (
       landform[i] === LANDFORM_CODE.basin &&
-      slopeMag[i] < params.lakeFlatSlopeThreshold &&
-      faN[i] >= params.lakeAccumThreshold
+      slopeMag[i] < flatSlopeThreshold &&
+      faN[i] >= accumThreshold
     ) {
       candidate[i] = 1;
     }
@@ -364,13 +366,15 @@ export function deriveStreamMask(
   validateMapLength(shape, lakeMask, "LakeMask");
   validateMapLength(shape, faN, "FA_N");
   validateMapLength(shape, slopeMag, "SlopeMag");
+  const accumThreshold = Math.fround(params.streamAccumThreshold);
+  const minSlopeThreshold = Math.fround(params.streamMinSlopeThreshold);
 
   const stream = new Uint8Array(shape.size);
   for (let i = 0; i < shape.size; i += 1) {
     if (
       lakeMask[i] === 0 &&
-      faN[i] >= params.streamAccumThreshold &&
-      slopeMag[i] >= params.streamMinSlopeThreshold
+      faN[i] >= accumThreshold &&
+      slopeMag[i] >= minSlopeThreshold
     ) {
       stream[i] = 1;
     }
@@ -417,6 +421,8 @@ export function classifyWaterClass(
   validateMapLength(shape, isStream, "isStream");
   validateMapLength(shape, moisture, "Moisture");
   validateMapLength(shape, slopeMag, "SlopeMag");
+  const marshMoistureThreshold = Math.fround(params.marshMoistureThreshold);
+  const marshSlopeThreshold = Math.fround(params.marshSlopeThreshold);
 
   const waterClass = new Uint8Array(shape.size);
   for (let i = 0; i < shape.size; i += 1) {
@@ -428,10 +434,7 @@ export function classifyWaterClass(
       waterClass[i] = WATER_CLASS_CODE.stream;
       continue;
     }
-    if (
-      moisture[i] >= params.marshMoistureThreshold &&
-      slopeMag[i] < params.marshSlopeThreshold
-    ) {
+    if (moisture[i] >= marshMoistureThreshold && slopeMag[i] < marshSlopeThreshold) {
       waterClass[i] = WATER_CLASS_CODE.marsh;
       continue;
     }
