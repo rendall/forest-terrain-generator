@@ -483,6 +483,8 @@ Locked decisions:
 13. Passability internal representation is fixed as bit-packed directional state: 2 bits per direction in canonical order `N, NE, E, SE, S, SW, W, NW` (16 bits total per tile).
 14. Passability enum mapping is fixed as `0=passable`, `1=difficult`, `2=blocked`; code `3` is reserved/invalid and MUST NOT be emitted.
 15. Envelope serialization maps the packed internal representation deterministically to the normative string-key object form.
+16. `followable` output ordering is fixed as canonical list order: `stream`, `ridge`, `game_trail`, `shore`.
+17. `followable` output is deduplicated by flag identity; each flag appears at most once per tile in emitted payloads.
 
 Done criteria:
 
