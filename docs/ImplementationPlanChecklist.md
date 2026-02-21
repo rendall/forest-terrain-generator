@@ -74,6 +74,13 @@ test/
 
 Scaffolding conventions to adopt:
 
+Completion semantics for policy checkboxes in this section:
+
+- [ ] Decision is documented in `Docs/Normative/ImplementationPolicy.md`
+- [ ] Decision is mirrored in `AGENTS.md`
+- [ ] Decision is enforceable via tooling/config or an explicit verification step
+
+
 - [ ] File naming: `kebab-case.ts`
 - [ ] Module boundaries: domain types in `domain/`, pure derivations in `pipeline/`, side effects in `io/` + `cli/`
 - [ ] Design approach: pure functions and explicit state flow; avoid mutable global state
