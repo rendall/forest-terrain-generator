@@ -385,6 +385,8 @@ Locked decisions:
 8. `FA` accumulation uses `Uint32Array` with explicit overflow checks on `FA[u] += FA[t]`; overflow is treated as fail-fast error rather than silent wraparound.
 9. `FA_N` normalization follows Section 6.3 exactly: if `FAmax == FAmin`, all `FA_N` values are `0`; otherwise apply the normative logarithmic formula and clamp result to `[0,1]`.
 10. No extra normalization epsilon/fudge factors are introduced beyond explicit spec thresholds.
+11. Hydrology threshold operators are fixed to normative comparisons: lake (`SlopeMag < lakeFlatSlopeThreshold` and `FA_N >= lakeAccumThreshold`), stream (`FA_N >= streamAccumThreshold` and `SlopeMag >= streamMinSlopeThreshold`), marsh (`Moisture >= marshMoistureThreshold` and `SlopeMag < marshSlopeThreshold`).
+12. Threshold comparisons use shared helper predicates for consistency, but helpers must preserve exact operator semantics (no hidden epsilon offsets).
 
 Done criteria:
 
