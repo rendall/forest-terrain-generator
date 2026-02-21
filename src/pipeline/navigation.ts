@@ -179,6 +179,13 @@ export interface FollowableInputs {
   gameTrail: Uint8Array;
 }
 
+export interface NavigationTilePayloadInputs {
+  moveCost: Float32Array;
+  passabilityPacked: Uint16Array;
+  followableFlags: Uint8Array;
+  gameTrailId: Int32Array;
+}
+
 interface FrontierEntry {
   index: number;
   cost: number;
@@ -839,6 +846,34 @@ export function deriveFollowableFlags(shape: GridShape, inputs: FollowableInputs
   }
 
   return out;
+}
+
+export function navigationTilePayloadAt(
+  index: number,
+  inputs: NavigationTilePayloadInputs
+): Record<string, unknown> {
+  if (
+    index < 0 ||
+    index >= inputs.moveCost.length ||
+    index >= inputs.passabilityPacked.length ||
+    index >= inputs.followableFlags.length ||
+    index >= inputs.gameTrailId.length
+  ) {
+    throw new Error(`Navigation payload index out of bounds: ${index}.`);
+  }
+
+  const payload: Record<string, unknown> = {
+    moveCost: inputs.moveCost[index],
+    followable: followableFlagsToOrderedList(inputs.followableFlags[index]),
+    passability: passabilityPackedToObject(inputs.passabilityPacked[index])
+  };
+
+  const trailId = inputs.gameTrailId[index];
+  if (trailId >= 0) {
+    payload.gameTrailId = trailId;
+  }
+
+  return payload;
 }
 
 export function markTrailPaths(shape: GridShape, paths: number[][]): TrailMarkedMaps {

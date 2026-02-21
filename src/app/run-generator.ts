@@ -23,6 +23,16 @@ import {
   soilTypeCodeToName,
   surfaceFlagsToOrderedList
 } from "../pipeline/ecology.js";
+import {
+  buildTrailPlan,
+  deriveDirectionalPassability,
+  deriveFollowableFlags,
+  deriveMoveCost,
+  deriveTrailPreferenceCost,
+  executeTrailRouteRequests,
+  markTrailPaths,
+  navigationTilePayloadAt
+} from "../pipeline/navigation.js";
 
 const LANDFORM_NAME_BY_CODE: Record<number, string> = {
   0: "flat",
@@ -41,6 +51,11 @@ const WATER_CLASS_NAME_BY_CODE: Record<number, string> = {
 
 type HydrologyParams = Parameters<typeof deriveHydrology>[5];
 type EcologyParams = Parameters<typeof deriveEcology>[2];
+type TrailCostParams = Parameters<typeof deriveTrailPreferenceCost>[2];
+type TrailPlanParams = Parameters<typeof buildTrailPlan>[2];
+type TrailRoutingParams = Parameters<typeof executeTrailRouteRequests>[3];
+type MoveCostParams = Parameters<typeof deriveMoveCost>[2];
+type DirectionalPassabilityParams = Parameters<typeof deriveDirectionalPassability>[2];
 
 function resolveFromCwd(cwd: string, maybeRelativePath: string | undefined): string | undefined {
   if (!maybeRelativePath) {
@@ -127,6 +142,107 @@ export async function runGenerator(request: RunRequest): Promise<void> {
     },
     ecologyParams
   );
+  const gameTrails = validated.params.gameTrails as Record<string, unknown>;
+  const movement = validated.params.movement as Record<string, unknown>;
+  const grid = validated.params.grid as Record<string, unknown>;
+  const hydrologyParamsRaw = validated.params.hydrology as Record<string, unknown>;
+
+  const trailCost = deriveTrailPreferenceCost(
+    shape,
+    {
+      slopeMag: topography.slopeMag,
+      moisture: hydrology.moisture,
+      obstruction: ecology.obstruction,
+      landform: topography.landform,
+      waterClass: hydrology.waterClass,
+      isStream: hydrology.isStream
+    },
+    {
+      playableInset: Number(grid.playableInset),
+      inf: Number(gameTrails.inf),
+      wSlope: Number(gameTrails.wSlope),
+      slopeScale: Number(gameTrails.slopeScale),
+      wMoist: Number(gameTrails.wMoist),
+      moistStart: Number(gameTrails.moistStart),
+      wObs: Number(gameTrails.wObs),
+      wRidge: Number(gameTrails.wRidge),
+      wStreamProx: Number(gameTrails.wStreamProx),
+      streamProxMaxDist: Number(gameTrails.streamProxMaxDist),
+      wCross: Number(gameTrails.wCross),
+      wMarsh: Number(gameTrails.wMarsh)
+    } as TrailCostParams
+  );
+  const trailPlan = buildTrailPlan(
+    shape,
+    {
+      seed: {
+        firmness: ecology.firmness,
+        moisture: hydrology.moisture,
+        slopeMag: topography.slopeMag,
+        waterClass: hydrology.waterClass
+      },
+      endpoint: {
+        waterClass: hydrology.waterClass,
+        faN: hydrology.faN,
+        landform: topography.landform,
+        slopeMag: topography.slopeMag
+      }
+    },
+    {
+      seed: {
+        playableInset: Number(grid.playableInset),
+        waterSeedMaxDist: Number(gameTrails.waterSeedMaxDist),
+        seedTilesPerTrail: Number(gameTrails.seedTilesPerTrail)
+      },
+      endpoint: {
+        streamEndpointAccumThreshold: Number(gameTrails.streamEndpointAccumThreshold),
+        ridgeEndpointMaxSlope: Number(gameTrails.ridgeEndpointMaxSlope)
+      }
+    } as TrailPlanParams
+  );
+  const routed = executeTrailRouteRequests(shape, trailCost, trailPlan.routeRequests, {
+    inf: Number(gameTrails.inf),
+    diagWeight: Number(gameTrails.diagWeight),
+    tieEps: Number(hydrologyParamsRaw.tieEps)
+  } as TrailRoutingParams);
+  const trailMarked = markTrailPaths(shape, routed.successfulPaths);
+  const moveCost = deriveMoveCost(
+    shape,
+    {
+      obstruction: ecology.obstruction,
+      moisture: hydrology.moisture,
+      waterClass: hydrology.waterClass,
+      biome: ecology.biome,
+      gameTrail: trailMarked.gameTrail
+    },
+    {
+      moveCostObstructionMax: Number(movement.moveCostObstructionMax),
+      moveCostMoistureMax: Number(movement.moveCostMoistureMax),
+      marshMoveCostMultiplier: Number(movement.marshMoveCostMultiplier),
+      openBogMoveCostMultiplier: Number(movement.openBogMoveCostMultiplier),
+      gameTrailMoveCostMultiplier: Number(gameTrails.gameTrailMoveCostMultiplier)
+    } as MoveCostParams
+  );
+  const directionalPassability = deriveDirectionalPassability(
+    shape,
+    {
+      h: topography.h,
+      moisture: hydrology.moisture,
+      slopeMag: topography.slopeMag,
+      waterClass: hydrology.waterClass,
+      playableInset: Number(grid.playableInset)
+    },
+    {
+      steepBlockDelta: Number(movement.steepBlockDelta),
+      steepDifficultDelta: Number(movement.steepDifficultDelta),
+      cliffSlopeMin: Number(movement.cliffSlopeMin)
+    } as DirectionalPassabilityParams
+  );
+  const followableFlags = deriveFollowableFlags(shape, {
+    waterClass: hydrology.waterClass,
+    landform: topography.landform,
+    gameTrail: trailMarked.gameTrail
+  });
 
   const envelope: TerrainEnvelope = buildEnvelopeSkeleton();
   envelope.meta.implementationStatus = "draft-incomplete";
@@ -175,7 +291,13 @@ export async function runGenerator(request: RunRequest): Promise<void> {
           obstruction: ecology.obstruction[i],
           featureFlags: featureFlagsToOrderedList(ecology.featureFlags[i])
         }
-      }
+      },
+      navigation: navigationTilePayloadAt(i, {
+        moveCost,
+        passabilityPacked: directionalPassability.passabilityPacked,
+        followableFlags,
+        gameTrailId: trailMarked.gameTrailId
+      })
     });
   }
   envelope.tiles = tiles;
