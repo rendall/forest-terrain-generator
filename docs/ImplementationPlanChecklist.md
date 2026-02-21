@@ -81,15 +81,20 @@ Rules:
 - [x] Decide canonical seed-to-Perlin initialization mapping from `uint64`/`subSeed` values (use normative `subSeed(seed,mapId,octaveIndex)`; initialize SplitMix64 state with that `uint64`; build `perm[0..255]` via seeded Fisher-Yates using `j = rand % (i+1)`; expand to 512 by repetition).
 - [x] Decide fixed `Landform` enum-code mapping for `Uint8Array` storage (Option 1/spec-order mapping: `0=flat`, `1=slope`, `2=ridge`, `3=valley`, `4=basin`).
 - [x] Decide `AspectDeg` behavior for zero-slope/flat tiles (if `Hx == 0` and `Hy == 0`, set `AspectDeg = 0` as deterministic sentinel; otherwise use formula output normalized to `[0,360)`).
-- [ ] Decide Phase 2 golden snapshot scope details (fixed seed list, grid sizes, and artifact set).
-- [ ] Review the Phase 2 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 2 implementation.
+- [x] Decide Phase 2 golden snapshot scope details (balanced scope: fixed seeds `1`, `42`, `123456789`, `18446744073709551615`; grid sizes `16x16` and `64x64`; committed/versioned artifacts `H`, `R`, `V`, `SlopeMag`, `AspectDeg`, `Landform`; plus targeted boundary fixtures including `1xN`, `Nx1`, and threshold-near cases).
+- [x] Review the Phase 2 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 2 implementation.
 
 ### Phase 2 Implementation
 
-- [ ] Implement base map generation and authored-map override flow.
-- [ ] Implement slope magnitude, aspect, and landform classification.
+- [ ] Implement Phase 2 typed-array map model and shared `GridShape` contract (row-major SoA for `H`, `R`, `V`, `SlopeMag`, `AspectDeg`, `Landform`).
+- [ ] Implement Improved Perlin (2002) primitives and deterministic permutation initialization (`subSeed` + SplitMix64 + Fisher-Yates).
+- [ ] Implement multi-octave base-map generation for `H`, `R`, and `V` using Appendix A parameters and generation-time `[0,1]` clamp policy.
+- [ ] Implement authored-map JSON parsing/validation for `--map-h`, `--map-r`, `--map-v` with strict `[0,1]` value checks, no resampling/interpolation, and exit-code mapping (`2`/`3`) per policy.
+- [ ] Implement authored-map override flow (`H`, `R`, `V`) with deterministic precedence and shape compatibility checks.
+- [ ] Implement slope magnitude and aspect derivation with clamped boundary sampling and `AspectDeg=0` sentinel for `Hx==0 && Hy==0`.
+- [ ] Implement landform classification with strict threshold comparisons and fixed enum mapping (`0=flat`, `1=slope`, `2=ridge`, `3=valley`, `4=basin`).
 - [ ] Add deterministic tests for ordering and tie-break behavior used by this phase.
-- [ ] Add fixed-seed regression tests for topography outputs.
+- [ ] Add fixed-seed hybrid topography regression tests using committed/versioned golden snapshots (balanced scope seeds/sizes/artifacts) plus targeted boundary/threshold fixtures.
 - [ ] Review gate: explicit approval to proceed to Phase 3.
 
 ## Phase 3 - Hydrology

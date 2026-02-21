@@ -350,7 +350,7 @@ Locked decisions:
 11. Authored map schema/type/range errors map to exit `2`; authored map shape/dimension mismatches map to exit `3`; errors must identify map input and failing key/index.
 12. Slope/aspect boundary handling follows clamped-coordinate sampling from normative Section 5.1 with no separate edge/corner algorithm branches.
 13. Landform threshold comparisons follow strict operators to avoid boundary drift: `SlopeMag < flatSlopeThreshold`; neighbor-high when `H[n] > center + eps`; neighbor-low when `H[n] < center - eps`; otherwise neutral.
-14. Phase-2 regression testing uses a hybrid strategy: committed/versioned golden snapshots for fixed seeds and dimensions, plus targeted fixtures for boundary and threshold behavior.
+14. Phase-2 regression testing uses a balanced hybrid strategy: committed/versioned golden snapshots for seeds `1`, `42`, `123456789`, and `18446744073709551615` at dimensions `16x16` and `64x64`, plus targeted fixtures for boundary and threshold behavior (`1xN`, `Nx1`, and threshold-near cases).
 15. Float assertions in topography regressions use epsilon-based comparisons (default `1e-6`) for derived float maps.
 16. v1 Perlin uses the Improved Perlin (2002) variant with fixed fade function `6t^5 - 15t^4 + 10t^3`, fixed linear interpolation, and fixed 2D gradient/dot-product behavior.
 17. v1 Perlin uses a deterministic 256-entry permutation table expanded to 512 entries; seed mapping into permutation initialization is fixed by a separate Phase-2 decision.
