@@ -126,6 +126,11 @@ export interface TrailRouteExecutionResult {
   successfulPaths: number[][];
 }
 
+export interface TrailMarkedMaps {
+  gameTrail: Uint8Array;
+  gameTrailId: Int32Array;
+}
+
 export interface TrailRoutingParams {
   inf: number;
   diagWeight: number;
@@ -592,6 +597,27 @@ export function executeTrailRouteRequests(
     skippedUnreachable,
     successfulPaths
   };
+}
+
+export function markTrailPaths(shape: GridShape, paths: number[][]): TrailMarkedMaps {
+  const gameTrail = new Uint8Array(shape.size);
+  const gameTrailId = new Int32Array(shape.size).fill(-1);
+
+  for (let routeId = 0; routeId < paths.length; routeId += 1) {
+    const path = paths[routeId];
+    for (const index of path) {
+      if (index < 0 || index >= shape.size) {
+        throw new Error(`Navigation trail path index out of bounds: ${index} for size ${shape.size}.`);
+      }
+
+      gameTrail[index] = 1;
+      if (gameTrailId[index] === -1) {
+        gameTrailId[index] = routeId;
+      }
+    }
+  }
+
+  return { gameTrail, gameTrailId };
 }
 
 export function deriveTrailPreferenceCost(

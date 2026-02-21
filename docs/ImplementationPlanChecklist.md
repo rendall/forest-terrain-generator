@@ -183,7 +183,7 @@ Rules:
 - [x] Implement deterministic endpoint selection and route request ordering (Section 10.4) using geometric 8-way nearest distance and `(y,x)` tie-breaks.
 - [x] Implement least-cost routing (Section 10.5) with float64 cumulative costs, `tieEps` equality handling, strict-better relaxation (`newCost < oldCost - tieEps`), and deterministic queue ordering.
 - [x] Implement no-op fallback behavior for no-seed and unreachable-route cases; skip only affected routes and continue pipeline.
-- [ ] Implement trail marking semantics: `GameTrail` union and first-writer-wins `GameTrailId` assignment.
+- [x] Implement trail marking semantics: `GameTrail` union and first-writer-wins `GameTrailId` assignment.
 - [ ] Implement movement cost derivation (Section 13.1) with ordered multiplier application and trail modifier applied last.
 - [ ] Implement directional passability and `CliffEdge` derivation (Section 13.2), including packed internal representation and deterministic envelope serialization mapping.
 - [ ] Implement followable derivation (Section 13.3) with canonical order/dedup and 8-way `shore` adjacency behavior.
