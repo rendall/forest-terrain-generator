@@ -101,7 +101,7 @@ Rules:
 
 ### Phase 3 Decisions
 
-- [ ] Decide hydrology in-memory map model and numeric types (`FD`, `FA`, `FA_N`, `LakeMask`, `isStream`, `distWater`, `Moisture`, `WaterClass`).
+- [x] Decide hydrology in-memory map model and numeric types (`FD`, `FA`, `FA_N`, `LakeMask`, `isStream`, `distWater`, `Moisture`, `WaterClass`) (`FD`: `Uint8Array`; `FA`: `Uint32Array`; `FA_N`: `Float32Array`; `LakeMask`: `Uint8Array`; `isStream`: `Uint8Array`; `distWater`: `Uint32Array`; `Moisture`: `Float32Array`; `WaterClass`: `Uint8Array`; internal `InDeg`: `Uint8Array`).
 - [ ] Decide canonical `FD` storage contract (`Dir8` encoding and `NONE=255`) and neighbor-iteration helper contract for hydrology passes.
 - [ ] Decide exact hash/tie-break implementation details for Section 6.1 flow-direction tie resolution (bit-width, hash function inputs, and modulo/indexing behavior).
 - [ ] Decide flow-accumulation numeric limits/overflow policy and deterministic topological queue implementation details.
@@ -109,6 +109,7 @@ Rules:
 - [ ] Decide lake/stream/moisture/water-class threshold comparison conventions (strict vs inclusive per threshold) and shared comparator helpers.
 - [ ] Decide explicit no-water and no-stream fallback handling details for proximity maps (`distWater`, `distStream`) and downstream moisture behavior.
 - [ ] Decide hydrology regression-test scope (golden seeds/sizes/artifacts and targeted tie-case fixtures).
+- [ ] Run a Phase 3 decision sanity check on targeted fixtures (tie-heavy flow, no-water/no-stream cases, and threshold-edge cases) and confirm behavior is not pathological before starting implementation (`FD` acyclic; valid `FD` domain; no `NaN`/`Infinity`; `FA>=1`; `FA_N` in `[0,1]`; water-class precedence holds; no-water/no-stream fallbacks applied as decided).
 - [ ] Review the Phase 3 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 3 implementation.
 
 ### Phase 3 Implementation

@@ -373,6 +373,11 @@ Goals:
 1. Implement flow direction, accumulation, normalization.
 2. Implement lakes, streams, moisture, and water class.
 
+Locked decisions:
+
+1. Hydrology map storage uses typed row-major arrays with explicit contracts: `FD` as `Uint8Array`, `FA` as `Uint32Array`, `FA_N` as `Float32Array`, `LakeMask` as `Uint8Array`, `isStream` as `Uint8Array`, `distWater` as `Uint32Array`, `Moisture` as `Float32Array`, and `WaterClass` as `Uint8Array`.
+2. Internal flow-accumulation indegree storage uses `Uint8Array` (max 8 upstream contributors in D8).
+
 Done criteria:
 
 1. Hydrology fixed-seed regressions pass.
