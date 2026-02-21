@@ -2,6 +2,31 @@
 
 This document is a living ledger of significant technical decisions made within this project. Each entry captures the context in which a decision was made, the options considered, the decision itself, and its consequences. The purpose is not to justify past choices defensively, but to preserve intent and reasoning so future contributors can understand why the system is shaped the way it is. Over time, this file forms a chronological record of trade-offs, constraints, and design direction, providing continuity as the codebase and team evolve.
 
+## Emit `navigation.gameTrailId` in Standard Tile Payload (v1)
+
+**Timestamp:** 2026-02-21 19:15 (UTC)
+
+### Decision
+For v1, the standard tile payload includes `navigation.gameTrailId` as an optional integer field.
+
+- Emit `navigation.gameTrailId` when a tile has a generated trail id.
+- Omit `navigation.gameTrailId` when no trail id exists.
+- Assign IDs incrementally in route-generation order.
+- On overlapping routes, keep existing tile id assignment (first-writer-wins).
+
+### Rationale
+Including `navigation.gameTrailId` in the standard envelope gives downstream gameplay and tooling immediate trail attribution without requiring debug-mode artifacts. This keeps v1 payloads useful in-game while staying compact and deterministic.
+
+### Alternatives Considered
+- Debug-only `GameTrailId` – rejected because in-game consumers would lose direct trail-id access in standard output.
+- Standard `trailManifest` (`routeId -> ordered tile list`) – rejected for v1 due to higher payload/schema complexity; deferred until route-level fidelity is required.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): docs/normative/ForestTerrainGeneration.md
+- Related ADRs: None
+
 ## Adopt JSON-Only Params File Format for v1
 
 **Timestamp:** 2026-02-21 09:35 (UTC)
