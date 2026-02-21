@@ -54,7 +54,7 @@ Rules:
 - [x] Implement params-file JSON-only enforcement and malformed-JSON classification as exit `2`.
 - [x] Implement path-resolution behavior (CLI relative paths from CWD; params-file relative paths from params-file directory).
 - [x] Implement mode/output validation details, including rejecting `--output-file` in `debug` with hint: `You might mean --debug-output-file.`
-- [ ] Implement duplicate-flag hard errors and unknown-input diagnostics with precise key/flag reporting and close-match suggestions when available.
+- [x] Implement duplicate-flag hard errors and unknown-input diagnostics with precise key/flag reporting and close-match suggestions when available.
 - [ ] Implement envelope skeleton builder and serializer boundary.
 - [ ] Implement exit code mapping for validation/shape/IO/internal failures.
 - [ ] Add integration tests for help behavior (`help`, `--help`, `-h`, no command) and command-error behavior (unknown/invalid -> exit `2`).

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { runGenerator } from "../app/run-generator.js";
+import { validateArgv } from "./argv-validation.js";
 import type { CliArgs, Mode } from "../domain/types.js";
 
 function parseIntArg(raw: string): number {
@@ -64,17 +65,25 @@ program
   .description("Procedural forest terrain generation CLI")
   .showSuggestionAfterError(true);
 
-addCommonInputOptions(program.command("generate").description("Generate terrain"))
-  .action(async (options) => runMode("generate", toArgs(options)));
+addCommonInputOptions(program.command("generate").description("Generate terrain")).action(
+  async (options) => runMode("generate", toArgs(options))
+);
 
-addCommonInputOptions(
-  program.command("derive").description("Derive terrain from authored maps")
-).action(async (options) => runMode("derive", toArgs(options)));
+addCommonInputOptions(program.command("derive").description("Derive terrain from authored maps"))
+  .action(async (options) => runMode("derive", toArgs(options)));
 
-addCommonInputOptions(program.command("debug").description("Emit debug artifacts"))
-  .action(async (options) => runMode("debug", toArgs(options)));
+addCommonInputOptions(program.command("debug").description("Emit debug artifacts")).action(
+  async (options) => runMode("debug", toArgs(options))
+);
 
-program.parseAsync(process.argv).catch((error: unknown) => {
-  console.error(error);
+try {
+  validateArgv(process.argv.slice(2));
+  await program.parseAsync(process.argv);
+} catch (error: unknown) {
+  if (error instanceof Error) {
+    console.error(error.message);
+  } else {
+    console.error(error);
+  }
   process.exitCode = 5;
-});
+}

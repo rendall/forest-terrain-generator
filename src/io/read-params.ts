@@ -2,6 +2,8 @@ import { readFile } from "node:fs/promises";
 import { dirname, extname, isAbsolute, resolve } from "node:path";
 import type { BaseInputs, JsonObject } from "../domain/types.js";
 import { InputValidationError } from "../domain/errors.js";
+import { suggestClosest } from "../lib/suggest.js";
+import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
 
 function isObject(value: unknown): value is JsonObject {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -11,6 +13,35 @@ function resolveFromBase(baseDir: string, maybeRelativePath: string): string {
   return isAbsolute(maybeRelativePath)
     ? maybeRelativePath
     : resolve(baseDir, maybeRelativePath);
+}
+
+function validateUnknownKeys(
+  input: JsonObject,
+  schema: JsonObject,
+  pathPrefix: string
+): void {
+  const allowedKeys = Object.keys(schema);
+  for (const [key, value] of Object.entries(input)) {
+    if (!allowedKeys.includes(key)) {
+      const suggestion = suggestClosest(key, allowedKeys);
+      const hint = suggestion ? ` Did you mean "${suggestion}"?` : "";
+      throw new InputValidationError(
+        `Unknown params key "${pathPrefix}.${key}".${hint}`
+      );
+    }
+
+    const schemaValue = schema[key];
+    if (
+      typeof value === "object" &&
+      value !== null &&
+      !Array.isArray(value) &&
+      typeof schemaValue === "object" &&
+      schemaValue !== null &&
+      !Array.isArray(schemaValue)
+    ) {
+      validateUnknownKeys(value as JsonObject, schemaValue as JsonObject, `${pathPrefix}.${key}`);
+    }
+  }
 }
 
 export async function readParamsFile(
@@ -43,6 +74,32 @@ export async function readParamsFile(
   }
 
   const baseDir = dirname(resolvedPath);
+  const wrapperKeys = [
+    "seed",
+    "width",
+    "height",
+    "params",
+    "mapHPath",
+    "mapRPath",
+    "mapVPath",
+    "outputFile",
+    "outputDir",
+    "debugOutputFile",
+    "force"
+  ];
+  const isWrapperMode =
+    "params" in parsed || wrapperKeys.some((key) => key !== "params" && key in parsed);
+
+  if (isWrapperMode) {
+    for (const key of Object.keys(parsed)) {
+      if (!wrapperKeys.includes(key)) {
+        const suggestion = suggestClosest(key, wrapperKeys);
+        const hint = suggestion ? ` Did you mean "${suggestion}"?` : "";
+        throw new InputValidationError(`Unknown params wrapper key "${key}".${hint}`);
+      }
+    }
+  }
+
   const seed = typeof parsed.seed === "string" ? parsed.seed : undefined;
   const width = typeof parsed.width === "number" ? parsed.width : undefined;
   const height = typeof parsed.height === "number" ? parsed.height : undefined;
@@ -72,6 +129,7 @@ export async function readParamsFile(
       : undefined;
   const force = typeof parsed.force === "boolean" ? parsed.force : undefined;
   const params = isObject(parsed.params) ? parsed.params : parsed;
+  validateUnknownKeys(params, APPENDIX_A_DEFAULTS, "params");
 
   return {
     seed,
