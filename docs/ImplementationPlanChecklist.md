@@ -77,6 +77,11 @@ Rules:
 - [x] Decide comparison conventions for landform thresholds (`eps`, `flatSlopeThreshold`) to prevent equality-edge drift (strict comparisons: `SlopeMag < flatSlopeThreshold` for flat branch; neighbor-high if `H[n] > center + eps`; neighbor-low if `H[n] < center - eps`; otherwise neutral/ignored).
 - [x] Decide topography regression-test strategy (hybrid: committed/versioned golden snapshots for a fixed deterministic seed set, plus float epsilon assertions and targeted boundary/threshold fixtures).
 - [x] Confirm v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); defer any resolution-model change to a future ADR.
+- [ ] Decide exact Perlin constants and algorithm details to lock for implementation.
+- [ ] Decide canonical seed-to-Perlin initialization mapping from `uint64`/`subSeed` values.
+- [ ] Decide fixed `Landform` enum-code mapping for `Uint8Array` storage.
+- [ ] Decide `AspectDeg` behavior for zero-slope/flat tiles.
+- [ ] Decide Phase 2 golden snapshot scope details (fixed seed list, grid sizes, and artifact set).
 - [ ] Review the Phase 2 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 2 implementation.
 
 ### Phase 2 Implementation
