@@ -46,6 +46,10 @@ export interface TrailDistStreamParams {
   streamProxMaxDist: number;
 }
 
+export interface TrailDistWaterParams {
+  waterSeedMaxDist: number;
+}
+
 export interface TrailCostInputs {
   slopeMag: Float32Array;
   moisture: Float32Array;
@@ -53,6 +57,13 @@ export interface TrailCostInputs {
   landform: Uint8Array;
   waterClass: Uint8Array;
   isStream: Uint8Array;
+}
+
+export interface TrailSeedInputs {
+  firmness: Float32Array;
+  moisture: Float32Array;
+  slopeMag: Float32Array;
+  waterClass: Uint8Array;
 }
 
 export interface TrailCostParams {
@@ -68,6 +79,12 @@ export interface TrailCostParams {
   streamProxMaxDist: number;
   wCross: number;
   wMarsh: number;
+}
+
+export interface TrailSeedParams {
+  playableInset: number;
+  waterSeedMaxDist: number;
+  seedTilesPerTrail: number;
 }
 
 export function deriveTrailDistStream(
@@ -124,6 +141,59 @@ export function deriveTrailDistStream(
   return dist;
 }
 
+export function deriveTrailDistWater(
+  shape: GridShape,
+  waterClass: Uint8Array,
+  params: TrailDistWaterParams
+): Uint32Array {
+  validateMapLength(shape, waterClass, "WaterClass");
+
+  const maxDist = Math.max(0, Math.floor(params.waterSeedMaxDist));
+  const dist = new Uint32Array(shape.size).fill(maxDist);
+  const queue: number[] = [];
+
+  for (let i = 0; i < shape.size; i += 1) {
+    if (waterClass[i] === WATER_CLASS_CODE.stream || waterClass[i] === WATER_CLASS_CODE.lake) {
+      dist[i] = 0;
+      queue.push(i);
+    }
+  }
+
+  if (queue.length === 0) {
+    return dist;
+  }
+
+  let head = 0;
+  while (head < queue.length) {
+    const current = queue[head];
+    head += 1;
+
+    const currentDist = dist[current];
+    if (currentDist >= maxDist) {
+      continue;
+    }
+
+    const x = current % shape.width;
+    const y = Math.floor(current / shape.width);
+    for (const step of DIR8_STEPS) {
+      const nx = x + step.dx;
+      const ny = y + step.dy;
+      if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
+        continue;
+      }
+
+      const nextIndex = ny * shape.width + nx;
+      const nextDist = currentDist + 1;
+      if (nextDist < dist[nextIndex] && nextDist <= maxDist) {
+        dist[nextIndex] = nextDist;
+        queue.push(nextIndex);
+      }
+    }
+  }
+
+  return dist;
+}
+
 function computeStreamProximityBonus(
   dist: number,
   streamProxMaxDist: number,
@@ -143,6 +213,102 @@ function computeMoistureTerm(moisture: number, moistStart: number, wMoist: numbe
     return moisture > moistStart ? wMoist : 0;
   }
   return wMoist * clamp01((moisture - moistStart) / denom);
+}
+
+function computeSeedCount(shape: GridShape, playableInset: number, seedTilesPerTrail: number): number {
+  const inset = Math.max(0, Math.floor(playableInset));
+  const playableWidth = shape.width - 2 * inset;
+  const playableHeight = shape.height - 2 * inset;
+  const playableArea = Math.max(0, playableWidth * playableHeight);
+  const tilesPerTrail = Math.max(1, Math.floor(seedTilesPerTrail));
+
+  const count = Math.floor(playableArea / tilesPerTrail);
+  return count < 1 ? 1 : count;
+}
+
+function computeWaterSeedScore(
+  firmness: number,
+  moisture: number,
+  slopeMag: number,
+  distWater: number,
+  waterSeedMaxDist: number
+): number {
+  const firmTerm = 0.35 * clamp01((firmness - 0.35) / 0.65);
+  const moistureTerm = 0.25 * clamp01(1 - Math.abs(moisture - 0.55) / 0.55);
+  const slopeTerm = 0.2 * clamp01(1 - slopeMag / 0.25);
+  const proxTerm =
+    waterSeedMaxDist > 0 ? 0.2 * clamp01(1 - distWater / waterSeedMaxDist) : 0;
+
+  return firmTerm + moistureTerm + slopeTerm + proxTerm;
+}
+
+export function selectTrailSeeds(
+  shape: GridShape,
+  inputs: TrailSeedInputs,
+  params: TrailSeedParams
+): number[] {
+  validateMapLength(shape, inputs.firmness, "Firmness");
+  validateMapLength(shape, inputs.moisture, "Moisture");
+  validateMapLength(shape, inputs.slopeMag, "SlopeMag");
+  validateMapLength(shape, inputs.waterClass, "WaterClass");
+
+  const distWater = deriveTrailDistWater(shape, inputs.waterClass, {
+    waterSeedMaxDist: params.waterSeedMaxDist
+  });
+  const seedCount = computeSeedCount(shape, params.playableInset, params.seedTilesPerTrail);
+  const candidates: Array<{ index: number; score: number }> = [];
+
+  for (let i = 0; i < shape.size; i += 1) {
+    const x = i % shape.width;
+    const y = Math.floor(i / shape.width);
+    const playable = !isNonPlayable(shape, x, y, params.playableInset);
+    if (!playable) {
+      continue;
+    }
+    if (inputs.waterClass[i] === WATER_CLASS_CODE.lake) {
+      continue;
+    }
+    if (inputs.moisture[i] >= 0.92) {
+      continue;
+    }
+    if (inputs.slopeMag[i] >= 0.3) {
+      continue;
+    }
+
+    candidates.push({
+      index: i,
+      score: computeWaterSeedScore(
+        inputs.firmness[i],
+        inputs.moisture[i],
+        inputs.slopeMag[i],
+        distWater[i],
+        params.waterSeedMaxDist
+      )
+    });
+  }
+
+  if (candidates.length === 0) {
+    return [];
+  }
+
+  candidates.sort((a, b) => {
+    if (a.score !== b.score) {
+      return b.score - a.score;
+    }
+
+    const ax = a.index % shape.width;
+    const ay = Math.floor(a.index / shape.width);
+    const bx = b.index % shape.width;
+    const by = Math.floor(b.index / shape.width);
+
+    if (ay !== by) {
+      return ay - by;
+    }
+    return ax - bx;
+  });
+
+  const selectedCount = Math.min(seedCount, candidates.length);
+  return candidates.slice(0, selectedCount).map((entry) => entry.index);
 }
 
 export function deriveTrailPreferenceCost(

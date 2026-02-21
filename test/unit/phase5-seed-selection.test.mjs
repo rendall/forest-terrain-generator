@@ -60,12 +60,17 @@ describe("Phase 5 deterministic seed selection", () => {
     const index = (x, y) => y * shape.width + x;
 
     const firmness = new Float32Array(shape.size).fill(0.6);
-    const moisture = new Float32Array(shape.size).fill(0.55);
+    const moisture = new Float32Array(shape.size).fill(0.95);
     const slopeMag = new Float32Array(shape.size).fill(0.1);
     const waterClass = new Uint8Array(shape.size).fill(WATER_CLASS_CODE.none);
 
     // Put one stream tile in playable area so distance term differs by tile.
     waterClass[index(1, 1)] = WATER_CLASS_CODE.stream;
+    // Only two non-stream candidates pass the filter; near-water should rank first.
+    const near = index(1, 2); // distance 1 to stream
+    const far = index(3, 3); // farther from stream
+    moisture[near] = 0.55;
+    moisture[far] = 0.55;
 
     const seeds = navigation.selectTrailSeeds(
       shape,
@@ -82,10 +87,6 @@ describe("Phase 5 deterministic seed selection", () => {
       }
     );
 
-    const near = index(1, 2); // distance 1 to stream
-    const far = index(3, 3); // distance 2+ to stream
-
-    expect(seeds).toContain(near);
-    expect(seeds.indexOf(near)).toBeLessThan(seeds.indexOf(far));
+    expect(seeds).toEqual([near, far]);
   });
 });
