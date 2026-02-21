@@ -440,6 +440,9 @@ Locked decisions:
 12. Phase-4 threshold operators remain exact as specified (`>=`, `<=`, `<`, `>`); no epsilon-based comparator offsets are introduced.
 13. To avoid float32 boundary drift, all threshold parameters used in Phase-4 comparisons are normalized with `Math.fround(...)` before applying exact operators against typed-array values.
 14. List-output shape and ordering are fixed: `dominant` is an ordered list of length `0..2` following the deterministic species table (primary first, optional secondary second); `surfaceFlags` and `featureFlags` are emitted as ordered string lists in their canonical fixed orders, filtered to active flags only, with no duplicates.
+15. Phase-4 regression scope is balanced: committed/versioned golden snapshots for seeds `1`, `42`, `123456789`, `18446744073709551615` at `16x16` and `64x64`, covering `Biome`, `SoilType`, `TreeDensity`, `CanopyCover`, `Obstruction`, `SurfaceFlags`, `FeatureFlags`, and `dominant`.
+16. Targeted Phase-4 fixtures are required for threshold-edge comparisons, deterministic list ordering (`dominant`, `surfaceFlags`, `featureFlags`), mixed-forest dominant-species split boundaries, multi-flag combinations, and empty-list cases.
+17. Float assertions for Phase-4 derived float maps use epsilon-based comparisons with default epsilon `1e-6`.
 
 Done criteria:
 
