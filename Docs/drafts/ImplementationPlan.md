@@ -339,7 +339,9 @@ Locked decisions:
 
 1. v1 base-map generation uses an in-repo deterministic 2D Perlin implementation.
 2. v1 does not depend on an external noise-generation library for base-map generation.
-3. v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); any future change to this model requires an ADR and normative-spec update before implementation.
+3. Perlin behavior is fixed in code for v1 (gradient/permutation strategy, fade/interpolation function, and output normalization/clamp behavior are implementation-defined and tested, not user-selectable).
+4. v1 noise tuning defaults come from Appendix A, and tuning overrides are provided through `--params` (`CLI > file > defaults`).
+5. v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); any future change to this model requires an ADR and normative-spec update before implementation.
 
 Done criteria:
 

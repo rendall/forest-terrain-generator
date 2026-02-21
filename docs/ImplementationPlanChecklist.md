@@ -69,7 +69,7 @@ Rules:
 ### Phase 2 Decisions
 
 - [x] Decide deterministic v1 noise-function implementation choice for base-map generation (v1 uses in-repo deterministic 2D Perlin).
-- [ ] Decide Perlin implementation details (gradient table, permutation/hash strategy, fade/interpolation function, and output normalization/clamp behavior).
+- [x] Decide Perlin implementation details (in-repo deterministic implementation; fixed gradient/permutation/fade/interpolation/normalization behavior; Appendix A defaults with noise tuning overrides via `--params`).
 - [ ] Decide in-memory grid representation and indexing contract for `H`, `R`, `V`, `SlopeMag`, `AspectDeg`, and `Landform`.
 - [ ] Decide authored-map file shape/format contract and parsing/validation behavior for `--map-h`, `--map-r`, and `--map-v`.
 - [ ] Decide range/clamping policy for base maps after generation and for authored-map validation.
