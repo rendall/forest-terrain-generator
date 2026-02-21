@@ -160,9 +160,8 @@ export function deriveFlowDirection(
     for (let x = 0; x < shape.width; x += 1) {
       const centerIndex = y * shape.width + x;
       const centerHeight = h[centerIndex];
-
+      const eligibleDrops: Array<{ dir: number; drop: number }> = [];
       let maxDrop = Number.NEGATIVE_INFINITY;
-      const tiedCandidates: number[] = [];
 
       for (const neighbor of DIR8_NEIGHBORS) {
         const nx = x + neighbor.dx;
@@ -176,13 +175,16 @@ export function deriveFlowDirection(
         if (drop < minDropThreshold) {
           continue;
         }
-
-        if (drop > maxDrop + tieEps) {
+        eligibleDrops.push({ dir: neighbor.dir, drop });
+        if (drop > maxDrop) {
           maxDrop = drop;
-          tiedCandidates.length = 0;
-          tiedCandidates.push(neighbor.dir);
-        } else if (Math.abs(drop - maxDrop) <= tieEps) {
-          tiedCandidates.push(neighbor.dir);
+        }
+      }
+
+      const tiedCandidates: number[] = [];
+      for (const candidate of eligibleDrops) {
+        if (Math.abs(candidate.drop - maxDrop) <= tieEps) {
+          tiedCandidates.push(candidate.dir);
         }
       }
 

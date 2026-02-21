@@ -46,4 +46,29 @@ describe("Phase 3 flow direction", () => {
       expect((dir >= 0 && dir <= 7) || dir === hydrology.DIR8_NONE).toBe(true);
     }
   });
+
+  it("builds tie candidates from true maxDrop when tieEps is non-trivial", async () => {
+    const hydrology = await loadHydrologyModule();
+    const shape = createGridShape(3, 3);
+    const center = indexOf(shape, 1, 1);
+
+    // Center height = 2.0.
+    // Drops in canonical Dir8 order at center:
+    // E=1.00, SE=1.09, S=1.15, others < minDropThreshold or not tied.
+    // With tieEps=0.1, T must contain SE and S (dirs 1 and 2), but not E.
+    const h = new Float32Array([
+      2.0, 2.0, 2.0,
+      2.0, 2.0, 1.0,
+      2.0, 0.85, 0.91
+    ]);
+    const seed = 123n;
+    const params = { minDropThreshold: 0.1, tieEps: 0.1 };
+
+    const fd = hydrology.deriveFlowDirection(shape, h, seed, params);
+
+    const tiedCandidates = [1, 2];
+    const expected =
+      tiedCandidates[Number(hydrology.tieBreakHash64(seed, 1, 1) % BigInt(tiedCandidates.length))];
+    expect(fd[center]).toBe(expected);
+  });
 });

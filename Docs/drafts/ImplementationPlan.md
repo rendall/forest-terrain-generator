@@ -466,6 +466,36 @@ Goals:
 1. Implement movement cost, passability, followable flags.
 2. Implement deterministic trail seed selection and routing.
 
+Locked decisions:
+
+1. Phase 5 uses a row-major struct-of-arrays in-memory model shared by the phase (`i = y * width + x`) with one `GridShape` contract for all navigation/trail maps.
+2. `C` (trail preference cost field) and `MoveCost` are stored as `Float32Array`.
+3. `GameTrail` is stored as `Uint8Array` (`0=false`, `1=true`).
+4. `GameTrailId` is stored as `Int32Array` with sentinel `-1` for no trail id.
+5. Directional/navigation categorical outputs (`Passability`, `CliffEdge`, `FollowableFlags`) are stored in compact typed-array bit/byte fields internally, then deterministically mapped to envelope payload fields at serialization boundaries.
+6. Exact per-direction encoding and emitted key order are decided separately in the dedicated Phase 5 passability/followable decision items.
+7. Endpoint selection in Section 10.4 uses geometric nearest-node distance only: 8-way grid distance (cardinal and diagonal step cost `1`) with deterministic tie-break by `(y, x)` ascending.
+8. Endpoint selection does not account for routing barriers (`C >= INF`) during nearest-node choice; reachability is resolved in routing, and unreachable route requests are skipped per fallback policy.
+9. Fallback behavior is graceful no-op for empty/unreachable routing conditions: if candidate filtering yields no seeds, generate zero trails and continue; if a selected seed has no reachable endpoint/path for one or both route requests, skip only those routes and continue.
+10. These fallback cases are not internal failures and do not produce exit `5`; implementations SHOULD expose deterministic debug counters for skipped/no-op routing outcomes.
+11. Route overlap behavior is fixed as first-writer-wins for `GameTrailId`: `GameTrail` is the union of all marked route tiles, and a tile's `GameTrailId` is assigned only when first marked.
+12. If a later route touches an already-marked tile, `GameTrail` remains `true` and existing `GameTrailId` MUST NOT be overwritten.
+13. Passability internal representation is fixed as bit-packed directional state: 2 bits per direction in canonical order `N, NE, E, SE, S, SW, W, NW` (16 bits total per tile).
+14. Passability enum mapping is fixed as `0=passable`, `1=difficult`, `2=blocked`; code `3` is reserved/invalid and MUST NOT be emitted.
+15. Envelope serialization maps the packed internal representation deterministically to the normative string-key object form.
+16. `followable` output ordering is fixed as canonical list order: `stream`, `ridge`, `game_trail`, `shore`.
+17. `followable` output is deduplicated by flag identity; each flag appears at most once per tile in emitted payloads.
+18. Optional trail post-processing (Section 10.6) is disabled in v1; no simplification pass is applied during Phase 5 implementation.
+19. Any future enablement of trail post-processing requires locking one deterministic algorithm and adding targeted regressions before activation.
+20. Trail routing cumulative path-cost math uses `Number` (`float64`) accumulators; `C` tile-cost inputs may remain `Float32Array` but are promoted to `Number` at arithmetic boundaries.
+21. `tieEps` is applied only to cumulative-cost equality comparisons in queue ordering and equal-cost predecessor/tie resolution; it is not applied to unrelated threshold classifiers.
+22. Relaxation/update behavior is fixed for determinism: treat candidate path as strictly better only when `newCost < oldCost - tieEps`; otherwise treat as equal/worse and resolve by locked tie-break order.
+23. Phase-5 regression scope is balanced: committed/versioned golden snapshots for seeds `1`, `42`, `123456789`, and `18446744073709551615` at dimensions `16x16` and `64x64`.
+24. Golden artifacts for Phase 5 include `C`, `GameTrail`, `GameTrailId`, `MoveCost`, `Passability`, `CliffEdge`, and `Followable`.
+25. Targeted Phase-5 fixtures are required for endpoint-selection ties, no-seed fallback, unreachable-endpoint route skipping, and overlap behavior (`GameTrail` union plus first-writer-wins `GameTrailId`).
+26. `shore` followable derivation uses 8-way adjacency: a non-lake tile gets `shore` when any of its 8 neighbors is a lake tile.
+27. v1 standard tile output includes `navigation.gameTrailId` as an optional integer field derived from internal `GameTrailId` storage (`-1` maps to field omission); `trailManifest` is not emitted in v1.
+
 Done criteria:
 
 1. Deterministic route-order and tie-break tests pass.

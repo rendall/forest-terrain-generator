@@ -23,6 +23,18 @@ import {
   soilTypeCodeToName,
   surfaceFlagsToOrderedList
 } from "../pipeline/ecology.js";
+import {
+  assertPostProcessingDisabled,
+  buildTrailPlan,
+  deriveDirectionalPassability,
+  deriveFollowableFlags,
+  deriveMoveCost,
+  deriveTrailPreferenceCost,
+  executeTrailRouteRequests,
+  markTrailPaths,
+  navigationTilePayloadAt,
+  validateNavigationMaps
+} from "../pipeline/navigation.js";
 
 const LANDFORM_NAME_BY_CODE: Record<number, string> = {
   0: "flat",
@@ -41,12 +53,53 @@ const WATER_CLASS_NAME_BY_CODE: Record<number, string> = {
 
 type HydrologyParams = Parameters<typeof deriveHydrology>[5];
 type EcologyParams = Parameters<typeof deriveEcology>[2];
+type TrailCostParams = Parameters<typeof deriveTrailPreferenceCost>[2];
+type TrailPlanParams = Parameters<typeof buildTrailPlan>[2];
+type TrailRoutingParams = Parameters<typeof executeTrailRouteRequests>[3];
+type MoveCostParams = Parameters<typeof deriveMoveCost>[2];
+type DirectionalPassabilityParams = Parameters<typeof deriveDirectionalPassability>[2];
 
 function resolveFromCwd(cwd: string, maybeRelativePath: string | undefined): string | undefined {
   if (!maybeRelativePath) {
     return undefined;
   }
   return isAbsolute(maybeRelativePath) ? maybeRelativePath : resolve(cwd, maybeRelativePath);
+}
+
+function isJsonObject(value: unknown): value is JsonObject {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasExplicitNestedVegVarianceStrength(params: JsonObject): boolean {
+  const nested = params.vegVarianceNoise;
+  if (!isJsonObject(nested)) {
+    return false;
+  }
+  const strength = nested.strength;
+  return typeof strength === "number" && Number.isFinite(strength);
+}
+
+function applyLegacyVegVarianceStrengthOverride(
+  mergedParams: JsonObject,
+  fileParams: JsonObject
+): void {
+  const legacyStrength = fileParams.vegVarianceStrength;
+  if (typeof legacyStrength !== "number" || !Number.isFinite(legacyStrength)) {
+    return;
+  }
+
+  // Canonical precedence remains nested > legacy when both are explicitly provided.
+  if (hasExplicitNestedVegVarianceStrength(fileParams)) {
+    return;
+  }
+
+  const nested = isJsonObject(mergedParams.vegVarianceNoise)
+    ? mergedParams.vegVarianceNoise
+    : {};
+  mergedParams.vegVarianceNoise = {
+    ...nested,
+    strength: legacyStrength
+  };
 }
 
 export async function resolveInputs(request: RunRequest): Promise<ResolvedInputs> {
@@ -62,6 +115,7 @@ export async function resolveInputs(request: RunRequest): Promise<ResolvedInputs
   const baseParams = APPENDIX_A_DEFAULTS;
   const fileParams = (fromFile.params ?? {}) as JsonObject;
   const mergedParams = deepMerge(baseParams, fileParams);
+  applyLegacyVegVarianceStrengthOverride(mergedParams, fileParams);
 
   return {
     seed: request.args.seed ?? fromFile.seed,
@@ -127,6 +181,118 @@ export async function runGenerator(request: RunRequest): Promise<void> {
     },
     ecologyParams
   );
+  const gameTrails = validated.params.gameTrails as Record<string, unknown>;
+  const movement = validated.params.movement as Record<string, unknown>;
+  const grid = validated.params.grid as Record<string, unknown>;
+  const hydrologyParamsRaw = validated.params.hydrology as Record<string, unknown>;
+
+  assertPostProcessingDisabled(
+    gameTrails.postProcessEnabled === true || gameTrails.enablePostProcess === true
+  );
+
+  const trailCost = deriveTrailPreferenceCost(
+    shape,
+    {
+      slopeMag: topography.slopeMag,
+      moisture: hydrology.moisture,
+      obstruction: ecology.obstruction,
+      landform: topography.landform,
+      waterClass: hydrology.waterClass,
+      isStream: hydrology.isStream
+    },
+    {
+      playableInset: Number(grid.playableInset),
+      inf: Number(gameTrails.inf),
+      wSlope: Number(gameTrails.wSlope),
+      slopeScale: Number(gameTrails.slopeScale),
+      wMoist: Number(gameTrails.wMoist),
+      moistStart: Number(gameTrails.moistStart),
+      wObs: Number(gameTrails.wObs),
+      wRidge: Number(gameTrails.wRidge),
+      wStreamProx: Number(gameTrails.wStreamProx),
+      streamProxMaxDist: Number(gameTrails.streamProxMaxDist),
+      wCross: Number(gameTrails.wCross),
+      wMarsh: Number(gameTrails.wMarsh)
+    } as TrailCostParams
+  );
+  const trailPlan = buildTrailPlan(
+    shape,
+    {
+      seed: {
+        firmness: ecology.firmness,
+        moisture: hydrology.moisture,
+        slopeMag: topography.slopeMag,
+        waterClass: hydrology.waterClass
+      },
+      endpoint: {
+        waterClass: hydrology.waterClass,
+        faN: hydrology.faN,
+        landform: topography.landform,
+        slopeMag: topography.slopeMag
+      }
+    },
+    {
+      seed: {
+        playableInset: Number(grid.playableInset),
+        waterSeedMaxDist: Number(gameTrails.waterSeedMaxDist),
+        seedTilesPerTrail: Number(gameTrails.seedTilesPerTrail)
+      },
+      endpoint: {
+        streamEndpointAccumThreshold: Number(gameTrails.streamEndpointAccumThreshold),
+        ridgeEndpointMaxSlope: Number(gameTrails.ridgeEndpointMaxSlope)
+      }
+    } as TrailPlanParams
+  );
+  const routed = executeTrailRouteRequests(shape, trailCost, trailPlan.routeRequests, {
+    inf: Number(gameTrails.inf),
+    diagWeight: Number(gameTrails.diagWeight),
+    tieEps: Number(hydrologyParamsRaw.tieEps)
+  } as TrailRoutingParams);
+  const trailMarked = markTrailPaths(shape, routed.successfulPaths);
+  const moveCost = deriveMoveCost(
+    shape,
+    {
+      obstruction: ecology.obstruction,
+      moisture: hydrology.moisture,
+      waterClass: hydrology.waterClass,
+      biome: ecology.biome,
+      gameTrail: trailMarked.gameTrail
+    },
+    {
+      moveCostObstructionMax: Number(movement.moveCostObstructionMax),
+      moveCostMoistureMax: Number(movement.moveCostMoistureMax),
+      marshMoveCostMultiplier: Number(movement.marshMoveCostMultiplier),
+      openBogMoveCostMultiplier: Number(movement.openBogMoveCostMultiplier),
+      gameTrailMoveCostMultiplier: Number(gameTrails.gameTrailMoveCostMultiplier)
+    } as MoveCostParams
+  );
+  const directionalPassability = deriveDirectionalPassability(
+    shape,
+    {
+      h: topography.h,
+      moisture: hydrology.moisture,
+      slopeMag: topography.slopeMag,
+      waterClass: hydrology.waterClass,
+      playableInset: Number(grid.playableInset)
+    },
+    {
+      steepBlockDelta: Number(movement.steepBlockDelta),
+      steepDifficultDelta: Number(movement.steepDifficultDelta),
+      cliffSlopeMin: Number(movement.cliffSlopeMin)
+    } as DirectionalPassabilityParams
+  );
+  const followableFlags = deriveFollowableFlags(shape, {
+    waterClass: hydrology.waterClass,
+    landform: topography.landform,
+    gameTrail: trailMarked.gameTrail
+  });
+  const navigationMaps = {
+    moveCost,
+    passabilityPacked: directionalPassability.passabilityPacked,
+    followableFlags,
+    gameTrailId: trailMarked.gameTrailId
+  };
+  validateNavigationMaps(shape, navigationMaps);
 
   const envelope: TerrainEnvelope = buildEnvelopeSkeleton();
   envelope.meta.implementationStatus = "draft-incomplete";
@@ -175,7 +341,8 @@ export async function runGenerator(request: RunRequest): Promise<void> {
           obstruction: ecology.obstruction[i],
           featureFlags: featureFlagsToOrderedList(ecology.featureFlags[i])
         }
-      }
+      },
+      navigation: navigationTilePayloadAt(i, navigationMaps)
     });
   }
   envelope.tiles = tiles;

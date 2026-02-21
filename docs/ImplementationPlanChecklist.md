@@ -155,23 +155,43 @@ Rules:
 - [x] Add targeted Phase 4 sanity fixtures (threshold-edge behavior, mixed-forest species boundary, deterministic list ordering, multi-flag combinations, empty-list cases, and float32 threshold-boundary cases).
 - [x] Add fixed-seed Phase 4 golden regressions for balanced scope seeds/sizes/artifacts.
 - [x] Validate categorical and float regression assertions (including default float epsilon `1e-6`) for all Phase 4 outputs.
-- [ ] Review gate: explicit approval to proceed to Phase 5.
+- [x] Review gate: explicit approval to proceed to Phase 5.
 
 ## Phase 5 - Navigation and Trails
 
 ### Decisions
 
-- [ ] Review the implementation list, and add uncertain, ambiguous or unknown implementation details as decision items just below this one, above the review gate.
-- [ ] Review gate: review the implementation plan and ensure that there are no more undecideds or ambiguities.
-- [ ] Review gate: review the implementation checklist and add missing steps and details.
+- [x] Review the implementation list, and add uncertain, ambiguous or unknown implementation details as decision items just below this one, above the review gate.
+- [x] Decide Phase 5 in-memory map model and storage contracts (`C`, `GameTrail`, `GameTrailId`, `MoveCost`, `Passability`, `CliffEdge`, `FollowableFlags`) and deterministic mapping to envelope payload fields.
+- [x] Decide nearest-node distance metric and tie behavior for Section 10.4 endpoint selection (`Seed -> WaterNode`, `Seed -> RidgeNode`) and define exact implementation algorithm.
+- [x] Decide fallback behavior when candidate filtering yields no seeds or when selected seeds have no reachable endpoints/routes.
+- [x] Decide route-overlap and `GameTrailId` assignment behavior when multiple routes mark the same tiles.
+- [x] Decide passability representation contract (internal encoding, 8-direction key order, and blocked/difficult/passable enum mapping).
+- [x] Decide deterministic `followable` list ordering and deduplication contract for multi-source flags (`stream`, `ridge`, `game_trail`, `shore`).
+- [x] Decide whether optional trail post-processing (Section 10.6) is disabled in v1 or enabled with a locked deterministic algorithm.
+- [x] Decide numeric precision and tie policy for trail routing costs (cost accumulator type, `tieEps` comparator usage boundaries, and reproducibility constraints).
+- [x] Decide Phase 5 regression-test scope (fixed seeds/sizes, golden artifacts, and targeted edge fixtures for endpoint selection, tie-breaks, unreachable routes, and overlap).
+- [x] Decide `shore` adjacency neighborhood for followable-flag derivation (8-way adjacency to lake tiles).
+- [x] Decide `GameTrailId` exposure contract for v1 payloads (emit `navigation.gameTrailId` in standard tile output; no `trailManifest` in v1).
+- [x] Review gate: review the implementation plan and ensure that there are no more undecideds or ambiguities.
+- [x] Review gate: review the implementation checklist and add missing steps and details.
 
 ### Implementation
 
-- [ ] Implement movement cost and directional passability.
-- [ ] Implement followable flags.
-- [ ] Implement deterministic trail seed selection and least-cost routing.
-- [ ] Add deterministic tests for route ordering and tie-break behavior.
-- [ ] Validate navigation payload shape and invariants.
+- [x] Implement trail preference cost field `C` (Section 10.2), including `distStream` 8-way BFS, no-stream fallback, and immutable cost-field behavior during routing.
+- [x] Implement deterministic seed candidate filtering/scoring/selection (Section 10.3), including `seedCount` calculation and tie-breaks.
+- [x] Implement deterministic endpoint selection and route request ordering (Section 10.4) using geometric 8-way nearest distance and `(y,x)` tie-breaks.
+- [x] Implement least-cost routing (Section 10.5) with float64 cumulative costs, `tieEps` equality handling, strict-better relaxation (`newCost < oldCost - tieEps`), and deterministic queue ordering.
+- [x] Implement no-op fallback behavior for no-seed and unreachable-route cases; skip only affected routes and continue pipeline.
+- [x] Implement trail marking semantics: `GameTrail` union and first-writer-wins `GameTrailId` assignment.
+- [x] Implement movement cost derivation (Section 13.1) with ordered multiplier application and trail modifier applied last.
+- [x] Implement directional passability and `CliffEdge` derivation (Section 13.2), including packed internal representation and deterministic envelope serialization mapping.
+- [x] Implement followable derivation (Section 13.3) with canonical order/dedup and 8-way `shore` adjacency behavior.
+- [x] Implement standard payload emission of optional `navigation.gameTrailId` (`-1` internal sentinel maps to field omission).
+- [x] Add deterministic tests for route ordering/tie-break behavior, including `tieEps` boundary/equality fixtures.
+- [x] Add targeted Phase 5 fixtures for endpoint-selection ties, no-seed fallback, unreachable-route skipping, and overlap `GameTrailId` behavior.
+- [x] Add fixed-seed Phase 5 golden regressions for balanced scope seeds/sizes/artifacts (`C`, `GameTrail`, `GameTrailId`, `MoveCost`, `Passability`, `CliffEdge`, `Followable`).
+- [x] Validate navigation payload shape/invariants and assert v1 post-processing remains disabled.
 - [ ] Review gate: explicit approval to proceed to Phase 6.
 
 ## Phase 6 - Output, Debug, and Hardening

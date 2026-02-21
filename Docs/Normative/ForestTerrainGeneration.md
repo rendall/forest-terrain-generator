@@ -772,9 +772,10 @@ Compute:
 The generator MUST produce:
 
 - `GameTrail[x,y]`: boolean
-- `GameTrailId[x,y]`: optional integer id (recommended for debugging)
+- `GameTrailId[x,y]`: optional integer id (emitted in standard tile payload as `navigation.gameTrailId` when present)
 
 If `GameTrailId[x,y]` is emitted, IDs MUST be assigned incrementally in the order routes are generated (Section 10.4). Route generation order is deterministic.
+If multiple routes mark the same tile, the existing `GameTrailId[x,y]` MUST NOT be overwritten (first-writer-wins).
 
 Trail effects:
 
@@ -1091,6 +1092,7 @@ The generator MUST emit a versioned envelope:
       "navigation": {
         "moveCost": 1.35,
         "orientationReliability": 0.58,
+        "gameTrailId": 7,
         "followable": ["stream", "game_trail"],
         "passability": {"N": "difficult", "NE": "passable", "E": "passable", "SE": "blocked", "S": "blocked", "SW": "blocked", "W": "passable", "NW": "passable"}
       }
@@ -1100,6 +1102,7 @@ The generator MUST emit a versioned envelope:
 ```
 
 `tiles` is the authoritative payload for downstream consumers.
+`navigation.gameTrailId` is optional and omitted when a tile has no trail id.
 
 ---
 
