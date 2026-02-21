@@ -154,11 +154,47 @@ export interface TrailRoutingParams {
   tieEps: number;
 }
 
+export interface DirectionalPassabilityInputs {
+  h: Float32Array;
+  moisture: Float32Array;
+  slopeMag: Float32Array;
+  waterClass: Uint8Array;
+  playableInset: number;
+}
+
+export interface DirectionalPassabilityParams {
+  steepBlockDelta: number;
+  steepDifficultDelta: number;
+  cliffSlopeMin: number;
+}
+
+export interface DirectionalPassabilityMaps {
+  passabilityPacked: Uint16Array;
+  cliffEdgePacked: Uint8Array;
+}
+
 interface FrontierEntry {
   index: number;
   cost: number;
   stepDir: number;
 }
+
+const PASSABILITY_CODE = {
+  passable: 0,
+  difficult: 1,
+  blocked: 2
+} as const;
+
+const PASS_DIR_ORDER = [
+  { key: "N", dx: 0, dy: -1 },
+  { key: "NE", dx: 1, dy: -1 },
+  { key: "E", dx: 1, dy: 0 },
+  { key: "SE", dx: 1, dy: 1 },
+  { key: "S", dx: 0, dy: 1 },
+  { key: "SW", dx: -1, dy: 1 },
+  { key: "W", dx: -1, dy: 0 },
+  { key: "NW", dx: -1, dy: -1 }
+] as const;
 
 export function deriveTrailDistStream(
   shape: GridShape,
@@ -617,6 +653,115 @@ export function executeTrailRouteRequests(
     requested: routeRequests.length,
     skippedUnreachable,
     successfulPaths
+  };
+}
+
+function setPackedPassabilityCode(currentPacked: number, dirIndex: number, code: number): number {
+  const shift = dirIndex * 2;
+  const cleared = currentPacked & ~(0b11 << shift);
+  return cleared | ((code & 0b11) << shift);
+}
+
+function getPackedPassabilityCode(packed: number, dirIndex: number): number {
+  return (packed >> (dirIndex * 2)) & 0b11;
+}
+
+export function passabilityPackedToObject(packed: number): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (let i = 0; i < PASS_DIR_ORDER.length; i += 1) {
+    const dir = PASS_DIR_ORDER[i];
+    const code = getPackedPassabilityCode(packed, i);
+    out[dir.key] =
+      code === PASSABILITY_CODE.passable
+        ? "passable"
+        : code === PASSABILITY_CODE.difficult
+          ? "difficult"
+          : "blocked";
+  }
+  return out;
+}
+
+export function cliffEdgePackedToObject(packed: number): Record<string, boolean> {
+  const out: Record<string, boolean> = {};
+  for (let i = 0; i < PASS_DIR_ORDER.length; i += 1) {
+    const dir = PASS_DIR_ORDER[i];
+    out[dir.key] = ((packed >> i) & 1) === 1;
+  }
+  return out;
+}
+
+export function deriveDirectionalPassability(
+  shape: GridShape,
+  inputs: DirectionalPassabilityInputs,
+  params: DirectionalPassabilityParams
+): DirectionalPassabilityMaps {
+  validateMapLength(shape, inputs.h, "H");
+  validateMapLength(shape, inputs.moisture, "Moisture");
+  validateMapLength(shape, inputs.slopeMag, "SlopeMag");
+  validateMapLength(shape, inputs.waterClass, "WaterClass");
+
+  const passabilityPacked = new Uint16Array(shape.size);
+  const cliffEdgePacked = new Uint8Array(shape.size);
+
+  for (let i = 0; i < shape.size; i += 1) {
+    const x = i % shape.width;
+    const y = Math.floor(i / shape.width);
+
+    let passPacked = 0;
+    let cliffPacked = 0;
+
+    for (let dirIndex = 0; dirIndex < PASS_DIR_ORDER.length; dirIndex += 1) {
+      const dir = PASS_DIR_ORDER[dirIndex];
+      const nx = x + dir.dx;
+      const ny = y + dir.dy;
+
+      if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
+        passPacked = setPackedPassabilityCode(passPacked, dirIndex, PASSABILITY_CODE.blocked);
+        continue;
+      }
+
+      if (isNonPlayable(shape, nx, ny, inputs.playableInset)) {
+        passPacked = setPackedPassabilityCode(passPacked, dirIndex, PASSABILITY_CODE.blocked);
+        continue;
+      }
+
+      const nIndex = ny * shape.width + nx;
+      const dh = inputs.h[nIndex] - inputs.h[i];
+      const cliff =
+        dh >= params.steepBlockDelta && inputs.slopeMag[i] >= params.cliffSlopeMin;
+      if (cliff) {
+        cliffPacked |= 1 << dirIndex;
+      }
+
+      if (
+        inputs.waterClass[i] === WATER_CLASS_CODE.lake ||
+        inputs.waterClass[nIndex] === WATER_CLASS_CODE.lake
+      ) {
+        passPacked = setPackedPassabilityCode(passPacked, dirIndex, PASSABILITY_CODE.blocked);
+        continue;
+      }
+
+      if (inputs.moisture[i] >= 0.9 && inputs.slopeMag[i] < 0.03) {
+        passPacked = setPackedPassabilityCode(passPacked, dirIndex, PASSABILITY_CODE.difficult);
+        continue;
+      }
+
+      if (dh >= params.steepBlockDelta) {
+        passPacked = setPackedPassabilityCode(passPacked, dirIndex, PASSABILITY_CODE.blocked);
+      } else if (dh >= params.steepDifficultDelta) {
+        passPacked = setPackedPassabilityCode(passPacked, dirIndex, PASSABILITY_CODE.difficult);
+      } else {
+        passPacked = setPackedPassabilityCode(passPacked, dirIndex, PASSABILITY_CODE.passable);
+      }
+    }
+
+    passabilityPacked[i] = passPacked;
+    cliffEdgePacked[i] = cliffPacked;
+  }
+
+  return {
+    passabilityPacked,
+    cliffEdgePacked
   };
 }
 
