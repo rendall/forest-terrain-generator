@@ -99,6 +99,20 @@ Rules:
 
 ## Phase 3 - Hydrology
 
+### Phase 3 Decisions
+
+- [ ] Decide hydrology in-memory map model and numeric types (`FD`, `FA`, `FA_N`, `LakeMask`, `isStream`, `distWater`, `Moisture`, `WaterClass`).
+- [ ] Decide canonical `FD` storage contract (`Dir8` encoding and `NONE=255`) and neighbor-iteration helper contract for hydrology passes.
+- [ ] Decide exact hash/tie-break implementation details for Section 6.1 flow-direction tie resolution (bit-width, hash function inputs, and modulo/indexing behavior).
+- [ ] Decide flow-accumulation numeric limits/overflow policy and deterministic topological queue implementation details.
+- [ ] Decide `FA_N` normalization behavior for degenerate cases (`FAmax == FAmin`) and clamp/epsilon conventions.
+- [ ] Decide lake/stream/moisture/water-class threshold comparison conventions (strict vs inclusive per threshold) and shared comparator helpers.
+- [ ] Decide explicit no-water and no-stream fallback handling details for proximity maps (`distWater`, `distStream`) and downstream moisture behavior.
+- [ ] Decide hydrology regression-test scope (golden seeds/sizes/artifacts and targeted tie-case fixtures).
+- [ ] Review the Phase 3 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 3 implementation.
+
+### Phase 3 Implementation
+
 - [ ] Implement flow direction with deterministic tie-break logic.
 - [ ] Implement flow accumulation and normalization.
 - [ ] Implement lakes, streams, moisture, and water class derivations.
