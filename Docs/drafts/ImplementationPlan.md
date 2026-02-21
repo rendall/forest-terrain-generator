@@ -381,6 +381,8 @@ Locked decisions:
 4. Hydrology neighbor traversal and tie-candidate enumeration use one shared canonical `Dir8` order helper: `E,SE,S,SW,W,NW,N,NE`.
 5. Section 6.1 tie-break hashing uses exact `uint64` semantics with `BigInt` operations and wraparound, following normative `tieBreakHash64(seed,x,y)` constants/steps verbatim.
 6. For tied downhill candidates, list `T` is constructed in canonical `Dir8` order and selection uses `i = tieBreakHash64(seed,x,y) mod |T|`.
+7. Flow accumulation uses deterministic Kahn-style indegree reduction with FIFO queue semantics; zero-indegree tiles are enqueued in canonical row-major order and queue mechanics are implemented with array-plus-head-index (no unstable container ordering).
+8. `FA` accumulation uses `Uint32Array` with explicit overflow checks on `FA[u] += FA[t]`; overflow is treated as fail-fast error rather than silent wraparound.
 
 Done criteria:
 
