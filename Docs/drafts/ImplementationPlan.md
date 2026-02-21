@@ -451,6 +451,7 @@ Locked decisions:
    - `FeatureFlags` bits: `bit0=fallen_log`, `bit1=root_tangle`, `bit2=boulder`, `bit3=windthrow`
 20. `dominant` is stored internally as two typed-array slots: `dominantPrimary: Uint8Array` and `dominantSecondary: Uint8Array`, using species codes `0=scots_pine`, `1=norway_spruce`, `2=birch`, and sentinel `255=none`.
 21. `dominant` envelope mapping is deterministic from slots: `[ ]` when both slots are `255`; `[primary]` when secondary is `255`; `[primary, secondary]` when both are set.
+22. Biome perturbation strength binding is canonicalized as: primary source `params.vegVarianceNoise.strength`; compatibility fallback `params.vegVarianceStrength`; if both are present, `params.vegVarianceNoise.strength` wins.
 
 Done criteria:
 

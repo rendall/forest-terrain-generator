@@ -140,7 +140,7 @@ Rules:
 - [x] Decide whether Phase 4 rule concretization requires ADR and/or draft-spec updates before implementation, and record required artifacts.
 - [x] Decide internal enum/bit assignments for `Biome`, `SoilType`, `SurfaceFlags`, and `FeatureFlags`.
 - [x] Decide in-memory storage contract for `dominant` before envelope mapping.
-- [ ] Decide canonical params binding for biome perturbation strength (`vegVarianceStrength` source path).
+- [x] Decide canonical params binding for biome perturbation strength (`vegVarianceStrength` source path).
 - [ ] Review the Phase 4 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 4 implementation.
 
 ### Phase 4 Implementation
