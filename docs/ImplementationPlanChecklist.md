@@ -66,6 +66,19 @@ Rules:
 
 ## Phase 2 - Topography
 
+### Phase 2 Decisions
+
+- [ ] Decide deterministic v1 noise-function implementation choice for base-map generation.
+- [ ] Decide in-memory grid representation and indexing contract for `H`, `R`, `V`, `SlopeMag`, `AspectDeg`, and `Landform`.
+- [ ] Decide authored-map file shape/format contract and parsing/validation behavior for `--map-h`, `--map-r`, and `--map-v`.
+- [ ] Decide range/clamping policy for base maps after generation and for authored-map validation.
+- [ ] Decide exact boundary-sampling implementation for slope/aspect clamping at map edges.
+- [ ] Decide comparison conventions for landform thresholds (`eps`, `flatSlopeThreshold`) to prevent equality-edge drift.
+- [ ] Decide topography regression-test strategy (fixtures, float epsilon assertions, and deterministic seed set).
+- [ ] Review the Phase 2 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 2 implementation.
+
+### Phase 2 Implementation
+
 - [ ] Implement base map generation and authored-map override flow.
 - [ ] Implement slope magnitude, aspect, and landform classification.
 - [ ] Add deterministic tests for ordering and tie-break behavior used by this phase.
