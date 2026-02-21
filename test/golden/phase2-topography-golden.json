@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "seed": "1",
+      "width": 16,
+      "height": 16,
+      "artifacts": {
+        "H": "376b53b1df26e7cbaa962cb18189bfd22f827384f9436ba750adeace12589a12",
+        "R": "5b6f56fb82b5ff6b43eb39ed848f22ba96519747f1f6c0e8a177f47aecb9a019",
+        "V": "1ae78fa6c2dafc89b7a552e714bec5ca492c7341f3228fdb1faf8406e7b56c22",
+        "SlopeMag": "1af1a76922e7d60c0706dc9e80470f7109bfbc5948290c1deb31c7be58899053",
+        "AspectDeg": "e1a11a86d7948a09d534863a1ee440b78d9a13575ba08f4d3d6b5d0b45496d3b",
+        "Landform": "f8d8ee905af31f787b0544ff843efa7461db7540c253909bc27c54b9587d56e0"
+      }
+    },
+    {
+      "seed": "1",
+      "width": 64,
+      "height": 64,
+      "artifacts": {
+        "H": "71dec9d687a5ff14db8881344c906b86fac4f7d08c079abcaf7d657aeeae1fb7",
+        "R": "2785269613233004d938cc6a4fcc0d98822443ceaaf48a9488fc3d1ef2210fa9",
+        "V": "9702902fb61f561bbacb5745891f505780d5a1501488e74ab7612e88b1df19a9",
+        "SlopeMag": "3b95b4479fad3bacd6faa56609ce94f07ed071cd076b2e4e8aa6c9ce966a5d84",
+        "AspectDeg": "d9bfb7b6c76150230c8931549d47fa715623464e888d2d4b1094fbb2163c63f0",
+        "Landform": "db31953551020f9fecde20fe6219fcc56a783ca0e56de92dc2ec3a73ed349f33"
+      }
+    },
+    {
+      "seed": "42",
+      "width": 16,
+      "height": 16,
+      "artifacts": {
+        "H": "7a478a63126d39241c63fe654232f680a5b8e0b7907e2bd3d6b2c4b5cf60c210",
+        "R": "a66ef7fd25e1192270dcc4e631395411a7ac9f064ccf433b14d07114ed31d1fd",
+        "V": "6cdd51f402c61aa70fddfff896cc7123e81d8deb7cf552fe3391d5a15cef44ab",
+        "SlopeMag": "e4d92b60d3ac05470943ec0332f1f85db1dbf62d43a5224bdca6ce04caf79d1e",
+        "AspectDeg": "75db33c803dc1608d90718eb3ea7fc6208c75ff216e6317a8faca357e8c5b4c8",
+        "Landform": "9dbc6d9df236f18f74937f63186fa8624a02c5379f34770f9c739a2c5924001d"
+      }
+    },
+    {
+      "seed": "42",
+      "width": 64,
+      "height": 64,
+      "artifacts": {
+        "H": "0a7349fd0595db36d879b1641275436a04aa0b71e10f9cb1329a474d1b133816",
+        "R": "acf442ba992280df0609177cdb9a9ea068069886a8b4460a1b2226168baa8cee",
+        "V": "9662141106dff4711a723de33163c7f74fd4aadf98714d5bbb5989741d5aa467",
+        "SlopeMag": "ace6136d092590b2f1f856fc893e51f01e25fcd8b4e889e68b3a1d7e9f703556",
+        "AspectDeg": "fabe9c7616a6ec5e9530d29a1845f1acfffd0d4befe6f643d61ded8967143fd0",
+        "Landform": "bc0becb8746ddc206128445ea58e79cf4085cd4d992833f548c4e16d5ea3bedb"
+      }
+    },
+    {
+      "seed": "123456789",
+      "width": 16,
+      "height": 16,
+      "artifacts": {
+        "H": "ce2b04a17452e9cedcddfe7ca32f51ae91024f3b7af8fe7e7b668d827e010b65",
+        "R": "7d74177e3014f7261f3fd8eb36b508f032ebb8e43bac9bbc81cc422f069071e6",
+        "V": "77511c306e22ad35052ab4aed23a79dac0980f29595315cad67e67c552307137",
+        "SlopeMag": "ef93a12789b3d7b73b4a615843815882b81868bd8712d3be0e4640bbf3a1c924",
+        "AspectDeg": "71df4dad923dec88a11d2293fc31a69544c6167a78bb01230c9ed366a170119f",
+        "Landform": "e1a86c9b48255e5dcfde012503a1ba6cbe152442fee2e48ee071797445888f44"
+      }
+    },
+    {
+      "seed": "123456789",
+      "width": 64,
+      "height": 64,
+      "artifacts": {
+        "H": "e0a74d4bb232be1a41a7f7b64033e18a0c8565381b3f79eb434fd136a752897c",
+        "R": "b9fd11d877b2beb94ff252f72887926148e73bc48b3cdd068e3408bd9bcf9f2f",
+        "V": "371742d1404b096aed39bee98d7ff1f480afe25d152541a298cd4c8c9414d881",
+        "SlopeMag": "cbc1c212680634a2405539087551746c1b00e4a20d2feb49ab8ca0e82bda9109",
+        "AspectDeg": "1f3143e5f1d8ad156586e31801713b989b6eeb7e45b5ad145f412c8132a9bb29",
+        "Landform": "f704fd7467e26a4de3ad6f6d0f34b1979f1222c21c342fdc5c86983c2e88eff3"
+      }
+    },
+    {
+      "seed": "18446744073709551615",
+      "width": 16,
+      "height": 16,
+      "artifacts": {
+        "H": "96606c78d329d2a35f6cae46d20e5fb3ddd5469de8a18fa4587cc121f2e25221",
+        "R": "c6e83345fb1c5d3596264cd1787a02f3d0f60a90a7562c3f87dd1708e04f9db0",
+        "V": "dd63235937d350cede1ede9cf5af27c51bf663cfa513d728f75bd6b9c762e54a",
+        "SlopeMag": "6f1e68ed71cecfa69d60c53ac2270c875fb1b82940991df7178b0c64bca86875",
+        "AspectDeg": "78764d30f20cf5487608524b58b5f54b523bc770a3c9386114d5e38c7337e6e5",
+        "Landform": "5c81dec4a8d6e6de9109e0a84f9085b7d2cbbdbd0dc625bd7f415f13083da6b0"
+      }
+    },
+    {
+      "seed": "18446744073709551615",
+      "width": 64,
+      "height": 64,
+      "artifacts": {
+        "H": "a2293ad2b893533c30f12a17f40c9602443954d7bed100f06783b886b13cedc5",
+        "R": "17a24e681430688c76cee4cd5a371403600dca16e73fea39337a2df09e2f53dc",
+        "V": "362ca231cd139bae88d47dd52c8e88aeeeabe3236d1257dcd664199cd2a56c28",
+        "SlopeMag": "09a423c447e1a064ed311400bfadc107418ea1725cfdeead6fa23e418fcc4fdd",
+        "AspectDeg": "49422c2a6d8d6b1e5ab54382361fc0aa9b91525a885d59bbf570c76030e39690",
+        "Landform": "0606c320daa5a1025394974adf18886667d9139caca71d56ec5396de258c6adb"
+      }
+    }
+  ]
+}
