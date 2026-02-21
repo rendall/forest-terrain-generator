@@ -5,6 +5,12 @@ import { InputValidationError } from "../domain/errors.js";
 import { suggestClosest } from "../lib/suggest.js";
 import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
 
+const PARAMS_VALIDATION_SCHEMA: JsonObject = {
+  ...APPENDIX_A_DEFAULTS,
+  // Compatibility alias accepted at root params level.
+  vegVarianceStrength: (APPENDIX_A_DEFAULTS.vegVarianceNoise as JsonObject).strength
+};
+
 function isObject(value: unknown): value is JsonObject {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -129,7 +135,7 @@ export async function readParamsFile(
       : undefined;
   const force = typeof parsed.force === "boolean" ? parsed.force : undefined;
   const params = isObject(parsed.params) ? parsed.params : parsed;
-  validateUnknownKeys(params, APPENDIX_A_DEFAULTS, "params");
+  validateUnknownKeys(params, PARAMS_VALIDATION_SCHEMA, "params");
 
   return {
     seed,

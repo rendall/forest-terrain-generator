@@ -66,6 +66,42 @@ function resolveFromCwd(cwd: string, maybeRelativePath: string | undefined): str
   return isAbsolute(maybeRelativePath) ? maybeRelativePath : resolve(cwd, maybeRelativePath);
 }
 
+function isJsonObject(value: unknown): value is JsonObject {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasExplicitNestedVegVarianceStrength(params: JsonObject): boolean {
+  const nested = params.vegVarianceNoise;
+  if (!isJsonObject(nested)) {
+    return false;
+  }
+  const strength = nested.strength;
+  return typeof strength === "number" && Number.isFinite(strength);
+}
+
+function applyLegacyVegVarianceStrengthOverride(
+  mergedParams: JsonObject,
+  fileParams: JsonObject
+): void {
+  const legacyStrength = fileParams.vegVarianceStrength;
+  if (typeof legacyStrength !== "number" || !Number.isFinite(legacyStrength)) {
+    return;
+  }
+
+  // Canonical precedence remains nested > legacy when both are explicitly provided.
+  if (hasExplicitNestedVegVarianceStrength(fileParams)) {
+    return;
+  }
+
+  const nested = isJsonObject(mergedParams.vegVarianceNoise)
+    ? mergedParams.vegVarianceNoise
+    : {};
+  mergedParams.vegVarianceNoise = {
+    ...nested,
+    strength: legacyStrength
+  };
+}
+
 export async function resolveInputs(request: RunRequest): Promise<ResolvedInputs> {
   const fromFile = await readParamsFile(request.args.paramsPath, request.cwd);
   const cliMapHPath = resolveFromCwd(request.cwd, request.args.mapHPath);
@@ -79,6 +115,7 @@ export async function resolveInputs(request: RunRequest): Promise<ResolvedInputs
   const baseParams = APPENDIX_A_DEFAULTS;
   const fileParams = (fromFile.params ?? {}) as JsonObject;
   const mergedParams = deepMerge(baseParams, fileParams);
+  applyLegacyVegVarianceStrengthOverride(mergedParams, fileParams);
 
   return {
     seed: request.args.seed ?? fromFile.seed,
