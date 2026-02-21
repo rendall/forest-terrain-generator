@@ -15,6 +15,13 @@ export interface BaseInputs {
   width?: number;
   height?: number;
   params?: JsonObject;
+  mapHPath?: string;
+  mapRPath?: string;
+  mapVPath?: string;
+  outputFile?: string;
+  outputDir?: string;
+  debugOutputFile?: string;
+  force?: boolean;
 }
 
 export interface CliArgs {
@@ -22,6 +29,13 @@ export interface CliArgs {
   width?: number;
   height?: number;
   paramsPath?: string;
+  mapHPath?: string;
+  mapRPath?: string;
+  mapVPath?: string;
+  outputFile?: string;
+  outputDir?: string;
+  debugOutputFile?: string;
+  force: boolean;
 }
 
 export interface RunRequest {
@@ -36,4 +50,11 @@ export interface ResolvedInputs {
   height?: number;
   params: JsonObject;
   paramsPath?: string;
+  mapHPath?: string;
+  mapRPath?: string;
+  mapVPath?: string;
+  outputFile?: string;
+  outputDir?: string;
+  debugOutputFile?: string;
+  force: boolean;
 }

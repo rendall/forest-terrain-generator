@@ -12,12 +12,26 @@ function toArgs(options: {
   width?: number;
   height?: number;
   params?: string;
+  mapH?: string;
+  mapR?: string;
+  mapV?: string;
+  outputFile?: string;
+  outputDir?: string;
+  debugOutputFile?: string;
+  force?: boolean;
 }): CliArgs {
   return {
     seed: options.seed,
     width: options.width,
     height: options.height,
-    paramsPath: options.params
+    paramsPath: options.params,
+    mapHPath: options.mapH,
+    mapRPath: options.mapR,
+    mapVPath: options.mapV,
+    outputFile: options.outputFile,
+    outputDir: options.outputDir,
+    debugOutputFile: options.debugOutputFile,
+    force: options.force ?? false
   };
 }
 
@@ -26,7 +40,14 @@ function addCommonInputOptions(command: Command): Command {
     .option("--seed <seed>", "Global terrain seed")
     .option("--width <width>", "Grid width", parseIntArg)
     .option("--height <height>", "Grid height", parseIntArg)
-    .option("--params <path>", "Path to JSON params file");
+    .option("--params <path>", "Path to JSON params file")
+    .option("--map-h <path>", "Path to authored H map")
+    .option("--map-r <path>", "Path to authored R map")
+    .option("--map-v <path>", "Path to authored V map")
+    .option("--output-file <path>", "Path to terrain output JSON file")
+    .option("--output-dir <path>", "Path to debug output directory")
+    .option("--debug-output-file <path>", "Optional terrain output file in debug mode")
+    .option("--force", "Allow replacing existing output targets", false);
 }
 
 async function runMode(mode: Mode, options: CliArgs): Promise<void> {

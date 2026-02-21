@@ -16,7 +16,14 @@ export async function resolveInputs(request: RunRequest): Promise<ResolvedInputs
     width: request.args.width ?? fromFile.width,
     height: request.args.height ?? fromFile.height,
     params: mergedParams,
-    paramsPath: request.args.paramsPath
+    paramsPath: request.args.paramsPath,
+    mapHPath: request.args.mapHPath ?? fromFile.mapHPath,
+    mapRPath: request.args.mapRPath ?? fromFile.mapRPath,
+    mapVPath: request.args.mapVPath ?? fromFile.mapVPath,
+    outputFile: request.args.outputFile ?? fromFile.outputFile,
+    outputDir: request.args.outputDir ?? fromFile.outputDir,
+    debugOutputFile: request.args.debugOutputFile ?? fromFile.debugOutputFile,
+    force: request.args.force || fromFile.force || false
   };
 }
 
