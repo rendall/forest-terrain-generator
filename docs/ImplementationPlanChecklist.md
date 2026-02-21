@@ -152,7 +152,7 @@ Rules:
 - [x] Implement ground derivations (`SoilType`, `Firmness`, `SurfaceFlags`) using the locked deterministic rule table and canonical surface-flag order.
 - [x] Implement roughness derivations (`Obstruction`, `FeatureFlags`) using the locked deterministic rule table and canonical feature-flag order.
 - [x] Implement a single Phase 4 facade module with stable named exports for orchestration/tests and shared serialization mapping helpers for enum/bit/slot -> envelope fields.
-- [ ] Add targeted Phase 4 sanity fixtures (threshold-edge behavior, mixed-forest species boundary, deterministic list ordering, multi-flag combinations, empty-list cases, and float32 threshold-boundary cases).
+- [x] Add targeted Phase 4 sanity fixtures (threshold-edge behavior, mixed-forest species boundary, deterministic list ordering, multi-flag combinations, empty-list cases, and float32 threshold-boundary cases).
 - [ ] Add fixed-seed Phase 4 golden regressions for balanced scope seeds/sizes/artifacts.
 - [ ] Validate categorical and float regression assertions (including default float epsilon `1e-6`) for all Phase 4 outputs.
 - [ ] Review gate: explicit approval to proceed to Phase 5.
