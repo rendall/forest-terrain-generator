@@ -70,7 +70,7 @@ Rules:
 
 - [x] Decide deterministic v1 noise-function implementation choice for base-map generation (v1 uses in-repo deterministic 2D Perlin).
 - [x] Decide Perlin implementation details (in-repo deterministic implementation; fixed gradient/permutation/fade/interpolation/normalization behavior; Appendix A defaults with noise tuning overrides via `--params`).
-- [ ] Decide in-memory grid representation and indexing contract for `H`, `R`, `V`, `SlopeMag`, `AspectDeg`, and `Landform`.
+- [x] Decide in-memory grid representation and indexing contract for `H`, `R`, `V`, `SlopeMag`, `AspectDeg`, and `Landform` (row-major struct-of-arrays; `i = y * width + x`; `Float32Array` for numeric maps; `Uint8Array` for `Landform` enum codes; shared `GridShape` for all maps).
 - [ ] Decide authored-map file shape/format contract and parsing/validation behavior for `--map-h`, `--map-r`, and `--map-v`.
 - [ ] Decide range/clamping policy for base maps after generation and for authored-map validation.
 - [ ] Decide exact boundary-sampling implementation for slope/aspect clamping at map edges.

@@ -341,7 +341,10 @@ Locked decisions:
 2. v1 does not depend on an external noise-generation library for base-map generation.
 3. Perlin behavior is fixed in code for v1 (gradient/permutation strategy, fade/interpolation function, and output normalization/clamp behavior are implementation-defined and tested, not user-selectable).
 4. v1 noise tuning defaults come from Appendix A, and tuning overrides are provided through `--params` (`CLI > file > defaults`).
-5. v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); any future change to this model requires an ADR and normative-spec update before implementation.
+5. Topography uses row-major struct-of-arrays in memory with index contract `i = y * width + x`.
+6. `H`, `R`, `V`, `SlopeMag`, and `AspectDeg` are stored as `Float32Array`; `Landform` is stored as `Uint8Array` with fixed enum-code mapping.
+7. All phase-2 maps share one `GridShape` (`width`, `height`) contract and must have equal linear length `width * height`.
+8. v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); any future change to this model requires an ADR and normative-spec update before implementation.
 
 Done criteria:
 
