@@ -161,7 +161,16 @@ Rules:
 
 ### Decisions
 
-- [ ] Review the implementation list, and add uncertain, ambiguous or unknown implementation details as decision items just below this one, above the review gate.
+- [x] Review the implementation list, and add uncertain, ambiguous or unknown implementation details as decision items just below this one, above the review gate.
+- [ ] Decide Phase 5 in-memory map model and storage contracts (`C`, `GameTrail`, `GameTrailId`, `MoveCost`, `Passability`, `CliffEdge`, `FollowableFlags`) and deterministic mapping to envelope payload fields.
+- [ ] Decide nearest-node distance metric and tie behavior for Section 10.4 endpoint selection (`Seed -> WaterNode`, `Seed -> RidgeNode`) and define exact implementation algorithm.
+- [ ] Decide fallback behavior when candidate filtering yields no seeds or when selected seeds have no reachable endpoints/routes.
+- [ ] Decide route-overlap and `GameTrailId` assignment behavior when multiple routes mark the same tiles.
+- [ ] Decide passability representation contract (internal encoding, 8-direction key order, and blocked/difficult/passable enum mapping).
+- [ ] Decide deterministic `followable` list ordering and deduplication contract for multi-source flags (`stream`, `ridge`, `game_trail`, `shore`).
+- [ ] Decide whether optional trail post-processing (Section 10.6) is disabled in v1 or enabled with a locked deterministic algorithm.
+- [ ] Decide numeric precision and tie policy for trail routing costs (cost accumulator type, `tieEps` comparator usage boundaries, and reproducibility constraints).
+- [ ] Decide Phase 5 regression-test scope (fixed seeds/sizes, golden artifacts, and targeted edge fixtures for endpoint selection, tie-breaks, unreachable routes, and overlap).
 - [ ] Review gate: review the implementation plan and ensure that there are no more undecideds or ambiguities.
 - [ ] Review gate: review the implementation checklist and add missing steps and details.
 
