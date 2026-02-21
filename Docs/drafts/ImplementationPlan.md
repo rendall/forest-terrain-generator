@@ -76,6 +76,13 @@ Unknown-input policy decision (Phase 1):
 3. Error messages MUST be precise and actionable, explicitly identifying the unknown key/flag and where it was found.
 4. Error messages SHOULD include close valid alternatives when available (for example nearest valid key/flag names).
 
+Params-file format decision (Phase 1):
+
+1. v1 supports JSON params files only.
+2. YAML (`.yml`/`.yaml`) is not supported in v1.
+3. If a non-JSON params format is provided, fail with validation error (exit `2`) and a precise message indicating supported format.
+4. Error messaging SHOULD explicitly recommend converting the file to JSON.
+
 ### 3.3 Output Contract
 
 1. `generate` and `derive` write the terrain envelope JSON to `--output-file`.

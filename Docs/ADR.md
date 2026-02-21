@@ -2,6 +2,30 @@
 
 This document is a living ledger of significant technical decisions made within this project. Each entry captures the context in which a decision was made, the options considered, the decision itself, and its consequences. The purpose is not to justify past choices defensively, but to preserve intent and reasoning so future contributors can understand why the system is shaped the way it is. Over time, this file forms a chronological record of trade-offs, constraints, and design direction, providing continuity as the codebase and team evolve.
 
+## Adopt JSON-Only Params File Format for v1
+
+**Timestamp:** 2026-02-21 09:35 (UTC)
+
+### Decision
+For v1, params files are JSON-only.
+
+- Supported params file format: JSON.
+- Unsupported in v1: YAML (`.yml` / `.yaml`) and other non-JSON formats.
+- Non-JSON params inputs are validation errors (exit `2`) with explicit guidance to provide/convert JSON.
+
+### Rationale
+JSON-only keeps the input contract strict and predictable, reduces parser/dependency surface area, and simplifies validation/error handling for a lean v1 CLI. This aligns with deterministic behavior goals and avoids YAML-specific parsing/coercion ambiguities.
+
+### Alternatives Considered
+- YAML-only params files – rejected due to parser complexity and higher ambiguity risk in type coercion/interpretation.
+- Supporting both JSON and YAML – rejected for v1 because it increases implementation and testing overhead without clear functional benefit at this stage.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): docs/drafts/ImplementationPlan.md
+- Related ADRs: Adopt Initial CLI Dependency and Versioning Policy
+
 ## Adopt Initial CLI Dependency and Versioning Policy
 
 **Timestamp:** 2026-02-21 09:05 (UTC)
