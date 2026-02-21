@@ -69,10 +69,3 @@ If a decision is later reversed:
 * Do not delete the original entry.
 * Add a new entry describing the superseding decision.
 * Reference the prior ADR in the new entry.
-
----
-
-In your `ADR.md`, you can add a line near the top such as:
-
-```md
-```

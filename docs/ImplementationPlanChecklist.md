@@ -10,24 +10,24 @@ Rules:
 
 ## Phase 0 - Alignment and Scaffold
 
-- [ ] Confirm project deliverable statement is present and consistent in `README.md` and `AGENTS.md`.
-- [ ] Confirm `AGENTS.md` alignment for approval gates and change process.
-- [ ] Confirm CLI command surface (`generate`, `derive`, `debug`) and output semantics (`--output-file` vs `--output-dir`).
-- [ ] Confirm overwrite policy: existing outputs fail by default; `--force` allows overwrite/replace.
-- [ ] Confirm help/empty-command equivalence: `help`, `--help`, `-h`, and no command all print top-level help and exit `0`.
-- [ ] Confirm CLI stream behavior policy (`stdout` for help/version, `stderr` for errors/status).
+- [x] Confirm project deliverable statement is present and consistent in `README.md` and `AGENTS.md`.
+- [x] Confirm `AGENTS.md` alignment for approval gates and change process.
+- [x] Confirm CLI command surface (`generate`, `derive`, `debug`) and output semantics (`--output-file` vs `--output-dir`).
+- [x] Confirm overwrite policy: existing outputs fail by default; `--force` allows overwrite/replace.
+- [x] Confirm help/empty-command equivalence: `help`, `--help`, `-h`, and no command all print top-level help and exit `0`.
+- [x] Confirm CLI stream behavior policy (`stdout` for help/version, `stderr` for errors/status).
 - [ ] Decide initial dependency set and versioning approach for runtime and test tooling.
 - [ ] Define dependency policy (selection criteria, update cadence, pinning strategy, and license/security expectations).
 - [ ] Document major dependency choices and dependency policy in `docs/ADR.md`.
-- [ ] Approve repository scaffold and module boundaries (`domain`, `pipeline`, `lib`, `io`, `cli`).
+- [x] Approve repository scaffold and module boundaries (`domain`, `pipeline`, `lib`, `io`, `cli`).
 - [ ] Establish tooling baseline (TypeScript strict, lint, test runner).
-- [ ] Define determinism policy baseline (seed handling, tie-break conventions, float/epsilon rules) and matching utility/test coverage expectations.
-- [ ] Define data-contract baseline (input schema, output envelope versioning, and error code contract) before Phase 1 implementation.
-- [ ] Confirm reproducibility minimums (Node version and lockfile policy).
-- [ ] Confirm minimal `package.json` baseline (`name`, `version`, `private`, `type`, `engines.node`, `bin`, scripts).
+- [x] Define determinism policy baseline (seed handling, tie-break conventions, float/epsilon rules) and matching utility/test coverage expectations.
+- [x] Define data-contract baseline (input schema, output envelope versioning, and error code contract) before Phase 1 implementation.
+- [x] Confirm reproducibility minimums (Node version and lockfile policy).
+- [x] Confirm minimal `package.json` baseline (`name`, `version`, `private`, `type`, `engines.node`, `bin`, scripts).
 - [ ] Run `npm init` using the approved `package.json` baseline.
-- [ ] Set lightweight phase definition of done (tests pass plus review gate approval).
-- [ ] Confirm documentation baseline paths (normative spec, ADR log, implementation plan/checklist).
+- [x] Set lightweight phase definition of done (tests pass plus review gate approval).
+- [x] Confirm documentation baseline paths (normative spec, ADR log, implementation plan/checklist).
 - [ ] Review gate: explicit approval to proceed to Phase 1.
 
 ## Phase 1 - Foundations and Contracts
