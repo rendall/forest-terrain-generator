@@ -155,7 +155,7 @@ Rules:
 - [x] Add targeted Phase 4 sanity fixtures (threshold-edge behavior, mixed-forest species boundary, deterministic list ordering, multi-flag combinations, empty-list cases, and float32 threshold-boundary cases).
 - [x] Add fixed-seed Phase 4 golden regressions for balanced scope seeds/sizes/artifacts.
 - [x] Validate categorical and float regression assertions (including default float epsilon `1e-6`) for all Phase 4 outputs.
-- [ ] Review gate: explicit approval to proceed to Phase 5.
+- [x] Review gate: explicit approval to proceed to Phase 5.
 
 ## Phase 5 - Navigation and Trails
 
