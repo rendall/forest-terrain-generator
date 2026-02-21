@@ -383,6 +383,8 @@ Locked decisions:
 6. For tied downhill candidates, list `T` is constructed in canonical `Dir8` order and selection uses `i = tieBreakHash64(seed,x,y) mod |T|`.
 7. Flow accumulation uses deterministic Kahn-style indegree reduction with FIFO queue semantics; zero-indegree tiles are enqueued in canonical row-major order and queue mechanics are implemented with array-plus-head-index (no unstable container ordering).
 8. `FA` accumulation uses `Uint32Array` with explicit overflow checks on `FA[u] += FA[t]`; overflow is treated as fail-fast error rather than silent wraparound.
+9. `FA_N` normalization follows Section 6.3 exactly: if `FAmax == FAmin`, all `FA_N` values are `0`; otherwise apply the normative logarithmic formula and clamp result to `[0,1]`.
+10. No extra normalization epsilon/fudge factors are introduced beyond explicit spec thresholds.
 
 Done criteria:
 
