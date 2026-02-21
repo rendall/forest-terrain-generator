@@ -516,6 +516,9 @@ Locked decisions:
 2. Draft-only metadata fields (`implementationStatus`, `implementedPhases`, and draft notes) are not emitted in final v1 output.
 3. Canonical JSON serialization for v1 uses pretty JSON (`2` spaces) with a trailing newline for both standard envelope and debug JSON artifacts.
 4. Emitters must populate fields in deterministic order so insertion-order JSON serialization remains stable across runs.
+5. v1 debug output always includes `debug-manifest.json` at the output-directory root.
+6. v1 debug output includes a fixed required artifact set in the output-directory root: `topography.json`, `hydrology.json`, `ecology.json`, and `navigation.json`.
+7. `debug-manifest.json` includes deterministic core metadata (`mode`, `specVersion`, `width`, `height`, `tileCount`) and a deterministic `artifacts` list naming emitted debug files.
 
 Done criteria:
 

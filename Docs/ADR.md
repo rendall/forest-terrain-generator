@@ -2,6 +2,30 @@
 
 This document is a living ledger of significant technical decisions made within this project. Each entry captures the context in which a decision was made, the options considered, the decision itself, and its consequences. The purpose is not to justify past choices defensively, but to preserve intent and reasoning so future contributors can understand why the system is shaped the way it is. Over time, this file forms a chronological record of trade-offs, constraints, and design direction, providing continuity as the codebase and team evolve.
 
+## Define v1 Debug Artifact Output Contract
+
+**Timestamp:** 2026-02-21 20:36 (UTC)
+
+### Decision
+For v1 `debug` mode, adopt a minimal stable output-directory contract.
+
+- Emit `debug-manifest.json` at the output-directory root.
+- Emit fixed required debug artifacts at the output-directory root: `topography.json`, `hydrology.json`, `ecology.json`, and `navigation.json`.
+- `debug-manifest.json` includes deterministic metadata fields: `mode`, `specVersion`, `width`, `height`, `tileCount`, and `artifacts`.
+
+### Rationale
+A fixed, minimal artifact set provides predictable downstream tooling integration and straightforward regression testing without introducing optional/variable debug schemas in v1.
+
+### Alternatives Considered
+- Rich debug contract with timings/counters/optional artifact variants – rejected for v1 to keep scope and schema surface small.
+- Raw internal-array dump contract – rejected because it is harder for downstream consumers to treat as stable and increases churn risk.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): Docs/drafts/ImplementationPlan.md
+- Related ADRs: Emit `navigation.gameTrailId` in Standard Tile Payload (v1)
+
 ## Emit `navigation.gameTrailId` in Standard Tile Payload (v1)
 
 **Timestamp:** 2026-02-21 19:15 (UTC)
