@@ -408,6 +408,51 @@ Goals:
 1. Implement biome classification and vegetation attributes/species.
 2. Implement ground and roughness outputs.
 
+Locked decisions:
+
+1. Phase-4 ecology/grounding derivation uses row-major struct-of-arrays (SoA) with shared `GridShape` and per-map linear length `width * height`.
+2. In-memory storage contracts are fixed as:
+   - `Biome`: `Uint8Array` enum codes
+   - `SoilType`: `Uint8Array` enum codes
+   - `TreeDensity`: `Float32Array`
+   - `CanopyCover`: `Float32Array`
+   - `Obstruction`: `Float32Array`
+   - `SurfaceFlags`: `Uint16Array` bitmask
+   - `FeatureFlags`: `Uint16Array` bitmask
+3. Enum/bitmask values are implementation-internal and MUST be mapped at the serialization boundary to normative envelope field shapes (`biome` string, `ground.soil` string, `ground.surfaceFlags` string list, `roughness.featureFlags` string list).
+4. Pipeline modules consume and produce Phase-4 typed arrays only; conversion to envelope strings/lists is IO-layer responsibility.
+5. `SoilType` mapping is deterministic and first-match: `peat` when `Moisture >= ground.peatMoistureThreshold`; else `sandy_till` when `Moisture <= ground.exposedSandMoistureMax` and (`Landform == ridge` or `H >= ground.bedrockHeightMin`); else `rocky_till`.
+6. `Firmness` uses the exact normative formula: `clamp01(1.0 - 0.85*Moisture + 0.15*clamp01(SlopeMag/0.2))`.
+7. `SurfaceFlags` deterministic threshold rules are fixed:
+   - `standing_water` when `Moisture >= ground.standingWaterMoistureThreshold` and `SlopeMag < ground.standingWaterSlopeMax`
+   - `sphagnum` when `SoilType == peat`
+   - `lichen` when `Moisture <= ground.lichenMoistureMax`
+   - `exposed_sand` when `SoilType == sandy_till` and `Moisture <= ground.exposedSandMoistureMax`
+   - `bedrock` when `H >= ground.bedrockHeightMin` and `R >= ground.bedrockRoughnessMin`
+8. `Obstruction` uses the exact normative formula: `clamp01(R * (1 - mix) + Moisture * mix)`, where `mix = roughnessFeatures.obstructionMoistureMix`.
+9. `FeatureFlags` deterministic threshold rules are fixed:
+   - `fallen_log` when `Obstruction >= roughnessFeatures.fallenLogThreshold`
+   - `root_tangle` when `Moisture >= roughnessFeatures.rootTangleMoistureThreshold`
+   - `boulder` when `H >= roughnessFeatures.boulderHeightMin` and `R >= roughnessFeatures.boulderRoughnessMin`
+   - `windthrow` when `Obstruction >= roughnessFeatures.windthrowThreshold`
+10. Canonical emission order for `surfaceFlags` is fixed as: `standing_water`, `sphagnum`, `lichen`, `exposed_sand`, `bedrock`.
+11. Canonical emission order for `featureFlags` is fixed as: `fallen_log`, `root_tangle`, `boulder`, `windthrow`.
+12. Phase-4 threshold operators remain exact as specified (`>=`, `<=`, `<`, `>`); no epsilon-based comparator offsets are introduced.
+13. To avoid float32 boundary drift, all threshold parameters used in Phase-4 comparisons are normalized with `Math.fround(...)` before applying exact operators against typed-array values.
+14. List-output shape and ordering are fixed: `dominant` is an ordered list of length `0..2` following the deterministic species table (primary first, optional secondary second); `surfaceFlags` and `featureFlags` are emitted as ordered string lists in their canonical fixed orders, filtered to active flags only, with no duplicates.
+15. Phase-4 regression scope is balanced: committed/versioned golden snapshots for seeds `1`, `42`, `123456789`, `18446744073709551615` at `16x16` and `64x64`, covering `Biome`, `SoilType`, `TreeDensity`, `CanopyCover`, `Obstruction`, `SurfaceFlags`, `FeatureFlags`, and `dominant`.
+16. Targeted Phase-4 fixtures are required for threshold-edge comparisons, deterministic list ordering (`dominant`, `surfaceFlags`, `featureFlags`), mixed-forest dominant-species split boundaries, multi-flag combinations, and empty-list cases.
+17. Float assertions for Phase-4 derived float maps use epsilon-based comparisons with default epsilon `1e-6`.
+18. Phase-4 rule concretization remains implementation-plan scoped for now: no ADR or spec update is required before implementation; reassess ADR/spec elevation after Phase-4 behavior has been exercised in tests.
+19. Internal enum/bit assignments are fixed:
+   - `Biome` codes: `0=open_bog`, `1=spruce_swamp`, `2=mixed_forest`, `3=pine_heath`, `4=esker_pine`, `5=lake`, `6=stream_bank`
+   - `SoilType` codes: `0=peat`, `1=sandy_till`, `2=rocky_till`
+   - `SurfaceFlags` bits: `bit0=standing_water`, `bit1=sphagnum`, `bit2=lichen`, `bit3=exposed_sand`, `bit4=bedrock`
+   - `FeatureFlags` bits: `bit0=fallen_log`, `bit1=root_tangle`, `bit2=boulder`, `bit3=windthrow`
+20. `dominant` is stored internally as two typed-array slots: `dominantPrimary: Uint8Array` and `dominantSecondary: Uint8Array`, using species codes `0=scots_pine`, `1=norway_spruce`, `2=birch`, and sentinel `255=none`.
+21. `dominant` envelope mapping is deterministic from slots: `[ ]` when both slots are `255`; `[primary]` when secondary is `255`; `[primary, secondary]` when both are set.
+22. Biome perturbation strength binding is canonicalized as: primary source `params.vegVarianceNoise.strength`; compatibility fallback `params.vegVarianceStrength`; if both are present, `params.vegVarianceNoise.strength` wins.
+
 Done criteria:
 
 1. Categorical output regressions pass.

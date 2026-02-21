@@ -132,23 +132,40 @@ Rules:
 
 ### Phase 4 Decisions
 
-- [ ] Decide Phase 4 in-memory map model and enum/storage contracts (`Biome`, `SoilType`, `TreeDensity`, `CanopyCover`, `Obstruction`, `SurfaceFlags`, `FeatureFlags`) and serialization mapping into the output envelope.
-- [ ] Decide deterministic rule tables for under-specified Ground/Roughness derivations (explicit `SoilType` mapping and explicit threshold rules for each `SurfaceFlags`/`FeatureFlags` member).
-- [ ] Decide threshold-operator and boundary conventions for all Phase 4 classifiers/formulas (`>=` vs `>`, `<` vs `<=`, and float-comparison precision policy).
-- [ ] Decide deterministic ordering and shape contracts for list outputs (`dominant`, `surfaceFlags`, `featureFlags`) including ordering guarantees for multi-flag tiles.
-- [ ] Decide Phase 4 regression scope and assertions (fixed seeds/sizes, golden artifacts, targeted fixtures, and float epsilon policy).
-- [ ] Decide whether Phase 4 rule concretization requires ADR and/or draft-spec updates before implementation, and record required artifacts.
-- [ ] Review the Phase 4 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 4 implementation.
+- [x] Decide Phase 4 in-memory map model and enum/storage contracts (`Biome`, `SoilType`, `TreeDensity`, `CanopyCover`, `Obstruction`, `SurfaceFlags`, `FeatureFlags`) and serialization mapping into the output envelope.
+- [x] Decide deterministic rule tables for under-specified Ground/Roughness derivations (explicit `SoilType` mapping and explicit threshold rules for each `SurfaceFlags`/`FeatureFlags` member).
+- [x] Decide threshold-operator and boundary conventions for all Phase 4 classifiers/formulas (`>=` vs `>`, `<` vs `<=`, and float-comparison precision policy).
+- [x] Decide deterministic ordering and shape contracts for list outputs (`dominant`, `surfaceFlags`, `featureFlags`) including ordering guarantees for multi-flag tiles.
+- [x] Decide Phase 4 regression scope and assertions (fixed seeds/sizes, golden artifacts, targeted fixtures, and float epsilon policy).
+- [x] Decide whether Phase 4 rule concretization requires ADR and/or draft-spec updates before implementation, and record required artifacts.
+- [x] Decide internal enum/bit assignments for `Biome`, `SoilType`, `SurfaceFlags`, and `FeatureFlags`.
+- [x] Decide in-memory storage contract for `dominant` before envelope mapping.
+- [x] Decide canonical params binding for biome perturbation strength (`vegVarianceStrength` source path).
+- [x] Review the Phase 4 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 4 implementation.
 
 ### Phase 4 Implementation
 
-- [ ] Implement biome assignment and vegetation attributes.
-- [ ] Implement dominant species derivation.
-- [ ] Implement ground and roughness feature derivations.
-- [ ] Add regression tests for categorical and float outputs.
+- [x] Implement Phase 4 typed-array ecology/grounding map model (`Biome`, `SoilType`, `TreeDensity`, `CanopyCover`, `Obstruction`, `SurfaceFlags`, `FeatureFlags`, `dominantPrimary`, `dominantSecondary`) with fixed enum/bit/species code contracts.
+- [x] Implement biome assignment with canonical perturbation-strength binding (`vegVarianceNoise.strength` primary, `vegVarianceStrength` fallback), exact classification order, and `Math.fround` threshold normalization.
+- [x] Implement vegetation attribute derivations (`TreeDensity`, `CanopyCover`) with exact normative formulas and clamp behavior.
+- [x] Implement dominant-species derivation into internal primary/secondary slots and deterministic mapping to ordered output lists.
+- [x] Implement ground derivations (`SoilType`, `Firmness`, `SurfaceFlags`) using the locked deterministic rule table and canonical surface-flag order.
+- [x] Implement roughness derivations (`Obstruction`, `FeatureFlags`) using the locked deterministic rule table and canonical feature-flag order.
+- [x] Implement a single Phase 4 facade module with stable named exports for orchestration/tests and shared serialization mapping helpers for enum/bit/slot -> envelope fields.
+- [x] Add targeted Phase 4 sanity fixtures (threshold-edge behavior, mixed-forest species boundary, deterministic list ordering, multi-flag combinations, empty-list cases, and float32 threshold-boundary cases).
+- [x] Add fixed-seed Phase 4 golden regressions for balanced scope seeds/sizes/artifacts.
+- [x] Validate categorical and float regression assertions (including default float epsilon `1e-6`) for all Phase 4 outputs.
 - [ ] Review gate: explicit approval to proceed to Phase 5.
 
 ## Phase 5 - Navigation and Trails
+
+### Decisions
+
+- [ ] Review the implementation list, and add uncertain, ambiguous or unknown implementation details as decision items just below this one, above the review gate.
+- [ ] Review gate: review the implementation plan and ensure that there are no more undecideds or ambiguities.
+- [ ] Review gate: review the implementation checklist and add missing steps and details.
+
+### Implementation
 
 - [ ] Implement movement cost and directional passability.
 - [ ] Implement followable flags.
@@ -158,6 +175,14 @@ Rules:
 - [ ] Review gate: explicit approval to proceed to Phase 6.
 
 ## Phase 6 - Output, Debug, and Hardening
+
+### Decisions
+
+- [ ] Review the implementation list, and add uncertain, ambiguous or unknown implementation details as decision items just below this one, above the review gate.
+- [ ] Review gate: review the implementation plan and ensure that there are no more undecideds or ambiguities.
+- [ ] Review gate: review the implementation checklist and add missing steps and details.
+
+### Implementation
 
 - [ ] Finalize output envelope emission to `--output-file`.
 - [ ] Implement debug artifact emission to `--output-dir`.

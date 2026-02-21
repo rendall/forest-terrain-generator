@@ -14,6 +14,33 @@ import { writeModeOutputs } from "../io/write-outputs.js";
 import { createGridShape } from "../domain/topography.js";
 import { resolveBaseMaps } from "../pipeline/resolve-base-maps.js";
 import { deriveTopographyFromBaseMaps } from "../pipeline/derive-topography.js";
+import { deriveHydrology } from "../pipeline/hydrology.js";
+import {
+  biomeCodeToName,
+  deriveEcology,
+  dominantSlotsToOrderedList,
+  featureFlagsToOrderedList,
+  soilTypeCodeToName,
+  surfaceFlagsToOrderedList
+} from "../pipeline/ecology.js";
+
+const LANDFORM_NAME_BY_CODE: Record<number, string> = {
+  0: "flat",
+  1: "slope",
+  2: "ridge",
+  3: "valley",
+  4: "basin"
+};
+
+const WATER_CLASS_NAME_BY_CODE: Record<number, string> = {
+  0: "none",
+  1: "lake",
+  2: "stream",
+  3: "marsh"
+};
+
+type HydrologyParams = Parameters<typeof deriveHydrology>[5];
+type EcologyParams = Parameters<typeof deriveEcology>[2];
 
 function resolveFromCwd(cwd: string, maybeRelativePath: string | undefined): string | undefined {
   if (!maybeRelativePath) {
@@ -65,9 +92,94 @@ export async function runGenerator(request: RunRequest): Promise<void> {
     mapRPath: validated.mapRPath,
     mapVPath: validated.mapVPath
   });
-  deriveTopographyFromBaseMaps(shape, baseMaps, validated.params);
+  const topography = deriveTopographyFromBaseMaps(shape, baseMaps, validated.params);
+  const hydrologyParams = {
+    ...(validated.params.hydrology as Record<string, unknown>),
+    streamProxMaxDist: (validated.params.gameTrails as Record<string, unknown>)?.streamProxMaxDist
+  } as unknown as HydrologyParams;
+  const hydrology = deriveHydrology(
+    shape,
+    topography.h,
+    topography.slopeMag,
+    topography.landform,
+    validated.seed,
+    hydrologyParams
+  );
+  const ecologyParams = {
+    vegVarianceNoise: validated.params.vegVarianceNoise as { strength?: number } | undefined,
+    vegVarianceStrength:
+      typeof validated.params.vegVarianceStrength === "number"
+        ? validated.params.vegVarianceStrength
+        : undefined,
+    ground: validated.params.ground as unknown,
+    roughnessFeatures: validated.params.roughnessFeatures as unknown
+  } as EcologyParams;
+  const ecology = deriveEcology(
+    shape,
+    {
+      waterClass: hydrology.waterClass,
+      h: topography.h,
+      r: topography.r,
+      v: topography.v,
+      moisture: hydrology.moisture,
+      slopeMag: topography.slopeMag,
+      landform: topography.landform
+    },
+    ecologyParams
+  );
 
   const envelope: TerrainEnvelope = buildEnvelopeSkeleton();
+  envelope.meta.implementationStatus = "draft-incomplete";
+  envelope.meta.implementedPhases = ["topography", "hydrology", "ecology"];
+  envelope.meta.notes = ["Partial output: phases 5-6 are not implemented yet."];
+
+  const tiles = [];
+  for (let i = 0; i < shape.size; i += 1) {
+    const x = i % shape.width;
+    const y = Math.floor(i / shape.width);
+    const landform = LANDFORM_NAME_BY_CODE[topography.landform[i]] ?? "unknown";
+    const waterClass = WATER_CLASS_NAME_BY_CODE[hydrology.waterClass[i]] ?? "unknown";
+
+    tiles.push({
+      x,
+      y,
+      topography: {
+        h: topography.h[i],
+        r: topography.r[i],
+        v: topography.v[i],
+        slopeMag: topography.slopeMag[i],
+        aspectDeg: topography.aspectDeg[i],
+        landform
+      },
+      hydrology: {
+        fd: hydrology.fd[i],
+        fa: hydrology.fa[i],
+        faN: hydrology.faN[i],
+        lakeMask: hydrology.lakeMask[i] === 1,
+        isStream: hydrology.isStream[i] === 1,
+        distWater: hydrology.distWater[i],
+        moisture: hydrology.moisture[i],
+        waterClass
+      },
+      ecology: {
+        biome: biomeCodeToName(ecology.biome[i]),
+        treeDensity: ecology.treeDensity[i],
+        canopyCover: ecology.canopyCover[i],
+        dominant: dominantSlotsToOrderedList(ecology.dominantPrimary[i], ecology.dominantSecondary[i]),
+        ground: {
+          soil: soilTypeCodeToName(ecology.soilType[i]),
+          firmness: ecology.firmness[i],
+          surfaceFlags: surfaceFlagsToOrderedList(ecology.surfaceFlags[i])
+        },
+        roughness: {
+          obstruction: ecology.obstruction[i],
+          featureFlags: featureFlagsToOrderedList(ecology.featureFlags[i])
+        }
+      }
+    });
+  }
+  envelope.tiles = tiles;
+
   await writeModeOutputs(
     request.mode,
     validated.outputFile,
