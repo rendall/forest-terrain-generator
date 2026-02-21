@@ -14,7 +14,7 @@ const VALUE_FLAGS = new Set<string>([
   "--debug-output-file"
 ]);
 
-const BOOLEAN_FLAGS = new Set<string>(["--force", "--help", "-h"]);
+const BOOLEAN_FLAGS = new Set<string>(["--force", "--help", "-h", "--version", "-V"]);
 const ALL_FLAGS = [...VALUE_FLAGS, ...BOOLEAN_FLAGS];
 
 function parseTokenFlag(token: string): string {
@@ -38,7 +38,12 @@ export function validateArgv(argv: readonly string[]): void {
       continue;
     }
 
-    if (token === "-h" || token === "--help") {
+    if (
+      token === "-h" ||
+      token === "--help" ||
+      token === "-V" ||
+      token === "--version"
+    ) {
       continue;
     }
 

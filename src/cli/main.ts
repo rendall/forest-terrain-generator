@@ -67,6 +67,7 @@ const program = new Command();
 program
   .name("forest-terrain-generator")
   .description("Procedural forest terrain generation CLI")
+  .version("1.0.0")
   .showSuggestionAfterError(true)
   .showHelpAfterError()
   .exitOverride();
@@ -93,7 +94,7 @@ try {
   }
 } catch (error: unknown) {
   if (error instanceof CommanderError) {
-    if (error.code === "commander.helpDisplayed" || error.code === "commander.help") {
+    if (error.exitCode === 0) {
       process.exitCode = 0;
     } else {
       process.exitCode = 2;
