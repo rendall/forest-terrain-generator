@@ -485,6 +485,8 @@ Locked decisions:
 15. Envelope serialization maps the packed internal representation deterministically to the normative string-key object form.
 16. `followable` output ordering is fixed as canonical list order: `stream`, `ridge`, `game_trail`, `shore`.
 17. `followable` output is deduplicated by flag identity; each flag appears at most once per tile in emitted payloads.
+18. Optional trail post-processing (Section 10.6) is disabled in v1; no simplification pass is applied during Phase 5 implementation.
+19. Any future enablement of trail post-processing requires locking one deterministic algorithm and adding targeted regressions before activation.
 
 Done criteria:
 
