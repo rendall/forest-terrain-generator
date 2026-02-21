@@ -20,7 +20,7 @@ Rules:
 - [x] Define dependency policy (selection criteria, update cadence, pinning strategy, and license/security expectations).
 - [x] Document major dependency choices and dependency policy in `docs/ADR.md`.
 - [x] Approve repository scaffold and module boundaries (`domain`, `pipeline`, `lib`, `io`, `cli`).
-- [ ] Establish tooling baseline (TypeScript strict, lint, test runner).
+- [x] Establish tooling baseline (TypeScript strict + NodeNext, Biome lint/format, Vitest test runner).
 - [x] Define determinism policy baseline (seed handling, tie-break conventions, float/epsilon rules) and matching utility/test coverage expectations.
 - [x] Define data-contract baseline (input schema, output envelope versioning, and error code contract) before Phase 1 implementation.
 - [x] Confirm reproducibility minimums (Node version and lockfile policy).

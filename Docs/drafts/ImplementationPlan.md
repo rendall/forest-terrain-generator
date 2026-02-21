@@ -108,14 +108,14 @@ Phase 0 package metadata baseline for `package.json`:
 4. `type` set to `module`
 5. `engines.node` set to `>=22 <23`
 6. `bin` entry for the CLI command
-7. scripts: `build`, `typecheck`, `test`
+7. scripts: `build`, `typecheck`, `lint`, `test`, `check`
 
 ### 3.8 Initial Dependency Set and Versioning Policy
 
 Phase 0 dependency decisions:
 
 1. Runtime dependency: `commander`.
-2. Dev dependencies: `typescript`, `@types/node`, `vitest`, `tsx`.
+2. Core dev dependencies: `typescript`, `@types/node`, `vitest`, `tsx`.
 3. Additional dependencies are added only when implementation needs are concrete.
 
 Versioning policy:
@@ -130,6 +130,27 @@ TypeScript toolchain policy:
 1. The project requires local `typescript` via `devDependencies`.
 2. Global TypeScript installations are optional personal convenience and are not part of project requirements.
 3. Project scripts and CI must run against the local dependency version.
+
+### 3.9 Tooling Baseline (Lean)
+
+Adopt the lean tooling baseline:
+
+1. TypeScript as the typecheck/compiler tool with strict mode enabled.
+2. `@biomejs/biome` as the lint/format tool.
+3. `vitest` as the test runner.
+
+TypeScript baseline:
+
+1. `strict: true`
+2. `module: "NodeNext"`
+3. `moduleResolution: "NodeNext"`
+4. `target: "ES2022"`
+5. `noEmit: true` for typecheck runs
+
+Workflow baseline:
+
+1. Prefer project-local scripts and `npm run` over global tooling.
+2. Keep lint/test/typecheck runnable via standard scripts (`lint`, `test`, `typecheck`, `check`).
 
 ## 4. Architecture Contract
 
