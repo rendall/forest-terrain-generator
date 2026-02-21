@@ -80,7 +80,7 @@ Rules:
 - [x] Decide exact Perlin constants and algorithm details to lock for implementation (Improved Perlin 2002 variant; fixed fade `6t^5 - 15t^4 + 10t^3`; fixed `lerp(a,b,t)`; fixed 2D gradient-set/dot-product logic; fixed 256-entry permutation expanded to 512; per-octave noise output normalized to `[-1,1]`).
 - [x] Decide canonical seed-to-Perlin initialization mapping from `uint64`/`subSeed` values (use normative `subSeed(seed,mapId,octaveIndex)`; initialize SplitMix64 state with that `uint64`; build `perm[0..255]` via seeded Fisher-Yates using `j = rand % (i+1)`; expand to 512 by repetition).
 - [x] Decide fixed `Landform` enum-code mapping for `Uint8Array` storage (Option 1/spec-order mapping: `0=flat`, `1=slope`, `2=ridge`, `3=valley`, `4=basin`).
-- [ ] Decide `AspectDeg` behavior for zero-slope/flat tiles.
+- [x] Decide `AspectDeg` behavior for zero-slope/flat tiles (if `Hx == 0` and `Hy == 0`, set `AspectDeg = 0` as deterministic sentinel; otherwise use formula output normalized to `[0,360)`).
 - [ ] Decide Phase 2 golden snapshot scope details (fixed seed list, grid sizes, and artifact set).
 - [ ] Review the Phase 2 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 2 implementation.
 

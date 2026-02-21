@@ -20,6 +20,12 @@ This repository's deliverable is a CLI that implements the forest terrain genera
 ## Roadmap
 
 - consider implications of adding landform `peak` to spec
+- consider implications of 'flat' landform aspect being explicitly indeterminate
+  - Data contract change: aspectDeg may need nullable/sentinel semantics (null, omitted, or enum).
+  - Consumer impact: any downstream system assuming numeric heading must handle “no direction.”
+  - Test/golden impact: snapshots and assertions must branch on slope/flatness.
+  - Back-compat impact: existing outputs with numeric 0 for flats would differ from future spec behavior.
+  - UX/docs impact: clarify that flat tiles have no downhill heading.
 
 ## CLI Summary
 

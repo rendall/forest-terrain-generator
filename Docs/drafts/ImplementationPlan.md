@@ -357,7 +357,8 @@ Locked decisions:
 18. Per-octave Perlin noise outputs are treated as `[-1,1]` inputs to the normative multi-octave composition step.
 19. Per-octave permutation initialization is canonical: `seed_octave = subSeed(seed,mapId,octaveIndex)`; SplitMix64 state starts at `seed_octave`; `perm[0..255]` is produced by Fisher-Yates with `j = rand % (i+1)`; table is expanded to 512 by repetition.
 20. `Landform` enum-code mapping for `Uint8Array` storage is fixed as: `0=flat`, `1=slope`, `2=ridge`, `3=valley`, `4=basin`.
-21. v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); any future change to this model requires an ADR and normative-spec update before implementation.
+21. `AspectDeg` uses a deterministic flat-tile sentinel: when `Hx == 0` and `Hy == 0`, set `AspectDeg = 0`; otherwise compute by formula and normalize to `[0,360)`.
+22. v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); any future change to this model requires an ADR and normative-spec update before implementation.
 
 Done criteria:
 
