@@ -2,6 +2,31 @@
 
 This document is a living ledger of significant technical decisions made within this project. Each entry captures the context in which a decision was made, the options considered, the decision itself, and its consequences. The purpose is not to justify past choices defensively, but to preserve intent and reasoning so future contributors can understand why the system is shaped the way it is. Over time, this file forms a chronological record of trade-offs, constraints, and design direction, providing continuity as the codebase and team evolve.
 
+## Lock Phase 6 CLI Integration Test Matrix
+
+**Timestamp:** 2026-02-21 20:43 (UTC)
+
+### Decision
+Lock a Phase 6 CLI integration-test matrix spanning `generate`, `derive`, and `debug`.
+
+- `generate`: success path, invalid output-argument combinations, overwrite behavior, and unknown-input handling.
+- `derive`: success path, missing required authored input failures, shape mismatch failures, and unknown-input handling.
+- `debug`: success path with/without `--debug-output-file`, invalid `--output-file` rejection with corrective hint, atomic output-write behavior, and unknown-input handling.
+- Matrix assertions include expected exit codes and key diagnostics for each scenario.
+
+### Rationale
+A locked matrix prevents coverage drift and ensures CLI contract behaviors stay stable as implementation hardening proceeds.
+
+### Alternatives Considered
+- Lightweight ad hoc integration tests – rejected because it can miss mode-specific regressions.
+- Exhaustive combinatorial matrix – rejected for v1 due to maintenance/runtime overhead.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): Docs/drafts/ImplementationPlan.md
+- Related ADRs: Adopt Balanced End-to-End Golden Scope for Phase 6
+
 ## Adopt Balanced End-to-End Golden Scope for Phase 6
 
 **Timestamp:** 2026-02-21 20:42 (UTC)

@@ -524,6 +524,9 @@ Locked decisions:
 10. Phase 6 end-to-end golden scope is balanced: modes `generate`, `derive`, and `debug`; seeds `1`, `42`, `123456789`, and `18446744073709551615`; sizes `16x16` and `64x64`.
 11. End-to-end golden assertions include full terrain envelope content plus debug manifest/artifact presence and key invariants.
 12. Golden baselines are updated only via an explicit opt-in workflow (`--update-goldens`), never implicitly during normal test runs.
+13. Phase 6 CLI integration coverage uses a locked matrix across `generate`, `derive`, and `debug` for happy paths, invalid mode/flag combinations, overwrite behavior, and unknown-input handling.
+14. `derive` integration coverage must include missing required authored-input failures and shape-mismatch failures with exit-code assertions.
+15. `debug` integration coverage must include both standard debug output and optional `--debug-output-file`, invalid `--output-file` hint behavior, and atomic-write failure behavior.
 
 Done criteria:
 
