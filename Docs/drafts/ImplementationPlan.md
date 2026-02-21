@@ -120,6 +120,16 @@ Defaults-source and Appendix A alignment decision (Phase 1):
 5. Effective precedence remains: `CLI > file > built-in defaults`.
 6. Any future divergence from Appendix A defaults MUST be explicitly documented.
 
+Validation/error taxonomy decision (Phase 1):
+
+1. `0`: success.
+2. `2`: invalid input/usage/validation errors.
+3. `3`: dimension/shape compatibility errors for authored maps and grid sizing.
+4. `4`: file I/O errors.
+5. `5`: internal generation/derivation failures.
+6. Malformed JSON params are classified as invalid input (`2`), not file I/O (`4`).
+7. Exit-code mapping is performed by normalized error category at the CLI boundary, not by raw thrown exception type.
+
 ### 3.3 Output Contract
 
 1. `generate` and `derive` write the terrain envelope JSON to `--output-file`.
