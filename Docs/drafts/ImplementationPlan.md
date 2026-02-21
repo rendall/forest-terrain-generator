@@ -101,15 +101,18 @@ Mode-specific input/output decision (Phase 1):
 7. `debug` requires `seed`, `width`, `height`, and `params`.
 8. `debug` allows authored maps consistent with the selected generation/derivation path.
 9. `debug` requires `--output-dir`.
-10. `generate`, `derive`, and `debug` use one shared internal derivation pipeline with command-level validation/wiring differences only.
+10. `debug` optionally accepts `--debug-output-file` to also emit terrain JSON output during debug runs.
+11. `generate`, `derive`, and `debug` use one shared internal derivation pipeline with command-level validation/wiring differences only.
 
 Output-argument validation decision (Phase 1):
 
-1. `generate` and `derive` require `--output-file` and reject `--output-dir`.
+1. `generate` and `derive` require `--output-file` and reject `--output-dir` and `--debug-output-file`.
 2. `debug` requires `--output-dir` and rejects `--output-file`.
-3. Missing required mode-specific output arguments are validation errors (exit `2`).
-4. Existing output targets fail by default.
-5. `--force` overrides existing-target checks and allows overwrite/replace behavior.
+3. `debug` accepts optional `--debug-output-file`.
+4. Missing required mode-specific output arguments are validation errors (exit `2`).
+5. Existing output targets fail by default.
+6. `--force` overrides existing-target checks and allows overwrite/replace behavior.
+7. If `--output-file` is used with `debug`, the error message MUST include a corrective hint: `You might mean --debug-output-file.`
 
 Defaults-source and Appendix A alignment decision (Phase 1):
 
@@ -140,7 +143,7 @@ Duplicate-flag behavior decision (Phase 1):
 
 1. `generate` and `derive` write the terrain envelope JSON to `--output-file`.
 2. `debug` writes debug artifacts to `--output-dir`.
-3. `debug` may additionally emit the envelope JSON when configured, but debug artifacts always target `--output-dir`.
+3. `debug` may additionally write terrain envelope JSON to `--debug-output-file`.
 4. Output envelope structure conforms to normative Section 14.
 5. Existing output targets fail by default; `--force` is required to overwrite an existing file target or replace an existing directory target.
 
@@ -179,7 +182,7 @@ Error behavior remains separate:
 1. Help and version output are written to `stdout` and exit `0`.
 2. Errors are written to `stderr` and exit non-zero.
 3. Human-readable status/progress messages are written to `stderr`.
-4. Terrain payload output is file-based via `--output-file`; it is not emitted to `stdout` by default.
+4. Terrain payload output is file-based via `--output-file` (`generate`/`derive`) or `--debug-output-file` (`debug`); it is not emitted to `stdout` by default.
 
 ### 3.7 Package Metadata Baseline
 

@@ -28,7 +28,7 @@ Rules:
 - [x] Run `npm init` using the approved `package.json` baseline.
 - [x] Set lightweight phase definition of done (tests pass plus review gate approval).
 - [x] Confirm documentation baseline paths (normative spec, ADR log, implementation plan/checklist).
-- [ ] Review gate: explicit approval to proceed to Phase 1.
+- [x] Review gate: explicit approval to proceed to Phase 1.
 
 ## Phase 1 - Foundations and Contracts
 
@@ -40,7 +40,7 @@ Rules:
 - [x] Decide params-file format support (for example JSON-only vs additional formats).
 - [x] Decide path-resolution rules for file inputs (CWD-relative vs params-file-relative).
 - [x] Decide mode-specific required/allowed inputs for `generate`, `derive`, and `debug`.
-- [x] Decide output-argument validation by mode (`--output-file` vs `--output-dir` requirements).
+- [x] Decide output-argument validation by mode (`--output-file`, `--output-dir`, and optional `--debug-output-file` requirements).
 - [x] Decide defaults-source policy and Appendix A alignment.
 - [x] Decide validation/error taxonomy mapping to exit codes (`2`, `3`, `4`, `5`).
 - [x] Decide duplicate-flag behavior (last value wins vs hard error).
