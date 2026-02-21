@@ -51,7 +51,7 @@ Rules:
 - [x] Implement CLI input parsing and config precedence (CLI > file > defaults).
 - [x] Implement input schema and validation errors.
 - [x] Implement canonical CLI flags (`--params`, `--map-h`, `--map-r`, `--map-v`, `--output-file`, `--output-dir`, `--debug-output-file`, `--force`).
-- [ ] Implement params-file JSON-only enforcement and malformed-JSON classification as exit `2`.
+- [x] Implement params-file JSON-only enforcement and malformed-JSON classification as exit `2`.
 - [ ] Implement path-resolution behavior (CLI relative paths from CWD; params-file relative paths from params-file directory).
 - [ ] Implement mode/output validation details, including rejecting `--output-file` in `debug` with hint: `You might mean --debug-output-file.`
 - [ ] Implement duplicate-flag hard errors and unknown-input diagnostics with precise key/flag reporting and close-match suggestions when available.

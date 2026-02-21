@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { extname, resolve } from "node:path";
 import type { BaseInputs, JsonObject } from "../domain/types.js";
+import { InputValidationError } from "../domain/errors.js";
 
 function isObject(value: unknown): value is JsonObject {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -15,8 +16,21 @@ export async function readParamsFile(
   }
 
   const resolvedPath = resolve(cwd, paramsPath);
+  if (extname(resolvedPath).toLowerCase() !== ".json") {
+    throw new InputValidationError(
+      `Unsupported params file format for "${paramsPath}". Only JSON params files are supported.`
+    );
+  }
+
   const raw = await readFile(resolvedPath, "utf8");
-  const parsed: unknown = JSON.parse(raw);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new InputValidationError(
+      `Malformed JSON in params file "${paramsPath}". Fix JSON syntax and try again.`
+    );
+  }
 
   if (!isObject(parsed)) {
     return {};
