@@ -392,6 +392,8 @@ Locked decisions:
 15. Proximity-derived wetness/score terms consume capped fallback distances directly (no special-case branching after fallback assignment).
 16. Phase-3 hydrology regression scope is balanced: committed/versioned golden snapshots for seeds `1`, `42`, `123456789`, `18446744073709551615` at `16x16` and `64x64`, covering `FD`, `FA`, `FA_N`, `LakeMask`, `isStream`, `distWater`, `Moisture`, and `WaterClass`.
 17. Targeted hydrology fixtures are required for tie-heavy flow choice determinism, no-water fallback, threshold-edge comparisons, water-class precedence (`lake > stream > marsh > none`), and acyclic `FD` invariants.
+18. Phase-3 hydrology implementation is surfaced through a single facade module, `src/pipeline/hydrology.ts`, exporting the stable named hydrology entrypoints used by tests and orchestration.
+19. Hydrology fail-fast conditions are classified as internal failures (exit code `5`) and MUST emit diagnostics that clearly state failing stage/invariant and reason, including relevant values/context and mitigation hints where possible.
 
 Done criteria:
 
