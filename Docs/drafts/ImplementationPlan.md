@@ -408,6 +408,20 @@ Goals:
 1. Implement biome classification and vegetation attributes/species.
 2. Implement ground and roughness outputs.
 
+Locked decisions:
+
+1. Phase-4 ecology/grounding derivation uses row-major struct-of-arrays (SoA) with shared `GridShape` and per-map linear length `width * height`.
+2. In-memory storage contracts are fixed as:
+   - `Biome`: `Uint8Array` enum codes
+   - `SoilType`: `Uint8Array` enum codes
+   - `TreeDensity`: `Float32Array`
+   - `CanopyCover`: `Float32Array`
+   - `Obstruction`: `Float32Array`
+   - `SurfaceFlags`: `Uint16Array` bitmask
+   - `FeatureFlags`: `Uint16Array` bitmask
+3. Enum/bitmask values are implementation-internal and MUST be mapped at the serialization boundary to normative envelope field shapes (`biome` string, `ground.soil` string, `ground.surfaceFlags` string list, `roughness.featureFlags` string list).
+4. Pipeline modules consume and produce Phase-4 typed arrays only; conversion to envelope strings/lists is IO-layer responsibility.
+
 Done criteria:
 
 1. Categorical output regressions pass.
