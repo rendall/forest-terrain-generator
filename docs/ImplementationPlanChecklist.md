@@ -75,7 +75,7 @@ Rules:
 - [x] Decide range/clamping policy for base maps after generation and for authored-map validation (generated maps are clamped to `[0,1]` after normalization without warnings; authored maps remain strict and fail validation on out-of-range values with exit `2`).
 - [x] Decide exact boundary-sampling implementation for slope/aspect clamping at map edges (clamped-coordinate sampling per spec 5.1: `xL=max(0,x-1)`, `xR=min(width-1,x+1)`, `yU=max(0,y-1)`, `yD=min(height-1,y+1)`; `Hx=H[xR,y]-H[xL,y]`; `Hy=H[x,yD]-H[x,yU]`; no special edge/corner branches).
 - [x] Decide comparison conventions for landform thresholds (`eps`, `flatSlopeThreshold`) to prevent equality-edge drift (strict comparisons: `SlopeMag < flatSlopeThreshold` for flat branch; neighbor-high if `H[n] > center + eps`; neighbor-low if `H[n] < center - eps`; otherwise neutral/ignored).
-- [ ] Decide topography regression-test strategy (fixtures, float epsilon assertions, and deterministic seed set).
+- [x] Decide topography regression-test strategy (hybrid: committed/versioned golden snapshots for a fixed deterministic seed set, plus float epsilon assertions and targeted boundary/threshold fixtures).
 - [x] Confirm v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); defer any resolution-model change to a future ADR.
 - [ ] Review the Phase 2 implementation checklist for further or unresolved ambiguity and confirm none remains before starting Phase 2 implementation.
 

@@ -350,7 +350,9 @@ Locked decisions:
 11. Authored map schema/type/range errors map to exit `2`; authored map shape/dimension mismatches map to exit `3`; errors must identify map input and failing key/index.
 12. Slope/aspect boundary handling follows clamped-coordinate sampling from normative Section 5.1 with no separate edge/corner algorithm branches.
 13. Landform threshold comparisons follow strict operators to avoid boundary drift: `SlopeMag < flatSlopeThreshold`; neighbor-high when `H[n] > center + eps`; neighbor-low when `H[n] < center - eps`; otherwise neutral.
-14. v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); any future change to this model requires an ADR and normative-spec update before implementation.
+14. Phase-2 regression testing uses a hybrid strategy: committed/versioned golden snapshots for fixed seeds and dimensions, plus targeted fixtures for boundary and threshold behavior.
+15. Float assertions in topography regressions use epsilon-based comparisons (default `1e-6`) for derived float maps.
+16. v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); any future change to this model requires an ADR and normative-spec update before implementation.
 
 Done criteria:
 
