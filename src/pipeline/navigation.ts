@@ -1,3 +1,4 @@
+import { BIOME_CODE } from "../domain/ecology.js";
 import { WATER_CLASS_CODE } from "../domain/hydrology.js";
 import { LANDFORM_CODE, type GridShape } from "../domain/topography.js";
 
@@ -129,6 +130,22 @@ export interface TrailRouteExecutionResult {
 export interface TrailMarkedMaps {
   gameTrail: Uint8Array;
   gameTrailId: Int32Array;
+}
+
+export interface MoveCostInputs {
+  obstruction: Float32Array;
+  moisture: Float32Array;
+  waterClass: Uint8Array;
+  biome: Uint8Array;
+  gameTrail: Uint8Array;
+}
+
+export interface MoveCostParams {
+  moveCostObstructionMax: number;
+  moveCostMoistureMax: number;
+  marshMoveCostMultiplier: number;
+  openBogMoveCostMultiplier: number;
+  gameTrailMoveCostMultiplier: number;
 }
 
 export interface TrailRoutingParams {
@@ -470,6 +487,10 @@ function compareFrontier(a: FrontierEntry, b: FrontierEntry, tieEps: number): nu
   return a.stepDir - b.stepDir;
 }
 
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * clamp01(t);
+}
+
 function reconstructPath(prev: Int32Array, startIndex: number, endIndex: number): number[] {
   const path: number[] = [];
   let cursor = endIndex;
@@ -618,6 +639,39 @@ export function markTrailPaths(shape: GridShape, paths: number[][]): TrailMarked
   }
 
   return { gameTrail, gameTrailId };
+}
+
+export function deriveMoveCost(
+  shape: GridShape,
+  inputs: MoveCostInputs,
+  params: MoveCostParams
+): Float32Array {
+  validateMapLength(shape, inputs.obstruction, "Obstruction");
+  validateMapLength(shape, inputs.moisture, "Moisture");
+  validateMapLength(shape, inputs.waterClass, "WaterClass");
+  validateMapLength(shape, inputs.biome, "Biome");
+  validateMapLength(shape, inputs.gameTrail, "GameTrail");
+
+  const out = new Float32Array(shape.size);
+  for (let i = 0; i < shape.size; i += 1) {
+    let cost = 1.0;
+    cost *= lerp(1.0, params.moveCostObstructionMax, inputs.obstruction[i]);
+    cost *= lerp(1.0, params.moveCostMoistureMax, inputs.moisture[i]);
+
+    if (inputs.waterClass[i] === WATER_CLASS_CODE.marsh) {
+      cost *= params.marshMoveCostMultiplier;
+    }
+    if (inputs.biome[i] === BIOME_CODE.open_bog) {
+      cost *= params.openBogMoveCostMultiplier;
+    }
+    if (inputs.gameTrail[i] === 1) {
+      cost *= params.gameTrailMoveCostMultiplier;
+    }
+
+    out[i] = cost;
+  }
+
+  return out;
 }
 
 export function deriveTrailPreferenceCost(
