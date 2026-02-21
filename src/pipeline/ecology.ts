@@ -1,6 +1,7 @@
 import {
   BIOME_CODE,
   FEATURE_FLAG_BIT,
+  createEcologyMaps,
   SOIL_TYPE_CODE,
   SPECIES_CODE,
   SPECIES_NONE,
@@ -158,6 +159,52 @@ export interface RoughnessMaps {
   obstruction: Float32Array;
   featureFlags: Uint16Array;
 }
+
+export interface EcologyInputs {
+  waterClass: Uint8Array;
+  h: Float32Array;
+  r: Float32Array;
+  v: Float32Array;
+  moisture: Float32Array;
+  slopeMag: Float32Array;
+  landform: Uint8Array;
+}
+
+export interface EcologyParams extends BiomeParams {
+  ground: GroundParams;
+  roughnessFeatures: RoughnessParams;
+}
+
+const BIOME_NAME_BY_CODE: Record<number, string> = {
+  [BIOME_CODE.open_bog]: "open_bog",
+  [BIOME_CODE.spruce_swamp]: "spruce_swamp",
+  [BIOME_CODE.mixed_forest]: "mixed_forest",
+  [BIOME_CODE.pine_heath]: "pine_heath",
+  [BIOME_CODE.esker_pine]: "esker_pine",
+  [BIOME_CODE.lake]: "lake",
+  [BIOME_CODE.stream_bank]: "stream_bank"
+};
+
+const SOIL_NAME_BY_CODE: Record<number, string> = {
+  [SOIL_TYPE_CODE.peat]: "peat",
+  [SOIL_TYPE_CODE.sandy_till]: "sandy_till",
+  [SOIL_TYPE_CODE.rocky_till]: "rocky_till"
+};
+
+const SURFACE_ORDER = [
+  { bit: SURFACE_FLAG_BIT.standing_water, name: "standing_water" },
+  { bit: SURFACE_FLAG_BIT.sphagnum, name: "sphagnum" },
+  { bit: SURFACE_FLAG_BIT.lichen, name: "lichen" },
+  { bit: SURFACE_FLAG_BIT.exposed_sand, name: "exposed_sand" },
+  { bit: SURFACE_FLAG_BIT.bedrock, name: "bedrock" }
+] as const;
+
+const FEATURE_ORDER = [
+  { bit: FEATURE_FLAG_BIT.fallen_log, name: "fallen_log" },
+  { bit: FEATURE_FLAG_BIT.root_tangle, name: "root_tangle" },
+  { bit: FEATURE_FLAG_BIT.boulder, name: "boulder" },
+  { bit: FEATURE_FLAG_BIT.windthrow, name: "windthrow" }
+] as const;
 
 const SPECIES_NAME_BY_CODE: Record<number, string> = {
   [SPECIES_CODE.scots_pine]: "scots_pine",
@@ -369,4 +416,92 @@ export function deriveRoughness(
   }
 
   return { obstruction, featureFlags };
+}
+
+export function biomeCodeToName(code: number): string {
+  const name = BIOME_NAME_BY_CODE[code];
+  if (!name) {
+    throw new Error(`Unknown biome code ${code}.`);
+  }
+  return name;
+}
+
+export function soilTypeCodeToName(code: number): string {
+  const name = SOIL_NAME_BY_CODE[code];
+  if (!name) {
+    throw new Error(`Unknown soil type code ${code}.`);
+  }
+  return name;
+}
+
+export function surfaceFlagsToOrderedList(flags: number): string[] {
+  const out: string[] = [];
+  for (const entry of SURFACE_ORDER) {
+    if ((flags & entry.bit) !== 0) {
+      out.push(entry.name);
+    }
+  }
+  return out;
+}
+
+export function featureFlagsToOrderedList(flags: number): string[] {
+  const out: string[] = [];
+  for (const entry of FEATURE_ORDER) {
+    if ((flags & entry.bit) !== 0) {
+      out.push(entry.name);
+    }
+  }
+  return out;
+}
+
+export function deriveEcology(
+  shape: GridShape,
+  inputs: EcologyInputs,
+  params: EcologyParams
+) {
+  validateMapLength(shape, inputs.waterClass, "WaterClass");
+  validateMapLength(shape, inputs.h, "H");
+  validateMapLength(shape, inputs.r, "R");
+  validateMapLength(shape, inputs.v, "V");
+  validateMapLength(shape, inputs.moisture, "Moisture");
+  validateMapLength(shape, inputs.slopeMag, "SlopeMag");
+  validateMapLength(shape, inputs.landform, "Landform");
+
+  const out = createEcologyMaps(shape);
+
+  out.biome = deriveBiome(
+    shape,
+    inputs.waterClass,
+    inputs.h,
+    inputs.moisture,
+    inputs.slopeMag,
+    inputs.v,
+    params
+  );
+
+  const vegetation = deriveVegetationAttributes(shape, out.biome, inputs.moisture, inputs.v);
+  out.treeDensity = vegetation.treeDensity;
+  out.canopyCover = vegetation.canopyCover;
+
+  const dominant = deriveDominantSpecies(shape, out.biome, inputs.moisture);
+  out.dominantPrimary = dominant.dominantPrimary;
+  out.dominantSecondary = dominant.dominantSecondary;
+
+  const ground = deriveGround(
+    shape,
+    inputs.moisture,
+    inputs.slopeMag,
+    inputs.h,
+    inputs.r,
+    inputs.landform,
+    params.ground
+  );
+  out.soilType = ground.soilType;
+  out.surfaceFlags = ground.surfaceFlags;
+
+  const roughness = deriveRoughness(shape, inputs.r, inputs.moisture, inputs.h, params.roughnessFeatures);
+  out.obstruction = roughness.obstruction;
+  out.featureFlags = roughness.featureFlags;
+
+  return out;
 }
