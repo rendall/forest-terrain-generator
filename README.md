@@ -17,6 +17,10 @@ This repository's deliverable is a CLI that implements the forest terrain genera
 - Repository policy and scaffold guidance: [docs/drafts/ImplementationPlan.md](docs/drafts/ImplementationPlan.md)
 - Agent collaboration policy: [AGENTS.md](AGENTS.md)
 
+## Roadmap
+
+- consider implications of adding landform `peak` to spec
+
 ## CLI Summary
 
 Commands:
