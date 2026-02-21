@@ -1,0 +1,31 @@
+{
+  "name": "forest-terrain-generator",
+  "version": "1.0.0",
+  "description": "Procedurally generate forest data.",
+  "scripts": {
+    "test": "vitest run",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "biome check .",
+    "check": "npm run typecheck && npm run lint && npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rendall/forest-terrain-generator.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rendall/forest-terrain-generator/issues"
+  },
+  "homepage": "https://github.com/rendall/forest-terrain-generator#readme",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22 <23"
+  },
+  "bin": {
+    "forest-terrain-generator": "dist/cli/main.js"
+  }
+}

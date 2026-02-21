@@ -25,7 +25,7 @@ Rules:
 - [x] Define data-contract baseline (input schema, output envelope versioning, and error code contract) before Phase 1 implementation.
 - [x] Confirm reproducibility minimums (Node version and lockfile policy).
 - [x] Confirm minimal `package.json` baseline (`name`, `version`, `private`, `type`, `engines.node`, `bin`, scripts).
-- [ ] Run `npm init` using the approved `package.json` baseline.
+- [x] Run `npm init` using the approved `package.json` baseline.
 - [x] Set lightweight phase definition of done (tests pass plus review gate approval).
 - [x] Confirm documentation baseline paths (normative spec, ADR log, implementation plan/checklist).
 - [ ] Review gate: explicit approval to proceed to Phase 1.
