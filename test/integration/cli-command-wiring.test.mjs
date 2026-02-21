@@ -138,8 +138,28 @@ describe("CLI command wiring and contract failures", () => {
     ]);
 
     expect(result.code).toBe(0);
-    const manifest = await readFile(join(outputDir, "debug-manifest.json"), "utf8");
-    expect(manifest).toContain("\"mode\": \"debug\"");
+    const manifestRaw = await readFile(join(outputDir, "debug-manifest.json"), "utf8");
+    const manifest = JSON.parse(manifestRaw);
+    expect(manifest.mode).toBe("debug");
+    expect(manifest.specVersion).toBe("forest-terrain-v1");
+    expect(manifest.width).toBe(4);
+    expect(manifest.height).toBe(4);
+    expect(manifest.tileCount).toBe(16);
+    expect(manifest.artifacts).toEqual([
+      "topography.json",
+      "hydrology.json",
+      "ecology.json",
+      "navigation.json"
+    ]);
+
+    const topographyRaw = await readFile(join(outputDir, "topography.json"), "utf8");
+    const hydrologyRaw = await readFile(join(outputDir, "hydrology.json"), "utf8");
+    const ecologyRaw = await readFile(join(outputDir, "ecology.json"), "utf8");
+    const navigationRaw = await readFile(join(outputDir, "navigation.json"), "utf8");
+    expect(JSON.parse(topographyRaw).tiles.length).toBe(16);
+    expect(JSON.parse(hydrologyRaw).tiles.length).toBe(16);
+    expect(JSON.parse(ecologyRaw).tiles.length).toBe(16);
+    expect(JSON.parse(navigationRaw).tiles.length).toBe(16);
 
     const envelope = await readFile(debugOutputFile, "utf8");
     const parsed = JSON.parse(envelope);
