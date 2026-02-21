@@ -2,8 +2,15 @@ import { isAbsolute, resolve } from "node:path";
 import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
 import { deepMerge } from "../lib/deep-merge.js";
 import { readParamsFile } from "../io/read-params.js";
-import type { JsonObject, ResolvedInputs, RunRequest } from "../domain/types.js";
+import type {
+  JsonObject,
+  ResolvedInputs,
+  RunRequest,
+  TerrainEnvelope
+} from "../domain/types.js";
 import { validateResolvedInputs } from "./validate-input.js";
+import { buildEnvelopeSkeleton } from "./build-envelope.js";
+import { serializeEnvelope } from "../io/serialize-envelope.js";
 
 function resolveFromCwd(cwd: string, maybeRelativePath: string | undefined): string | undefined {
   if (!maybeRelativePath) {
@@ -45,4 +52,8 @@ export async function resolveInputs(request: RunRequest): Promise<ResolvedInputs
 export async function runGenerator(request: RunRequest): Promise<void> {
   const resolved = await resolveInputs(request);
   validateResolvedInputs(resolved, request.mode);
+
+  const envelope: TerrainEnvelope = buildEnvelopeSkeleton();
+  const serializedEnvelope = serializeEnvelope(envelope);
+  void serializedEnvelope;
 }

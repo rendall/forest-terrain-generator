@@ -58,3 +58,12 @@ export interface ResolvedInputs {
   debugOutputFile?: string;
   force: boolean;
 }
+
+export interface TerrainEnvelopeMeta {
+  specVersion: string;
+}
+
+export interface TerrainEnvelope {
+  meta: TerrainEnvelopeMeta;
+  tiles: JsonObject[];
+}
