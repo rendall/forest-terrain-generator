@@ -466,6 +466,15 @@ Goals:
 1. Implement movement cost, passability, followable flags.
 2. Implement deterministic trail seed selection and routing.
 
+Locked decisions:
+
+1. Phase 5 uses a row-major struct-of-arrays in-memory model shared by the phase (`i = y * width + x`) with one `GridShape` contract for all navigation/trail maps.
+2. `C` (trail preference cost field) and `MoveCost` are stored as `Float32Array`.
+3. `GameTrail` is stored as `Uint8Array` (`0=false`, `1=true`).
+4. `GameTrailId` is stored as `Int32Array` with sentinel `-1` for no trail id.
+5. Directional/navigation categorical outputs (`Passability`, `CliffEdge`, `FollowableFlags`) are stored in compact typed-array bit/byte fields internally, then deterministically mapped to envelope payload fields at serialization boundaries.
+6. Exact per-direction encoding and emitted key order are decided separately in the dedicated Phase 5 passability/followable decision items.
+
 Done criteria:
 
 1. Deterministic route-order and tie-break tests pass.

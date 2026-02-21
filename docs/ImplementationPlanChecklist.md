@@ -162,7 +162,7 @@ Rules:
 ### Decisions
 
 - [x] Review the implementation list, and add uncertain, ambiguous or unknown implementation details as decision items just below this one, above the review gate.
-- [ ] Decide Phase 5 in-memory map model and storage contracts (`C`, `GameTrail`, `GameTrailId`, `MoveCost`, `Passability`, `CliffEdge`, `FollowableFlags`) and deterministic mapping to envelope payload fields.
+- [x] Decide Phase 5 in-memory map model and storage contracts (`C`, `GameTrail`, `GameTrailId`, `MoveCost`, `Passability`, `CliffEdge`, `FollowableFlags`) and deterministic mapping to envelope payload fields.
 - [ ] Decide nearest-node distance metric and tie behavior for Section 10.4 endpoint selection (`Seed -> WaterNode`, `Seed -> RidgeNode`) and define exact implementation algorithm.
 - [ ] Decide fallback behavior when candidate filtering yields no seeds or when selected seeds have no reachable endpoints/routes.
 - [ ] Decide route-overlap and `GameTrailId` assignment behavior when multiple routes mark the same tiles.
