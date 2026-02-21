@@ -4,7 +4,6 @@ import { runGenerator } from "../app/run-generator.js";
 import { validateArgv } from "./argv-validation.js";
 import type { CliArgs, Mode } from "../domain/types.js";
 import {
-  InputValidationError,
   exitCodeForCategory,
   normalizeCliError
 } from "../domain/errors.js";
@@ -84,16 +83,20 @@ addCommonInputOptions(program.command("debug").description("Emit debug artifacts
 );
 
 try {
-  validateArgv(process.argv.slice(2));
-  await program.parseAsync(process.argv);
+  const argv = process.argv.slice(2);
+  if (argv.length === 0) {
+    program.outputHelp();
+    process.exitCode = 0;
+  } else {
+    validateArgv(argv);
+    await program.parseAsync(process.argv);
+  }
 } catch (error: unknown) {
   if (error instanceof CommanderError) {
-    if (error.code === "commander.helpDisplayed") {
+    if (error.code === "commander.helpDisplayed" || error.code === "commander.help") {
       process.exitCode = 0;
     } else {
-      const inputError = new InputValidationError(error.message.trim());
-      console.error(inputError.message);
-      process.exitCode = exitCodeForCategory(inputError.category);
+      process.exitCode = 2;
     }
   } else {
     const normalizedError = normalizeCliError(error);

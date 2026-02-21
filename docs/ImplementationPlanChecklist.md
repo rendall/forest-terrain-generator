@@ -57,7 +57,7 @@ Rules:
 - [x] Implement duplicate-flag hard errors and unknown-input diagnostics with precise key/flag reporting and close-match suggestions when available.
 - [x] Implement envelope skeleton builder and serializer boundary.
 - [x] Implement exit code mapping for validation/shape/IO/internal failures.
-- [ ] Add integration tests for help behavior (`help`, `--help`, `-h`, no command) and command-error behavior (unknown/invalid -> exit `2`).
+- [x] Add integration tests for help behavior (`help`, `--help`, `-h`, no command) and command-error behavior (unknown/invalid -> exit `2`).
 - [ ] Add integration tests for stream behavior (`stdout` for help/version, `stderr` for errors/status).
 - [ ] Add integration tests for overwrite policy (existing outputs fail without `--force`, succeed with `--force`).
 - [ ] Add integration tests for command wiring and contract failures.
