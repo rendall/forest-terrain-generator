@@ -4,6 +4,8 @@
   "description": "Procedurally generate forest data.",
   "scripts": {
     "test": "vitest run",
+    "test:phase6-goldens": "node scripts/run-phase6-e2e-goldens.mjs",
+    "test:phase6-goldens:update": "node scripts/run-phase6-e2e-goldens.mjs --update-goldens",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "biome check .",

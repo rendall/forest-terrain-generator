@@ -4,8 +4,7 @@ import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "vitest";
 
-const VITEST_ENTRY = resolve(process.cwd(), "node_modules/vitest/vitest.mjs");
-const GOLDEN_TEST_FILE = resolve(process.cwd(), "test/golden/phase6-e2e-golden.test.mjs");
+const GOLDEN_RUNNER = resolve(process.cwd(), "scripts/run-phase6-e2e-goldens.mjs");
 const tempDirs = [];
 
 function runGoldenTest({
@@ -13,9 +12,9 @@ function runGoldenTest({
   updateGoldens
 }) {
   return new Promise((resolveResult, rejectResult) => {
-    const args = [VITEST_ENTRY, "run", GOLDEN_TEST_FILE];
+    const args = [GOLDEN_RUNNER];
     if (updateGoldens) {
-      args.push("--", "--update-goldens");
+      args.push("--update-goldens");
     }
 
     const child = spawn(process.execPath, args, {

@@ -6,7 +6,11 @@ import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "vitest";
 
 const CLI_ENTRY = resolve(process.cwd(), "src/cli/main.ts");
-const GOLDEN_BASELINES_PATH = resolve(process.cwd(), "test/golden/e2e/phase6-e2e-hashes.json");
+const GOLDEN_BASELINES_PATH = process.env.FTG_PHASE6_E2E_BASELINE_PATH
+  ? resolve(process.cwd(), process.env.FTG_PHASE6_E2E_BASELINE_PATH)
+  : resolve(process.cwd(), "test/golden/e2e/phase6-e2e-hashes.json");
+const UPDATE_GOLDENS =
+  process.argv.includes("--update-goldens") || process.env.FTG_UPDATE_GOLDENS === "1";
 const SEEDS = ["1", "42", "123456789", "18446744073709551615"];
 const SIZES = [
   { width: 16, height: 16 },
@@ -83,7 +87,7 @@ afterEach(async () => {
 
 describe("Phase 6 end-to-end fixed-seed goldens", () => {
   it("matches locked generate/derive/debug golden baselines and debug invariants", async () => {
-    const baseline = JSON.parse(await readFile(GOLDEN_BASELINES_PATH, "utf8"));
+    const actual = {};
 
     for (const seed of SEEDS) {
       for (const size of SIZES) {
@@ -104,7 +108,7 @@ describe("Phase 6 end-to-end fixed-seed goldens", () => {
         ]);
         expect(generateResult.code).toBe(0);
         const generateRaw = await readFile(generateOutput, "utf8");
-        expect(hashText(generateRaw)).toBe(baseline[caseKey("generate", seed, width, height)]);
+        actual[caseKey("generate", seed, width, height)] = hashText(generateRaw);
 
         const deriveMapH = join(dir, `derive-map-h-${width}x${height}.json`);
         await createDeriveMap(deriveMapH, width, height);
@@ -124,7 +128,7 @@ describe("Phase 6 end-to-end fixed-seed goldens", () => {
         ]);
         expect(deriveResult.code).toBe(0);
         const deriveRaw = await readFile(deriveOutput, "utf8");
-        expect(hashText(deriveRaw)).toBe(baseline[caseKey("derive", seed, width, height)]);
+        actual[caseKey("derive", seed, width, height)] = hashText(deriveRaw);
 
         const debugDir = join(dir, `debug-${width}x${height}`);
         const debugOutput = join(dir, `debug-output-${width}x${height}.json`);
@@ -143,7 +147,7 @@ describe("Phase 6 end-to-end fixed-seed goldens", () => {
         ]);
         expect(debugResult.code).toBe(0);
         const debugRaw = await readFile(debugOutput, "utf8");
-        expect(hashText(debugRaw)).toBe(baseline[caseKey("debug", seed, width, height)]);
+        actual[caseKey("debug", seed, width, height)] = hashText(debugRaw);
 
         for (const artifact of DEBUG_ARTIFACTS) {
           await expect(stat(join(debugDir, artifact))).resolves.toBeDefined();
@@ -162,5 +166,13 @@ describe("Phase 6 end-to-end fixed-seed goldens", () => {
         ]);
       }
     }
+
+    const orderedActual = Object.fromEntries(Object.entries(actual).sort(([a], [b]) => a.localeCompare(b)));
+    if (UPDATE_GOLDENS) {
+      await writeFile(GOLDEN_BASELINES_PATH, `${JSON.stringify(orderedActual, null, 2)}\n`, "utf8");
+    }
+
+    const baseline = JSON.parse(await readFile(GOLDEN_BASELINES_PATH, "utf8"));
+    expect(orderedActual).toEqual(baseline);
   }, 120000);
 });
