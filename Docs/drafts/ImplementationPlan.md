@@ -103,6 +103,14 @@ Mode-specific input/output decision (Phase 1):
 9. `debug` requires `--output-dir`.
 10. `generate`, `derive`, and `debug` use one shared internal derivation pipeline with command-level validation/wiring differences only.
 
+Output-argument validation decision (Phase 1):
+
+1. `generate` and `derive` require `--output-file` and reject `--output-dir`.
+2. `debug` requires `--output-dir` and rejects `--output-file`.
+3. Missing required mode-specific output arguments are validation errors (exit `2`).
+4. Existing output targets fail by default.
+5. `--force` overrides existing-target checks and allows overwrite/replace behavior.
+
 ### 3.3 Output Contract
 
 1. `generate` and `derive` write the terrain envelope JSON to `--output-file`.

@@ -40,7 +40,7 @@ Rules:
 - [x] Decide params-file format support (for example JSON-only vs additional formats).
 - [x] Decide path-resolution rules for file inputs (CWD-relative vs params-file-relative).
 - [x] Decide mode-specific required/allowed inputs for `generate`, `derive`, and `debug`.
-- [ ] Decide output-argument validation by mode (`--output-file` vs `--output-dir` requirements).
+- [x] Decide output-argument validation by mode (`--output-file` vs `--output-dir` requirements).
 - [ ] Decide defaults-source policy and Appendix A alignment.
 - [ ] Decide validation/error taxonomy mapping to exit codes (`2`, `3`, `4`, `5`).
 - [ ] Decide duplicate-flag behavior (last value wins vs hard error).
