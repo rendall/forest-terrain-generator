@@ -13,6 +13,7 @@ import { buildEnvelopeSkeleton } from "./build-envelope.js";
 import { writeModeOutputs } from "../io/write-outputs.js";
 import { createGridShape } from "../domain/topography.js";
 import { resolveBaseMaps } from "../pipeline/resolve-base-maps.js";
+import { deriveSlopeAspect } from "../pipeline/derive-slope-aspect.js";
 
 function resolveFromCwd(cwd: string, maybeRelativePath: string | undefined): string | undefined {
   if (!maybeRelativePath) {
@@ -55,7 +56,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
   const resolved = await resolveInputs(request);
   const validated = validateResolvedInputs(resolved, request.mode);
   const shape = createGridShape(validated.width, validated.height);
-  await resolveBaseMaps({
+  const baseMaps = await resolveBaseMaps({
     shape,
     seed: validated.seed,
     params: validated.params,
@@ -64,6 +65,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
     mapRPath: validated.mapRPath,
     mapVPath: validated.mapVPath
   });
+  deriveSlopeAspect(shape, baseMaps.h);
 
   const envelope: TerrainEnvelope = buildEnvelopeSkeleton();
   await writeModeOutputs(
