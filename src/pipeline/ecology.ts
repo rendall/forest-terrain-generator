@@ -1,4 +1,4 @@
-import { BIOME_CODE } from "../domain/ecology.js";
+import { BIOME_CODE, SPECIES_CODE, SPECIES_NONE } from "../domain/ecology.js";
 import { WATER_CLASS_CODE } from "../domain/hydrology.js";
 import type { GridShape } from "../domain/topography.js";
 
@@ -117,6 +117,17 @@ export interface VegetationAttributes {
   canopyCover: Float32Array;
 }
 
+export interface DominantSpeciesSlots {
+  dominantPrimary: Uint8Array;
+  dominantSecondary: Uint8Array;
+}
+
+const SPECIES_NAME_BY_CODE: Record<number, string> = {
+  [SPECIES_CODE.scots_pine]: "scots_pine",
+  [SPECIES_CODE.norway_spruce]: "norway_spruce",
+  [SPECIES_CODE.birch]: "birch"
+};
+
 export function deriveVegetationAttributes(
   shape: GridShape,
   biome: Uint8Array,
@@ -144,4 +155,72 @@ export function deriveVegetationAttributes(
   }
 
   return { treeDensity, canopyCover };
+}
+
+export function deriveDominantSpecies(
+  shape: GridShape,
+  biome: Uint8Array,
+  moisture: Float32Array
+): DominantSpeciesSlots {
+  validateMapLength(shape, biome, "Biome");
+  validateMapLength(shape, moisture, "Moisture");
+
+  const moistSplit = Math.fround(0.52);
+  const bogTreeCutoff = Math.fround(0.75);
+  const dominantPrimary = new Uint8Array(shape.size).fill(SPECIES_NONE);
+  const dominantSecondary = new Uint8Array(shape.size).fill(SPECIES_NONE);
+
+  for (let i = 0; i < shape.size; i += 1) {
+    switch (biome[i]) {
+      case BIOME_CODE.pine_heath:
+      case BIOME_CODE.esker_pine:
+        dominantPrimary[i] = SPECIES_CODE.scots_pine;
+        break;
+      case BIOME_CODE.spruce_swamp:
+        dominantPrimary[i] = SPECIES_CODE.norway_spruce;
+        break;
+      case BIOME_CODE.mixed_forest:
+        if (moisture[i] >= moistSplit) {
+          dominantPrimary[i] = SPECIES_CODE.norway_spruce;
+          dominantSecondary[i] = SPECIES_CODE.birch;
+        } else {
+          dominantPrimary[i] = SPECIES_CODE.birch;
+          dominantSecondary[i] = SPECIES_CODE.norway_spruce;
+        }
+        break;
+      case BIOME_CODE.stream_bank:
+        dominantPrimary[i] = SPECIES_CODE.birch;
+        break;
+      case BIOME_CODE.open_bog:
+        if (moisture[i] < bogTreeCutoff) {
+          dominantPrimary[i] = SPECIES_CODE.birch;
+        }
+        break;
+      case BIOME_CODE.lake:
+        break;
+      default:
+        throw new Error(`Unknown Biome code ${biome[i]} at index ${i}.`);
+    }
+  }
+
+  return { dominantPrimary, dominantSecondary };
+}
+
+export function dominantSlotsToOrderedList(primary: number, secondary: number): string[] {
+  const out: string[] = [];
+  if (primary !== SPECIES_NONE) {
+    const name = SPECIES_NAME_BY_CODE[primary];
+    if (!name) {
+      throw new Error(`Unknown dominant primary species code ${primary}.`);
+    }
+    out.push(name);
+  }
+  if (secondary !== SPECIES_NONE) {
+    const name = SPECIES_NAME_BY_CODE[secondary];
+    if (!name) {
+      throw new Error(`Unknown dominant secondary species code ${secondary}.`);
+    }
+    out.push(name);
+  }
+  return out;
 }
