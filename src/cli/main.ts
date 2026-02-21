@@ -1,8 +1,13 @@
 #!/usr/bin/env node
-import { Command } from "commander";
+import { Command, CommanderError } from "commander";
 import { runGenerator } from "../app/run-generator.js";
 import { validateArgv } from "./argv-validation.js";
 import type { CliArgs, Mode } from "../domain/types.js";
+import {
+  InputValidationError,
+  exitCodeForCategory,
+  normalizeCliError
+} from "../domain/errors.js";
 
 function parseIntArg(raw: string): number {
   return Number.parseInt(raw, 10);
@@ -63,7 +68,9 @@ const program = new Command();
 program
   .name("forest-terrain-generator")
   .description("Procedural forest terrain generation CLI")
-  .showSuggestionAfterError(true);
+  .showSuggestionAfterError(true)
+  .showHelpAfterError()
+  .exitOverride();
 
 addCommonInputOptions(program.command("generate").description("Generate terrain")).action(
   async (options) => runMode("generate", toArgs(options))
@@ -80,10 +87,17 @@ try {
   validateArgv(process.argv.slice(2));
   await program.parseAsync(process.argv);
 } catch (error: unknown) {
-  if (error instanceof Error) {
-    console.error(error.message);
+  if (error instanceof CommanderError) {
+    if (error.code === "commander.helpDisplayed") {
+      process.exitCode = 0;
+    } else {
+      const inputError = new InputValidationError(error.message.trim());
+      console.error(inputError.message);
+      process.exitCode = exitCodeForCategory(inputError.category);
+    }
   } else {
-    console.error(error);
+    const normalizedError = normalizeCliError(error);
+    console.error(normalizedError.message);
+    process.exitCode = exitCodeForCategory(normalizedError.category);
   }
-  process.exitCode = 5;
 }
