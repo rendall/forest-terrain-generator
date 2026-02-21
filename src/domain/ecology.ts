@@ -48,6 +48,7 @@ export interface EcologyMapsSoA {
   shape: GridShape;
   biome: Uint8Array;
   soilType: Uint8Array;
+  firmness: Float32Array;
   treeDensity: Float32Array;
   canopyCover: Float32Array;
   obstruction: Float32Array;
@@ -62,6 +63,7 @@ export function createEcologyMaps(shape: GridShape): EcologyMapsSoA {
     shape,
     biome: new Uint8Array(shape.size),
     soilType: new Uint8Array(shape.size),
+    firmness: new Float32Array(shape.size),
     treeDensity: new Float32Array(shape.size),
     canopyCover: new Float32Array(shape.size),
     obstruction: new Float32Array(shape.size),

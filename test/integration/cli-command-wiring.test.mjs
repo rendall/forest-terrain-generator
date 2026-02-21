@@ -66,7 +66,13 @@ describe("CLI command wiring and contract failures", () => {
 
     expect(result.code).toBe(0);
     const written = await readFile(outputFile, "utf8");
-    expect(written).toContain("\"specVersion\": \"forest-terrain-v1\"");
+    const parsed = JSON.parse(written);
+    expect(parsed.meta.specVersion).toBe("forest-terrain-v1");
+    expect(parsed.meta.implementationStatus).toBe("draft-incomplete");
+    expect(Array.isArray(parsed.meta.implementedPhases)).toBe(true);
+    expect(parsed.meta.implementedPhases).toEqual(["topography", "hydrology", "ecology"]);
+    expect(Array.isArray(parsed.tiles)).toBe(true);
+    expect(parsed.tiles.length).toBeGreaterThan(0);
   });
 
   it("fails derive without required --map-h", async () => {
@@ -136,6 +142,10 @@ describe("CLI command wiring and contract failures", () => {
     expect(manifest).toContain("\"mode\": \"debug\"");
 
     const envelope = await readFile(debugOutputFile, "utf8");
-    expect(envelope).toContain("\"specVersion\": \"forest-terrain-v1\"");
+    const parsed = JSON.parse(envelope);
+    expect(parsed.meta.specVersion).toBe("forest-terrain-v1");
+    expect(parsed.meta.implementationStatus).toBe("draft-incomplete");
+    expect(Array.isArray(parsed.tiles)).toBe(true);
+    expect(parsed.tiles.length).toBeGreaterThan(0);
   });
 });

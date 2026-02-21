@@ -61,6 +61,9 @@ export interface ResolvedInputs {
 
 export interface TerrainEnvelopeMeta {
   specVersion: string;
+  implementationStatus?: "draft-incomplete" | "complete";
+  implementedPhases?: string[];
+  notes?: string[];
 }
 
 export interface TerrainEnvelope {

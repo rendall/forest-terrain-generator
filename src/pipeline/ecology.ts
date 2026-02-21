@@ -497,6 +497,7 @@ export function deriveEcology(
     params.ground
   );
   out.soilType = ground.soilType;
+  out.firmness = ground.firmness;
   out.surfaceFlags = ground.surfaceFlags;
 
   const roughness = deriveRoughness(shape, inputs.r, inputs.moisture, inputs.h, params.roughnessFeatures);
