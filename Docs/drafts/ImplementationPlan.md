@@ -474,6 +474,8 @@ Locked decisions:
 4. `GameTrailId` is stored as `Int32Array` with sentinel `-1` for no trail id.
 5. Directional/navigation categorical outputs (`Passability`, `CliffEdge`, `FollowableFlags`) are stored in compact typed-array bit/byte fields internally, then deterministically mapped to envelope payload fields at serialization boundaries.
 6. Exact per-direction encoding and emitted key order are decided separately in the dedicated Phase 5 passability/followable decision items.
+7. Endpoint selection in Section 10.4 uses geometric nearest-node distance only: 8-way grid distance (cardinal and diagonal step cost `1`) with deterministic tie-break by `(y, x)` ascending.
+8. Endpoint selection does not account for routing barriers (`C >= INF`) during nearest-node choice; reachability is resolved in routing, and unreachable route requests are skipped per fallback policy.
 
 Done criteria:
 
