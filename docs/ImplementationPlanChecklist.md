@@ -1,100 +1,91 @@
-# Forest Terrain Generator — Implementation Plan & Checklist
+# Forest Terrain Generator - Implementation Checklist
 
-## Phase 0 — Project Setup & Collaboration Guardrails
+This checklist is the execution companion to `docs/drafts/ImplementationPlan.md`.
 
-Before implementation starts, align on:
+Rules:
 
-- [ ] Repository scaffolding (folders, module boundaries, naming conventions)
-- [ ] `AGENTS.md` collaboration rules (decision process, review cadence, ownership)
-- [ ] Dependency policy (allowed libraries, version pinning, update policy, license checks)
-- [ ] Build/test/tooling baseline (formatter, linter, test runner, CI entrypoints)
-- [ ] Determinism policy (seed handling, tie-break conventions, float/epsilon rules)
-- [ ] Data contracts first (input schema, output schema/envelope versioning, error codes)
-- [ ] Environment & reproducibility standards (runtime versions, lockfiles, dev setup)
-- [ ] Quality gates (definition of done for each phase, minimum tests per feature)
-- [ ] Documentation baseline (where specs, ADRs, and implementation notes live)
-- [ ] Risk register kickoff (known unknowns and how we de-risk early)
+1. Follow precedence in `AGENTS.md` and the normative specification.
+2. Treat each phase as closed only when its done criteria are satisfied.
+3. Stop at each review gate and request explicit approval before continuing.
 
-### Phase 0.1 — Repository Scaffolding Proposal (Approved Direction)
+## Phase 0 - Alignment and Scaffold
 
-Guiding constraints captured from stakeholder preference:
+- [ ] Confirm project deliverable statement is present and consistent in `README.md` and `AGENTS.md`.
+- [ ] Confirm `AGENTS.md` alignment for approval gates and change process.
+- [ ] Confirm CLI command surface (`generate`, `derive`, `debug`) and output semantics (`--output-file` vs `--output-dir`).
+- [ ] Confirm overwrite policy: existing outputs fail by default; `--force` allows overwrite/replace.
+- [ ] Confirm help/empty-command equivalence: `help`, `--help`, `-h`, and no command all print top-level help and exit `0`.
+- [ ] Confirm CLI stream behavior policy (`stdout` for help/version, `stderr` for errors/status).
+- [ ] Decide initial dependency set and versioning approach for runtime and test tooling.
+- [ ] Define dependency policy (selection criteria, update cadence, pinning strategy, and license/security expectations).
+- [ ] Document major dependency choices and dependency policy in `docs/ADR.md`.
+- [ ] Approve repository scaffold and module boundaries (`domain`, `pipeline`, `lib`, `io`, `cli`).
+- [ ] Establish tooling baseline (TypeScript strict, lint, test runner).
+- [ ] Define determinism policy baseline (seed handling, tie-break conventions, float/epsilon rules) and matching utility/test coverage expectations.
+- [ ] Define data-contract baseline (input schema, output envelope versioning, and error code contract) before Phase 1 implementation.
+- [ ] Confirm reproducibility minimums (Node version and lockfile policy).
+- [ ] Confirm minimal `package.json` baseline (`name`, `version`, `private`, `type`, `engines.node`, `bin`, scripts).
+- [ ] Run `npm init` using the approved `package.json` baseline.
+- [ ] Set lightweight phase definition of done (tests pass plus review gate approval).
+- [ ] Confirm documentation baseline paths (normative spec, ADR log, implementation plan/checklist).
+- [ ] Review gate: explicit approval to proceed to Phase 1.
 
-- TypeScript-first implementation
-- Modern ESM `import` statements
-- Functional style preferred over class-heavy object-oriented design
+## Phase 1 - Foundations and Contracts
 
-Proposed scaffold:
+- [ ] Implement CLI input parsing and config precedence (CLI > file > defaults).
+- [ ] Implement input schema and validation errors.
+- [ ] Implement envelope skeleton builder and serializer boundary.
+- [ ] Implement exit code mapping for validation/shape/IO/internal failures.
+- [ ] Add integration tests for help behavior (`help`, `--help`, `-h`, no command) and command-error behavior (unknown/invalid -> exit `2`).
+- [ ] Add integration tests for stream behavior (`stdout` for help/version, `stderr` for errors/status).
+- [ ] Add integration tests for overwrite policy (existing outputs fail without `--force`, succeed with `--force`).
+- [ ] Add integration tests for command wiring and contract failures.
+- [ ] Review gate: explicit approval to proceed to Phase 2.
 
-```txt
-src/
-  index.ts
-  app/
-    run-generator.ts
-  domain/
-    types.ts
-    dir8.ts
-    errors.ts
-  pipeline/
-    phase-00-validate/
-      validate-input.ts
-    phase-01-base-maps/
-      generate-base-maps.ts
-      apply-authored-maps.ts
-    phase-02-topography/
-      derive-slope.ts
-      derive-aspect.ts
-      classify-landform.ts
-    phase-03-hydrology/
-      derive-flow-direction.ts
-      derive-flow-accumulation.ts
-      derive-moisture.ts
-    phase-04-ecology/
-      classify-biome.ts
-      derive-vegetation.ts
-    phase-05-navigation/
-      derive-move-cost.ts
-      derive-passability.ts
-    phase-06-output/
-      build-output-envelope.ts
-  lib/
-    grid.ts
-    math.ts
-    deterministic.ts
-  io/
-    read-params.ts
-    read-authored-maps.ts
-    write-output.ts
-  cli/
-    main.ts
-test/
-  unit/
-  integration/
-  golden/
-```
+## Phase 2 - Topography
 
-Scaffolding conventions to adopt:
+- [ ] Implement base map generation and authored-map override flow.
+- [ ] Implement slope magnitude, aspect, and landform classification.
+- [ ] Add deterministic tests for ordering and tie-break behavior used by this phase.
+- [ ] Add fixed-seed regression tests for topography outputs.
+- [ ] Review gate: explicit approval to proceed to Phase 3.
 
-Completion semantics for policy checkboxes in this section:
+## Phase 3 - Hydrology
 
-- [ ] Decision is documented in `Docs/Normative/ImplementationPolicy.md`
-- [ ] Decision is mirrored in `AGENTS.md`
-- [ ] Decision is enforceable via tooling/config or an explicit verification step
+- [ ] Implement flow direction with deterministic tie-break logic.
+- [ ] Implement flow accumulation and normalization.
+- [ ] Implement lakes, streams, moisture, and water class derivations.
+- [ ] Add fixed-seed regression tests for hydrology outputs.
+- [ ] Verify traversal-order conformance to normative Section 1.7.
+- [ ] Review gate: explicit approval to proceed to Phase 4.
 
+## Phase 4 - Ecology and Grounding
 
-- [ ] File naming: `kebab-case.ts`
-- [ ] Module boundaries: domain types in `domain/`, pure derivations in `pipeline/`, side effects in `io/` + `cli/`
-- [ ] Design approach: pure functions and explicit state flow; avoid mutable global state
-- [ ] Runtime/module format: Node ESM (`"type": "module"`) and TypeScript `NodeNext`
-- [ ] Strictness baseline: TypeScript strict mode enabled from day one
+- [ ] Implement biome assignment and vegetation attributes.
+- [ ] Implement dominant species derivation.
+- [ ] Implement ground and roughness feature derivations.
+- [ ] Add regression tests for categorical and float outputs.
+- [ ] Review gate: explicit approval to proceed to Phase 5.
 
-## Phase 1 — Foundations & Contracts
+## Phase 5 - Navigation and Trails
 
-## Phase 2 — Core Terrain Signals
+- [ ] Implement movement cost and directional passability.
+- [ ] Implement followable flags.
+- [ ] Implement deterministic trail seed selection and least-cost routing.
+- [ ] Add deterministic tests for route ordering and tie-break behavior.
+- [ ] Validate navigation payload shape and invariants.
+- [ ] Review gate: explicit approval to proceed to Phase 6.
 
-## Phase 3 — Hydrology Pass
+## Phase 6 - Output, Debug, and Hardening
 
-## Phase 4 — Ecology & Grounding
+- [ ] Finalize output envelope emission to `--output-file`.
+- [ ] Implement debug artifact emission to `--output-dir`.
+- [ ] Add CLI integration tests for `generate`, `derive`, and `debug` modes.
+- [ ] Add end-to-end fixed-seed golden tests.
+- [ ] Validate error messages and exit-code behavior.
+- [ ] Final review gate: explicit approval to mark implementation complete.
 
-## Phase 5 — Navigation Semantics
+## Cross-Cutting Policy Checks
 
-## Phase 6 — Output, Validation & Hardening
+- [ ] Policy decision updates are applied to all applicable artifacts (`docs/drafts/ImplementationPlan.md`, `AGENTS.md`, `docs/ADR.md`, and relevant spec docs).
+- [ ] If applicability is unclear for any policy update, work is paused and instructions are requested before marking complete.
