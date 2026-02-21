@@ -118,7 +118,7 @@ Rules:
 
 - [x] Implement Phase 3 typed-array hydrology map model with row-major storage contracts (`FD`, `FA`, `FA_N`, `LakeMask`, `isStream`, `distWater`, `Moisture`, `WaterClass`, and internal `InDeg`).
 - [x] Implement flow direction with deterministic tie-break logic (`Dir8` + `NONE=255`, canonical neighbor order, and exact `tieBreakHash64` behavior).
-- [ ] Implement flow accumulation with deterministic Kahn/FIFO processing, overflow-protected `FA` updates, and spec-accurate `FA_N` normalization.
+- [x] Implement flow accumulation with deterministic Kahn/FIFO processing, overflow-protected `FA` updates, and spec-accurate `FA_N` normalization.
 - [ ] Implement lakes, streams, moisture, and water-class derivations with exact threshold operators and precedence rules.
 - [ ] Implement explicit no-water/no-stream fallback behavior for proximity maps and downstream moisture/proximity terms.
 - [ ] Implement single hydrology facade module `src/pipeline/hydrology.ts` with stable named exports used by tests and orchestration.

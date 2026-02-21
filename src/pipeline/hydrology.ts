@@ -22,8 +22,20 @@ export interface FlowDirectionParams {
   tieEps: number;
 }
 
+const U32_MAX = 0xffffffff;
+
 function u64(value: bigint): bigint {
   return value & U64_MASK;
+}
+
+function clamp01(value: number): number {
+  if (value <= 0) {
+    return 0;
+  }
+  if (value >= 1) {
+    return 1;
+  }
+  return value;
 }
 
 function validateMapLength(shape: GridShape, map: ArrayLike<unknown>, mapName: string): void {
@@ -92,6 +104,109 @@ export function deriveFlowDirection(
   }
 
   return fd;
+}
+
+function downstreamIndex(shape: GridShape, index: number, dir: number): number {
+  if (dir < 0 || dir > 7) {
+    throw new Error(`Invalid FD direction code ${dir} at index ${index}.`);
+  }
+
+  const x = index % shape.width;
+  const y = Math.floor(index / shape.width);
+  const step = DIR8_NEIGHBORS[dir];
+  const nx = x + step.dx;
+  const ny = y + step.dy;
+  if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
+    throw new Error(`FD points outside map bounds at index ${index} with direction ${dir}.`);
+  }
+  return ny * shape.width + nx;
+}
+
+export function deriveFlowAccumulation(shape: GridShape, fd: Uint8Array): Uint32Array {
+  validateMapLength(shape, fd, "FD");
+
+  const fa = new Uint32Array(shape.size).fill(1);
+  const inDeg = new Uint8Array(shape.size);
+
+  for (let i = 0; i < shape.size; i += 1) {
+    const dir = fd[i];
+    if (dir === DIR8_NONE) {
+      continue;
+    }
+    const downstream = downstreamIndex(shape, i, dir);
+    inDeg[downstream] += 1;
+  }
+
+  const queue: number[] = [];
+  for (let i = 0; i < shape.size; i += 1) {
+    if (inDeg[i] === 0) {
+      queue.push(i);
+    }
+  }
+
+  let head = 0;
+  let processed = 0;
+  while (head < queue.length) {
+    const tile = queue[head];
+    head += 1;
+    processed += 1;
+
+    const dir = fd[tile];
+    if (dir === DIR8_NONE) {
+      continue;
+    }
+
+    const downstream = downstreamIndex(shape, tile, dir);
+    const sum = fa[downstream] + fa[tile];
+    if (sum > U32_MAX) {
+      throw new Error(
+        `Flow accumulation overflow at tile ${downstream}: ${fa[downstream]} + ${fa[tile]} exceeds uint32.`
+      );
+    }
+    fa[downstream] = sum;
+
+    inDeg[downstream] -= 1;
+    if (inDeg[downstream] === 0) {
+      queue.push(downstream);
+    }
+  }
+
+  if (processed !== shape.size) {
+    throw new Error(
+      `Flow accumulation invariant failed: processed ${processed}/${shape.size} tiles (cycle detected).`
+    );
+  }
+
+  return fa;
+}
+
+export function normalizeFlowAccumulation(fa: Uint32Array): Float32Array {
+  let faMin = Number.POSITIVE_INFINITY;
+  let faMax = Number.NEGATIVE_INFINITY;
+
+  for (let i = 0; i < fa.length; i += 1) {
+    const value = fa[i];
+    if (value < faMin) {
+      faMin = value;
+    }
+    if (value > faMax) {
+      faMax = value;
+    }
+  }
+
+  const out = new Float32Array(fa.length);
+  if (faMax === faMin) {
+    return out;
+  }
+
+  const logMin = Math.log(faMin);
+  const logMax = Math.log(faMax);
+  const denom = logMax - logMin;
+  for (let i = 0; i < fa.length; i += 1) {
+    const normalized = (Math.log(fa[i]) - logMin) / denom;
+    out[i] = clamp01(normalized);
+  }
+  return out;
 }
 
 export { DIR8_NONE };
