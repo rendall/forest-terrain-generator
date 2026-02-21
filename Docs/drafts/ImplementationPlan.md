@@ -345,9 +345,10 @@ Locked decisions:
 6. `H`, `R`, `V`, `SlopeMag`, and `AspectDeg` are stored as `Float32Array`; `Landform` is stored as `Uint8Array` with fixed enum-code mapping.
 7. All phase-2 maps share one `GridShape` (`width`, `height`) contract and must have equal linear length `width * height`.
 8. Authored base maps (`--map-h`, `--map-r`, `--map-v`) use JSON-only v1 format: `{ "width": number, "height": number, "data": number[] }` with row-major data ordering.
-9. Authored map `data` length must equal `width * height`, all values must be finite and within `[0,1]`, and implementations must not resample/interpolate authored maps.
-10. Authored map schema/type/range errors map to exit `2`; authored map shape/dimension mismatches map to exit `3`; errors must identify map input and failing key/index.
-11. v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); any future change to this model requires an ADR and normative-spec update before implementation.
+9. Generated base-map values are clamped to `[0,1]` after normalization; v1 does not emit warnings for clamp events.
+10. Authored map `data` length must equal `width * height`, all values must be finite and within `[0,1]`, and implementations must not resample/interpolate authored maps.
+11. Authored map schema/type/range errors map to exit `2`; authored map shape/dimension mismatches map to exit `3`; errors must identify map input and failing key/index.
+12. v1 keeps the normative tile-resolution model (`1 base-map cell = 1 location`); any future change to this model requires an ADR and normative-spec update before implementation.
 
 Done criteria:
 
