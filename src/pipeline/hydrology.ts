@@ -1,4 +1,9 @@
-import { DIR8_NONE, WATER_CLASS_CODE } from "../domain/hydrology.js";
+import {
+  DIR8_NONE,
+  WATER_CLASS_CODE,
+  createHydrologyMaps,
+  type HydrologyMapsSoA
+} from "../domain/hydrology.js";
 import { LANDFORM_CODE, type GridShape } from "../domain/topography.js";
 import { mix64 } from "../lib/sub-seed.js";
 
@@ -55,6 +60,15 @@ export interface DistWaterParams {
 export interface DistStreamParams {
   streamProxMaxDist: number;
 }
+
+export interface HydrologyParams
+  extends FlowDirectionParams,
+    LakeMaskParams,
+    StreamMaskParams,
+    DistWaterParams,
+    DistStreamParams,
+    MoistureParams,
+    WaterClassParams {}
 
 const U32_MAX = 0xffffffff;
 
@@ -212,6 +226,20 @@ export function deriveFlowAccumulation(shape: GridShape, fd: Uint8Array): Uint32
   }
 
   return fa;
+}
+
+export function deriveInDegree(shape: GridShape, fd: Uint8Array): Uint8Array {
+  validateMapLength(shape, fd, "FD");
+  const inDeg = new Uint8Array(shape.size);
+  for (let i = 0; i < shape.size; i += 1) {
+    const dir = fd[i];
+    if (dir === DIR8_NONE) {
+      continue;
+    }
+    const downstream = downstreamIndex(shape, i, dir);
+    inDeg[downstream] += 1;
+  }
+  return inDeg;
 }
 
 export function normalizeFlowAccumulation(fa: Uint32Array): Float32Array {
@@ -461,4 +489,32 @@ export function deriveDistStream(
   return deriveDistanceFromSources(shape, isStream, params.streamProxMaxDist);
 }
 
-export { DIR8_NONE };
+export function deriveHydrology(
+  shape: GridShape,
+  h: Float32Array,
+  slopeMag: Float32Array,
+  landform: Uint8Array,
+  seed: bigint,
+  params: HydrologyParams
+): HydrologyMapsSoA {
+  const maps = createHydrologyMaps(shape);
+  maps.fd = deriveFlowDirection(shape, h, seed, params);
+  maps.inDeg = deriveInDegree(shape, maps.fd);
+  maps.fa = deriveFlowAccumulation(shape, maps.fd);
+  maps.faN = normalizeFlowAccumulation(maps.fa);
+  maps.lakeMask = deriveLakeMask(shape, landform, slopeMag, maps.faN, params);
+  maps.isStream = deriveStreamMask(shape, maps.lakeMask, maps.faN, slopeMag, params);
+  maps.distWater = deriveDistWater(shape, maps.lakeMask, maps.isStream, params);
+  maps.moisture = deriveMoisture(shape, maps.faN, slopeMag, maps.distWater, params);
+  maps.waterClass = classifyWaterClass(
+    shape,
+    maps.lakeMask,
+    maps.isStream,
+    maps.moisture,
+    slopeMag,
+    params
+  );
+  return maps;
+}
+
+export { DIR8_NONE, WATER_CLASS_CODE, createHydrologyMaps };
