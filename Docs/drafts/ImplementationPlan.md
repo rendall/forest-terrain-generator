@@ -91,6 +91,14 @@ Path-resolution decision (Phase 1):
 3. Absolute paths are used as-is.
 4. CLI help and project docs MUST explicitly state these path-resolution rules.
 
+CLI flag-name decision (Phase 1):
+
+1. Params-file flag: `--params <path>`.
+2. Authored-map flags: `--map-h <path>`, `--map-r <path>`, `--map-v <path>`.
+3. Output flags: `--output-file <path>`, `--output-dir <path>`, `--debug-output-file <path>`.
+4. Overwrite flag: `--force`.
+5. CLI help/docs MUST use these canonical names consistently.
+
 Mode-specific input/output decision (Phase 1):
 
 1. `generate` requires `seed`, `width`, `height`, and `params`.
