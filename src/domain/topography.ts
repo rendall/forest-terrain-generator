@@ -17,6 +17,16 @@ export interface TopographyMapsSoA extends BaseMapsSoA {
   landform: Uint8Array;
 }
 
+export const LANDFORM_CODE = {
+  flat: 0,
+  slope: 1,
+  ridge: 2,
+  valley: 3,
+  basin: 4
+} as const;
+
+export type LandformCode = (typeof LANDFORM_CODE)[keyof typeof LANDFORM_CODE];
+
 export function createGridShape(width: number, height: number): GridShape {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
     throw new Error(`Invalid grid shape (${width}x${height}). Width/height must be positive integers.`);

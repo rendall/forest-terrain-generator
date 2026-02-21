@@ -14,6 +14,7 @@ import { writeModeOutputs } from "../io/write-outputs.js";
 import { createGridShape } from "../domain/topography.js";
 import { resolveBaseMaps } from "../pipeline/resolve-base-maps.js";
 import { deriveSlopeAspect } from "../pipeline/derive-slope-aspect.js";
+import { classifyLandform } from "../pipeline/classify-landform.js";
 
 function resolveFromCwd(cwd: string, maybeRelativePath: string | undefined): string | undefined {
   if (!maybeRelativePath) {
@@ -65,7 +66,8 @@ export async function runGenerator(request: RunRequest): Promise<void> {
     mapRPath: validated.mapRPath,
     mapVPath: validated.mapVPath
   });
-  deriveSlopeAspect(shape, baseMaps.h);
+  const { slopeMag } = deriveSlopeAspect(shape, baseMaps.h);
+  classifyLandform(shape, baseMaps.h, slopeMag, validated.params);
 
   const envelope: TerrainEnvelope = buildEnvelopeSkeleton();
   await writeModeOutputs(
