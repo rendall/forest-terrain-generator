@@ -223,4 +223,4 @@ Rules:
 ## Cross-Cutting Policy Checks
 
 - [x] Policy decision updates are applied to all applicable artifacts (`docs/drafts/ImplementationPlan.md`, `AGENTS.md`, `docs/ADR.md`, and relevant spec docs).
-- [ ] If applicability is unclear for any policy update, work is paused and instructions are requested before marking complete.
+- [x] If applicability is unclear for any policy update, work is paused and instructions are requested before marking complete.
