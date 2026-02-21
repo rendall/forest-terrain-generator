@@ -421,6 +421,22 @@ Locked decisions:
    - `FeatureFlags`: `Uint16Array` bitmask
 3. Enum/bitmask values are implementation-internal and MUST be mapped at the serialization boundary to normative envelope field shapes (`biome` string, `ground.soil` string, `ground.surfaceFlags` string list, `roughness.featureFlags` string list).
 4. Pipeline modules consume and produce Phase-4 typed arrays only; conversion to envelope strings/lists is IO-layer responsibility.
+5. `SoilType` mapping is deterministic and first-match: `peat` when `Moisture >= ground.peatMoistureThreshold`; else `sandy_till` when `Moisture <= ground.exposedSandMoistureMax` and (`Landform == ridge` or `H >= ground.bedrockHeightMin`); else `rocky_till`.
+6. `Firmness` uses the exact normative formula: `clamp01(1.0 - 0.85*Moisture + 0.15*clamp01(SlopeMag/0.2))`.
+7. `SurfaceFlags` deterministic threshold rules are fixed:
+   - `standing_water` when `Moisture >= ground.standingWaterMoistureThreshold` and `SlopeMag < ground.standingWaterSlopeMax`
+   - `sphagnum` when `SoilType == peat`
+   - `lichen` when `Moisture <= ground.lichenMoistureMax`
+   - `exposed_sand` when `SoilType == sandy_till` and `Moisture <= ground.exposedSandMoistureMax`
+   - `bedrock` when `H >= ground.bedrockHeightMin` and `R >= ground.bedrockRoughnessMin`
+8. `Obstruction` uses the exact normative formula: `clamp01(R * (1 - mix) + Moisture * mix)`, where `mix = roughnessFeatures.obstructionMoistureMix`.
+9. `FeatureFlags` deterministic threshold rules are fixed:
+   - `fallen_log` when `Obstruction >= roughnessFeatures.fallenLogThreshold`
+   - `root_tangle` when `Moisture >= roughnessFeatures.rootTangleMoistureThreshold`
+   - `boulder` when `H >= roughnessFeatures.boulderHeightMin` and `R >= roughnessFeatures.boulderRoughnessMin`
+   - `windthrow` when `Obstruction >= roughnessFeatures.windthrowThreshold`
+10. Canonical emission order for `surfaceFlags` is fixed as: `standing_water`, `sphagnum`, `lichen`, `exposed_sand`, `bedrock`.
+11. Canonical emission order for `featureFlags` is fixed as: `fallen_log`, `root_tangle`, `boulder`, `windthrow`.
 
 Done criteria:
 
