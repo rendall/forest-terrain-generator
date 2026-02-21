@@ -97,11 +97,12 @@ try {
     if (error.exitCode === 0) {
       process.exitCode = 0;
     } else {
+      console.error(`[input] stage=cli_parse ${error.message}`);
       process.exitCode = 2;
     }
   } else {
     const normalizedError = normalizeCliError(error);
-    console.error(normalizedError.message);
+    console.error(`[${normalizedError.category}] stage=cli_runtime ${normalizedError.message}`);
     process.exitCode = exitCodeForCategory(normalizedError.category);
   }
 }
