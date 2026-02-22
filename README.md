@@ -54,6 +54,168 @@ Mode/output validation highlights:
 - In `debug`, using `--output-file` is rejected with the hint: `You might mean --debug-output-file.`
 - Existing output files/directories fail by default and require `--force` to overwrite/replace.
 
+## Parameters
+
+These parameters are read from `--params <path>` and merged over built-in defaults.
+Guidance below assumes all other parameters stay the same.
+
+### `grid`
+
+| Parameter | What it controls | Raise it | Lower it |
+| --- | --- | --- | --- |
+| `grid.playableInset` | Non-playable border thickness around the map edge. | Larger blocked border, smaller playable area, fewer trail seeds/routes. | More playable area up to map edges. |
+
+### `heightNoise`
+
+| Parameter | What it controls | Raise it | Lower it |
+| --- | --- | --- | --- |
+| `heightNoise.octaves` | Number of Perlin octaves used for elevation (`H`). | More fine detail and higher compute cost. | Smoother broad shapes, lower compute cost. |
+| `heightNoise.baseFrequency` | Starting spatial frequency for elevation noise. | Smaller, tighter terrain features. | Larger, broader hills/valleys. |
+| `heightNoise.lacunarity` | Frequency multiplier per octave for elevation. | Faster shift to high-frequency detail. | Slower shift; gentler multiscale detail. |
+| `heightNoise.persistence` | Amplitude retained per octave for elevation. | Stronger high-frequency contribution (rougher relief). | Weaker high-frequency contribution (smoother relief). |
+
+### `roughnessNoise`
+
+| Parameter | What it controls | Raise it | Lower it |
+| --- | --- | --- | --- |
+| `roughnessNoise.octaves` | Number of octaves for roughness map (`R`). | Richer obstruction texture, more compute cost. | Simpler roughness field. |
+| `roughnessNoise.baseFrequency` | Starting frequency for roughness map. | Smaller-scale rough patches. | Larger-scale rough regions. |
+| `roughnessNoise.lacunarity` | Frequency multiplier per roughness octave. | More high-frequency roughness variation. | Smoother roughness transitions. |
+| `roughnessNoise.persistence` | Amplitude retained per roughness octave. | Stronger fine roughness variation. | Weaker fine variation. |
+
+### `vegVarianceNoise`
+
+| Parameter | What it controls | Raise it | Lower it |
+| --- | --- | --- | --- |
+| `vegVarianceNoise.octaves` | Number of octaves for vegetation-variance map (`V`). | More detailed biome/vegetation perturbation pattern. | Broader, smoother perturbation regions. |
+| `vegVarianceNoise.baseFrequency` | Starting frequency for `V`. | Smaller vegetation patches. | Larger vegetation patches. |
+| `vegVarianceNoise.lacunarity` | Frequency multiplier per `V` octave. | More fine patch boundaries. | Smoother boundaries. |
+| `vegVarianceNoise.persistence` | Amplitude retained per `V` octave. | Stronger fine-scale patch variation. | More muted fine-scale variation. |
+| `vegVarianceNoise.strength` | Strength of `V` perturbation on moisture during biome classification. | More biome mixing/patchiness around thresholds. | More biome stability from raw moisture alone. |
+
+### `landform`
+
+| Parameter | What it controls | Raise it | Lower it |
+| --- | --- | --- | --- |
+| `landform.eps` | Height-difference tolerance when comparing neighbors. | Fewer neighbors counted as higher/lower (less sensitive to tiny deltas). | More sensitivity to small elevation differences. |
+| `landform.flatSlopeThreshold` | Slope cutoff for entering flat-landform branch. | More tiles treated as flat-ish for landform classification. | Fewer tiles treated as flat-ish. |
+
+### `hydrology`
+
+| Parameter | What it controls | Raise it | Lower it |
+| --- | --- | --- | --- |
+| `hydrology.minDropThreshold` | Minimum downhill drop needed to set flow direction. | More pits/`FD=NONE`, less connected drainage. | More tiles get a downhill flow direction. |
+| `hydrology.tieEps` | Epsilon for “equal drop” ties and Dijkstra tie handling. | More ties resolved by deterministic tie-break hash/order. | Fewer ties; more strict max-drop selection. |
+| `hydrology.streamAccumThreshold` | `FA_N` threshold for stream eligibility. | Fewer stream tiles. | More stream tiles. |
+| `hydrology.streamMinSlopeThreshold` | Minimum slope required for stream tiles. | Suppresses low-slope streams. | Allows streams on gentler slopes. |
+| `hydrology.lakeFlatSlopeThreshold` | Maximum slope for lake-candidate basins. | More flat basin tiles eligible for lakes. | Fewer lake candidates. |
+| `hydrology.lakeAccumThreshold` | Minimum `FA_N` for lake candidates. | Harder to become lake. | Easier to become lake. |
+| `hydrology.moistureAccumStart` | `FA_N` point where accumulation-driven moisture begins ramping up. | Delays accumulation moisture effect (drier overall unless high `FA_N`). | Accumulation contributes earlier (wetter overall). |
+| `hydrology.flatnessThreshold` | Slope threshold used in flatness moisture term. | More tiles receive flatness moisture boost. | Fewer tiles receive flatness boost. |
+| `hydrology.waterProxMaxDist` | Distance cap/range for water-proximity moisture term. | Water proximity influence reaches farther. | Proximity moisture is more local/tight. |
+| `hydrology.weights.accum` | Weight of accumulation moisture term. | Moisture follows drainage more strongly. | Drainage contributes less to moisture. |
+| `hydrology.weights.flat` | Weight of flatness moisture term. | Flat areas get relatively wetter. | Flatness contributes less. |
+| `hydrology.weights.prox` | Weight of water-proximity moisture term. | Near-water wetness effect increases. | Near-water effect decreases. |
+| `hydrology.marshMoistureThreshold` | Moisture threshold for marsh classification. | Fewer marsh tiles. | More marsh tiles. |
+| `hydrology.marshSlopeThreshold` | Slope cutoff for marsh classification. | Marsh allowed on steeper lowlands. | Marsh restricted to flatter areas. |
+
+### `ground`
+
+| Parameter | What it controls | Raise it | Lower it |
+| --- | --- | --- | --- |
+| `ground.peatMoistureThreshold` | Moisture needed for `peat` soil. | Fewer peat tiles. | More peat tiles. |
+| `ground.standingWaterMoistureThreshold` | Moisture needed for `standing_water` flag. | Fewer standing-water flags. | More standing-water flags. |
+| `ground.standingWaterSlopeMax` | Max slope allowed for standing water. | Standing water appears on steeper terrain. | Standing water limited to flatter terrain. |
+| `ground.lichenMoistureMax` | Moisture ceiling for `lichen` flag. | More tiles qualify for lichen. | Fewer lichen tiles. |
+| `ground.exposedSandMoistureMax` | Moisture ceiling for exposed sand conditions. | More sandy/exposed-sand outcomes. | Fewer sandy/exposed-sand outcomes. |
+| `ground.bedrockHeightMin` | Elevation floor for bedrock-related checks. | Fewer bedrock flags (higher bar). | More bedrock flags (lower bar). |
+| `ground.bedrockRoughnessMin` | Roughness floor for bedrock flag. | Fewer bedrock flags. | More bedrock flags. |
+
+### `roughnessFeatures`
+
+| Parameter | What it controls | Raise it | Lower it |
+| --- | --- | --- | --- |
+| `roughnessFeatures.obstructionMoistureMix` | Blend between roughness (`R`) and moisture for obstruction. | Obstruction tracks moisture more, roughness less. | Obstruction tracks roughness more, moisture less. |
+| `roughnessFeatures.windthrowThreshold` | Obstruction threshold for `windthrow` flag. | Fewer windthrow flags. | More windthrow flags. |
+| `roughnessFeatures.fallenLogThreshold` | Obstruction threshold for `fallen_log` flag. | Fewer fallen logs. | More fallen logs. |
+| `roughnessFeatures.rootTangleMoistureThreshold` | Moisture threshold for `root_tangle` flag. | Fewer root tangles. | More root tangles. |
+| `roughnessFeatures.boulderHeightMin` | Elevation floor for `boulder` flag. | Fewer boulder flags. | More boulder flags. |
+| `roughnessFeatures.boulderRoughnessMin` | Roughness floor for `boulder` flag. | Fewer boulder flags. | More boulder flags. |
+
+### `movement`
+
+| Parameter | What it controls | Raise it | Lower it |
+| --- | --- | --- | --- |
+| `movement.steepBlockDelta` | Height delta threshold for blocked directional movement. | Fewer blocked uphill edges. | More blocked uphill edges. |
+| `movement.steepDifficultDelta` | Height delta threshold for difficult (vs passable) movement. | Fewer difficult edges (more passable unless blocked). | More difficult edges. |
+| `movement.cliffSlopeMin` | Local slope minimum for setting `CliffEdge` flag. | Fewer cliff-edge flags. | More cliff-edge flags. |
+| `movement.moveCostObstructionMax` | Upper multiplier applied by obstruction to move cost. | Obstruction penalizes movement more. | Obstruction penalizes movement less. |
+| `movement.moveCostMoistureMax` | Upper multiplier applied by moisture to move cost. | Wetness penalizes movement more. | Wetness penalizes movement less. |
+| `movement.marshMoveCostMultiplier` | Additional multiplier for marsh tiles. | Marsh traversal gets costlier. | Marsh traversal gets cheaper. |
+| `movement.openBogMoveCostMultiplier` | Additional multiplier for open-bog biome tiles. | Open-bog traversal gets costlier. | Open-bog traversal gets cheaper. |
+
+### `visibility`
+
+`visibility.*` follows the normative formula in Section 11 of the spec (`vis = base - penalties + elevation bonus`) and is planned-facing even if your current output contract does not consume every field yet.
+
+| Parameter | What it controls | Raise it | Lower it |
+| --- | --- | --- | --- |
+| `visibility.base` | Baseline visibility distance (meters). | Raises visibility everywhere. | Lowers visibility everywhere. |
+| `visibility.densityPenalty` | Tree-density penalty strength. | Dense vegetation reduces visibility more. | Dense vegetation reduces visibility less. |
+| `visibility.obstructionPenalty` | Obstruction penalty strength. | Rough/obstructed terrain reduces visibility more. | Obstruction hurts visibility less. |
+| `visibility.elevationBonus` | Elevation bonus strength from `H`. | High ground gains more visibility bonus. | Elevation contributes less bonus. |
+| `visibility.minMeters` | Minimum visibility clamp. | Raises the floor (no extremely low visibility). | Allows lower minimum visibility. |
+| `visibility.maxMeters` | Maximum visibility clamp. | Raises the ceiling for best-case visibility. | Lowers best-case visibility cap. |
+
+### `orientation`
+
+`orientation.*` follows the normative formula in Section 12 (informational in v1 and must not alter simulation outcomes).
+
+| Parameter | What it controls | Raise it | Lower it |
+| --- | --- | --- | --- |
+| `orientation.min` | Lower clamp for orientation reliability. | Raises worst-case reliability floor. | Allows lower worst-case reliability. |
+| `orientation.max` | Upper clamp for orientation reliability. | Raises best-case cap. | Lowers best-case cap. |
+| `orientation.densityWeight` | Penalty weight from tree density. | Dense vegetation degrades orientation more. | Density penalizes less. |
+| `orientation.obstructionWeight` | Penalty weight from obstruction. | Obstruction degrades orientation more. | Obstruction penalizes less. |
+| `orientation.wetnessWeight` | Penalty weight from wetness term. | Wetness degrades orientation more. | Wetness penalizes less. |
+| `orientation.wetnessStart` | Moisture point where wetness penalty begins. | Wetness penalty starts later (at wetter tiles). | Wetness penalty starts earlier. |
+| `orientation.wetnessRange` | Moisture span used to ramp wetness penalty. | Gentler/wider ramp. | Sharper/faster ramp. |
+| `orientation.ridgeBonus` | Bonus added on ridge landform tiles. | Ridges improve orientation reliability more. | Ridges improve it less. |
+
+### `gameTrails`
+
+| Parameter | What it controls | Raise it | Lower it |
+| --- | --- | --- | --- |
+| `gameTrails.diagWeight` | Extra multiplier for diagonal path steps in trail routing. | Trails avoid diagonals more (straighter cardinal routes). | Diagonals become relatively cheaper/more common. |
+| `gameTrails.inf` | Cost sentinel for non-traversable tiles in trail routing. | Larger sentinel; harder to hit accidentally as finite cost. | More tiles may cross the non-traversable cutoff if costs get high. |
+| `gameTrails.wSlope` | Slope penalty weight in trail preference cost field. | Trails avoid steep tiles more strongly. | Slope matters less to routing. |
+| `gameTrails.slopeScale` | Scale at which slope penalty saturates. | Penalty ramps more gradually with slope. | Penalty ramps quickly at lower slopes. |
+| `gameTrails.wMoist` | Moisture penalty weight in trail preference cost field. | Trails avoid wet tiles more strongly. | Moisture matters less. |
+| `gameTrails.moistStart` | Moisture level where moisture penalty starts. | Penalty starts later (only wetter tiles). | Penalty starts earlier. |
+| `gameTrails.wObs` | Obstruction penalty weight in trail preference cost field. | Trails avoid obstructed tiles more. | Obstruction matters less. |
+| `gameTrails.wRidge` | Ridge preference magnitude (applied as a negative cost bonus on ridges). | Stronger ridge attraction. | Weaker ridge attraction. |
+| `gameTrails.wStreamProx` | Bonus magnitude for being near streams. | Stronger stream-adjacency preference. | Weaker stream-adjacency preference. |
+| `gameTrails.streamProxMaxDist` | Distance cap/range for stream proximity bonus. | Stream-proximity bonus extends farther. | Bonus becomes more local. |
+| `gameTrails.wCross` | Extra cost for stream tiles while routing. | Trails cross streams less often. | Stream crossings become less discouraged. |
+| `gameTrails.wMarsh` | Extra cost for marsh tiles while routing. | Trails avoid marsh more strongly. | Marsh penalty weakens. |
+| `gameTrails.waterSeedMaxDist` | Distance cap/range in seed scoring for water proximity. | Seed scoring considers water proximity over a wider area. | Water-proximity seed bonus is more local. |
+| `gameTrails.seedTilesPerTrail` | Controls seed count via `floor(playableArea / seedTilesPerTrail)`. | Fewer seeds/routes. | More seeds/routes. |
+| `gameTrails.streamEndpointAccumThreshold` | `FA_N` threshold for stream endpoint candidates. | Fewer but stronger stream endpoints. | More stream endpoint candidates. |
+| `gameTrails.ridgeEndpointMaxSlope` | Maximum slope for ridge endpoint candidates. | More ridge endpoint candidates. | Fewer ridge endpoint candidates. |
+| `gameTrails.gameTrailMoveCostMultiplier` | Move-cost multiplier applied on tiles marked as game trails. | Trail benefit shrinks as value approaches `1` (and can become a penalty if >1). | Stronger move-cost reduction on trails (when <1). |
+
+## Visualization
+
+Generate browser-viewable SVG layers from debug artifacts:
+
+```bash
+npm run visualize:debug -- --input-dir outdir --output-dir out/visualizations --cell-size 10
+```
+
+Then open `out/visualizations/index.html`.
+
+Outputs include layers for topography (`H`, `SlopeMag`), hydrology (`Moisture`, `WaterClass`), ecology (`Biome`, `TreeDensity`), and navigation (`MoveCost`, blocked-direction count).
+
 ## Example tile
 
 ```json
