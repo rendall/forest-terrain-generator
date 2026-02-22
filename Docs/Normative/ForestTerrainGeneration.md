@@ -685,7 +685,6 @@ The first matching clause MUST be taken.
 - If `WaterClass[x,y] == lake`: `Biome[x,y] = lake`
 - Else if `WaterClass[x,y] == stream`: `Biome[x,y] = stream_bank`
 - Else if `m2 >= 0.85` and `SlopeMag[x,y] < 0.03`: `Biome[x,y] = open_bog`
-- Else if `m2 >= 0.85`: `Biome[x,y] = spruce_swamp`
 - Else if `m2 >= 0.65`: `Biome[x,y] = spruce_swamp`
 - Else if `m2 >= 0.40`: `Biome[x,y] = mixed_forest`
 - Else if `H[x,y] >= 0.70` and `SlopeMag[x,y] < 0.05`: `Biome[x,y] = esker_pine`

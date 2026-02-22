@@ -17,6 +17,10 @@ This repository's deliverable is a CLI that implements the forest terrain genera
 - Repository policy and scaffold guidance: [docs/drafts/ImplementationPlan.md](docs/drafts/ImplementationPlan.md)
 - Agent collaboration policy: [AGENTS.md](AGENTS.md)
 
+```bash
+node --import tsx src/cli/main.ts generate --params params.json --output-file out.json
+```
+
 ## Roadmap
 
 - consider implications of adding landform `peak` to spec
@@ -215,6 +219,18 @@ npm run visualize:debug -- --input-dir outdir --output-dir out/visualizations --
 Then open `out/visualizations/index.html`.
 
 Outputs include layers for topography (`H`, `SlopeMag`), hydrology (`Moisture`, `WaterClass`), ecology (`Biome`, `TreeDensity`), and navigation (`MoveCost`, blocked-direction count).
+
+## Authored Map From PNG
+
+Convert a grayscale image into authored-map JSON compatible with `--map-h`:
+
+```bash
+bash scripts/png-to-authored-map.sh --input input.png --output map-h.json --expect-size 64x64
+```
+
+The script writes JSON with the required schema:
+`{ "width": number, "height": number, "data": number[] }`
+where `data` is row-major and normalized to `[0,1]`.
 
 ## Example tile
 
