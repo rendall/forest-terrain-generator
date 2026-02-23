@@ -619,14 +619,6 @@ function renderObstacleSentence(
 	return pickDeterministic(options, `${seedKey}:obstacle:${obstacle}`);
 }
 
-function shouldIncludeBothAnchors(input: DescriptionTileInput): boolean {
-	if (input.landform === "ridge" || input.landform === "basin") {
-		return true;
-	}
-
-	return CARDINALS.some((dir) => input.neighbors[dir].biome !== input.biome);
-}
-
 function shouldMentionWater(input: DescriptionTileInput): boolean {
 	if (input.standingWater) {
 		return true;
@@ -646,6 +638,31 @@ function sanitizeSentence(text: string): string {
 	return text.replace(/\s+/g, " ").trim();
 }
 
+function stripTerminalPunctuation(text: string): string {
+	return sanitizeSentence(text).replace(/[.!?]+$/, "");
+}
+
+function lowercaseFirst(text: string): string {
+	if (text.length === 0) {
+		return text;
+	}
+	return text[0].toLowerCase() + text.slice(1);
+}
+
+function mergeAsClause(
+	base: string,
+	clause: string,
+	joiner: "where" | "and",
+): string {
+	const baseCore = stripTerminalPunctuation(base);
+	const clauseCore = lowercaseFirst(stripTerminalPunctuation(clause));
+	return `${baseCore}, ${joiner} ${clauseCore}.`;
+}
+
+function directionalMentionsWater(text: string): boolean {
+	return /\b(water|stream|lake)\b/i.test(text);
+}
+
 export function generateRawDescription(
 	input: DescriptionTileInput,
 	seedKey: string,
@@ -653,8 +670,6 @@ export function generateRawDescription(
 ): DescriptionResult {
 	const strict = options.strict === true;
 	const sentences: DescriptionSentence[] = [];
-
-	const includeBothAnchors = shouldIncludeBothAnchors(input);
 
 	const landformSentence = pickDeterministic(
 		phraseOptionsForLandform(input.landform, strict),
@@ -665,12 +680,15 @@ export function generateRawDescription(
 		`${seedKey}:biome:${input.biome}`,
 	);
 
-	if (includeBothAnchors) {
-		sentences.push({ slot: "landform", text: landformSentence });
-		sentences.push({ slot: "biome", text: biomeSentence });
-	} else {
-		sentences.push({ slot: "biome", text: biomeSentence });
-	}
+	let hydrologySentence: string | null = null;
+	let obstacleSentence: string | null = null;
+	let slopeSentence: string | null = null;
+	let directionalSentence: string | null = null;
+	let visibilitySentence: string | null = null;
+
+	let anchorSentence = mergeAsClause(landformSentence, biomeSentence, "where");
+	let hydrologyMerged = false;
+	let obstacleMerged = false;
 
 	if (shouldMentionWater(input)) {
 		if (input.standingWater) {
@@ -680,37 +698,59 @@ export function generateRawDescription(
 				strict,
 			);
 			if (standingOptions) {
-				sentences.push({
-					slot: "hydrology",
-					text: pickDeterministic(
-						standingOptions,
-						`${seedKey}:hydrology:standing`,
-					),
-				});
+				hydrologySentence = pickDeterministic(
+					standingOptions,
+					`${seedKey}:hydrology:standing`,
+				);
 			}
 		}
 	}
 
-	const obstacleSentence = renderObstacleSentence(input, seedKey, strict);
-	if (obstacleSentence) {
-		sentences.push({ slot: "obstacle", text: obstacleSentence });
+	if (
+		hydrologySentence &&
+		input.standingWater &&
+		(input.landform === "basin" || input.landform === "valley")
+	) {
+		anchorSentence = mergeAsClause(anchorSentence, hydrologySentence, "where");
+		hydrologyMerged = true;
 	}
+
+	obstacleSentence = renderObstacleSentence(input, seedKey, strict);
+	if (obstacleSentence && sanitizeSentence(anchorSentence).length < 100) {
+		anchorSentence = mergeAsClause(anchorSentence, obstacleSentence, "and");
+		obstacleMerged = true;
+	}
+
+	sentences.push({ slot: "landform", text: anchorSentence });
 
 	if (input.landform !== "slope") {
-		const slopeSentence = renderSlopeSentence(input);
-		if (slopeSentence) {
-			sentences.push({ slot: "slope", text: slopeSentence });
-		}
+		slopeSentence = renderSlopeSentence(input);
+	}
+	if (slopeSentence) {
+		sentences.push({ slot: "slope", text: slopeSentence });
 	}
 
-	const directionalSentence = renderDirectionalSentence(input, seedKey, strict);
+	directionalSentence = renderDirectionalSentence(input, seedKey, strict);
 	if (directionalSentence) {
-		const existingDirectional = sentences.some(
-			(sentence) => sentence.slot === "directional",
-		);
-		if (!existingDirectional) {
+		if (directionalMentionsWater(directionalSentence)) {
+			if (hydrologySentence && !hydrologyMerged && !input.standingWater) {
+				hydrologyMerged = true;
+			}
+			sentences.push({ slot: "directional", text: directionalSentence });
+		} else {
+			if (hydrologySentence && !hydrologyMerged) {
+				sentences.push({ slot: "hydrology", text: hydrologySentence });
+				hydrologyMerged = true;
+			}
 			sentences.push({ slot: "directional", text: directionalSentence });
 		}
+	} else if (hydrologySentence && !hydrologyMerged) {
+		sentences.push({ slot: "hydrology", text: hydrologySentence });
+		hydrologyMerged = true;
+	}
+
+	if (obstacleSentence && !obstacleMerged) {
+		sentences.push({ slot: "obstacle", text: obstacleSentence });
 	}
 
 	if (input.visibility !== "medium") {
@@ -720,18 +760,35 @@ export function generateRawDescription(
 			strict,
 		);
 		if (visibilityOptions) {
-			const visibilitySentence = pickDeterministic(
+			visibilitySentence = pickDeterministic(
 				visibilityOptions,
 				`${seedKey}:visibility:${input.visibility}`,
 			);
-			sentences.push({ slot: "visibility", text: visibilitySentence });
 		}
 	}
+	if (visibilitySentence) {
+		sentences.push({ slot: "visibility", text: visibilitySentence });
+	}
 
-	const capped = sentences.slice(0, 4).map((sentence) => ({
-		slot: sentence.slot,
-		text: sanitizeSentence(sentence.text),
-	}));
+	const deduped: DescriptionSentence[] = [];
+	const seen = new Set<string>();
+	for (const sentence of sentences) {
+		const text = sanitizeSentence(sentence.text);
+		if (text.length === 0) {
+			continue;
+		}
+		const key = text.toLowerCase();
+		if (seen.has(key)) {
+			continue;
+		}
+		seen.add(key);
+		deduped.push({
+			slot: sentence.slot,
+			text,
+		});
+	}
+
+	const capped = deduped.slice(0, 4);
 
 	return {
 		sentences: capped,

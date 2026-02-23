@@ -140,6 +140,12 @@ const case04 = {
 	},
 };
 
+const caseSlope = {
+	...case04,
+	landform: "slope",
+	slopeStrength: 0.1,
+};
+
 describe("Phase 1 description pipeline", () => {
 	it("produces deterministic raw sentence output for the same seed key", () => {
 		const a = generateRawDescription(case01, "seed-42");
@@ -148,15 +154,17 @@ describe("Phase 1 description pipeline", () => {
 		expect(a).toEqual(b);
 	});
 
-	it("respects sentence cap and includes anchor slots", () => {
+	it("respects sentence cap and merges landform+biome anchor", () => {
 		const result = generateRawDescription(case01, "seed-101");
 
 		expect(result.sentences.length).toBeLessThanOrEqual(4);
-		expect(
-			result.sentences.some((sentence) => sentence.slot === "landform"),
-		).toBe(true);
+		const anchor = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(anchor).toBeDefined();
+		expect(anchor.text).toContain(", where ");
 		expect(result.sentences.some((sentence) => sentence.slot === "biome")).toBe(
-			true,
+			false,
 		);
 	});
 
@@ -181,6 +189,13 @@ describe("Phase 1 description pipeline", () => {
 		for (const forbidden of baseForbidden) {
 			expect(lowered.includes(forbidden)).toBe(false);
 		}
+	});
+
+	it("suppresses slope-intensity sentence when landform is slope", () => {
+		const result = generateRawDescription(caseSlope, "seed-slope-1");
+		expect(result.sentences.some((sentence) => sentence.slot === "slope")).toBe(
+			false,
+		);
 	});
 
 	it("throws in strict mode when biome phrases are missing", () => {
