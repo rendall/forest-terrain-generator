@@ -499,6 +499,19 @@ All queue operations MUST follow Section 1.7 Graph Traversal Determinism.
 
 - Lake candidate: `Landform==basin && SlopeMag<hydrology.lakeFlatSlopeThreshold && FA_N>=hydrology.lakeAccumThreshold`.
 - Flood-fill connected lake candidates (`LakeMask=true`).
+- Optional lake growth pass (if `hydrology.lakeGrowSteps > 0`) is applied to `LakeMask` before stream derivation:
+  - Connected components are identified from the initial `LakeMask` using 8-way connectivity.
+  - For each component, compute `componentRefHeight = min(H[t])` over component tiles.
+  - Run bounded BFS from all component tiles as depth-0 seeds.
+  - Expansion uses 4-way neighbors in deterministic order `E, S, W, N` (`Dir8` subset `0, 2, 4, 6`).
+  - A neighbor `j` is eligible iff all conditions hold:
+    - `LakeMask_initial[j] == false`
+    - `SlopeMag[j] <= hydrology.lakeFlatSlopeThreshold`
+    - `H[j] <= componentRefHeight + hydrology.lakeGrowHeightDelta`
+  - On eligibility, mark `LakeMask[j]=true` and enqueue with depth `+1`.
+  - Stop expansion from a frontier tile when depth reaches `hydrology.lakeGrowSteps`.
+
+When `hydrology.lakeGrowSteps == 0`, lake growth is disabled.
 
 ## 6.5 Streams (Normative)
 
@@ -1137,6 +1150,8 @@ Recommended float epsilon: `1e-6`.
     "streamMinSlopeThreshold": 0.01,
     "lakeFlatSlopeThreshold": 0.03,
     "lakeAccumThreshold": 0.65,
+    "lakeGrowSteps": 0,
+    "lakeGrowHeightDelta": 0.01,
     "moistureAccumStart": 0.35,
     "flatnessThreshold": 0.06,
     "waterProxMaxDist": 6,

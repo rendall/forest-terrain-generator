@@ -2,7 +2,7 @@
 
 Status: draft
 Scope: implementation of the Forest Terrain Generator CLI in this repository
-Last updated: 2026-02-21
+Last updated: 2026-02-22
 
 ## 1. Authority and Precedence
 
@@ -94,10 +94,11 @@ Path-resolution decision (Phase 1):
 CLI flag-name decision (Phase 1):
 
 1. Params-file flag: `--params <path>`.
-2. Authored-map flags: `--map-h <path>`, `--map-r <path>`, `--map-v <path>`.
-3. Output flags: `--output-file <path>`, `--output-dir <path>`, `--debug-output-file <path>`.
-4. Overwrite flag: `--force`.
-5. CLI help/docs MUST use these canonical names consistently.
+2. Input-envelope flag for debug replay: `--input-file <path>`.
+3. Authored-map flags: `--map-h <path>`, `--map-r <path>`, `--map-v <path>`.
+4. Output flags: `--output-file <path>`, `--output-dir <path>`, `--debug-output-file <path>`.
+5. Overwrite flag: `--force`.
+6. CLI help/docs MUST use these canonical names consistently.
 
 Mode-specific input/output decision (Phase 1):
 
@@ -107,21 +108,25 @@ Mode-specific input/output decision (Phase 1):
 4. `derive` requires `seed`, `width`, `height`, `params`, and authored `H`.
 5. `derive` allows authored `R` and `V` as optional inputs.
 6. `derive` requires `--output-file` and fails fast if required authored inputs are missing.
-7. `debug` requires `seed`, `width`, `height`, and `params`.
-8. `debug` allows authored maps consistent with the selected generation/derivation path.
-9. `debug` requires `--output-dir`.
-10. `debug` optionally accepts `--debug-output-file` to also emit terrain JSON output during debug runs.
-11. `generate`, `derive`, and `debug` use one shared internal derivation pipeline with command-level validation/wiring differences only.
+7. `debug` supports two input modes:
+8. Generation/derivation debug mode requiring `seed`, `width`, `height`, and `params`.
+9. Input-envelope debug mode requiring `--input-file` (terrain envelope JSON).
+10. In input-envelope debug mode, `--seed`, `--width`, `--height`, `--params`, `--map-h`, `--map-r`, and `--map-v` are invalid.
+11. `debug` allows authored maps only in generation/derivation debug mode.
+12. `debug` requires `--output-dir`.
+13. `debug` optionally accepts `--debug-output-file` to also emit terrain JSON output during debug runs.
+14. `generate`, `derive`, and generation/derivation `debug` use one shared internal derivation pipeline with command-level validation/wiring differences only.
 
 Output-argument validation decision (Phase 1):
 
 1. `generate` and `derive` require `--output-file` and reject `--output-dir` and `--debug-output-file`.
 2. `debug` requires `--output-dir` and rejects `--output-file`.
 3. `debug` accepts optional `--debug-output-file`.
-4. Missing required mode-specific output arguments are validation errors (exit `2`).
-5. Existing output targets fail by default.
-6. `--force` overrides existing-target checks and allows overwrite/replace behavior.
-7. If `--output-file` is used with `debug`, the error message MUST include a corrective hint: `You might mean --debug-output-file.`
+4. `--input-file` is valid only in `debug` mode.
+5. Missing required mode-specific output arguments are validation errors (exit `2`).
+6. Existing output targets fail by default.
+7. `--force` overrides existing-target checks and allows overwrite/replace behavior.
+8. If `--output-file` is used with `debug`, the error message MUST include a corrective hint: `You might mean --debug-output-file.`
 
 Defaults-source and Appendix A alignment decision (Phase 1):
 
@@ -152,9 +157,10 @@ Duplicate-flag behavior decision (Phase 1):
 
 1. `generate` and `derive` write the terrain envelope JSON to `--output-file`.
 2. `debug` writes debug artifacts to `--output-dir`.
-3. `debug` may additionally write terrain envelope JSON to `--debug-output-file`.
-4. Output envelope structure conforms to normative Section 14.
-5. Existing output targets fail by default; `--force` is required to overwrite an existing file target or replace an existing directory target.
+3. `debug` may source debug artifacts from an existing envelope via `--input-file`.
+4. `debug` may additionally write terrain envelope JSON to `--debug-output-file`.
+5. Output envelope structure conforms to normative Section 14.
+6. Existing output targets fail by default; `--force` is required to overwrite an existing file target or replace an existing directory target.
 
 ### 3.4 Exit Codes
 
@@ -192,6 +198,7 @@ Error behavior remains separate:
 2. Errors are written to `stderr` and exit non-zero.
 3. Human-readable status/progress messages are written to `stderr`.
 4. Terrain payload output is file-based via `--output-file` (`generate`/`derive`) or `--debug-output-file` (`debug`); it is not emitted to `stdout` by default.
+5. `debug --input-file` reads an existing terrain JSON envelope from disk and emits debug artifacts file-based to `--output-dir`.
 
 ### 3.7 Package Metadata Baseline
 
@@ -386,14 +393,15 @@ Locked decisions:
 9. `FA_N` normalization follows Section 6.3 exactly: if `FAmax == FAmin`, all `FA_N` values are `0`; otherwise apply the normative logarithmic formula and clamp result to `[0,1]`.
 10. No extra normalization epsilon/fudge factors are introduced beyond explicit spec thresholds.
 11. Hydrology threshold operators are fixed to normative comparisons: lake (`SlopeMag < lakeFlatSlopeThreshold` and `FA_N >= lakeAccumThreshold`), stream (`FA_N >= streamAccumThreshold` and `SlopeMag >= streamMinSlopeThreshold`), marsh (`Moisture >= marshMoistureThreshold` and `SlopeMag < marshSlopeThreshold`).
-12. Threshold comparisons use shared helper predicates for consistency, but helpers must preserve exact operator semantics (no hidden epsilon offsets).
-13. No-water fallback is explicit: if no water tile exists, set `distWater[x,y] = hydrology.waterProxMaxDist` for all tiles before moisture calculations.
-14. No-stream fallback is explicit for downstream proximity consumers: if no stream tile exists, set `distStream[x,y] = gameTrails.streamProxMaxDist` for all tiles.
-15. Proximity-derived wetness/score terms consume capped fallback distances directly (no special-case branching after fallback assignment).
-16. Phase-3 hydrology regression scope is balanced: committed/versioned golden snapshots for seeds `1`, `42`, `123456789`, `18446744073709551615` at `16x16` and `64x64`, covering `FD`, `FA`, `FA_N`, `LakeMask`, `isStream`, `distWater`, `Moisture`, and `WaterClass`.
-17. Targeted hydrology fixtures are required for tie-heavy flow choice determinism, no-water fallback, threshold-edge comparisons, water-class precedence (`lake > stream > marsh > none`), and acyclic `FD` invariants.
-18. Phase-3 hydrology implementation is surfaced through a single facade module, `src/pipeline/hydrology.ts`, exporting the stable named hydrology entrypoints used by tests and orchestration.
-19. Hydrology fail-fast conditions are classified as internal failures (exit code `5`) and MUST emit diagnostics that clearly state failing stage/invariant and reason, including relevant values/context and mitigation hints where possible.
+12. v1 lake growth is an optional pre-stream expansion pass over `LakeMask` controlled by `hydrology.lakeGrowSteps` and `hydrology.lakeGrowHeightDelta`; growth is component-based, deterministic, 4-way (`E,S,W,N`) and constrained by `SlopeMag <= lakeFlatSlopeThreshold` and `H <= componentRefHeight + lakeGrowHeightDelta` where `componentRefHeight` is the component minimum height.
+13. Threshold comparisons use shared helper predicates for consistency, but helpers must preserve exact operator semantics (no hidden epsilon offsets).
+14. No-water fallback is explicit: if no water tile exists, set `distWater[x,y] = hydrology.waterProxMaxDist` for all tiles before moisture calculations.
+15. No-stream fallback is explicit for downstream proximity consumers: if no stream tile exists, set `distStream[x,y] = gameTrails.streamProxMaxDist` for all tiles.
+16. Proximity-derived wetness/score terms consume capped fallback distances directly (no special-case branching after fallback assignment).
+17. Phase-3 hydrology regression scope is balanced: committed/versioned golden snapshots for seeds `1`, `42`, `123456789`, `18446744073709551615` at `16x16` and `64x64`, covering `FD`, `FA`, `FA_N`, `LakeMask`, `isStream`, `distWater`, `Moisture`, and `WaterClass`.
+18. Targeted hydrology fixtures are required for tie-heavy flow choice determinism, no-water fallback, threshold-edge comparisons, water-class precedence (`lake > stream > marsh > none`), and acyclic `FD` invariants.
+19. Phase-3 hydrology implementation is surfaced through a single facade module, `src/pipeline/hydrology.ts`, exporting the stable named hydrology entrypoints used by tests and orchestration.
+20. Hydrology fail-fast conditions are classified as internal failures (exit code `5`) and MUST emit diagnostics that clearly state failing stage/invariant and reason, including relevant values/context and mitigation hints where possible.
 
 Done criteria:
 

@@ -82,10 +82,10 @@ export function deriveBiome(
   validateMapLength(shape, v, "V");
 
   const strength = Math.fround(resolveVegVarianceStrength(params));
-  const bogMoisture = Math.fround(0.41);
-  const spruceMoisture = Math.fround(0.33);
-  const mixedMoisture = Math.fround(0.25);
-  const eskerHeight = Math.fround(0.6);
+  const bogMoisture = Math.fround(0.85);
+  const spruceMoisture = Math.fround(0.65);
+  const mixedMoisture = Math.fround(0.4);
+  const eskerHeight = Math.fround(0.7);
   const openBogSlope = Math.fround(0.03);
   const eskerSlope = Math.fround(0.05);
 
@@ -104,6 +104,8 @@ export function deriveBiome(
 
     if (m2 >= bogMoisture && slopeMag[i] < openBogSlope) {
       out[i] = BIOME_CODE.open_bog;
+    } else if (m2 >= bogMoisture) {
+      out[i] = BIOME_CODE.spruce_swamp;
     } else if (m2 >= spruceMoisture) {
       out[i] = BIOME_CODE.spruce_swamp;
     } else if (m2 >= mixedMoisture) {

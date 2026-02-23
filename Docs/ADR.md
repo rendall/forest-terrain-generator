@@ -2,6 +2,62 @@
 
 This document is a living ledger of significant technical decisions made within this project. Each entry captures the context in which a decision was made, the options considered, the decision itself, and its consequences. The purpose is not to justify past choices defensively, but to preserve intent and reasoning so future contributors can understand why the system is shaped the way it is. Over time, this file forms a chronological record of trade-offs, constraints, and design direction, providing continuity as the codebase and team evolve.
 
+## Add Optional Component-Based Lake Growth (v1)
+
+**Timestamp:** 2026-02-22 00:00 (UTC)
+
+### Decision
+Add an optional lake-growth pass inside hydrology that expands `LakeMask` before stream/moisture derivation.
+
+- Growth is controlled by:
+  - `hydrology.lakeGrowSteps` (`0` disables growth)
+  - `hydrology.lakeGrowHeightDelta`
+- Growth runs per connected lake component (not per seed tile).
+- Component reference height is conservative: `min(H)` of the component.
+- Expansion uses deterministic 4-way neighbors (`E,S,W,N`) and keeps existing slope/height eligibility constraints:
+  - `SlopeMag <= lakeFlatSlopeThreshold`
+  - `H <= componentRefHeight + lakeGrowHeightDelta`
+- Stream/moisture/water-class are derived from the grown `LakeMask`.
+
+### Rationale
+Observed lake fragmentation produced many isolated single-tile lakes. Component-based growth provides more coherent lake bodies while preserving deterministic behavior and avoiding per-seed order bias.
+
+### Alternatives Considered
+- Per-seed growth BFS — rejected due to stronger order sensitivity and shape bias.
+- 8-way growth expansion — rejected as default behavior because it is materially more aggressive and can over-merge lakes in typical parameter ranges.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): src/pipeline/hydrology.ts, src/lib/default-params.ts, docs/normative/ForestTerrainGeneration.md, docs/drafts/ImplementationPlan.md
+- Related ADRs: Define v1 Debug Artifact Output Contract
+
+## Allow Debug Artifact Replay from Existing Envelope Input (`--input-file`) (v1)
+
+**Timestamp:** 2026-02-22 00:00 (UTC)
+
+### Decision
+For v1 `debug` mode, support a second input path that consumes an existing terrain envelope JSON.
+
+- Add `--input-file <path>` to `debug`.
+- In this path, `debug` reads the envelope and emits the standard debug artifact set to `--output-dir`.
+- Keep existing `debug` generation/derivation behavior unchanged.
+- Treat `--input-file` as mutually exclusive with generation/derivation inputs in `debug`: `--seed`, `--width`, `--height`, `--params`, `--map-h`, `--map-r`, `--map-v`.
+- Keep `--input-file` invalid in `generate` and `derive`.
+
+### Rationale
+This supports post-hoc debugging and visualization of already generated terrain outputs without requiring regeneration inputs. It improves workflow efficiency while preserving existing mode semantics.
+
+### Alternatives Considered
+- Require regeneration-only debug path (no input replay) – rejected because users cannot debug historical outputs directly.
+- Add a new command (`debug-from-file`) – rejected for v1 to avoid unnecessary command-surface expansion.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): src/cli/main.ts, src/app/run-generator.ts, src/app/validate-input.ts, src/io/read-envelope.ts, docs/drafts/ImplementationPlan.md
+- Related ADRs: Define v1 Debug Artifact Output Contract
+
 ## Define Final CLI Error-Diagnostics Quality Bar (v1)
 
 **Timestamp:** 2026-02-21 20:43 (UTC)

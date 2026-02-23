@@ -37,11 +37,12 @@ Commands:
 
 - `generate`: Generate terrain and write envelope JSON to `--output-file`.
 - `derive`: Derive terrain from authored maps (requires `--map-h`) and write envelope JSON to `--output-file`.
-- `debug`: Emit debug artifacts to `--output-dir`; optionally also write envelope JSON to `--debug-output-file`.
+- `debug`: Emit debug artifacts to `--output-dir` from either generation inputs or an existing envelope `--input-file`; optionally also write envelope JSON to `--debug-output-file`.
 
 Canonical flags:
 
 - `--params <path>`
+- `--input-file <path>` (debug only; terrain envelope JSON source)
 - `--map-h <path>`, `--map-r <path>`, `--map-v <path>`
 - `--output-file <path>` (generate/derive only)
 - `--output-dir <path>` (debug only)
@@ -56,6 +57,7 @@ Path resolution:
 Mode/output validation highlights:
 
 - In `debug`, using `--output-file` is rejected with the hint: `You might mean --debug-output-file.`
+- In `debug`, `--input-file` cannot be combined with generation inputs (`--seed`, `--width`, `--height`, `--params`, `--map-h`, `--map-r`, `--map-v`).
 - Existing output files/directories fail by default and require `--force` to overwrite/replace.
 
 ## Parameters
@@ -114,6 +116,8 @@ Guidance below assumes all other parameters stay the same.
 | `hydrology.streamMinSlopeThreshold` | Minimum slope required for stream tiles. | Suppresses low-slope streams. | Allows streams on gentler slopes. |
 | `hydrology.lakeFlatSlopeThreshold` | Maximum slope for lake-candidate basins. | More flat basin tiles eligible for lakes. | Fewer lake candidates. |
 | `hydrology.lakeAccumThreshold` | Minimum `FA_N` for lake candidates. | Harder to become lake. | Easier to become lake. |
+| `hydrology.lakeGrowSteps` | Extra 4-way lake expansion depth from connected lake components (0 disables growth). | Larger/connected lakes; stronger stream suppression near lakes. | Smaller, stricter lake footprints. |
+| `hydrology.lakeGrowHeightDelta` | Height band above component reference height allowed during lake growth. | Lakes can expand uphill more; easier coalescence. | Lakes stay tighter to basin bottoms. |
 | `hydrology.moistureAccumStart` | `FA_N` point where accumulation-driven moisture begins ramping up. | Delays accumulation moisture effect (drier overall unless high `FA_N`). | Accumulation contributes earlier (wetter overall). |
 | `hydrology.flatnessThreshold` | Slope threshold used in flatness moisture term. | More tiles receive flatness moisture boost. | Fewer tiles receive flatness boost. |
 | `hydrology.waterProxMaxDist` | Distance cap/range for water-proximity moisture term. | Water proximity influence reaches farther. | Proximity moisture is more local/tight. |
@@ -209,6 +213,12 @@ Guidance below assumes all other parameters stay the same.
 | `gameTrails.gameTrailMoveCostMultiplier` | Move-cost multiplier applied on tiles marked as game trails. | Trail benefit shrinks as value approaches `1` (and can become a penalty if >1). | Stronger move-cost reduction on trails (when <1). |
 
 ## Visualization
+
+Create debug artifacts from an existing terrain envelope:
+
+```bash
+node --import tsx src/cli/main.ts debug --input-file forest.json --output-dir outdir
+```
 
 Generate browser-viewable SVG layers from debug artifacts:
 
