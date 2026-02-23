@@ -379,15 +379,17 @@ export function attachTileDescriptions(
 				description: description.text,
 			};
 
-			if (includeStructured) {
-				outputTile.descriptionStructured = {
-					text: description.text,
-					sentences: description.sentences.map((sentence) => ({
-						slot: sentence.slot,
-						text: sentence.text,
-					})),
-				};
-			}
+				if (includeStructured) {
+					outputTile.descriptionStructured = {
+						text: description.text,
+						sentences: description.sentences.map((sentence) => ({
+							slot: sentence.slot,
+							text: sentence.text,
+							contributors: [...sentence.contributors],
+							contributorKeys: { ...sentence.contributorKeys },
+						})),
+					};
+				}
 
 			return outputTile;
 		} catch (error) {

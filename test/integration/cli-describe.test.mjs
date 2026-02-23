@@ -119,6 +119,12 @@ describe("describe CLI", () => {
 		expect(first.descriptionStructured).toBeDefined();
 		expect(first.descriptionStructured.text).toBe(first.description);
 		expect(Array.isArray(first.descriptionStructured.sentences)).toBe(true);
+		expect(
+			Array.isArray(first.descriptionStructured.sentences[0].contributors),
+		).toBe(true);
+		expect(
+			typeof first.descriptionStructured.sentences[0].contributorKeys,
+		).toBe("object");
 	});
 
 	it("follows output overwrite policy and supports --force", async () => {

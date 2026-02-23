@@ -163,23 +163,22 @@ describe("Phase 1 description pipeline", () => {
 		);
 		expect(anchor).toBeDefined();
 		expect(anchor.text).toContain(", where ");
+		expect(anchor.contributors).toContain("landform");
+		expect(anchor.contributors).toContain("biome");
+		expect(anchor.contributorKeys.landform).toBe(case01.landform);
+		expect(anchor.contributorKeys.biome).toBe(case01.biome);
 		expect(result.sentences.some((sentence) => sentence.slot === "biome")).toBe(
 			false,
 		);
 	});
 
-	it("keeps directional mentions to one sentence and uses diegetic directional wording", () => {
+	it("does not emit directional sentence slots", () => {
 		const result = generateRawDescription(case04, "seed-303");
 		const directionalSentences = result.sentences.filter(
 			(sentence) => sentence.slot === "directional",
 		);
 
-		expect(directionalSentences.length).toBeLessThanOrEqual(1);
-		if (directionalSentences.length === 1) {
-			expect(directionalSentences[0].text).toMatch(
-				/^To the (north|south|east|west|northeast|northwest|southeast|southwest)/,
-			);
-		}
+		expect(directionalSentences.length).toBe(0);
 	});
 
 	it("avoids banned terms in generated text", () => {
@@ -210,15 +209,10 @@ describe("Phase 1 description pipeline", () => {
 		).toThrowError(DescriptionPhraseError);
 	});
 
-	it("throws in strict mode when visibility phrase slot is missing", () => {
-		expect(() =>
-			generateRawDescription(
-				{ ...case01, visibility: "opaque" },
-				"seed-strict-2",
-				{
-					strict: true,
-				},
-			),
-		).toThrowError(DescriptionPhraseError);
+	it("does not emit visibility sentence slots", () => {
+		const result = generateRawDescription(case01, "seed-visibility-off");
+		expect(
+			result.sentences.some((sentence) => sentence.slot === "visibility"),
+		).toBe(false);
 	});
 });

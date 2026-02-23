@@ -79,7 +79,11 @@ export interface DescriptionSentence {
 		| "visibility"
 		| "directional";
 	text: string;
+	contributors: DescriptionSentenceContributor[];
+	contributorKeys: Partial<Record<DescriptionSentenceContributor, string>>;
 }
+
+export type DescriptionSentenceContributor = DescriptionSentence["slot"];
 
 export interface DescriptionResult {
 	sentences: DescriptionSentence[];
@@ -588,11 +592,10 @@ function chooseObstacle(input: DescriptionTileInput): Obstacle | null {
 }
 
 function renderObstacleSentence(
-	input: DescriptionTileInput,
+	obstacle: Obstacle | null,
 	seedKey: string,
 	strict: boolean,
 ): string | null {
-	const obstacle = chooseObstacle(input);
 	if (!obstacle) {
 		return null;
 	}
@@ -659,6 +662,12 @@ function mergeAsClause(
 	return `${baseCore}, ${joiner} ${clauseCore}.`;
 }
 
+function uniqueContributors(
+	contributors: readonly DescriptionSentenceContributor[],
+): DescriptionSentenceContributor[] {
+	return [...new Set(contributors)];
+}
+
 function directionalMentionsWater(text: string): boolean {
 	return /\b(water|stream|lake)\b/i.test(text);
 }
@@ -683,12 +692,21 @@ export function generateRawDescription(
 	let hydrologySentence: string | null = null;
 	let obstacleSentence: string | null = null;
 	let slopeSentence: string | null = null;
-	let directionalSentence: string | null = null;
-	let visibilitySentence: string | null = null;
+	let chosenObstacle: Obstacle | null = null;
 
 	let anchorSentence = mergeAsClause(landformSentence, biomeSentence, "where");
 	let hydrologyMerged = false;
 	let obstacleMerged = false;
+	const anchorContributors: DescriptionSentenceContributor[] = [
+		"landform",
+		"biome",
+	];
+	const anchorContributorKeys: Partial<
+		Record<DescriptionSentenceContributor, string>
+	> = {
+		landform: input.landform,
+		biome: input.biome,
+	};
 
 	if (shouldMentionWater(input)) {
 		if (input.standingWater) {
@@ -713,78 +731,86 @@ export function generateRawDescription(
 	) {
 		anchorSentence = mergeAsClause(anchorSentence, hydrologySentence, "where");
 		hydrologyMerged = true;
+		anchorContributors.push("hydrology");
+		anchorContributorKeys.hydrology = "standing_water";
 	}
 
-	obstacleSentence = renderObstacleSentence(input, seedKey, strict);
+	chosenObstacle = chooseObstacle(input);
+	obstacleSentence = renderObstacleSentence(chosenObstacle, seedKey, strict);
 	if (obstacleSentence && sanitizeSentence(anchorSentence).length < 100) {
 		anchorSentence = mergeAsClause(anchorSentence, obstacleSentence, "and");
 		obstacleMerged = true;
+		if (chosenObstacle) {
+			anchorContributors.push("obstacle");
+			anchorContributorKeys.obstacle = chosenObstacle;
+		}
 	}
 
-	sentences.push({ slot: "landform", text: anchorSentence });
+	sentences.push({
+		slot: "landform",
+		text: anchorSentence,
+		contributors: uniqueContributors(anchorContributors),
+		contributorKeys: anchorContributorKeys,
+	});
 
 	if (input.landform !== "slope") {
 		slopeSentence = renderSlopeSentence(input);
 	}
 	if (slopeSentence) {
-		sentences.push({ slot: "slope", text: slopeSentence });
+		sentences.push({
+			slot: "slope",
+			text: slopeSentence,
+			contributors: ["slope"],
+			contributorKeys: { slope: input.slopeDirection },
+		});
 	}
 
-	directionalSentence = renderDirectionalSentence(input, seedKey, strict);
-	if (directionalSentence) {
-		if (directionalMentionsWater(directionalSentence)) {
-			if (hydrologySentence && !hydrologyMerged && !input.standingWater) {
-				hydrologyMerged = true;
-			}
-			sentences.push({ slot: "directional", text: directionalSentence });
-		} else {
-			if (hydrologySentence && !hydrologyMerged) {
-				sentences.push({ slot: "hydrology", text: hydrologySentence });
-				hydrologyMerged = true;
-			}
-			sentences.push({ slot: "directional", text: directionalSentence });
-		}
-	} else if (hydrologySentence && !hydrologyMerged) {
-		sentences.push({ slot: "hydrology", text: hydrologySentence });
+	if (hydrologySentence && !hydrologyMerged) {
+		sentences.push({
+			slot: "hydrology",
+			text: hydrologySentence,
+			contributors: ["hydrology"],
+			contributorKeys: { hydrology: "standing_water" },
+		});
 		hydrologyMerged = true;
 	}
 
 	if (obstacleSentence && !obstacleMerged) {
-		sentences.push({ slot: "obstacle", text: obstacleSentence });
-	}
-
-	if (input.visibility !== "medium") {
-		const visibilityOptions = requirePhraseOptions(
-			VISIBILITY_PHRASES[input.visibility as Visibility],
-			{ slot: "visibility", key: input.visibility },
-			strict,
-		);
-		if (visibilityOptions) {
-			visibilitySentence = pickDeterministic(
-				visibilityOptions,
-				`${seedKey}:visibility:${input.visibility}`,
-			);
-		}
-	}
-	if (visibilitySentence) {
-		sentences.push({ slot: "visibility", text: visibilitySentence });
+		sentences.push({
+			slot: "obstacle",
+			text: obstacleSentence,
+			contributors: ["obstacle"],
+			contributorKeys: { obstacle: chosenObstacle ?? "unknown" },
+		});
 	}
 
 	const deduped: DescriptionSentence[] = [];
-	const seen = new Set<string>();
+	const seen = new Map<string, number>();
 	for (const sentence of sentences) {
 		const text = sanitizeSentence(sentence.text);
 		if (text.length === 0) {
 			continue;
 		}
 		const key = text.toLowerCase();
-		if (seen.has(key)) {
+		const existingIndex = seen.get(key);
+		if (existingIndex !== undefined) {
+			const existing = deduped[existingIndex] as DescriptionSentence;
+			existing.contributors = uniqueContributors([
+				...existing.contributors,
+				...sentence.contributors,
+			]);
+			existing.contributorKeys = {
+				...existing.contributorKeys,
+				...sentence.contributorKeys,
+			};
 			continue;
 		}
-		seen.add(key);
+		seen.set(key, deduped.length);
 		deduped.push({
 			slot: sentence.slot,
 			text,
+			contributors: sentence.contributors,
+			contributorKeys: sentence.contributorKeys,
 		});
 	}
 

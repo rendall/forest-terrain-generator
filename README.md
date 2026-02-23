@@ -72,7 +72,8 @@ Describe output contract:
 
 - Success per tile: `description` is a string.
 - Failure per tile: `description` is `null` and `descriptionDebug` is emitted.
-- With `--include-structured`, successful tiles also include `descriptionStructured` (`text` + sentence list); failed tiles set `descriptionStructured` to `null`.
+- With `--include-structured`, successful tiles also include `descriptionStructured` (`text` + sentence list). Each sentence includes `slot`, `text`, `contributors`, and `contributorKeys`; failed tiles set `descriptionStructured` to `null`.
+- Current prose composition intentionally omits `directional` and `visibility` sentence slots while those components are being redesigned.
 - By default, unknown `biome`/`landform` values use generic fallback prose.
 - With `--strict`, no phrase fallback is allowed: unknown taxonomy is a per-tile failure (`descriptionDebug.code = "unknown_taxonomy"`), and any other missing selected phrase slot is also a per-tile failure (`descriptionDebug.code = "phrase_library_missing"`).
 
