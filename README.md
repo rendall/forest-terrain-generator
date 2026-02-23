@@ -5,6 +5,7 @@ Procedurally generate forest data.
 The *Forest Terrain Generator* is a deterministic terrain synthesis engine for producing complete, machine-readable, procedurally generated forest landscapes. Given a seed, dimensions, and a parameter set defined by the normative specification, it generates a rectangular grid of tiles and derives a coherent physical model of that region: elevation, slope, landform, hydrology, moisture, biome classification, vegetation structure, ground conditions, roughness features, visibility, and movement semantics.
 
 The output is a versioned JSON dataset whose `tiles` array contains one fully described record per coordinate. Each tile represents a physically consistent location within a forest environment, including both environmental attributes and navigation-related properties. The result is not prose or rendered content, but a structured terrain model designed to be deterministic, reproducible, and suitable for downstream systems that require spatially coherent forest data.
+An optional post-processing CLI can attach deterministic prose descriptions per tile.
 
 ## Project Purpose
 
@@ -19,6 +20,10 @@ This repository's deliverable is a CLI that implements the forest terrain genera
 
 ```bash
 node --import tsx src/cli/main.ts generate --params params.json --output-file out.json
+```
+
+```bash
+node --import tsx src/cli/describe.ts --input-file forest.json --output-file out.json
 ```
 
 ## Roadmap
@@ -38,16 +43,19 @@ Commands:
 - `generate`: Generate terrain and write envelope JSON to `--output-file`.
 - `derive`: Derive terrain from authored maps (requires `--map-h`) and write envelope JSON to `--output-file`.
 - `debug`: Emit debug artifacts to `--output-dir` from either generation inputs or an existing envelope `--input-file`; optionally also write envelope JSON to `--debug-output-file`.
+- `describe`: Read an existing envelope from `--input-file`, write a copied envelope to `--output-file`, and attach a `description` field to each tile.
 
 Canonical flags:
 
 - `--params <path>`
-- `--input-file <path>` (debug only; terrain envelope JSON source)
+- `--input-file <path>` (debug/describe; terrain envelope JSON source)
 - `--map-h <path>`, `--map-r <path>`, `--map-v <path>`
 - `--output-file <path>` (generate/derive only)
 - `--output-dir <path>` (debug only)
 - `--debug-output-file <path>` (debug optional)
 - `--force`
+- `--include-structured` (describe only; adds `descriptionStructured` with `text` and sentence slots)
+- `--strict` (describe only; unknown biome/landform becomes per-tile failure with `descriptionDebug`)
 
 Path resolution:
 
@@ -59,6 +67,13 @@ Mode/output validation highlights:
 - In `debug`, using `--output-file` is rejected with the hint: `You might mean --debug-output-file.`
 - In `debug`, `--input-file` cannot be combined with generation inputs (`--seed`, `--width`, `--height`, `--params`, `--map-h`, `--map-r`, `--map-v`).
 - Existing output files/directories fail by default and require `--force` to overwrite/replace.
+
+Describe output contract:
+
+- Success per tile: `description` is a string.
+- Failure per tile: `description` is `null` and `descriptionDebug` is emitted.
+- With `--include-structured`, successful tiles also include `descriptionStructured` (`text` + sentence list); failed tiles set `descriptionStructured` to `null`.
+- By default, unknown `biome`/`landform` values use generic fallback prose; with `--strict`, those unknowns become per-tile failures (`description: null` + `descriptionDebug.code = "unknown_taxonomy"`).
 
 ## Parameters
 
