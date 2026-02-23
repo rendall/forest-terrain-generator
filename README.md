@@ -55,7 +55,7 @@ Canonical flags:
 - `--debug-output-file <path>` (debug optional)
 - `--force`
 - `--include-structured` (describe only; adds `descriptionStructured` with `text` and sentence slots)
-- `--strict` (describe only; unknown biome/landform becomes per-tile failure with `descriptionDebug`)
+- `--strict` (describe only; disables phrase fallbacks and fails per-tile when any selected phrase slot has no candidates)
 
 Path resolution:
 
@@ -73,7 +73,8 @@ Describe output contract:
 - Success per tile: `description` is a string.
 - Failure per tile: `description` is `null` and `descriptionDebug` is emitted.
 - With `--include-structured`, successful tiles also include `descriptionStructured` (`text` + sentence list); failed tiles set `descriptionStructured` to `null`.
-- By default, unknown `biome`/`landform` values use generic fallback prose; with `--strict`, those unknowns become per-tile failures (`description: null` + `descriptionDebug.code = "unknown_taxonomy"`).
+- By default, unknown `biome`/`landform` values use generic fallback prose.
+- With `--strict`, no phrase fallback is allowed: unknown taxonomy is a per-tile failure (`descriptionDebug.code = "unknown_taxonomy"`), and any other missing selected phrase slot is also a per-tile failure (`descriptionDebug.code = "phrase_library_missing"`).
 
 ## Parameters
 

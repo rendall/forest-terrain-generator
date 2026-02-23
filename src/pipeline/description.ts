@@ -86,6 +86,30 @@ export interface DescriptionResult {
 	text: string;
 }
 
+export interface DescriptionGenerationOptions {
+	strict?: boolean;
+}
+
+export interface MissingPhraseDetail {
+	slot: DescriptionSentence["slot"];
+	key: string;
+}
+
+export class DescriptionPhraseError extends Error {
+	public readonly code = "phrase_library_missing";
+	public readonly details: MissingPhraseDetail[];
+
+	public constructor(details: MissingPhraseDetail[]) {
+		super(
+			`Missing phrase options for: ${details
+				.map((detail) => `${detail.slot}:${detail.key}`)
+				.join(", ")}.`,
+		);
+		this.name = "DescriptionPhraseError";
+		this.details = details;
+	}
+}
+
 export function isKnownDescriptionBiome(biome: string): biome is KnownBiome {
 	return KNOWN_BIOMES.has(biome as KnownBiome);
 }
@@ -138,18 +162,6 @@ const LANDFORM_PHRASES: Partial<Record<KnownLandform, string[]>> = {
 		"Small rises of firmer ground alternate with lower patches.",
 		"The forest floor shifts subtly between higher and lower spots.",
 	],
-	slope: [
-		"The ground falls away in a steady slope.",
-		"This patch sits on a long, gentle incline.",
-		"The forest floor tilts enough to shape movement.",
-		"The land descends in a broad, continuous grade.",
-	],
-	valley: [
-		"The terrain settles into a low valley corridor.",
-		"The ground narrows into a shallow trough between rises.",
-		"This stretch lies in a low run where water tends to gather.",
-		"The forest floor dips along a gradual valley line.",
-	],
 };
 
 const DEFAULT_BIOME_PHRASES = [
@@ -194,30 +206,6 @@ const BIOME_PHRASES: Partial<Record<KnownBiome, string[]>> = {
 		"Spruce and birch share the ground here in an uneven mix.",
 		"Mixed woodland fills this area, neither fully open nor fully dense.",
 		"The canopy is varied, with birch scattered through conifer growth.",
-	],
-	open_bog: [
-		"The trees thin into open bog ground with low growth.",
-		"Soft, open bog patches interrupt the forest cover.",
-		"Sparse trees stand over wetter, open stretches.",
-		"The stand opens into low bog vegetation and scattered trunks.",
-	],
-	esker_pine: [
-		"Pine grow along a drier rise of firmer ground.",
-		"A pine stand follows this higher, better-drained strip.",
-		"The ground here is drier, with pine holding the rise.",
-		"Pines line a narrow band of elevated, sandy footing.",
-	],
-	stream_bank: [
-		"The trees crowd closer along streamside ground.",
-		"A wetter stream-bank stand runs through this patch.",
-		"Vegetation thickens near a nearby watercourse.",
-		"Mixed trees and brush gather along stream-bank footing.",
-	],
-	lake: [
-		"Open water and shoreline growth dominate this spot.",
-		"The trees break at the edge of a broader water surface.",
-		"Lakeside ground and sparse trunks define this patch.",
-		"This stretch sits against open water with thinner tree cover.",
 	],
 };
 
@@ -333,14 +321,43 @@ function pickDeterministic<T>(items: readonly T[], seedKey: string): T {
 	return items[hash32(seedKey) % items.length] as T;
 }
 
-function phraseOptionsForLandform(landform: string): readonly string[] {
-	const options = LANDFORM_PHRASES[landform as KnownLandform];
-	return options && options.length > 0 ? options : DEFAULT_LANDFORM_PHRASES;
+function requirePhraseOptions(
+	options: readonly string[] | undefined,
+	detail: MissingPhraseDetail,
+	strict: boolean,
+	lenientFallback: readonly string[] = [],
+): readonly string[] | null {
+	if (options && options.length > 0) {
+		return options;
+	}
+	if (strict) {
+		throw new DescriptionPhraseError([detail]);
+	}
+	return lenientFallback.length > 0 ? lenientFallback : null;
 }
 
-function phraseOptionsForBiome(biome: string): readonly string[] {
-	const options = BIOME_PHRASES[biome as KnownBiome];
-	return options && options.length > 0 ? options : DEFAULT_BIOME_PHRASES;
+function phraseOptionsForLandform(
+	landform: string,
+	strict: boolean,
+): readonly string[] {
+	return requirePhraseOptions(
+		LANDFORM_PHRASES[landform as KnownLandform],
+		{ slot: "landform", key: landform },
+		strict,
+		DEFAULT_LANDFORM_PHRASES,
+	) as readonly string[];
+}
+
+function phraseOptionsForBiome(
+	biome: string,
+	strict: boolean,
+): readonly string[] {
+	return requirePhraseOptions(
+		BIOME_PHRASES[biome as KnownBiome],
+		{ slot: "biome", key: biome },
+		strict,
+		DEFAULT_BIOME_PHRASES,
+	) as readonly string[];
 }
 
 function chooseSlopeBand(
@@ -430,6 +447,7 @@ function chooseDirectional(input: DescriptionTileInput): Direction | null {
 function renderDirectionalSentence(
 	input: DescriptionTileInput,
 	seedKey: string,
+	strict: boolean,
 ): string | null {
 	const direction = chooseDirectional(input);
 	if (!direction) {
@@ -440,15 +458,31 @@ function renderDirectionalSentence(
 	const connector = DIRECTIONAL_CONNECTORS[direction];
 
 	if (neighbor.water === "lake") {
-		const phrase = pickDeterministic(
+		const lakeOptions = requirePhraseOptions(
 			LAKE_PHRASES,
+			{ slot: "directional", key: "lake" },
+			strict,
+		);
+		if (!lakeOptions) {
+			return null;
+		}
+		const phrase = pickDeterministic(
+			lakeOptions,
 			`${seedKey}:dir:lake:${direction}`,
 		);
 		return `${connector}, ${phrase}.`;
 	}
 	if (neighbor.water === "stream") {
-		const phrase = pickDeterministic(
+		const streamOptions = requirePhraseOptions(
 			STREAM_PHRASES,
+			{ slot: "directional", key: "stream" },
+			strict,
+		);
+		if (!streamOptions) {
+			return null;
+		}
+		const phrase = pickDeterministic(
+			streamOptions,
 			`${seedKey}:dir:stream:${direction}`,
 		);
 		return `${connector}, ${phrase}.`;
@@ -504,19 +538,32 @@ function chooseObstacle(input: DescriptionTileInput): Obstacle | null {
 function renderObstacleSentence(
 	input: DescriptionTileInput,
 	seedKey: string,
+	strict: boolean,
 ): string | null {
 	const obstacle = chooseObstacle(input);
 	if (!obstacle) {
 		return null;
 	}
 	if (obstacle === "root_tangle") {
-		return pickDeterministic(
+		const rootOptions = requirePhraseOptions(
 			ROOT_TANGLE_PHRASES,
-			`${seedKey}:obstacle:root_tangle`,
+			{ slot: "obstacle", key: "root_tangle" },
+			strict,
 		);
+		if (!rootOptions) {
+			return null;
+		}
+		return pickDeterministic(rootOptions, `${seedKey}:obstacle:root_tangle`);
 	}
 
-	const options = OBSTACLE_PHRASES[obstacle];
+	const options = requirePhraseOptions(
+		OBSTACLE_PHRASES[obstacle],
+		{ slot: "obstacle", key: obstacle },
+		strict,
+	);
+	if (!options) {
+		return null;
+	}
 	return pickDeterministic(options, `${seedKey}:obstacle:${obstacle}`);
 }
 
@@ -550,17 +597,19 @@ function sanitizeSentence(text: string): string {
 export function generateRawDescription(
 	input: DescriptionTileInput,
 	seedKey: string,
+	options: DescriptionGenerationOptions = {},
 ): DescriptionResult {
+	const strict = options.strict === true;
 	const sentences: DescriptionSentence[] = [];
 
 	const includeBothAnchors = shouldIncludeBothAnchors(input);
 
 	const landformSentence = pickDeterministic(
-		phraseOptionsForLandform(input.landform),
+		phraseOptionsForLandform(input.landform, strict),
 		`${seedKey}:landform:${input.landform}`,
 	);
 	const biomeSentence = pickDeterministic(
-		phraseOptionsForBiome(input.biome),
+		phraseOptionsForBiome(input.biome, strict),
 		`${seedKey}:biome:${input.biome}`,
 	);
 
@@ -573,17 +622,24 @@ export function generateRawDescription(
 
 	if (shouldMentionWater(input)) {
 		if (input.standingWater) {
-			sentences.push({
-				slot: "hydrology",
-				text: pickDeterministic(
-					STANDING_WATER_PHRASES,
-					`${seedKey}:hydrology:standing`,
-				),
-			});
+			const standingOptions = requirePhraseOptions(
+				STANDING_WATER_PHRASES,
+				{ slot: "hydrology", key: "standing_water" },
+				strict,
+			);
+			if (standingOptions) {
+				sentences.push({
+					slot: "hydrology",
+					text: pickDeterministic(
+						standingOptions,
+						`${seedKey}:hydrology:standing`,
+					),
+				});
+			}
 		}
 	}
 
-	const obstacleSentence = renderObstacleSentence(input, seedKey);
+	const obstacleSentence = renderObstacleSentence(input, seedKey, strict);
 	if (obstacleSentence) {
 		sentences.push({ slot: "obstacle", text: obstacleSentence });
 	}
@@ -593,7 +649,7 @@ export function generateRawDescription(
 		sentences.push({ slot: "slope", text: slopeSentence });
 	}
 
-	const directionalSentence = renderDirectionalSentence(input, seedKey);
+	const directionalSentence = renderDirectionalSentence(input, seedKey, strict);
 	if (directionalSentence) {
 		const existingDirectional = sentences.some(
 			(sentence) => sentence.slot === "directional",
@@ -604,11 +660,18 @@ export function generateRawDescription(
 	}
 
 	if (input.visibility !== "medium") {
-		const visibilitySentence = pickDeterministic(
-			VISIBILITY_PHRASES[input.visibility],
-			`${seedKey}:visibility:${input.visibility}`,
+		const visibilityOptions = requirePhraseOptions(
+			VISIBILITY_PHRASES[input.visibility as Visibility],
+			{ slot: "visibility", key: input.visibility },
+			strict,
 		);
-		sentences.push({ slot: "visibility", text: visibilitySentence });
+		if (visibilityOptions) {
+			const visibilitySentence = pickDeterministic(
+				visibilityOptions,
+				`${seedKey}:visibility:${input.visibility}`,
+			);
+			sentences.push({ slot: "visibility", text: visibilitySentence });
+		}
 	}
 
 	const capped = sentences.slice(0, 4).map((sentence) => ({

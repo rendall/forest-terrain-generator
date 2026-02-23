@@ -4,6 +4,7 @@ import type { JsonObject, TerrainEnvelope } from "../domain/types.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
 import { writeStandardOutput } from "../io/write-outputs.js";
 import {
+	DescriptionPhraseError,
 	type Direction,
 	generateRawDescription,
 	isKnownDescriptionBiome,
@@ -31,12 +32,14 @@ interface DescriptionDebug {
 	code:
 		| "description_input_invalid"
 		| "description_generation_failed"
+		| "phrase_library_missing"
 		| "unknown_taxonomy";
 	message: string;
 	x: number | null;
 	y: number | null;
 	unknownBiome?: string;
 	unknownLandform?: string;
+	missingSlots?: string[];
 }
 
 interface TileSignals {
@@ -221,6 +224,9 @@ function buildFailureTile(
 	if (debug.unknownLandform) {
 		debugPayload.unknownLandform = debug.unknownLandform;
 	}
+	if (debug.missingSlots) {
+		debugPayload.missingSlots = debug.missingSlots;
+	}
 
 	const out: JsonObject = {
 		...tile,
@@ -365,6 +371,7 @@ export function attachTileDescriptions(
 					neighbors: buildNeighborSignals(signals, byCoord),
 				},
 				describeSeedKey(signals),
+				{ strict },
 			);
 
 			const outputTile: JsonObject = {
@@ -384,6 +391,21 @@ export function attachTileDescriptions(
 
 			return outputTile;
 		} catch (error) {
+			if (error instanceof DescriptionPhraseError) {
+				return buildFailureTile(
+					tile,
+					{
+						code: "phrase_library_missing",
+						message: error.message,
+						x: signals.x,
+						y: signals.y,
+						missingSlots: error.details.map(
+							(detail) => `${detail.slot}:${detail.key}`,
+						),
+					},
+					includeStructured,
+				);
+			}
 			return buildFailureTile(
 				tile,
 				{
