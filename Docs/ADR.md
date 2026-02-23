@@ -2,6 +2,31 @@
 
 This document is a living ledger of significant technical decisions made within this project. Each entry captures the context in which a decision was made, the options considered, the decision itself, and its consequences. The purpose is not to justify past choices defensively, but to preserve intent and reasoning so future contributors can understand why the system is shaped the way it is. Over time, this file forms a chronological record of trade-offs, constraints, and design direction, providing continuity as the codebase and team evolve.
 
+## Adopt Asymmetric Lake Passability for Recovery Safety (v1)
+
+**Timestamp:** 2026-02-23 00:00 (UTC)
+
+### Decision
+Adjust directional passability lake handling to be asymmetric in v1:
+
+- `non-lake -> lake` is `blocked`.
+- `lake -> non-lake` is `passable`.
+- `lake -> lake` is `passable` only when the origin lake tile is fully lake-enclosed (all 8 Dir8 neighbors are in-bounds lake tiles); otherwise `blocked`.
+- Out-of-bounds and destination `NonPlayable` remain `blocked`.
+
+### Rationale
+Symmetric lake blocking can trap players if they are placed on a lake tile due to an upstream bug or content error. The asymmetric rule preserves normal "no entry into lake" behavior while providing deterministic recovery paths off lake tiles. The constrained `lake -> lake` exception supports fully water-enclosed interiors without opening general lake traversal.
+
+### Alternatives Considered
+- Keep symmetric lake blocking (`origin==lake OR destination==lake`) - rejected because it can hard-lock mistaken placements on lake tiles.
+- Allow all `lake -> lake` movement - rejected because it broadens unintended water traversal beyond the recovery-focused scope.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): docs/normative/ForestTerrainGeneration.md, docs/drafts/ImplementationPlan.md
+- Related ADRs: None
+
 ## Add Optional Component-Based Lake Growth (v1)
 
 **Timestamp:** 2026-02-22 00:00 (UTC)

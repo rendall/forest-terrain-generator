@@ -1060,12 +1060,17 @@ Passability checks and slope comparisons use `H[x,y]` and `H[nx,ny]`. `MoveCost`
 For each directed edge `(x,y)->(nx,ny)`:
 
 1. If out-of-bounds or destination `NonPlayable`: `blocked`.
-2. If `WaterClass[x,y]==lake` or `WaterClass[nx,ny]==lake`: `blocked`.
-3. `dh = H[nx,ny] - H[x,y]`.
-4. If `Moisture[x,y] >= 0.90 && SlopeMag[x,y] < 0.03`: `difficult`.
-5. Else if `dh >= movement.steepBlockDelta`: `blocked`.
-6. Else if `dh >= movement.steepDifficultDelta`: `difficult`.
-7. Else `passable`.
+2. If `WaterClass[x,y]==lake` and `WaterClass[nx,ny]!=lake`: `passable`.
+3. If `WaterClass[x,y]==lake` and `WaterClass[nx,ny]==lake`:
+   - Let `originFullyLakeEnclosed` mean all 8 Dir8 neighbors of `(x,y)` are in-bounds and have `WaterClass==lake`.
+   - If `originFullyLakeEnclosed`: `passable`.
+   - Else: `blocked`.
+4. If `WaterClass[x,y]!=lake` and `WaterClass[nx,ny]==lake`: `blocked`.
+5. `dh = H[nx,ny] - H[x,y]`.
+6. If `Moisture[x,y] >= 0.90 && SlopeMag[x,y] < 0.03`: `difficult`.
+7. Else if `dh >= movement.steepBlockDelta`: `blocked`.
+8. Else if `dh >= movement.steepDifficultDelta`: `difficult`.
+9. Else `passable`.
 
 The suction-bog slope threshold (`0.03`) is fixed in v1 and not parameterized.
 

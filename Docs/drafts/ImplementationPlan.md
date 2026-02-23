@@ -2,7 +2,7 @@
 
 Status: draft
 Scope: implementation of the Forest Terrain Generator CLI in this repository
-Last updated: 2026-02-22
+Last updated: 2026-02-23
 
 ## 1. Authority and Precedence
 
@@ -503,6 +503,7 @@ Locked decisions:
 25. Targeted Phase-5 fixtures are required for endpoint-selection ties, no-seed fallback, unreachable-endpoint route skipping, and overlap behavior (`GameTrail` union plus first-writer-wins `GameTrailId`).
 26. `shore` followable derivation uses 8-way adjacency: a non-lake tile gets `shore` when any of its 8 neighbors is a lake tile.
 27. v1 standard tile output includes `navigation.gameTrailId` as an optional integer field derived from internal `GameTrailId` storage (`-1` maps to field omission); `trailManifest` is not emitted in v1.
+28. Lake passability is asymmetric per normative Section 13.2: `non-lake -> lake` is `blocked`; `lake -> non-lake` is `passable`; `lake -> lake` is `passable` only when the origin lake tile is fully lake-enclosed (all 8 Dir8 neighbors in-bounds and lake), otherwise `blocked`; out-of-bounds and destination `NonPlayable` remain `blocked`.
 
 Done criteria:
 
