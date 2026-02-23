@@ -2,6 +2,189 @@
 
 This document is a living ledger of significant technical decisions made within this project. Each entry captures the context in which a decision was made, the options considered, the decision itself, and its consequences. The purpose is not to justify past choices defensively, but to preserve intent and reasoning so future contributors can understand why the system is shaped the way it is. Over time, this file forms a chronological record of trade-offs, constraints, and design direction, providing continuity as the codebase and team evolve.
 
+## Add Optional Component-Based Lake Growth (v1)
+
+**Timestamp:** 2026-02-22 00:00 (UTC)
+
+### Decision
+Add an optional lake-growth pass inside hydrology that expands `LakeMask` before stream/moisture derivation.
+
+- Growth is controlled by:
+  - `hydrology.lakeGrowSteps` (`0` disables growth)
+  - `hydrology.lakeGrowHeightDelta`
+- Growth runs per connected lake component (not per seed tile).
+- Component reference height is conservative: `min(H)` of the component.
+- Expansion uses deterministic 4-way neighbors (`E,S,W,N`) and keeps existing slope/height eligibility constraints:
+  - `SlopeMag <= lakeFlatSlopeThreshold`
+  - `H <= componentRefHeight + lakeGrowHeightDelta`
+- Stream/moisture/water-class are derived from the grown `LakeMask`.
+
+### Rationale
+Observed lake fragmentation produced many isolated single-tile lakes. Component-based growth provides more coherent lake bodies while preserving deterministic behavior and avoiding per-seed order bias.
+
+### Alternatives Considered
+- Per-seed growth BFS — rejected due to stronger order sensitivity and shape bias.
+- 8-way growth expansion — rejected as default behavior because it is materially more aggressive and can over-merge lakes in typical parameter ranges.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): src/pipeline/hydrology.ts, src/lib/default-params.ts, docs/normative/ForestTerrainGeneration.md, docs/drafts/ImplementationPlan.md
+- Related ADRs: Define v1 Debug Artifact Output Contract
+
+## Allow Debug Artifact Replay from Existing Envelope Input (`--input-file`) (v1)
+
+**Timestamp:** 2026-02-22 00:00 (UTC)
+
+### Decision
+For v1 `debug` mode, support a second input path that consumes an existing terrain envelope JSON.
+
+- Add `--input-file <path>` to `debug`.
+- In this path, `debug` reads the envelope and emits the standard debug artifact set to `--output-dir`.
+- Keep existing `debug` generation/derivation behavior unchanged.
+- Treat `--input-file` as mutually exclusive with generation/derivation inputs in `debug`: `--seed`, `--width`, `--height`, `--params`, `--map-h`, `--map-r`, `--map-v`.
+- Keep `--input-file` invalid in `generate` and `derive`.
+
+### Rationale
+This supports post-hoc debugging and visualization of already generated terrain outputs without requiring regeneration inputs. It improves workflow efficiency while preserving existing mode semantics.
+
+### Alternatives Considered
+- Require regeneration-only debug path (no input replay) – rejected because users cannot debug historical outputs directly.
+- Add a new command (`debug-from-file`) – rejected for v1 to avoid unnecessary command-surface expansion.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): src/cli/main.ts, src/app/run-generator.ts, src/app/validate-input.ts, src/io/read-envelope.ts, docs/drafts/ImplementationPlan.md
+- Related ADRs: Define v1 Debug Artifact Output Contract
+
+## Define Final CLI Error-Diagnostics Quality Bar (v1)
+
+**Timestamp:** 2026-02-21 20:43 (UTC)
+
+### Decision
+For v1, non-zero CLI exits must meet a minimum diagnostics contract.
+
+- Include error category, mode/stage context, and primary failing subject.
+- Exit `2` diagnostics include offending flag/key and expected form.
+- Exit `3` diagnostics include expected vs actual dimensions/shapes.
+- Exit `4` diagnostics include failed operation and path.
+- Exit `5` diagnostics include failing invariant/stage and relevant values.
+- Include corrective hints when available and suppress raw stack traces in normal CLI output.
+
+### Rationale
+Consistent, context-rich diagnostics reduce troubleshooting time and keep CLI behavior predictable for both users and automated tests.
+
+### Alternatives Considered
+- Minimal free-form error text – rejected because it leads to inconsistent, low-actionability diagnostics.
+- Structured machine-readable diagnostics only – rejected for v1 because primary CLI UX remains human-oriented.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): Docs/drafts/ImplementationPlan.md
+- Related ADRs: Lock Phase 6 CLI Integration Test Matrix
+
+## Lock Phase 6 CLI Integration Test Matrix
+
+**Timestamp:** 2026-02-21 20:43 (UTC)
+
+### Decision
+Lock a Phase 6 CLI integration-test matrix spanning `generate`, `derive`, and `debug`.
+
+- `generate`: success path, invalid output-argument combinations, overwrite behavior, and unknown-input handling.
+- `derive`: success path, missing required authored input failures, shape mismatch failures, and unknown-input handling.
+- `debug`: success path with/without `--debug-output-file`, invalid `--output-file` rejection with corrective hint, atomic output-write behavior, and unknown-input handling.
+- Matrix assertions include expected exit codes and key diagnostics for each scenario.
+
+### Rationale
+A locked matrix prevents coverage drift and ensures CLI contract behaviors stay stable as implementation hardening proceeds.
+
+### Alternatives Considered
+- Lightweight ad hoc integration tests – rejected because it can miss mode-specific regressions.
+- Exhaustive combinatorial matrix – rejected for v1 due to maintenance/runtime overhead.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): Docs/drafts/ImplementationPlan.md
+- Related ADRs: Adopt Balanced End-to-End Golden Scope for Phase 6
+
+## Adopt Balanced End-to-End Golden Scope for Phase 6
+
+**Timestamp:** 2026-02-21 20:42 (UTC)
+
+### Decision
+For Phase 6, adopt a balanced end-to-end golden regression scope.
+
+- Modes: `generate`, `derive`, and `debug`.
+- Seeds: `1`, `42`, `123456789`, and `18446744073709551615`.
+- Grid sizes: `16x16` and `64x64`.
+- Assertions cover full envelope output and debug artifact presence/invariants.
+- Golden updates are opt-in only via an explicit update workflow flag.
+
+### Rationale
+This scope provides high confidence in deterministic behavior across commands while keeping runtime and maintenance cost reasonable for v1.
+
+### Alternatives Considered
+- Minimal scope (single seed/size per mode) – rejected because it risks missing regressions.
+- Heavy exhaustive scope (many seeds/sizes/artifacts) – rejected for v1 due to runtime/maintenance overhead.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): Docs/drafts/ImplementationPlan.md
+- Related ADRs: Use Atomic Debug Output Publication (v1)
+
+## Use Atomic Debug Output Publication (v1)
+
+**Timestamp:** 2026-02-21 20:38 (UTC)
+
+### Decision
+For v1 `debug` mode, adopt atomic all-or-nothing publication for `--output-dir`.
+
+- Stage all debug artifacts in a temporary directory.
+- Publish to the final output directory only after all artifact writes succeed.
+- On write/publish failure, do not leave partially published debug outputs.
+- Surface failures as file I/O errors (exit `4`) with actionable path/context details.
+
+### Rationale
+Atomic publication gives deterministic and trustworthy debug outputs for both users and tests. Downstream tooling can assume either a complete debug artifact set or a failed run, never a partial ambiguous state.
+
+### Alternatives Considered
+- Best-effort partial writes – rejected because partial output states are harder to reason about and increase troubleshooting ambiguity.
+- Hybrid atomic/partial behavior – rejected for v1 to keep failure semantics simple and predictable.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): Docs/drafts/ImplementationPlan.md
+- Related ADRs: Define v1 Debug Artifact Output Contract
+
+## Define v1 Debug Artifact Output Contract
+
+**Timestamp:** 2026-02-21 20:36 (UTC)
+
+### Decision
+For v1 `debug` mode, adopt a minimal stable output-directory contract.
+
+- Emit `debug-manifest.json` at the output-directory root.
+- Emit fixed required debug artifacts at the output-directory root: `topography.json`, `hydrology.json`, `ecology.json`, and `navigation.json`.
+- `debug-manifest.json` includes deterministic metadata fields: `mode`, `specVersion`, `width`, `height`, `tileCount`, and `artifacts`.
+
+### Rationale
+A fixed, minimal artifact set provides predictable downstream tooling integration and straightforward regression testing without introducing optional/variable debug schemas in v1.
+
+### Alternatives Considered
+- Rich debug contract with timings/counters/optional artifact variants – rejected for v1 to keep scope and schema surface small.
+- Raw internal-array dump contract – rejected because it is harder for downstream consumers to treat as stable and increases churn risk.
+
+### References
+- PR: None
+- Commit: Pending
+- File(s): Docs/drafts/ImplementationPlan.md
+- Related ADRs: Emit `navigation.gameTrailId` in Standard Tile Payload (v1)
+
 ## Emit `navigation.gameTrailId` in Standard Tile Payload (v1)
 
 **Timestamp:** 2026-02-21 19:15 (UTC)

@@ -198,20 +198,29 @@ Rules:
 
 ### Decisions
 
-- [ ] Review the implementation list, and add uncertain, ambiguous or unknown implementation details as decision items just below this one, above the review gate.
-- [ ] Review gate: review the implementation plan and ensure that there are no more undecideds or ambiguities.
-- [ ] Review gate: review the implementation checklist and add missing steps and details.
+- [x] Review the implementation list, and add uncertain, ambiguous or unknown implementation details as decision items just below this one, above the review gate.
+- [x] Decide final output-envelope completeness metadata policy for v1 (`meta` contains only `specVersion`; do not emit `implementationStatus`, `implementedPhases`, or draft notes in v1 output).
+- [x] Decide canonical JSON serialization policy for standard/debug outputs (emit pretty JSON with two-space indentation and trailing newline for standard and debug JSON artifacts; rely on stable insertion-order serialization, with deterministic field population in emitters).
+- [x] Decide debug artifact contract for v1 (`debug-manifest.json` required; fixed required artifact files `topography.json`, `hydrology.json`, `ecology.json`, `navigation.json` in output-dir root; deterministic naming/path contract; manifest includes mode/specVersion/width/height/tileCount/artifacts list).
+- [x] Decide debug-write failure policy (atomic all-or-nothing: stage debug artifacts in a temp directory and publish only after full success; on failure, do not publish partial output and surface file-write/rename failures as exit `4` with actionable path/context details).
+- [x] Decide end-to-end golden scope details (balanced v1 scope: modes `generate`, `derive`, `debug`; seeds `1`, `42`, `123456789`, `18446744073709551615`; sizes `16x16`, `64x64`; assert full envelope plus debug manifest/artifact presence with key invariants; golden updates only via explicit `--update-goldens` workflow).
+- [x] Decide CLI integration-test matrix details for mode/flag/error-path coverage (`generate`: happy path + invalid-output-arg combos + overwrite behavior; `derive`: happy path + missing required authored inputs + shape mismatch path; `debug`: happy path with/without `--debug-output-file` + invalid `--output-file` rejection hint + atomic write behavior; all modes include unknown-input and exit-code assertions).
+- [x] Decide final error-diagnostics quality bar (all non-zero exits MUST include error category + mode/stage context + primary failing subject; exit `2` includes offending flag/key/value expectation, exit `3` includes expected vs actual dimensions, exit `4` includes operation + path, exit `5` includes failing invariant/stage + relevant values; include corrective hints when available; avoid raw stack traces in normal CLI output).
+- [x] Review gate: review the implementation plan and ensure that there are no more undecideds or ambiguities.
+- [x] Review gate: review the implementation checklist and add missing steps and details.
 
 ### Implementation
 
-- [ ] Finalize output envelope emission to `--output-file`.
-- [ ] Implement debug artifact emission to `--output-dir`.
-- [ ] Add CLI integration tests for `generate`, `derive`, and `debug` modes.
-- [ ] Add end-to-end fixed-seed golden tests.
-- [ ] Validate error messages and exit-code behavior.
-- [ ] Final review gate: explicit approval to mark implementation complete.
+- [x] Finalize output envelope emission to `--output-file` (emit `meta.specVersion` only; remove draft metadata fields; preserve deterministic field population order and canonical pretty JSON with trailing newline).
+- [x] Implement debug artifact emission to `--output-dir` (fixed root artifacts: `debug-manifest.json`, `topography.json`, `hydrology.json`, `ecology.json`, `navigation.json`; manifest schema locked by Phase 6 decisions).
+- [x] Implement atomic debug-output publication (stage writes in temp dir, publish on full success only, no partial published outputs on failure, map write/publish failures to exit `4` with path/context details).
+- [x] Add CLI integration tests for `generate`, `derive`, and `debug` modes per locked Phase 6 matrix.
+- [x] Add end-to-end fixed-seed golden tests for balanced Phase 6 scope (modes/seeds/sizes/artifacts/invariants).
+- [x] Implement explicit golden update workflow (`--update-goldens`) and ensure standard test runs fail on drift instead of rewriting baselines.
+- [x] Validate error messages and exit-code behavior against the locked diagnostics quality bar (`2`/`3`/`4`/`5` required context payload).
+- [x] Final review gate: explicit approval to mark implementation complete.
 
 ## Cross-Cutting Policy Checks
 
-- [ ] Policy decision updates are applied to all applicable artifacts (`docs/drafts/ImplementationPlan.md`, `AGENTS.md`, `docs/ADR.md`, and relevant spec docs).
-- [ ] If applicability is unclear for any policy update, work is paused and instructions are requested before marking complete.
+- [x] Policy decision updates are applied to all applicable artifacts (`docs/drafts/ImplementationPlan.md`, `AGENTS.md`, `docs/ADR.md`, and relevant spec docs).
+- [x] If applicability is unclear for any policy update, work is paused and instructions are requested before marking complete.
