@@ -162,6 +162,20 @@ const LANDFORM_PHRASES: Partial<Record<KnownLandform, string[]>> = {
 		"Small rises of firmer ground alternate with lower patches.",
 		"The forest floor shifts subtly between higher and lower spots.",
 	],
+	slope: [
+		"The ground slopes gently across this stretch of forest.",
+		"The terrain leans steadily in one direction.",
+		"The forest floor tilts at a noticeable angle.",
+		"The land rises on one side and falls on the other.",
+		"A steady incline runs through the trees here.",
+	],
+	valley: [
+		"The land narrows into a shallow valley between higher ground.",
+		"The forest follows a low trough through this area.",
+		"The terrain forms a subtle valley between gentle rises.",
+		"A broad dip runs between higher patches of forest.",
+		"The ground settles into a low corridor between slopes.",
+	],
 };
 
 const DEFAULT_BIOME_PHRASES = [
@@ -206,6 +220,44 @@ const BIOME_PHRASES: Partial<Record<KnownBiome, string[]>> = {
 		"Spruce and birch share the ground here in an uneven mix.",
 		"Mixed woodland fills this area, neither fully open nor fully dense.",
 		"The canopy is varied, with birch scattered through conifer growth.",
+	],
+	esker_pine: [
+		"Pine dominate this higher, drier ground.",
+		"A stand of pine covers the raised ridge here.",
+		"The forest here is mostly pine over firm soil.",
+		"Tall pines follow the higher ground in a narrow band.",
+		"The trees are pine, spaced along elevated terrain.",
+		"Pine grow over sandy, well-drained soil.",
+		"The raised ground supports an open pine stand.",
+		"Pine form a dry crest above the surrounding low areas.",
+	],
+	lake: [
+		"Open water covers this area.",
+		"A broad stretch of still water lies here.",
+		"The surface is open water with little vegetation.",
+		"This spot is part of a lake.",
+		"Water extends across this low-lying ground.",
+		"The forest gives way here to open water.",
+		"The area is occupied by still lake water.",
+	],
+	open_bog: [
+		"Trees thin out across open, wet ground.",
+		"Low growth and scattered trees cover the boggy surface.",
+		"The forest loosens here into open, saturated ground.",
+		"Sparse trees stand over low, wet terrain.",
+		"Open bog replaces denser forest in this patch.",
+		"The ground is wet and open with only scattered trees.",
+		"Vegetation is low and broken across this bog.",
+		"Tree cover is sparse over the saturated ground.",
+	],
+	stream_bank: [
+		"Trees line the edge of a nearby stream.",
+		"The forest follows the course of running water here.",
+		"The ground sits close to a small stream.",
+		"Vegetation thickens along the stream bank.",
+		"The forest edge runs beside moving water.",
+		"Trees grow along the narrow channel nearby.",
+		"The stand adjusts to the presence of running water.",
 	],
 };
 
@@ -644,9 +696,11 @@ export function generateRawDescription(
 		sentences.push({ slot: "obstacle", text: obstacleSentence });
 	}
 
-	const slopeSentence = renderSlopeSentence(input);
-	if (slopeSentence) {
-		sentences.push({ slot: "slope", text: slopeSentence });
+	if (input.landform !== "slope") {
+		const slopeSentence = renderSlopeSentence(input);
+		if (slopeSentence) {
+			sentences.push({ slot: "slope", text: slopeSentence });
+		}
 	}
 
 	const directionalSentence = renderDirectionalSentence(input, seedKey, strict);
