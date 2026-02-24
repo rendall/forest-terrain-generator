@@ -60,6 +60,7 @@ interface TileSignals {
 	obstacles: Obstacle[];
 	visibility: Visibility;
 	passability: PassabilityByDir;
+	followable: string[];
 }
 
 type TileSignalBuildResult =
@@ -316,6 +317,7 @@ function buildTileSignals(tile: JsonObject): TileSignalBuildResult {
 			obstacles: collectObstacles(roughness.featureFlags),
 			visibility: deriveVisibility(treeDensity, canopyCover, obstruction),
 			passability,
+			followable: navigation.followable as string[],
 		},
 	};
 }
@@ -416,8 +418,8 @@ export function attachTileDescriptions(
 			);
 		}
 
-		try {
-			const description = generateRawDescription(
+			try {
+				const description = generateRawDescription(
 				{
 					biome: signals.biome,
 					landform: signals.landform,
@@ -430,9 +432,9 @@ export function attachTileDescriptions(
 					visibility: signals.visibility,
 					neighbors: buildNeighborSignals(signals, byCoord),
 				},
-				describeSeedKey(signals),
-				{ strict },
-			);
+					describeSeedKey(signals),
+					{ strict },
+				);
 
 				const outputTile: JsonObject = {
 					...tile,
@@ -440,6 +442,25 @@ export function attachTileDescriptions(
 				};
 
 				if (includeStructured) {
+					const adjacency = signals.followable.reduce<
+						Record<string, Direction[]>
+					>((obj, token) => {
+						const directionsForToken = DIRECTION_ORDER.filter((direction) => {
+							const delta = DIRECTION_DELTAS[direction];
+							const nx = signals.x + delta.dx;
+							const ny = signals.y + delta.dy;
+							const neighbor = byCoord.get(tileKey(nx, ny));
+							if (!neighbor) {
+								return false;
+							}
+							return neighbor.followable.includes(token);
+						});
+						return {
+							...obj,
+							[token]: directionsForToken,
+						};
+					}, {});
+
 					outputTile.descriptionStructured = {
 						text: description.text,
 						sentences: description.sentences.map((sentence) => {
@@ -459,11 +480,12 @@ export function attachTileDescriptions(
 							}
 							return out;
 						}),
+						adjacency,
 					};
 				}
 
-			return outputTile;
-		} catch (error) {
+				return outputTile;
+			} catch (error) {
 			if (error instanceof DescriptionPhraseError) {
 				return buildFailureTile(
 					tile,

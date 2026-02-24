@@ -159,4 +159,33 @@ describe("describe attachment", () => {
 			y: 0,
 		});
 	});
+
+	it("emits structured followable adjacency with canonical direction order and OOB skip", () => {
+		const a = makeValidTile(0, 0);
+		const b = makeValidTile(1, 0);
+		const c = makeValidTile(0, 1);
+		const d = makeValidTile(1, 1);
+		a.navigation.followable = ["ridge", "shore", "game_trail"];
+		b.navigation.followable = ["ridge"];
+		c.navigation.followable = ["shore"];
+		d.navigation.followable = [];
+
+		const envelope = {
+			meta: { specVersion: "forest-terrain-v1" },
+			tiles: [a, b, c, d],
+		};
+		const out = attachTileDescriptions(envelope, true);
+
+		const tileA = out.tiles.find((tile) => tile.x === 0 && tile.y === 0);
+		expect(tileA.descriptionStructured).toBeDefined();
+		expect(tileA.descriptionStructured.adjacency).toEqual({
+			ridge: ["E"],
+			shore: ["S"],
+			game_trail: [],
+		});
+
+		const tileD = out.tiles.find((tile) => tile.x === 1 && tile.y === 1);
+		expect(tileD.descriptionStructured).toBeDefined();
+		expect(tileD.descriptionStructured.adjacency).toEqual({});
+	});
 });

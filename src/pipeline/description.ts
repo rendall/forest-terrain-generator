@@ -80,14 +80,14 @@ export interface MovementRun {
 
 export interface DescriptionSentence {
 	slot:
-		| "landform"
-		| "biome"
-		| "hydrology"
-		| "obstacle"
-		| "slope"
-		| "movement_structure"
-		| "visibility"
-		| "directional";
+	| "landform"
+	| "biome"
+	| "hydrology"
+	| "obstacle"
+	| "slope"
+	| "movement_structure"
+	| "visibility"
+	| "directional";
 	text?: string;
 	contributors: DescriptionSentenceContributor[];
 	contributorKeys: Partial<Record<DescriptionSentenceContributor, string>>;
@@ -375,6 +375,16 @@ const DIRECTIONAL_CONNECTORS: Record<Direction, string> = {
 const CARDINALS: Direction[] = ["N", "E", "S", "W"];
 const DIAGONALS: Direction[] = ["NE", "SE", "SW", "NW"];
 const RING: Direction[] = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+const DIR_LOWER: Record<Direction, string> = {
+	N: "north",
+	NE: "northeast",
+	E: "east",
+	SE: "southeast",
+	S: "south",
+	SW: "southwest",
+	W: "west",
+	NW: "northwest",
+};
 
 function movementTypeForPassability(passability: Passability): MovementRun["type"] {
 	return passability === "passable" ? "passage" : "blockage";
@@ -419,11 +429,84 @@ function collectMovementRuns(passability: PassabilityByDir): MovementRun[] {
 
 	return runs;
 }
+
+function countPassableExits(passability: PassabilityByDir): number {
+	let count = 0;
+	for (const direction of RING) {
+		if (passability[direction] === "passable") {
+			count += 1;
+		}
+	}
+	return count;
+}
+
+function formatDirectionNames(directions: readonly Direction[]): string {
+	const names = directions.map((direction) => DIR_LOWER[direction]);
+	if (names.length === 0) {
+		return "no direction";
+	}
+	if (names.length === 1) {
+		return names[0] as string;
+	}
+	if (names.length === 2) {
+		return `${names[0]} and ${names[1]}`;
+	}
+	return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+}
+
+function renderPassageText(passages: readonly MovementRun[]): string {
+	if (passages.length === 0) {
+		return "No passage leads out from here.";
+	}
+	if (passages.length === 1) {
+		const directions = passages[0]?.directions ?? [];
+		if (directions.length >= 2) {
+			return `A broad passage opens to the ${formatDirectionNames(directions)}.`;
+		}
+		return `A passage opens to the ${formatDirectionNames(directions)}.`;
+	}
+
+	const clauses = passages.map((run) => {
+		if (run.directions.length >= 2) {
+			return `a broad passage to the ${formatDirectionNames(run.directions)}`;
+		}
+		return `a passage to the ${formatDirectionNames(run.directions)}`;
+	});
+
+	if (clauses.length === 2) {
+		return `There is ${clauses[0]}, and ${clauses[1]}.`;
+	}
+	return `There are ${clauses.slice(0, -1).join(", ")}, and ${clauses[clauses.length - 1]}.`;
+}
+
+function renderBlockageText(blockages: readonly MovementRun[]): string {
+	if (blockages.length === 0) {
+		return "Passages open in all directions.";
+	}
+
+	const clauses = blockages.map(
+		(run) => `to the ${formatDirectionNames(run.directions)}`,
+	);
+	if (clauses.length === 1) {
+		return `Passage is blocked ${clauses[0]}.`;
+	}
+	return `Passage is blocked ${clauses.slice(0, -1).join(", ")}, and ${clauses[clauses.length - 1]}.`;
+}
+
 function renderMovementStructureSentence(
 	input: DescriptionTileInput,
-): { movement: MovementRun[] } {
+): { text: string; movement: MovementRun[] } {
+	const passableExitCount = countPassableExits(input.passability);
+	const movementRuns = collectMovementRuns(input.passability);
+	const passages = movementRuns.filter((run) => run.type === "passage");
+	const blockages = movementRuns.filter((run) => run.type === "blockage");
+	const text =
+		passableExitCount > 4
+			? renderBlockageText(blockages)
+			: renderPassageText(passages);
 	return {
-		movement: collectMovementRuns(input.passability),
+		text,
+		movement: movementRuns,
 	};
 }
 
@@ -819,6 +902,7 @@ export function generateRawDescription(
 	const movementStructureSentence = renderMovementStructureSentence(input);
 	sentences.push({
 		slot: "movement_structure",
+		text: movementStructureSentence.text,
 		contributors: ["movement_structure"],
 		contributorKeys: {},
 		movement: movementStructureSentence.movement,
@@ -865,11 +949,11 @@ export function generateRawDescription(
 				contributorKeys: sentence.contributorKeys,
 				...(sentence.movement
 					? {
-							movement: sentence.movement.map((run) => ({
-								type: run.type,
-								directions: [...run.directions],
-							})),
-						}
+						movement: sentence.movement.map((run) => ({
+							type: run.type,
+							directions: [...run.directions],
+						})),
+					}
 					: {}),
 			});
 			continue;
@@ -881,44 +965,48 @@ export function generateRawDescription(
 		}
 		const key = text.toLowerCase();
 		const existingIndex = seen.get(key);
-			if (existingIndex !== undefined) {
-				const existing = deduped[existingIndex] as DescriptionSentence;
-				existing.contributors = uniqueContributors([
-					...existing.contributors,
-					...sentence.contributors,
-				]);
-				existing.contributorKeys = {
-					...existing.contributorKeys,
-					...sentence.contributorKeys,
-				};
-				if (!existing.movement && sentence.movement) {
-					existing.movement = sentence.movement.map((run) => ({
+		if (existingIndex !== undefined) {
+			const existing = deduped[existingIndex] as DescriptionSentence;
+			existing.contributors = uniqueContributors([
+				...existing.contributors,
+				...sentence.contributors,
+			]);
+			existing.contributorKeys = {
+				...existing.contributorKeys,
+				...sentence.contributorKeys,
+			};
+			if (!existing.movement && sentence.movement) {
+				existing.movement = sentence.movement.map((run) => ({
+					type: run.type,
+					directions: [...run.directions],
+				}));
+			}
+			continue;
+		}
+		seen.set(key, deduped.length);
+		deduped.push({
+			slot: sentence.slot,
+			text,
+			contributors: sentence.contributors,
+			contributorKeys: sentence.contributorKeys,
+			...(sentence.movement
+				? {
+					movement: sentence.movement.map((run) => ({
 						type: run.type,
 						directions: [...run.directions],
-					}));
+					})),
 				}
-				continue;
-			}
-			seen.set(key, deduped.length);
-			deduped.push({
-				slot: sentence.slot,
-				text,
-				contributors: sentence.contributors,
-				contributorKeys: sentence.contributorKeys,
-				...(sentence.movement
-					? {
-							movement: sentence.movement.map((run) => ({
-								type: run.type,
-								directions: [...run.directions],
-							})),
-						}
-					: {}),
-			});
-		}
+				: {}),
+		});
+	}
 
 	const capped = deduped.slice(0, 4);
 	const proseText = capped
-		.filter((sentence) => typeof sentence.text === "string")
+		.filter(
+			(sentence) =>
+				sentence.slot !== "movement_structure" &&
+				typeof sentence.text === "string",
+		)
 		.map((sentence) => sentence.text as string)
 		.join(" ");
 

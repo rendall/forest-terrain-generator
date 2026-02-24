@@ -104,6 +104,11 @@ describe("describe CLI", () => {
 		]);
 		expect(generateResult.code).toBe(0);
 
+		const source = JSON.parse(await readFile(sourceFile, "utf8"));
+		source.tiles[0].navigation.followable = ["ridge", "shore"];
+		source.tiles[1].navigation.followable = ["ridge"];
+		await writeFile(sourceFile, `${JSON.stringify(source, null, 2)}\n`, "utf8");
+
 		const describeResult = await runCli(DESCRIBE_CLI_ENTRY, [
 			"--input-file",
 			sourceFile,
@@ -125,6 +130,10 @@ describe("describe CLI", () => {
 		expect(
 			typeof first.descriptionStructured.sentences[0].contributorKeys,
 		).toBe("object");
+		expect(typeof first.descriptionStructured.adjacency).toBe("object");
+		const seeded = parsed.tiles.find((tile) => tile.x === 0 && tile.y === 0);
+		expect(seeded).toBeDefined();
+		expect(Array.isArray(seeded.descriptionStructured.adjacency.ridge)).toBe(true);
 		const movementSentence = first.descriptionStructured.sentences.find(
 			(sentence) => sentence.slot === "movement_structure",
 		);
