@@ -50,6 +50,7 @@ interface TileSignals {
 	y: number;
 	biome: string;
 	waterClass: WaterClass;
+	flowDirection: Direction | "NONE" | null;
 	elevation: number;
 	treeDensity: number;
 	moisture: number;
@@ -122,6 +123,18 @@ const VALID_PASSABILITY = new Set<Passability>([
 	"difficult",
 	"blocked",
 ]);
+
+const FLOW_DIRECTION_BY_FD: Partial<Record<number, Direction | "NONE">> = {
+	0: "E",
+	1: "SE",
+	2: "S",
+	3: "SW",
+	4: "W",
+	5: "NW",
+	6: "N",
+	7: "NE",
+	255: "NONE",
+};
 
 function resolveFromCwd(
 	cwd: string,
@@ -231,6 +244,14 @@ function parsePassability(value: unknown): PassabilityByDir | null {
 	return out as PassabilityByDir;
 }
 
+function parseFlowDirection(value: unknown): Direction | "NONE" | null {
+	const code = asInteger(value);
+	if (code === null) {
+		return null;
+	}
+	return FLOW_DIRECTION_BY_FD[code] ?? null;
+}
+
 function tileKey(x: number, y: number): string {
 	return `${x},${y}`;
 }
@@ -305,6 +326,7 @@ function buildTileSignals(tile: JsonObject): TileSignalBuildResult {
 			y,
 			biome: asString(ecology.biome, "mixed_forest"),
 			waterClass: normalizeWaterClass(hydrology.waterClass),
+			flowDirection: parseFlowDirection(hydrology.fd),
 			elevation: asFiniteNumber(topography.h, 0),
 			treeDensity,
 			moisture: clamp01(asFiniteNumber(hydrology.moisture, 0.5)),
@@ -442,7 +464,7 @@ export function attachTileDescriptions(
 				};
 
 				if (includeStructured) {
-					const adjacency = signals.followable.reduce<
+					const adjacencyByToken = signals.followable.reduce<
 						Record<string, Direction[]>
 					>((obj, token) => {
 						const directionsForToken = DIRECTION_ORDER.filter((direction) => {
@@ -460,6 +482,16 @@ export function attachTileDescriptions(
 							[token]: directionsForToken,
 						};
 					}, {});
+					const adjacency: JsonObject = {};
+					for (const [token, directions] of Object.entries(adjacencyByToken)) {
+						adjacency[token] = directions;
+					}
+					if (
+						Object.prototype.hasOwnProperty.call(adjacencyByToken, "stream") &&
+						signals.flowDirection !== null
+					) {
+						adjacency.streamflow = signals.flowDirection;
+					}
 
 					outputTile.descriptionStructured = {
 						text: description.text,

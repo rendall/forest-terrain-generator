@@ -188,4 +188,35 @@ describe("describe attachment", () => {
 		expect(tileD.descriptionStructured).toBeDefined();
 		expect(tileD.descriptionStructured.adjacency).toEqual({});
 	});
+
+	it("adds adjacency.streamflow only when stream is present in adjacency", () => {
+		const a = makeValidTile(0, 0);
+		const b = makeValidTile(1, 0);
+		const c = makeValidTile(0, 1);
+
+		a.navigation.followable = ["stream"];
+		b.navigation.followable = ["stream"];
+		c.navigation.followable = ["ridge"];
+
+		a.hydrology.fd = 7; // NE
+		b.hydrology.fd = 4; // W
+		c.hydrology.fd = 2; // S (should not be emitted without stream adjacency)
+
+		const envelope = {
+			meta: { specVersion: "forest-terrain-v1" },
+			tiles: [a, b, c],
+		};
+		const out = attachTileDescriptions(envelope, true);
+
+		const tileA = out.tiles.find((tile) => tile.x === 0 && tile.y === 0);
+		expect(tileA.descriptionStructured).toBeDefined();
+		expect(tileA.descriptionStructured.adjacency).toEqual({
+			stream: ["E"],
+			streamflow: "NE",
+		});
+
+		const tileC = out.tiles.find((tile) => tile.x === 0 && tile.y === 1);
+		expect(tileC.descriptionStructured).toBeDefined();
+		expect(tileC.descriptionStructured.adjacency.streamflow).toBeUndefined();
+	});
 });
