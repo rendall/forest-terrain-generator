@@ -89,6 +89,7 @@ export interface DescriptionSentence {
 	| "visibility"
 	| "directional";
 	text?: string;
+	basicText?: string;
 	contributors: DescriptionSentenceContributor[];
 	contributorKeys: Partial<Record<DescriptionSentenceContributor, string>>;
 	movement?: MovementRun[];
@@ -902,7 +903,7 @@ export function generateRawDescription(
 	const movementStructureSentence = renderMovementStructureSentence(input);
 	sentences.push({
 		slot: "movement_structure",
-		text: movementStructureSentence.text,
+		basicText: movementStructureSentence.text,
 		contributors: ["movement_structure"],
 		contributorKeys: {},
 		movement: movementStructureSentence.movement,
@@ -947,6 +948,9 @@ export function generateRawDescription(
 				slot: sentence.slot,
 				contributors: sentence.contributors,
 				contributorKeys: sentence.contributorKeys,
+				...(typeof sentence.basicText === "string"
+					? { basicText: sanitizeSentence(sentence.basicText) }
+					: {}),
 				...(sentence.movement
 					? {
 						movement: sentence.movement.map((run) => ({
@@ -987,6 +991,9 @@ export function generateRawDescription(
 		deduped.push({
 			slot: sentence.slot,
 			text,
+			...(typeof sentence.basicText === "string"
+				? { basicText: sanitizeSentence(sentence.basicText) }
+				: {}),
 			contributors: sentence.contributors,
 			contributorKeys: sentence.contributorKeys,
 			...(sentence.movement

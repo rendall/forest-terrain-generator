@@ -504,6 +504,9 @@ export function attachTileDescriptions(
 							if (typeof sentence.text === "string") {
 								out.text = sentence.text;
 							}
+							if (typeof sentence.basicText === "string") {
+								out.basic_text = sentence.basicText;
+							}
 							if (sentence.movement) {
 								out.movement = sentence.movement.map((run) => ({
 									type: run.type,
