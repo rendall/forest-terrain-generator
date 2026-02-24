@@ -644,21 +644,22 @@ describe("Phase 1 description pipeline", () => {
 		);
 	});
 
-	it("uses fixed landform anchor text for lake biome while keeping other slots", () => {
+	it("uses fixed lake anchor text without obstacle merge and lake-aware movement wording", () => {
 		const result = generateRawDescription(
 			{
 				...case04,
+				landform: "slope",
 				biome: "lake",
-				followable: ["stream"],
-				flowDirection: "NE",
-				passability: passabilityFromOpen(["NE", "SW", "W", "NW", "N"]),
+				obstacles: ["fallen_log"],
+				followable: [],
+				passability: passabilityFromOpen([]),
 				neighbors: {
 					N: { ...case04.neighbors.N, followable: [] },
-					NE: { ...case04.neighbors.NE, followable: ["stream"] },
+					NE: { ...case04.neighbors.NE, followable: [] },
 					E: { ...case04.neighbors.E, followable: [] },
 					SE: { ...case04.neighbors.SE, followable: [] },
 					S: { ...case04.neighbors.S, followable: [] },
-					SW: { ...case04.neighbors.SW, followable: ["stream"] },
+					SW: { ...case04.neighbors.SW, followable: [] },
 					W: { ...case04.neighbors.W, followable: [] },
 					NW: { ...case04.neighbors.NW, followable: [] },
 				},
@@ -668,6 +669,12 @@ describe("Phase 1 description pipeline", () => {
 
 		const landform = result.sentences.find((sentence) => sentence.slot === "landform");
 		expect(landform?.text).toBe("This is lake surface.");
+		expect(landform?.contributors).toEqual(["landform", "biome"]);
+		expect(landform?.contributorKeys.obstacle).toBeUndefined();
+		const movement = result.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		expect(movement?.text).toContain("across the water");
 		expect(
 			result.sentences.some((sentence) => sentence.slot === "movement_structure"),
 		).toBe(true);

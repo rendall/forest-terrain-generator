@@ -275,6 +275,9 @@ function traversalArticle(noun: TraversalNoun): "A" | "An" {
 }
 
 function movementBiomePhrase(biome: string): string {
+	if (biome === "lake") {
+		return "across the water";
+	}
 	if (biome === "open_bog") {
 		return "across the bog";
 	}
@@ -1236,15 +1239,37 @@ function obstaclePriority(obstacle: Obstacle): number {
 	}
 }
 
-function chooseObstacle(input: DescriptionTileInput): Obstacle | null {
+function obstacleSelectionWeightByRank(rank: number): number {
+	if (rank <= 0) {
+		return 3;
+	}
+	if (rank === 1) {
+		return 2;
+	}
+	return 1;
+}
+
+function chooseObstacle(input: DescriptionTileInput, seedKey: string): Obstacle | null {
 	if (input.obstacles.length === 0) {
 		return null;
 	}
-	return (
-		[...input.obstacles].sort(
-			(a, b) => obstaclePriority(a) - obstaclePriority(b),
-		)[0] ?? null
+
+	const ranked = [...new Set(input.obstacles)].sort(
+		(a, b) => obstaclePriority(a) - obstaclePriority(b),
 	);
+	const topRanked = ranked.slice(0, 3);
+	const weightedPool: Obstacle[] = [];
+	for (const [index, obstacle] of topRanked.entries()) {
+		const weight = obstacleSelectionWeightByRank(index);
+		for (let i = 0; i < weight; i += 1) {
+			weightedPool.push(obstacle);
+		}
+	}
+	if (weightedPool.length === 0) {
+		return null;
+	}
+
+	return pickDeterministic(weightedPool, `${seedKey}:obstacle:key`);
 }
 
 function renderObstacleSentence(
@@ -1394,9 +1419,13 @@ export function generateRawDescription(
 		anchorContributorKeys.hydrology = "standing_water";
 	}
 
-	chosenObstacle = chooseObstacle(input);
+	chosenObstacle = chooseObstacle(input, seedKey);
 	obstacleSentence = renderObstacleSentence(chosenObstacle, seedKey, strict);
-	if (obstacleSentence && sanitizeSentence(anchorSentence).length < 100) {
+	if (
+		obstacleSentence &&
+		input.biome !== "lake" &&
+		sanitizeSentence(anchorSentence).length < 100
+	) {
 		anchorSentence = mergeAsClause(anchorSentence, obstacleSentence, "and");
 		obstacleMerged = true;
 		if (chosenObstacle) {
