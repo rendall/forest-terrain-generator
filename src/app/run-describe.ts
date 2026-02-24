@@ -493,25 +493,31 @@ export function attachTileDescriptions(
 						adjacency.streamflow = signals.flowDirection;
 					}
 
-					outputTile.descriptionStructured = {
-						text: description.text,
-						sentences: description.sentences.map((sentence) => {
-							const out: JsonObject = {
-								slot: sentence.slot,
-								contributors: [...sentence.contributors],
-								contributorKeys: { ...sentence.contributorKeys },
-							};
-							if (typeof sentence.text === "string") {
-								out.text = sentence.text;
-							}
-							if (typeof sentence.basicText === "string") {
-								out.basic_text = sentence.basicText;
-							}
-							if (sentence.movement) {
-								out.movement = sentence.movement.map((run) => ({
-									type: run.type,
-									directions: [...run.directions],
-								}));
+						outputTile.descriptionStructured = {
+							text: description.text,
+							sentences: description.sentences.map((sentence) => {
+								const out: JsonObject = {
+									slot: sentence.slot,
+									contributors: [...sentence.contributors],
+									contributorKeys: { ...sentence.contributorKeys },
+								};
+								if (typeof sentence.basicText === "string") {
+									out.basic_text = sentence.basicText;
+								}
+								const structuredText =
+									typeof sentence.text === "string"
+										? sentence.text
+										: typeof sentence.basicText === "string"
+											? sentence.basicText
+											: null;
+								if (structuredText !== null) {
+									out.text = structuredText;
+								}
+								if (sentence.movement) {
+									out.movement = sentence.movement.map((run) => ({
+										type: run.type,
+										directions: [...run.directions],
+									}));
 							}
 							return out;
 						}),

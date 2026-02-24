@@ -391,6 +391,17 @@ function movementTypeForPassability(passability: Passability): MovementRun["type
 	return passability === "passable" ? "passage" : "blockage";
 }
 
+/**
+ * Converts directional passability into contiguous movement arcs around the 8-way ring.
+ *
+ * Ring order is fixed: N, NE, E, SE, S, SW, W, NW.
+ * Rules:
+ * 1. `passage` means one contiguous arc of adjacent open exits (`passable`).
+ * 2. `blockage` means one contiguous arc of adjacent closed exits (`blocked` + `difficult` in the current model).
+ * 3. Adjacent directions with the same type are grouped into a single arc.
+ * 4. Wraparound is normalized by merging first+last arcs if they share a type
+ *    (for example, W/NW and N/NE become one continuous arc).
+ */
 function collectMovementRuns(passability: PassabilityByDir): MovementRun[] {
 	const runs: MovementRun[] = [];
 	let currentType: MovementRun["type"] | null = null;
@@ -494,6 +505,23 @@ function renderBlockageText(blockages: readonly MovementRun[]): string {
 	return `Passage is blocked ${clauses.slice(0, -1).join(", ")}, and ${clauses[clauses.length - 1]}.`;
 }
 
+/**
+ * Produces the baseline movement_structure sentence and structured run arcs.
+ * 
+ * Describe each passage in terms of direction, e.g. "passage to the north, northwest and west"
+ * 
+ * or
+ * 
+ * Describe each blockage in terms of direction, e.g. "passage is blocked to the north, northwest and west"
+ * 
+ *
+ * Mode selection:
+ * - If number of open exits are 0..4: describe each passage arc.
+ * - If number of open exits are 5..8: describe each blockage arc.
+ *
+ * Returned `movement` always contains the full ring run breakdown used by structured output.
+ * Returned `text` is the baseline sentence (later exposed as `basic_text` in structured output).
+ */
 function renderMovementStructureSentence(
 	input: DescriptionTileInput,
 ): { text: string; movement: MovementRun[] } {
