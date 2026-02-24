@@ -58,6 +58,7 @@ export interface NeighborSignal {
 	water: WaterClass;
 	elevDelta: number;
 	densityDelta: number;
+	followable?: readonly string[];
 }
 
 export interface DescriptionTileInput {
@@ -66,6 +67,7 @@ export interface DescriptionTileInput {
 	moisture: number;
 	standingWater: boolean;
 	passability: PassabilityByDir;
+	flowDirection?: Direction | "NONE" | null;
 	slopeDirection: Direction;
 	slopeStrength: number;
 	obstacles: Obstacle[];
@@ -268,7 +270,8 @@ function collectBlockageRuns(runs: readonly MovementRun[]): BlockageRun[] {
 }
 
 function traversalArticle(noun: TraversalNoun): "A" | "An" {
-	return noun === "opening" ? "An" : "A";
+	void noun;
+	return "A";
 }
 
 function movementBiomePhrase(biome: string): string {
@@ -313,13 +316,27 @@ function renderBlockageTransformedText(
 	noun: TraversalNoun,
 	selections: readonly BlockagePhraseSelection[],
 ): string {
-	const first = selections[0] as BlockagePhraseSelection;
+	type PhraseGroup = { phrase: string; directions: Direction[] };
+	const grouped: PhraseGroup[] = [];
+	for (const selection of selections) {
+		const existing = grouped.find((entry) => entry.phrase === selection.phrase);
+		if (existing) {
+			existing.directions.push(...selection.directions);
+			continue;
+		}
+		grouped.push({
+			phrase: selection.phrase,
+			directions: [...selection.directions],
+		});
+	}
+
+	const first = grouped[0] as PhraseGroup;
 	const firstClause = `The ${noun} to the ${formatDirectionNames(first.directions)} is blocked by ${first.phrase}`;
-	const restClauses = selections
+	const restClauses = grouped
 		.slice(1)
 		.map(
-			(selection) =>
-				`to the ${formatDirectionNames(selection.directions)} by ${selection.phrase}`,
+			(group) =>
+				`to the ${formatDirectionNames(group.directions)} by ${group.phrase}`,
 		);
 	return joinClausesWithAnd(firstClause, restClauses);
 }
@@ -348,6 +365,7 @@ function renderTransformedMovementStructure(
 	}
 
 	const selections: BlockagePhraseSelection[] = [];
+	let sharedLakePhrase: string | null = null;
 	for (const [runIndex, run] of blockages.entries()) {
 		const ctx = buildBlockageRunContext(input, run);
 		const eligiblePhrases = eligibleBlockedPhrasesForRun(ctx);
@@ -355,10 +373,18 @@ function renderTransformedMovementStructure(
 			// Whole-sentence fallback: omit transformed text and all blocked_by fields.
 			return { movement: movementRuns.map((entry) => cloneMovementRun(entry)) };
 		}
-		const phrase = pickDeterministic(
-			eligiblePhrases,
-			`${seedKey}:movement_structure:blockage:${runIndex}:phrase`,
-		);
+		const lakeRule = BLOCK_RULES[0];
+		const isLakeOverride = lakeRule ? lakeRule.when(ctx) : false;
+		const phrase =
+			isLakeOverride && sharedLakePhrase
+				? sharedLakePhrase
+				: pickDeterministic(
+					eligiblePhrases,
+					`${seedKey}:movement_structure:blockage:${runIndex}:phrase`,
+				);
+		if (isLakeOverride && sharedLakePhrase === null) {
+			sharedLakePhrase = phrase;
+		}
 		selections.push({ directions: [...run.directions], phrase });
 	}
 
@@ -391,6 +417,7 @@ export interface DescriptionSentence {
 	| "hydrology"
 	| "obstacle"
 	| "slope"
+	| "followable"
 	| "movement_structure"
 	| "visibility"
 	| "directional";
@@ -693,6 +720,16 @@ const DIR_LOWER: Record<Direction, string> = {
 	NW: "northwest",
 };
 
+function directionRingDistance(a: Direction, b: Direction): number {
+	const ai = RING.indexOf(a);
+	const bi = RING.indexOf(b);
+	if (ai < 0 || bi < 0) {
+		return 0;
+	}
+	const delta = Math.abs(ai - bi);
+	return Math.min(delta, RING.length - delta);
+}
+
 function movementTypeForPassability(passability: Passability): MovementRun["type"] {
 	return passability === "passable" ? "passage" : "blockage";
 }
@@ -770,6 +807,141 @@ function formatDirectionNames(directions: readonly Direction[]): string {
 		return `${names[0]} and ${names[1]}`;
 	}
 	return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+}
+
+function collectFollowableDirections(
+	input: DescriptionTileInput,
+	token: string,
+): Direction[] {
+	return RING.filter((direction) => {
+		if (input.passability[direction] !== "passable") {
+			return false;
+		}
+		const neighborFollowable = input.neighbors[direction].followable ?? [];
+		return neighborFollowable.includes(token);
+	});
+}
+
+function renderGameTrailSentence(directions: readonly Direction[]): string | null {
+	if (directions.length === 0) {
+		return null;
+	}
+	return `A trail leads ${formatDirectionNames(directions)} from here.`;
+}
+
+function renderRidgeSentence(directions: readonly Direction[]): string | null {
+	if (directions.length === 0) {
+		return null;
+	}
+	return `A ridge continues to the ${formatDirectionNames(directions)}.`;
+}
+
+function renderShoreSentence(directions: readonly Direction[]): string | null {
+	if (directions.length === 0) {
+		return null;
+	}
+	return `Lakeshore lies to the ${formatDirectionNames(directions)}.`;
+}
+
+function farthestDirectionFrom(
+	directions: readonly Direction[],
+	target: Direction,
+): Direction | null {
+	let best: Direction | null = null;
+	let bestDistance = -1;
+	for (const direction of directions) {
+		const distance = directionRingDistance(direction, target);
+		if (distance > bestDistance) {
+			best = direction;
+			bestDistance = distance;
+		}
+	}
+	return best;
+}
+
+function renderStreamSentence(
+	directions: readonly Direction[],
+	flowDirection: Direction | "NONE" | null | undefined,
+): string | null {
+	if (directions.length === 0) {
+		return null;
+	}
+	if (directions.length === 1) {
+		return `A stream flows ${formatDirectionNames(directions)}.`;
+	}
+
+	if (flowDirection && flowDirection !== "NONE") {
+		if (directions.includes(flowDirection)) {
+			const fromDirection =
+				directions.length === 2
+					? (directions.find((direction) => direction !== flowDirection) ?? null)
+					: farthestDirectionFrom(
+						directions.filter((direction) => direction !== flowDirection),
+						flowDirection,
+					);
+			if (fromDirection) {
+				return `A stream flows from ${DIR_LOWER[fromDirection]} to the ${DIR_LOWER[flowDirection]}.`;
+			}
+		}
+
+		if (directions.length === 2) {
+			return `A stream runs between the ${formatDirectionNames(directions)} and flows ${DIR_LOWER[flowDirection]}.`;
+		}
+		return `A stream runs to the ${formatDirectionNames(directions)}, flowing ${DIR_LOWER[flowDirection]}.`;
+	}
+
+	if (directions.length === 2) {
+		return `A stream runs between the ${formatDirectionNames(directions)}.`;
+	}
+
+	return `A stream runs to the ${formatDirectionNames(directions)}.`;
+}
+
+function renderFollowableSentence(input: DescriptionTileInput): string | null {
+	const tokenSet = new Set(input.followable);
+	const parts: string[] = [];
+
+	if (tokenSet.has("game_trail")) {
+		const gameTrailText = renderGameTrailSentence(
+			collectFollowableDirections(input, "game_trail"),
+		);
+		if (gameTrailText) {
+			parts.push(gameTrailText);
+		}
+	}
+
+	if (tokenSet.has("ridge")) {
+		const ridgeText = renderRidgeSentence(
+			collectFollowableDirections(input, "ridge"),
+		);
+		if (ridgeText) {
+			parts.push(ridgeText);
+		}
+	}
+
+	if (tokenSet.has("stream")) {
+		const streamText = renderStreamSentence(
+			collectFollowableDirections(input, "stream"),
+			input.flowDirection,
+		);
+		if (streamText) {
+			parts.push(streamText);
+		}
+	}
+
+	if (tokenSet.has("shore")) {
+		const shoreText = renderShoreSentence(
+			collectFollowableDirections(input, "shore"),
+		);
+		if (shoreText) {
+			parts.push(shoreText);
+		}
+	}
+
+	if (parts.length === 0) {
+		return null;
+	}
+	return parts.join(" ");
 }
 
 function renderPassageText(passages: readonly PassageRun[]): string {
@@ -1234,6 +1406,16 @@ export function generateRawDescription(
 		contributorKeys: anchorContributorKeys,
 	});
 
+	const followableSentence = renderFollowableSentence(input);
+	if (followableSentence) {
+		sentences.push({
+			slot: "followable",
+			text: followableSentence,
+			contributors: ["followable"],
+			contributorKeys: { followable: "present" },
+		});
+	}
+
 	const movementStructureSentence = renderMovementStructureSentence(input);
 	const transformedMovement = renderTransformedMovementStructure(
 		input,
@@ -1348,9 +1530,19 @@ export function generateRawDescription(
 		.filter(
 			(sentence) =>
 				sentence.slot !== "movement_structure" &&
+				sentence.slot !== "followable" &&
 				typeof sentence.text === "string",
 		)
 		.map((sentence) => sentence.text as string);
+	const followableForProse = capped.find(
+		(sentence) =>
+			sentence.slot === "followable" &&
+			typeof sentence.text === "string" &&
+			sanitizeSentence(sentence.text).length > 0,
+	);
+	if (typeof followableForProse?.text === "string") {
+		proseParts.push(followableForProse.text);
+	}
 	const movementSentence = capped.find(
 		(sentence) =>
 			sentence.slot === "movement_structure" &&

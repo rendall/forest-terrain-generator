@@ -234,6 +234,75 @@ describe("Phase 1 description pipeline", () => {
 		expect(directionalSentences.length).toBe(0);
 	});
 
+	it("emits followable sentence and places it immediately before movement prose", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				biome: "mixed_forest",
+				followable: ["stream", "shore"],
+				flowDirection: "N",
+				passability: passabilityFromOpen(["N", "NE", "SE", "S", "SW"]),
+				neighbors: {
+					N: { ...case04.neighbors.N, followable: ["stream", "shore"] },
+					NE: { ...case04.neighbors.NE, followable: ["shore"] },
+					E: { ...case04.neighbors.E, followable: [] },
+					SE: { ...case04.neighbors.SE, followable: ["shore"] },
+					S: { ...case04.neighbors.S, followable: ["shore"] },
+					SW: { ...case04.neighbors.SW, followable: ["stream"] },
+					W: { ...case04.neighbors.W, followable: [] },
+					NW: { ...case04.neighbors.NW, followable: [] },
+				},
+			},
+			"seed-followable-1",
+		);
+
+		const followable = result.sentences.find(
+			(sentence) => sentence.slot === "followable",
+		);
+		const movement = result.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+
+		expect(followable?.text).toBe(
+			"A stream flows from southwest to the north. Lakeshore lies to the north, northeast, southeast, and south.",
+		);
+		expect(movement?.text).toBeDefined();
+		expect(result.text).toContain(`${followable?.text} ${movement?.text}`);
+		const followableIndex = result.sentences.findIndex(
+			(sentence) => sentence.slot === "followable",
+		);
+		const movementIndex = result.sentences.findIndex(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		expect(followableIndex).toBeGreaterThanOrEqual(0);
+		expect(movementIndex).toBeGreaterThan(followableIndex);
+	});
+
+	it("omits followable sentence when all followable directions are blocked", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				followable: ["shore"],
+				passability: passabilityFromOpen(["E", "SE"]),
+				neighbors: {
+					N: { ...case04.neighbors.N, followable: ["shore"] },
+					NE: { ...case04.neighbors.NE, followable: ["shore"] },
+					E: { ...case04.neighbors.E, followable: [] },
+					SE: { ...case04.neighbors.SE, followable: [] },
+					S: { ...case04.neighbors.S, followable: ["shore"] },
+					SW: { ...case04.neighbors.SW, followable: [] },
+					W: { ...case04.neighbors.W, followable: [] },
+					NW: { ...case04.neighbors.NW, followable: [] },
+				},
+			},
+			"seed-followable-2",
+		);
+
+		expect(
+			result.sentences.some((sentence) => sentence.slot === "followable"),
+		).toBe(false);
+	});
+
 	it("emits movement_structure when any direction is blocked or difficult", () => {
 		const result = generateRawDescription(case04, "seed-move-1");
 		const movementSentences = result.sentences.filter(
@@ -431,6 +500,42 @@ describe("Phase 1 description pipeline", () => {
 		const blockageRun = movement?.movement?.find((run) => run.type === "blockage");
 		expect(blockageRun).toBeDefined();
 		expect(LAKE_WATER_PHRASES).toContain(blockageRun?.blocked_by);
+	});
+
+	it("reuses one lake phrase across multiple lake blockage runs in a tile", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				biome: "mixed_forest",
+				passability: {
+					N: "passable",
+					NE: "passable",
+					E: "passable",
+					SE: "blocked",
+					S: "passable",
+					SW: "passable",
+					W: "blocked",
+					NW: "passable",
+				},
+				neighbors: {
+					...case04.neighbors,
+					SE: { ...case04.neighbors.SE, water: "lake" },
+					W: { ...case04.neighbors.W, water: "lake" },
+				},
+			},
+			"seed-lake-shared-phrase",
+		);
+
+		const movement = result.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		const blockageRuns = (movement?.movement ?? []).filter(
+			(run) => run.type === "blockage",
+		);
+		expect(blockageRuns).toHaveLength(2);
+		expect(blockageRuns[0]?.blocked_by).toBeDefined();
+		expect(blockageRuns[0]?.blocked_by).toBe(blockageRuns[1]?.blocked_by);
+		expect(movement?.text).toContain("southeast and west");
 	});
 
 	it("uses Appendix D seed-key formats for noun and blockage phrase picks", () => {

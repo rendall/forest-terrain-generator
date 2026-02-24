@@ -359,6 +359,7 @@ function buildNeighborSignals(
 			water: candidate.waterClass,
 			elevDelta: candidate.elevation - self.elevation,
 			densityDelta: candidate.treeDensity - self.treeDensity,
+			followable: [...candidate.followable],
 		};
 	}
 
@@ -448,6 +449,7 @@ export function attachTileDescriptions(
 						moisture: signals.moisture,
 						standingWater: signals.standingWater,
 						passability: signals.passability,
+						flowDirection: signals.flowDirection,
 						slopeDirection: signals.slopeDirection,
 						slopeStrength: signals.slopeStrength,
 						obstacles: signals.obstacles,
