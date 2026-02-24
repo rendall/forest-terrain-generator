@@ -442,18 +442,19 @@ export function attachTileDescriptions(
 
 			try {
 				const description = generateRawDescription(
-				{
-					biome: signals.biome,
-					landform: signals.landform,
-					moisture: signals.moisture,
-					standingWater: signals.standingWater,
-					passability: signals.passability,
-					slopeDirection: signals.slopeDirection,
-					slopeStrength: signals.slopeStrength,
-					obstacles: signals.obstacles,
-					visibility: signals.visibility,
-					neighbors: buildNeighborSignals(signals, byCoord),
-				},
+					{
+						biome: signals.biome,
+						landform: signals.landform,
+						moisture: signals.moisture,
+						standingWater: signals.standingWater,
+						passability: signals.passability,
+						slopeDirection: signals.slopeDirection,
+						slopeStrength: signals.slopeStrength,
+						obstacles: signals.obstacles,
+						followable: signals.followable,
+						visibility: signals.visibility,
+						neighbors: buildNeighborSignals(signals, byCoord),
+					},
 					describeSeedKey(signals),
 					{ strict },
 				);
@@ -494,7 +495,6 @@ export function attachTileDescriptions(
 					}
 
 						outputTile.descriptionStructured = {
-							text: description.text,
 							sentences: description.sentences.map((sentence) => {
 								const out: JsonObject = {
 									slot: sentence.slot,
@@ -504,12 +504,14 @@ export function attachTileDescriptions(
 								if (typeof sentence.basicText === "string") {
 									out.basic_text = sentence.basicText;
 								}
-								const structuredText =
-									typeof sentence.text === "string"
-										? sentence.text
-										: typeof sentence.basicText === "string"
-											? sentence.basicText
-											: null;
+									const structuredText =
+										typeof sentence.text === "string"
+											? sentence.text
+											: sentence.slot === "movement_structure"
+												? ""
+											: typeof sentence.basicText === "string"
+												? sentence.basicText
+												: null;
 								if (structuredText !== null) {
 									out.text = structuredText;
 								}
@@ -517,8 +519,12 @@ export function attachTileDescriptions(
 									out.movement = sentence.movement.map((run) => ({
 										type: run.type,
 										directions: [...run.directions],
+										...(run.type === "blockage" &&
+										typeof run.blocked_by === "string"
+											? { blocked_by: run.blocked_by }
+											: {}),
 									}));
-							}
+								}
 							return out;
 						}),
 						adjacency,

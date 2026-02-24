@@ -69,13 +69,319 @@ export interface DescriptionTileInput {
 	slopeDirection: Direction;
 	slopeStrength: number;
 	obstacles: Obstacle[];
+	followable: string[];
 	visibility: Visibility;
 	neighbors: Record<Direction, NeighborSignal>;
 }
 
-export interface MovementRun {
-	type: "passage" | "blockage";
+export interface PassageRun {
+	type: "passage";
 	directions: Direction[];
+}
+
+export interface BlockageRun {
+	type: "blockage";
+	directions: Direction[];
+	blocked_by?: string;
+}
+
+export type MovementRun = PassageRun | BlockageRun;
+
+interface BlockageRunContext {
+	biome: string;
+	landform: string;
+	obstacles: readonly string[];
+	slopeStrength: number;
+	followable: readonly string[];
+	runDirections: Direction[];
+	neighborWater: WaterClass[];
+	neighborElevDelta: number[];
+}
+
+interface BlockedPhraseRule {
+	id: string;
+	when: (ctx: BlockageRunContext) => boolean;
+	phrases: readonly string[];
+}
+
+interface BlockagePhraseSelection {
+	directions: Direction[];
+	phrase: string;
+}
+
+type TraversalNoun = "way";
+
+const TRAVERSAL_NOUNS: readonly TraversalNoun[] = ["way"] as const;
+
+const BLOCK_RULES: readonly BlockedPhraseRule[] = [
+	{
+		id: "lake_water",
+		when: (ctx) => ctx.neighborWater.some((water) => water === "lake"),
+		phrases: [
+			"lake water",
+			"the lake",
+			"deep water",
+			"a broad stretch of water",
+		],
+	},
+	{
+		id: "stream_crossing",
+		when: (ctx) => ctx.neighborWater.some((water) => water === "stream"),
+		phrases: [
+			"a wide stream",
+			"running water",
+			"a fast-moving channel",
+			"the stream",
+		],
+	},
+	{
+		id: "saturated_ground",
+		when: (ctx) =>
+			ctx.biome === "open_bog" ||
+			ctx.biome === "spruce_swamp" ||
+			ctx.neighborWater.some((water) => water === "marsh"),
+		phrases: [
+			"deep bog",
+			"saturated ground",
+			"soft, waterlogged soil",
+			"wet ground",
+		],
+	},
+	{
+		id: "steep_rise",
+		when: (ctx) =>
+			ctx.slopeStrength >= 0.1 &&
+			ctx.neighborElevDelta.some((delta) => delta > 0.08),
+		phrases: [
+			"a steep rise",
+			"a sharp incline",
+			"rising ground",
+			"a sudden climb",
+		],
+	},
+	{
+		id: "windthrow",
+		when: (ctx) =>
+			ctx.obstacles.includes("windthrow") ||
+			ctx.obstacles.includes("deadfall") ||
+			ctx.obstacles.includes("fallen_log"),
+		phrases: [
+			"a tangle of fallen trees",
+			"deadfall",
+			"a mass of broken timber",
+			"uprooted trunks",
+		],
+	},
+	{
+		id: "brush_blockage",
+		when: (ctx) => ctx.obstacles.includes("brush_blockage"),
+		phrases: [
+			"dense brush",
+			"thick undergrowth",
+			"a stand of young trees",
+			"close growth",
+		],
+	},
+	{
+		id: "ridge_edge",
+		when: (ctx) =>
+			ctx.landform === "ridge" &&
+			ctx.neighborElevDelta.some((delta) => delta < -0.08),
+		phrases: [
+			"a drop along the ridge edge",
+			"falling ground",
+			"the edge of the ridge",
+		],
+	},
+	{
+		id: "dense_stand",
+		when: (ctx) =>
+			ctx.biome === "spruce_swamp" || ctx.biome === "mixed_forest",
+		phrases: ["a dense stand of trees", "close-set trunks", "thick forest"],
+	},
+];
+
+function isPassageRun(run: MovementRun): run is PassageRun {
+	return run.type === "passage";
+}
+
+function isBlockageRun(run: MovementRun): run is BlockageRun {
+	return run.type === "blockage";
+}
+
+function cloneMovementRun(run: MovementRun): MovementRun {
+	if (run.type === "passage") {
+		return { type: "passage", directions: [...run.directions] };
+	}
+	return {
+		type: "blockage",
+		directions: [...run.directions],
+		...(typeof run.blocked_by === "string" ? { blocked_by: run.blocked_by } : {}),
+	};
+}
+
+function createMovementRun(
+	type: MovementRun["type"],
+	directions: Direction[],
+): MovementRun {
+	if (type === "passage") {
+		return { type: "passage", directions };
+	}
+	return { type: "blockage", directions };
+}
+
+function buildBlockageRunContext(
+	input: DescriptionTileInput,
+	run: BlockageRun,
+): BlockageRunContext {
+	return {
+		biome: input.biome,
+		landform: input.landform,
+		obstacles: input.obstacles,
+		slopeStrength: input.slopeStrength,
+		followable: input.followable,
+		runDirections: [...run.directions],
+		neighborWater: run.directions.map((direction) => input.neighbors[direction].water),
+		neighborElevDelta: run.directions.map(
+			(direction) => input.neighbors[direction].elevDelta,
+		),
+	};
+}
+
+function eligibleBlockedPhrasesForRun(ctx: BlockageRunContext): readonly string[] {
+	const lakeRule = BLOCK_RULES[0];
+	if (lakeRule && lakeRule.when(ctx)) {
+		return [...lakeRule.phrases];
+	}
+
+	const eligible: string[] = [];
+	for (const rule of BLOCK_RULES.slice(1)) {
+		if (rule.when(ctx)) {
+			eligible.push(...rule.phrases);
+		}
+	}
+	return eligible;
+}
+
+function collectBlockageRuns(runs: readonly MovementRun[]): BlockageRun[] {
+	return runs.filter(isBlockageRun);
+}
+
+function traversalArticle(noun: TraversalNoun): "A" | "An" {
+	return noun === "opening" ? "An" : "A";
+}
+
+function movementBiomePhrase(biome: string): string {
+	if (biome === "open_bog") {
+		return "across the bog";
+	}
+	if (biome === "spruce_swamp") {
+		return "through the swamp";
+	}
+	return "through the trees";
+}
+
+function joinClausesWithAnd(first: string, rest: readonly string[]): string {
+	if (rest.length === 0) {
+		return `${first}.`;
+	}
+	if (rest.length === 1) {
+		return `${first}, and ${rest[0]}.`;
+	}
+	return `${first}, ${rest.slice(0, -1).join(", ")}, and ${rest[rest.length - 1]}.`;
+}
+
+function renderPassageTransformedText(
+	input: DescriptionTileInput,
+	noun: TraversalNoun,
+	passages: readonly PassageRun[],
+): string {
+	const terrainPhrase = movementBiomePhrase(input.biome);
+	if (passages.length === 0) {
+		return `No ${noun} ${terrainPhrase} leads out from here.`;
+	}
+
+	const firstRun = passages[0] as PassageRun;
+	const firstClause = `${traversalArticle(noun)} ${noun} ${terrainPhrase} leads to the ${formatDirectionNames(firstRun.directions)}`;
+	const restClauses = passages
+		.slice(1)
+		.map((run) => `to the ${formatDirectionNames(run.directions)}`);
+	return joinClausesWithAnd(firstClause, restClauses);
+}
+
+function renderBlockageTransformedText(
+	noun: TraversalNoun,
+	selections: readonly BlockagePhraseSelection[],
+): string {
+	const first = selections[0] as BlockagePhraseSelection;
+	const firstClause = `The ${noun} to the ${formatDirectionNames(first.directions)} is blocked by ${first.phrase}`;
+	const restClauses = selections
+		.slice(1)
+		.map(
+			(selection) =>
+				`to the ${formatDirectionNames(selection.directions)} by ${selection.phrase}`,
+		);
+	return joinClausesWithAnd(firstClause, restClauses);
+}
+
+function renderTransformedMovementStructure(
+	input: DescriptionTileInput,
+	seedKey: string,
+	movementRuns: readonly MovementRun[],
+): { text?: string; movement: MovementRun[] } {
+	const noun = pickDeterministic(
+		TRAVERSAL_NOUNS,
+		`${seedKey}:movement_structure:noun`,
+	);
+	const passableExitCount = countPassableExits(input.passability);
+	const passages = movementRuns.filter(isPassageRun);
+	const blockages = collectBlockageRuns(movementRuns);
+
+	if (passableExitCount <= 4) {
+		return {
+			text: renderPassageTransformedText(input, noun, passages),
+			movement: movementRuns.map((run) => cloneMovementRun(run)),
+		};
+	}
+	if (blockages.length === 0) {
+		return { movement: movementRuns.map((run) => cloneMovementRun(run)) };
+	}
+
+	const selections: BlockagePhraseSelection[] = [];
+	for (const [runIndex, run] of blockages.entries()) {
+		const ctx = buildBlockageRunContext(input, run);
+		const eligiblePhrases = eligibleBlockedPhrasesForRun(ctx);
+		if (eligiblePhrases.length === 0) {
+			// Whole-sentence fallback: omit transformed text and all blocked_by fields.
+			return { movement: movementRuns.map((entry) => cloneMovementRun(entry)) };
+		}
+		const phrase = pickDeterministic(
+			eligiblePhrases,
+			`${seedKey}:movement_structure:blockage:${runIndex}:phrase`,
+		);
+		selections.push({ directions: [...run.directions], phrase });
+	}
+
+	const transformedRuns: MovementRun[] = [];
+	let blockageIndex = 0;
+	for (const run of movementRuns) {
+		if (run.type === "passage") {
+			transformedRuns.push(cloneMovementRun(run));
+			continue;
+		}
+		const selection = selections[blockageIndex];
+		blockageIndex += 1;
+		transformedRuns.push({
+			type: "blockage",
+			directions: [...run.directions],
+			blocked_by: selection?.phrase,
+		});
+	}
+
+	return {
+		text: renderBlockageTransformedText(noun, selections),
+		movement: transformedRuns,
+	};
 }
 
 export interface DescriptionSentence {
@@ -418,23 +724,23 @@ function collectMovementRuns(passability: PassabilityByDir): MovementRun[] {
 			currentDirections.push(direction);
 			continue;
 		}
-		runs.push({ type: currentType, directions: currentDirections });
+		runs.push(createMovementRun(currentType, currentDirections));
 		currentType = type;
 		currentDirections = [direction];
 	}
 
 	if (currentType !== null) {
-		runs.push({ type: currentType, directions: currentDirections });
+		runs.push(createMovementRun(currentType, currentDirections));
 	}
 
 	if (runs.length > 1) {
 		const first = runs[0] as MovementRun;
 		const last = runs[runs.length - 1] as MovementRun;
 		if (first.type === last.type) {
-			const merged: MovementRun = {
-				type: last.type,
-				directions: [...last.directions, ...first.directions],
-			};
+			const merged = createMovementRun(last.type, [
+				...last.directions,
+				...first.directions,
+			]);
 			return [merged, ...runs.slice(1, -1)];
 		}
 	}
@@ -466,7 +772,7 @@ function formatDirectionNames(directions: readonly Direction[]): string {
 	return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
 }
 
-function renderPassageText(passages: readonly MovementRun[]): string {
+function renderPassageText(passages: readonly PassageRun[]): string {
 	if (passages.length === 0) {
 		return "No passage leads out from here.";
 	}
@@ -491,7 +797,7 @@ function renderPassageText(passages: readonly MovementRun[]): string {
 	return `There are ${clauses.slice(0, -1).join(", ")}, and ${clauses[clauses.length - 1]}.`;
 }
 
-function renderBlockageText(blockages: readonly MovementRun[]): string {
+function renderBlockageText(blockages: readonly BlockageRun[]): string {
 	if (blockages.length === 0) {
 		return "Passages open in all directions.";
 	}
@@ -527,8 +833,8 @@ function renderMovementStructureSentence(
 ): { text: string; movement: MovementRun[] } {
 	const passableExitCount = countPassableExits(input.passability);
 	const movementRuns = collectMovementRuns(input.passability);
-	const passages = movementRuns.filter((run) => run.type === "passage");
-	const blockages = movementRuns.filter((run) => run.type === "blockage");
+	const passages = movementRuns.filter(isPassageRun);
+	const blockages = movementRuns.filter(isBlockageRun);
 	const text =
 		passableExitCount > 4
 			? renderBlockageText(blockages)
@@ -929,12 +1235,23 @@ export function generateRawDescription(
 	});
 
 	const movementStructureSentence = renderMovementStructureSentence(input);
+	const transformedMovement = renderTransformedMovementStructure(
+		input,
+		seedKey,
+		movementStructureSentence.movement,
+	);
 	sentences.push({
 		slot: "movement_structure",
+		...(typeof transformedMovement.text === "string"
+			? { text: transformedMovement.text }
+			: {}),
 		basicText: movementStructureSentence.text,
 		contributors: ["movement_structure"],
-		contributorKeys: {},
-		movement: movementStructureSentence.movement,
+		contributorKeys: {
+			movement_structure:
+				countPassableExits(input.passability) > 4 ? "blocked_bias" : "passage_bias",
+		},
+		movement: transformedMovement.movement,
 	});
 
 	if (input.landform !== "slope") {
@@ -981,10 +1298,7 @@ export function generateRawDescription(
 					: {}),
 				...(sentence.movement
 					? {
-						movement: sentence.movement.map((run) => ({
-							type: run.type,
-							directions: [...run.directions],
-						})),
+						movement: sentence.movement.map((run) => cloneMovementRun(run)),
 					}
 					: {}),
 			});
@@ -1008,10 +1322,7 @@ export function generateRawDescription(
 				...sentence.contributorKeys,
 			};
 			if (!existing.movement && sentence.movement) {
-				existing.movement = sentence.movement.map((run) => ({
-					type: run.type,
-					directions: [...run.directions],
-				}));
+				existing.movement = sentence.movement.map((run) => cloneMovementRun(run));
 			}
 			continue;
 		}
@@ -1026,24 +1337,30 @@ export function generateRawDescription(
 			contributorKeys: sentence.contributorKeys,
 			...(sentence.movement
 				? {
-					movement: sentence.movement.map((run) => ({
-						type: run.type,
-						directions: [...run.directions],
-					})),
+					movement: sentence.movement.map((run) => cloneMovementRun(run)),
 				}
 				: {}),
 		});
 	}
 
 	const capped = deduped.slice(0, 4);
-	const proseText = capped
+	const proseParts = capped
 		.filter(
 			(sentence) =>
 				sentence.slot !== "movement_structure" &&
 				typeof sentence.text === "string",
 		)
-		.map((sentence) => sentence.text as string)
-		.join(" ");
+		.map((sentence) => sentence.text as string);
+	const movementSentence = capped.find(
+		(sentence) =>
+			sentence.slot === "movement_structure" &&
+			typeof sentence.text === "string" &&
+			sanitizeSentence(sentence.text).length > 0,
+	);
+	if (typeof movementSentence?.text === "string") {
+		proseParts.push(movementSentence.text);
+	}
+	const proseText = proseParts.join(" ");
 
 	return {
 		sentences: capped,

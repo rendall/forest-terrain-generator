@@ -33,6 +33,7 @@ const case01 = {
 	landform: "basin",
 	moisture: 0.92,
 	standingWater: true,
+	followable: [],
 	passability: {
 		N: "blocked",
 		NE: "blocked",
@@ -104,6 +105,7 @@ const case04 = {
 	landform: "ridge",
 	moisture: 0.22,
 	standingWater: false,
+	followable: [],
 	passability: {
 		N: "passable",
 		NE: "passable",
@@ -167,6 +169,22 @@ const caseSlope = {
 };
 
 const DIRS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+const TRAVERSAL_NOUNS = ["way"];
+const LAKE_WATER_PHRASES = [
+	"lake water",
+	"the lake",
+	"deep water",
+	"a broad stretch of water",
+];
+
+function hash32(text) {
+	let hash = 2166136261;
+	for (let i = 0; i < text.length; i += 1) {
+		hash ^= text.charCodeAt(i);
+		hash = Math.imul(hash, 16777619);
+	}
+	return hash >>> 0;
+}
 
 function passabilityFromOpen(openDirs, difficultDirs = []) {
 	const open = new Set(openDirs);
@@ -267,7 +285,7 @@ describe("Phase 1 description pipeline", () => {
 		]);
 	});
 
-	it("returns null movement sentence when all directions are passable", () => {
+	it("falls back to basicText when all directions are passable", () => {
 		const fullyOpen = {
 			...case04,
 			passability: {
@@ -282,12 +300,21 @@ describe("Phase 1 description pipeline", () => {
 			},
 		};
 		const result = generateRawDescription(fullyOpen, "seed-move-open");
-		expect(
-			result.sentences.some((sentence) => sentence.slot === "movement_structure"),
-		).toBe(false);
+		const movement = result.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		expect(movement).toBeDefined();
+		expect(movement?.text).toBeUndefined();
+		expect(movement?.basicText).toBe("Passages open in all directions.");
+		expect(movement?.movement).toEqual([
+			{
+				type: "passage",
+				directions: ["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
+			},
+		]);
 	});
 
-	it("includes constrained difficult-footing clause for difficult-only exits", () => {
+	it("falls back to zero-exit wording for difficult-only exits", () => {
 		const difficultOnly = {
 			...case04,
 			passability: {
@@ -306,48 +333,194 @@ describe("Phase 1 description pipeline", () => {
 			(sentence) => sentence.slot === "movement_structure",
 		);
 		expect(movement).toBeDefined();
-		expect(movement?.text.toLowerCase()).toContain("harder going");
+		expect(movement?.text.toLowerCase()).toContain("leads out from here");
 		expect(movement?.text.toLowerCase()).not.toContain("lake");
 		expect(movement?.text.toLowerCase()).not.toContain("stream");
 		expect(movement?.text.toLowerCase()).not.toContain("bog");
 	});
 
-	it("classifies representative topology variants from open directions", () => {
-		const cases = [
-			{ open: ["SE"], expected: "cul_de_sac" },
-			{ open: ["N", "S"], expected: "corridor" },
-			{ open: ["N", "NE"], expected: "corner" },
-			{ open: ["N", "SE"], expected: "skew_bend" },
-			{ open: ["N", "S", "E"], expected: "t_junction" },
-			{ open: ["NW", "N", "NE"], expected: "fan_3" },
-			{ open: ["N", "E", "S", "W"], expected: "cardinal_crossroads" },
-			{ open: ["NE", "SE", "SW", "NW"], expected: "diagonal_crossroads" },
+	it("uses passage/blockage bias contributor key from open-exit count", () => {
+		const passageBias = generateRawDescription(
 			{
-				open: ["E", "SE", "S", "SW", "W", "NW"],
-				expected: "open_with_notch",
+				...case04,
+				passability: passabilityFromOpen(["N", "NE", "E"]),
 			},
+			"seed-topology-passage",
+		);
+		const blockageBias = generateRawDescription(
 			{
-				open: ["N", "NE", "E", "SE", "S", "SW", "W"],
-				expected: "nearly_open",
+				...case04,
+				passability: passabilityFromOpen(["N", "NE", "E", "SE", "S"]),
 			},
-		];
+			"seed-topology-blockage",
+		);
 
-		for (const topologyCase of cases) {
-			const result = generateRawDescription(
-				{
-					...case04,
-					passability: passabilityFromOpen(topologyCase.open),
+		const passageMovement = passageBias.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		const blockageMovement = blockageBias.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		expect(passageMovement?.contributorKeys.movement_structure).toBe(
+			"passage_bias",
+		);
+		expect(blockageMovement?.contributorKeys.movement_structure).toBe(
+			"blocked_bias",
+		);
+	});
+
+	it("attaches blocked_by for blockage runs when eligible phrases exist", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				biome: "mixed_forest",
+				passability: passabilityFromOpen(["N", "NE", "E", "SE", "S"]),
+				neighbors: {
+					...case04.neighbors,
+					W: {
+						...case04.neighbors.W,
+						water: "lake",
+					},
 				},
-				`seed-topology-${topologyCase.expected}`,
-			);
-			const movement = result.sentences.find(
-				(sentence) => sentence.slot === "movement_structure",
-			);
-			expect(movement).toBeDefined();
-			expect(movement?.contributorKeys.movement_structure).toBe(
-				topologyCase.expected,
-			);
-		}
+			},
+			"seed-blocked-by-1",
+		);
+
+		const movement = result.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		expect(movement).toBeDefined();
+		const blockageRuns = movement?.movement?.filter(
+			(run) => run.type === "blockage",
+		);
+		expect(blockageRuns?.length).toBeGreaterThan(0);
+		expect(blockageRuns?.[0]?.blocked_by).toBeDefined();
+		expect((movement?.text ?? "").toLowerCase()).toContain(
+			(blockageRuns?.[0]?.blocked_by ?? "").toLowerCase(),
+		);
+	});
+
+	it("uses lake_water override for whole blockage run when any blocked direction touches lake", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				biome: "mixed_forest",
+				obstacles: ["brush_blockage"],
+				passability: {
+					N: "blocked",
+					NE: "blocked",
+					E: "blocked",
+					SE: "passable",
+					S: "passable",
+					SW: "passable",
+					W: "passable",
+					NW: "passable",
+				},
+				neighbors: {
+					...case04.neighbors,
+					N: { ...case04.neighbors.N, water: "lake" },
+					NE: { ...case04.neighbors.NE, water: "none" },
+					E: { ...case04.neighbors.E, water: "none" },
+				},
+			},
+			"seed-lake-override",
+		);
+		const movement = result.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		const blockageRun = movement?.movement?.find((run) => run.type === "blockage");
+		expect(blockageRun).toBeDefined();
+		expect(LAKE_WATER_PHRASES).toContain(blockageRun?.blocked_by);
+	});
+
+	it("uses Appendix D seed-key formats for noun and blockage phrase picks", () => {
+		const seed = "seed-key-contract";
+		const result = generateRawDescription(
+			{
+				...case04,
+				biome: "mixed_forest",
+				passability: {
+					N: "blocked",
+					NE: "blocked",
+					E: "blocked",
+					SE: "passable",
+					S: "passable",
+					SW: "passable",
+					W: "passable",
+					NW: "passable",
+				},
+				neighbors: {
+					...case04.neighbors,
+					N: { ...case04.neighbors.N, water: "lake" },
+					NE: { ...case04.neighbors.NE, water: "none" },
+					E: { ...case04.neighbors.E, water: "none" },
+				},
+			},
+			seed,
+		);
+
+		const movement = result.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		const blockageRun = movement?.movement?.find((run) => run.type === "blockage");
+		expect(blockageRun?.blocked_by).toBeDefined();
+
+		const expectedNoun =
+			TRAVERSAL_NOUNS[
+				hash32(`${seed}:movement_structure:noun`) % TRAVERSAL_NOUNS.length
+			];
+		const expectedPhrase =
+			LAKE_WATER_PHRASES[
+				hash32(`${seed}:movement_structure:blockage:0:phrase`) %
+					LAKE_WATER_PHRASES.length
+			];
+
+		expect(blockageRun?.blocked_by).toBe(expectedPhrase);
+		expect(movement?.text?.toLowerCase()).toContain(`the ${expectedNoun} `);
+	});
+
+	it("falls back whole movement sentence to basicText when any blockage run has no pool", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				biome: "pine_heath",
+				landform: "flat",
+				obstacles: [],
+				slopeStrength: 0.02,
+				passability: {
+					N: "blocked",
+					NE: "blocked",
+					E: "passable",
+					SE: "passable",
+					S: "blocked",
+					SW: "passable",
+					W: "passable",
+					NW: "passable",
+				},
+				neighbors: {
+					N: { ...case04.neighbors.N, water: "none", elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, water: "none", elevDelta: 0 },
+					E: { ...case04.neighbors.E, water: "none", elevDelta: 0 },
+					SE: { ...case04.neighbors.SE, water: "none", elevDelta: 0 },
+					S: { ...case04.neighbors.S, water: "none", elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, water: "none", elevDelta: 0 },
+					W: { ...case04.neighbors.W, water: "none", elevDelta: 0 },
+					NW: { ...case04.neighbors.NW, water: "none", elevDelta: 0 },
+				},
+			},
+			"seed-fallback-all-or-nothing",
+		);
+
+		const movement = result.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		expect(movement).toBeDefined();
+		expect(movement?.text).toBeUndefined();
+		expect(typeof movement?.basicText).toBe("string");
+		const anyBlockedBy = movement?.movement?.some(
+			(run) => run.type === "blockage" && typeof run.blocked_by === "string",
+		);
+		expect(anyBlockedBy).toBe(false);
 	});
 
 	it("avoids banned terms in generated text", () => {

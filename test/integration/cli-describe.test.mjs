@@ -119,10 +119,10 @@ describe("describe CLI", () => {
 		expect(describeResult.code).toBe(0);
 
 		const parsed = JSON.parse(await readFile(describedFile, "utf8"));
-		const first = parsed.tiles[0];
-		expect(typeof first.description).toBe("string");
-		expect(first.descriptionStructured).toBeDefined();
-		expect(first.descriptionStructured.text).toBe(first.description);
+			const first = parsed.tiles[0];
+			expect(typeof first.description).toBe("string");
+			expect(first.descriptionStructured).toBeDefined();
+			expect(first.descriptionStructured.text).toBeUndefined();
 		expect(Array.isArray(first.descriptionStructured.sentences)).toBe(true);
 		expect(
 			Array.isArray(first.descriptionStructured.sentences[0].contributors),
@@ -134,17 +134,17 @@ describe("describe CLI", () => {
 		const seeded = parsed.tiles.find((tile) => tile.x === 0 && tile.y === 0);
 		expect(seeded).toBeDefined();
 		expect(Array.isArray(seeded.descriptionStructured.adjacency.ridge)).toBe(true);
-		const movementSentence = first.descriptionStructured.sentences.find(
-			(sentence) => sentence.slot === "movement_structure",
-		);
-		if (movementSentence) {
-			expect(typeof movementSentence.basic_text).toBe("string");
-			expect(movementSentence.text).toBe(movementSentence.basic_text);
-			expect(Array.isArray(movementSentence.movement)).toBe(true);
-			expect(["passage", "blockage"]).toContain(
-				movementSentence.movement[0].type,
+			const movementSentence = first.descriptionStructured.sentences.find(
+				(sentence) => sentence.slot === "movement_structure",
 			);
-			expect(Array.isArray(movementSentence.movement[0].directions)).toBe(true);
+			if (movementSentence) {
+				expect(typeof movementSentence.basic_text).toBe("string");
+				expect(typeof movementSentence.text).toBe("string");
+				expect(Array.isArray(movementSentence.movement)).toBe(true);
+				expect(["passage", "blockage"]).toContain(
+					movementSentence.movement[0].type,
+				);
+				expect(Array.isArray(movementSentence.movement[0].directions)).toBe(true);
 		}
 	});
 
