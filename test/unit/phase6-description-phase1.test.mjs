@@ -264,7 +264,7 @@ describe("Phase 1 description pipeline", () => {
 		);
 
 		expect(followable?.text).toBe(
-			"A stream flows from southwest to the north. Lakeshore lies to the north, northeast, southeast, and south.",
+			"A stream flows from southwest to the north. Lakeshore surrounds much of this area.",
 		);
 		expect(movement?.text).toBeDefined();
 		expect(result.text).toContain(`${followable?.text} ${movement?.text}`);
@@ -642,6 +642,35 @@ describe("Phase 1 description pipeline", () => {
 		expect(result.sentences.some((sentence) => sentence.slot === "slope")).toBe(
 			false,
 		);
+	});
+
+	it("uses fixed landform anchor text for lake biome while keeping other slots", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				biome: "lake",
+				followable: ["stream"],
+				flowDirection: "NE",
+				passability: passabilityFromOpen(["NE", "SW", "W", "NW", "N"]),
+				neighbors: {
+					N: { ...case04.neighbors.N, followable: [] },
+					NE: { ...case04.neighbors.NE, followable: ["stream"] },
+					E: { ...case04.neighbors.E, followable: [] },
+					SE: { ...case04.neighbors.SE, followable: [] },
+					S: { ...case04.neighbors.S, followable: [] },
+					SW: { ...case04.neighbors.SW, followable: ["stream"] },
+					W: { ...case04.neighbors.W, followable: [] },
+					NW: { ...case04.neighbors.NW, followable: [] },
+				},
+			},
+			"seed-lake-anchor-1",
+		);
+
+		const landform = result.sentences.find((sentence) => sentence.slot === "landform");
+		expect(landform?.text).toBe("This is lake surface.");
+		expect(
+			result.sentences.some((sentence) => sentence.slot === "movement_structure"),
+		).toBe(true);
 	});
 
 	it("throws in strict mode when biome phrases are missing", () => {

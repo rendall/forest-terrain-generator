@@ -375,7 +375,7 @@ function renderTransformedMovementStructure(
 		}
 		const lakeRule = BLOCK_RULES[0];
 		const isLakeOverride = lakeRule ? lakeRule.when(ctx) : false;
-		const phrase =
+		const phrase: string =
 			isLakeOverride && sharedLakePhrase
 				? sharedLakePhrase
 				: pickDeterministic(
@@ -839,6 +839,9 @@ function renderRidgeSentence(directions: readonly Direction[]): string | null {
 function renderShoreSentence(directions: readonly Direction[]): string | null {
 	if (directions.length === 0) {
 		return null;
+	}
+	if (directions.length >= 4) {
+		return "Lakeshore surrounds much of this area.";
 	}
 	return `Lakeshore lies to the ${formatDirectionNames(directions)}.`;
 }
@@ -1347,7 +1350,10 @@ export function generateRawDescription(
 	let slopeSentence: string | null = null;
 	let chosenObstacle: Obstacle | null = null;
 
-	let anchorSentence = mergeAsClause(landformSentence, biomeSentence, "where");
+	let anchorSentence =
+		input.biome === "lake"
+			? "This is lake surface."
+			: mergeAsClause(landformSentence, biomeSentence, "where");
 	let hydrologyMerged = false;
 	let obstacleMerged = false;
 	const anchorContributors: DescriptionSentenceContributor[] = [
