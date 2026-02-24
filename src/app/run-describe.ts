@@ -11,6 +11,8 @@ import {
 	isKnownDescriptionLandform,
 	type NeighborSignal,
 	type Obstacle,
+	type Passability,
+	type PassabilityByDir,
 	type Visibility,
 	type WaterClass,
 } from "../pipeline/description.js";
@@ -31,6 +33,7 @@ export interface DescribeRequest {
 interface DescriptionDebug {
 	code:
 		| "description_input_invalid"
+		| "malformed_passability"
 		| "description_generation_failed"
 		| "phrase_library_missing"
 		| "unknown_taxonomy";
@@ -56,7 +59,13 @@ interface TileSignals {
 	slopeDirection: Direction;
 	obstacles: Obstacle[];
 	visibility: Visibility;
+	passability: PassabilityByDir;
 }
+
+type TileSignalBuildResult =
+	| { kind: "ok"; signals: TileSignals }
+	| { kind: "description_input_invalid"; x: number | null; y: number | null }
+	| { kind: "malformed_passability"; x: number | null; y: number | null };
 
 const DIRECTION_ORDER: readonly Direction[] = [
 	"N",
@@ -105,6 +114,12 @@ const VALID_OBSTACLES = new Set<Obstacle>([
 	"fallen_log",
 	"root_tangle",
 	"brush_blockage",
+]);
+
+const VALID_PASSABILITY = new Set<Passability>([
+	"passable",
+	"difficult",
+	"blocked",
 ]);
 
 function resolveFromCwd(
@@ -196,6 +211,25 @@ function hasStandingWater(surfaceFlags: unknown): boolean {
 	return Array.isArray(surfaceFlags) && surfaceFlags.includes("standing_water");
 }
 
+function parsePassability(value: unknown): PassabilityByDir | null {
+	if (!isJsonObject(value)) {
+		return null;
+	}
+
+	const out: Partial<PassabilityByDir> = {};
+	for (const direction of DIRECTION_ORDER) {
+		const state = value[direction];
+		if (
+			typeof state !== "string" ||
+			!VALID_PASSABILITY.has(state as Passability)
+		) {
+			return null;
+		}
+		out[direction] = state as Passability;
+	}
+	return out as PassabilityByDir;
+}
+
 function tileKey(x: number, y: number): string {
 	return `${x},${y}`;
 }
@@ -241,39 +275,48 @@ function buildFailureTile(
 	return out;
 }
 
-function buildTileSignals(tile: JsonObject): TileSignals | null {
+function buildTileSignals(tile: JsonObject): TileSignalBuildResult {
 	const x = asInteger(tile.x);
 	const y = asInteger(tile.y);
 	if (x === null || y === null) {
-		return null;
+		return { kind: "description_input_invalid", x, y };
 	}
 
 	const topography = isJsonObject(tile.topography) ? tile.topography : {};
 	const hydrology = isJsonObject(tile.hydrology) ? tile.hydrology : {};
 	const ecology = isJsonObject(tile.ecology) ? tile.ecology : {};
+	const navigation = isJsonObject(tile.navigation) ? tile.navigation : {};
 	const roughness = isJsonObject(ecology.roughness) ? ecology.roughness : {};
 	const ground = isJsonObject(ecology.ground) ? ecology.ground : {};
+	const passability = parsePassability(navigation.passability);
+	if (!passability) {
+		return { kind: "malformed_passability", x, y };
+	}
 
 	const treeDensity = asFiniteNumber(ecology.treeDensity, 0.5);
 	const canopyCover = asFiniteNumber(ecology.canopyCover, treeDensity);
 	const obstruction = asFiniteNumber(roughness.obstruction, 0.35);
 
 	return {
-		x,
-		y,
-		biome: asString(ecology.biome, "mixed_forest"),
-		waterClass: normalizeWaterClass(hydrology.waterClass),
-		elevation: asFiniteNumber(topography.h, 0),
-		treeDensity,
-		moisture: clamp01(asFiniteNumber(hydrology.moisture, 0.5)),
-		standingWater: hasStandingWater(ground.surfaceFlags),
-		landform: asString(topography.landform, "flat"),
-		slopeStrength: Math.max(0, asFiniteNumber(topography.slopeMag, 0)),
-		slopeDirection: normalizeSlopeDirection(
-			asFiniteNumber(topography.aspectDeg, 0),
-		),
-		obstacles: collectObstacles(roughness.featureFlags),
-		visibility: deriveVisibility(treeDensity, canopyCover, obstruction),
+		kind: "ok",
+		signals: {
+			x,
+			y,
+			biome: asString(ecology.biome, "mixed_forest"),
+			waterClass: normalizeWaterClass(hydrology.waterClass),
+			elevation: asFiniteNumber(topography.h, 0),
+			treeDensity,
+			moisture: clamp01(asFiniteNumber(hydrology.moisture, 0.5)),
+			standingWater: hasStandingWater(ground.surfaceFlags),
+			landform: asString(topography.landform, "flat"),
+			slopeStrength: Math.max(0, asFiniteNumber(topography.slopeMag, 0)),
+			slopeDirection: normalizeSlopeDirection(
+				asFiniteNumber(topography.aspectDeg, 0),
+			),
+			obstacles: collectObstacles(roughness.featureFlags),
+			visibility: deriveVisibility(treeDensity, canopyCover, obstruction),
+			passability,
+		},
 	};
 }
 
@@ -310,29 +353,45 @@ export function attachTileDescriptions(
 	const byCoord = new Map<string, TileSignals>();
 
 	for (const tile of envelope.tiles) {
-		const signals = buildTileSignals(tile);
-		if (signals) {
-			byCoord.set(tileKey(signals.x, signals.y), signals);
+		const signalResult = buildTileSignals(tile);
+		if (signalResult.kind === "ok") {
+			byCoord.set(
+				tileKey(signalResult.signals.x, signalResult.signals.y),
+				signalResult.signals,
+			);
 		}
 	}
 
 	const tiles = envelope.tiles.map((tile) => {
-		const x = asInteger(tile.x);
-		const y = asInteger(tile.y);
-		const signals = buildTileSignals(tile);
-		if (!signals) {
+		const signalResult = buildTileSignals(tile);
+		if (signalResult.kind === "description_input_invalid") {
 			return buildFailureTile(
 				tile,
 				{
 					code: "description_input_invalid",
 					message:
 						"Tile is missing required integer x/y for description generation.",
-					x,
-					y,
+					x: signalResult.x,
+					y: signalResult.y,
 				},
 				includeStructured,
 			);
 		}
+
+		if (signalResult.kind === "malformed_passability") {
+			return buildFailureTile(
+				tile,
+				{
+					code: "malformed_passability",
+					message:
+						"Tile navigation.passability is missing or malformed for description generation.",
+					x: signalResult.x,
+					y: signalResult.y,
+				},
+				includeStructured,
+			);
+		}
+		const signals = signalResult.signals;
 
 		const unknownBiome = isKnownDescriptionBiome(signals.biome)
 			? undefined
@@ -364,6 +423,7 @@ export function attachTileDescriptions(
 					landform: signals.landform,
 					moisture: signals.moisture,
 					standingWater: signals.standingWater,
+					passability: signals.passability,
 					slopeDirection: signals.slopeDirection,
 					slopeStrength: signals.slopeStrength,
 					obstacles: signals.obstacles,
@@ -374,20 +434,31 @@ export function attachTileDescriptions(
 				{ strict },
 			);
 
-			const outputTile: JsonObject = {
-				...tile,
-				description: description.text,
-			};
+				const outputTile: JsonObject = {
+					...tile,
+					description: description.text,
+				};
 
 				if (includeStructured) {
 					outputTile.descriptionStructured = {
 						text: description.text,
-						sentences: description.sentences.map((sentence) => ({
-							slot: sentence.slot,
-							text: sentence.text,
-							contributors: [...sentence.contributors],
-							contributorKeys: { ...sentence.contributorKeys },
-						})),
+						sentences: description.sentences.map((sentence) => {
+							const out: JsonObject = {
+								slot: sentence.slot,
+								contributors: [...sentence.contributors],
+								contributorKeys: { ...sentence.contributorKeys },
+							};
+							if (typeof sentence.text === "string") {
+								out.text = sentence.text;
+							}
+							if (sentence.movement) {
+								out.movement = sentence.movement.map((run) => ({
+									type: run.type,
+									directions: [...run.directions],
+								}));
+							}
+							return out;
+						}),
 					};
 				}
 

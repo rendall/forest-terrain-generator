@@ -1,5 +1,8 @@
 export type Direction = "N" | "NE" | "E" | "SE" | "S" | "SW" | "W" | "NW";
 
+export type Passability = "passable" | "difficult" | "blocked";
+export type PassabilityByDir = Record<Direction, Passability>;
+
 export type Visibility = "short" | "medium" | "long";
 
 export type WaterClass = "none" | "marsh" | "stream" | "lake";
@@ -62,11 +65,17 @@ export interface DescriptionTileInput {
 	landform: string;
 	moisture: number;
 	standingWater: boolean;
+	passability: PassabilityByDir;
 	slopeDirection: Direction;
 	slopeStrength: number;
 	obstacles: Obstacle[];
 	visibility: Visibility;
 	neighbors: Record<Direction, NeighborSignal>;
+}
+
+export interface MovementRun {
+	type: "passage" | "blockage";
+	directions: Direction[];
 }
 
 export interface DescriptionSentence {
@@ -76,11 +85,13 @@ export interface DescriptionSentence {
 		| "hydrology"
 		| "obstacle"
 		| "slope"
+		| "movement_structure"
 		| "visibility"
 		| "directional";
-	text: string;
+	text?: string;
 	contributors: DescriptionSentenceContributor[];
 	contributorKeys: Partial<Record<DescriptionSentenceContributor, string>>;
+	movement?: MovementRun[];
 }
 
 export type DescriptionSentenceContributor = DescriptionSentence["slot"];
@@ -363,6 +374,58 @@ const DIRECTIONAL_CONNECTORS: Record<Direction, string> = {
 
 const CARDINALS: Direction[] = ["N", "E", "S", "W"];
 const DIAGONALS: Direction[] = ["NE", "SE", "SW", "NW"];
+const RING: Direction[] = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+
+function movementTypeForPassability(passability: Passability): MovementRun["type"] {
+	return passability === "passable" ? "passage" : "blockage";
+}
+
+function collectMovementRuns(passability: PassabilityByDir): MovementRun[] {
+	const runs: MovementRun[] = [];
+	let currentType: MovementRun["type"] | null = null;
+	let currentDirections: Direction[] = [];
+
+	for (const direction of RING) {
+		const type = movementTypeForPassability(passability[direction]);
+		if (currentType === null) {
+			currentType = type;
+			currentDirections = [direction];
+			continue;
+		}
+		if (type === currentType) {
+			currentDirections.push(direction);
+			continue;
+		}
+		runs.push({ type: currentType, directions: currentDirections });
+		currentType = type;
+		currentDirections = [direction];
+	}
+
+	if (currentType !== null) {
+		runs.push({ type: currentType, directions: currentDirections });
+	}
+
+	if (runs.length > 1) {
+		const first = runs[0] as MovementRun;
+		const last = runs[runs.length - 1] as MovementRun;
+		if (first.type === last.type) {
+			const merged: MovementRun = {
+				type: last.type,
+				directions: [...last.directions, ...first.directions],
+			};
+			return [merged, ...runs.slice(1, -1)];
+		}
+	}
+
+	return runs;
+}
+function renderMovementStructureSentence(
+	input: DescriptionTileInput,
+): { movement: MovementRun[] } {
+	return {
+		movement: collectMovementRuns(input.passability),
+	};
+}
 
 function hash32(text: string): number {
 	let hash = 2166136261;
@@ -753,6 +816,14 @@ export function generateRawDescription(
 		contributorKeys: anchorContributorKeys,
 	});
 
+	const movementStructureSentence = renderMovementStructureSentence(input);
+	sentences.push({
+		slot: "movement_structure",
+		contributors: ["movement_structure"],
+		contributorKeys: {},
+		movement: movementStructureSentence.movement,
+	});
+
 	if (input.landform !== "slope") {
 		slopeSentence = renderSlopeSentence(input);
 	}
@@ -787,37 +858,72 @@ export function generateRawDescription(
 	const deduped: DescriptionSentence[] = [];
 	const seen = new Map<string, number>();
 	for (const sentence of sentences) {
+		if (typeof sentence.text !== "string") {
+			deduped.push({
+				slot: sentence.slot,
+				contributors: sentence.contributors,
+				contributorKeys: sentence.contributorKeys,
+				...(sentence.movement
+					? {
+							movement: sentence.movement.map((run) => ({
+								type: run.type,
+								directions: [...run.directions],
+							})),
+						}
+					: {}),
+			});
+			continue;
+		}
+
 		const text = sanitizeSentence(sentence.text);
 		if (text.length === 0) {
 			continue;
 		}
 		const key = text.toLowerCase();
 		const existingIndex = seen.get(key);
-		if (existingIndex !== undefined) {
-			const existing = deduped[existingIndex] as DescriptionSentence;
-			existing.contributors = uniqueContributors([
-				...existing.contributors,
-				...sentence.contributors,
-			]);
-			existing.contributorKeys = {
-				...existing.contributorKeys,
-				...sentence.contributorKeys,
-			};
-			continue;
+			if (existingIndex !== undefined) {
+				const existing = deduped[existingIndex] as DescriptionSentence;
+				existing.contributors = uniqueContributors([
+					...existing.contributors,
+					...sentence.contributors,
+				]);
+				existing.contributorKeys = {
+					...existing.contributorKeys,
+					...sentence.contributorKeys,
+				};
+				if (!existing.movement && sentence.movement) {
+					existing.movement = sentence.movement.map((run) => ({
+						type: run.type,
+						directions: [...run.directions],
+					}));
+				}
+				continue;
+			}
+			seen.set(key, deduped.length);
+			deduped.push({
+				slot: sentence.slot,
+				text,
+				contributors: sentence.contributors,
+				contributorKeys: sentence.contributorKeys,
+				...(sentence.movement
+					? {
+							movement: sentence.movement.map((run) => ({
+								type: run.type,
+								directions: [...run.directions],
+							})),
+						}
+					: {}),
+			});
 		}
-		seen.set(key, deduped.length);
-		deduped.push({
-			slot: sentence.slot,
-			text,
-			contributors: sentence.contributors,
-			contributorKeys: sentence.contributorKeys,
-		});
-	}
 
 	const capped = deduped.slice(0, 4);
+	const proseText = capped
+		.filter((sentence) => typeof sentence.text === "string")
+		.map((sentence) => sentence.text as string)
+		.join(" ");
 
 	return {
 		sentences: capped,
-		text: capped.map((sentence) => sentence.text).join(" "),
+		text: proseText,
 	};
 }

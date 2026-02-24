@@ -72,10 +72,13 @@ Describe output contract:
 
 - Success per tile: `description` is a string.
 - Failure per tile: `description` is `null` and `descriptionDebug` is emitted.
-- With `--include-structured`, successful tiles also include `descriptionStructured` (`text` + sentence list). Each sentence includes `slot`, `text`, `contributors`, and `contributorKeys`; failed tiles set `descriptionStructured` to `null`.
+- With `--include-structured`, successful tiles also include `descriptionStructured` (`text` + sentence list). Each sentence includes `slot`, `text`, `contributors`, and `contributorKeys`; `movement_structure` sentences also include `movement` (array of `{ type: "passage" | "blockage", directions: Direction[] }`); failed tiles set `descriptionStructured` to `null`.
+- Stage 2A movement sentence (`slot = "movement_structure"`) is topology-only (derived from directional passability), inserted after the anchor sentence, and includes deterministic provenance in structured output.
+- Stage 2A emits only when at least one direction is `blocked` or `difficult`; when all 8 directions are `passable`, no movement sentence is emitted.
 - Current prose composition intentionally omits `directional` and `visibility` sentence slots while those components are being redesigned.
 - By default, unknown `biome`/`landform` values use generic fallback prose.
-- With `--strict`, no phrase fallback is allowed: unknown taxonomy is a per-tile failure (`descriptionDebug.code = "unknown_taxonomy"`), and any other missing selected phrase slot is also a per-tile failure (`descriptionDebug.code = "phrase_library_missing"`).
+- Tiles with missing or malformed `navigation.passability` fail per-tile with `descriptionDebug.code = "malformed_passability"`.
+- With `--strict`, no phrase fallback is allowed for selected slots (including movement topology templates): unknown taxonomy is a per-tile failure (`descriptionDebug.code = "unknown_taxonomy"`), and any other missing selected phrase slot is also a per-tile failure (`descriptionDebug.code = "phrase_library_missing"`).
 
 ## Parameters
 

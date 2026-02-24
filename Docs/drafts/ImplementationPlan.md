@@ -539,6 +539,7 @@ Locked decisions:
 16. Final diagnostics quality bar: every non-zero CLI exit includes error category, mode/stage context, and the primary failing subject in human-readable text.
 17. Exit-specific required context: `2` includes offending flag/key and expected form; `3` includes expected vs actual dimensions/shapes; `4` includes operation and path; `5` includes failing invariant/stage and relevant values.
 18. Diagnostics include corrective hints when available and omit raw stack traces in normal CLI output.
+19. Describe pipeline Stage 2A sequencing is locked: keep Stage 1 anchor sentence unchanged, insert a topology-only `movement_structure` sentence immediately after anchor when passability indicates constraints (`blocked` or `difficult` present), then keep existing Stage 1 ordering under the max-4 sentence cap.
 
 Done criteria:
 

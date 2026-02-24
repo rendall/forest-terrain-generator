@@ -125,6 +125,16 @@ describe("describe CLI", () => {
 		expect(
 			typeof first.descriptionStructured.sentences[0].contributorKeys,
 		).toBe("object");
+		const movementSentence = first.descriptionStructured.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		if (movementSentence) {
+			expect(Array.isArray(movementSentence.movement)).toBe(true);
+			expect(["passage", "blockage"]).toContain(
+				movementSentence.movement[0].type,
+			);
+			expect(Array.isArray(movementSentence.movement[0].directions)).toBe(true);
+		}
 	});
 
 	it("follows output overwrite policy and supports --force", async () => {
@@ -220,6 +230,55 @@ describe("describe CLI", () => {
 			x: 0,
 			y: 0,
 			unknownBiome: "alien_biome",
+		});
+	});
+
+	it("marks malformed passability as per-tile failure", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source.json");
+		const malformedSourceFile = join(dir, "source-malformed-passability.json");
+		const describedFile = join(dir, "described-malformed-passability.json");
+
+		const generateResult = await runCli(MAIN_CLI_ENTRY, [
+			"generate",
+			"--seed",
+			"321",
+			"--width",
+			"4",
+			"--height",
+			"4",
+			"--output-file",
+			sourceFile,
+		]);
+		expect(generateResult.code).toBe(0);
+
+		const source = JSON.parse(await readFile(sourceFile, "utf8"));
+		delete source.tiles[0].navigation.passability.NE;
+		await writeFile(
+			malformedSourceFile,
+			`${JSON.stringify(source, null, 2)}\n`,
+			"utf8",
+		);
+
+		const describeResult = await runCli(DESCRIBE_CLI_ENTRY, [
+			"--input-file",
+			malformedSourceFile,
+			"--output-file",
+			describedFile,
+			"--include-structured",
+		]);
+		expect(describeResult.code).toBe(0);
+
+		const described = JSON.parse(await readFile(describedFile, "utf8"));
+		const first = described.tiles[0];
+		expect(first.description).toBeNull();
+		expect(first.descriptionStructured).toBeNull();
+		expect(first.descriptionDebug).toEqual({
+			code: "malformed_passability",
+			message:
+				"Tile navigation.passability is missing or malformed for description generation.",
+			x: 0,
+			y: 0,
 		});
 	});
 });

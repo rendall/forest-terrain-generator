@@ -138,4 +138,25 @@ describe("describe attachment", () => {
 			unknownLandform: "mystery_landform",
 		});
 	});
+
+	it("fails tile when navigation.passability is missing or malformed", () => {
+		const malformedTile = makeValidTile(0, 0);
+		delete malformedTile.navigation.passability.SE;
+		const envelope = {
+			meta: { specVersion: "forest-terrain-v1" },
+			tiles: [malformedTile],
+		};
+
+		const out = attachTileDescriptions(envelope, true);
+		const failed = out.tiles[0];
+		expect(failed.description).toBeNull();
+		expect(failed.descriptionStructured).toBeNull();
+		expect(failed.descriptionDebug).toEqual({
+			code: "malformed_passability",
+			message:
+				"Tile navigation.passability is missing or malformed for description generation.",
+			x: 0,
+			y: 0,
+		});
+	});
 });
