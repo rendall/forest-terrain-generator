@@ -2,7 +2,7 @@
 
 You have been tasked with creating a checklist for a task. These are the instructions for doing that properly.
 
-There have been discussions about how to implement the task. This exercise is to write a step-by-step implementation checklist according to those instructions such that an engineers could implement your vision of the plan simply by following the checklist. The intent is to review and discuss specifics so there is no drift between understanding.
+There have been discussions about how to implement the task. This exercise is to write a step-by-step implementation checklist according to those instructions such that an engineer could implement your vision of the plan simply by following the checklist. The intent is to review and discuss specifics so there is no drift between understanding.
 
 Each checklist item MUST be a minimal, imperative, and checkable implementation step.
 Use one behavior change per item.
