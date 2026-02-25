@@ -1049,12 +1049,16 @@ interface NeighborLandformGroup {
 	directions: Direction[];
 	mode: "rise" | "descend" | "same";
 	band: "same" | "gentle" | "none" | "steep";
+	mergedFromCount?: number;
+	mergeBands?: Array<"same" | "gentle" | "none" | "steep">;
 }
 
 interface NeighborLandformContribution {
 	directions: Direction[];
 	mode: "rise" | "descend" | "same";
 	band: "same" | "gentle" | "none" | "steep";
+	mergedFromCount?: number;
+	mergeBands?: Array<"same" | "gentle" | "none" | "steep">;
 	minAbsDelta: number;
 	maxAbsDelta: number;
 	text: string;
@@ -1172,6 +1176,124 @@ function groupNeighborLandformSignals(
 	return groups;
 }
 
+function isMergeCompatibleNeighborBand(
+	a: "same" | "gentle" | "none" | "steep",
+	b: "same" | "gentle" | "none" | "steep",
+): boolean {
+	if (a === b) {
+		return true;
+	}
+	if (a === "same" || b === "same") {
+		return false;
+	}
+	const rank = (band: "gentle" | "none" | "steep"): number => {
+		if (band === "gentle") {
+			return 0;
+		}
+		if (band === "none") {
+			return 1;
+		}
+		return 2;
+	};
+	const aRank = rank(a);
+	const bRank = rank(b);
+	return Math.abs(aRank - bRank) <= 1;
+}
+
+function collapseMergedNeighborBand(
+	bands: readonly Array<"same" | "gentle" | "none" | "steep">,
+): "same" | "gentle" | "none" | "steep" {
+	const unique = [...new Set(bands)];
+	if (unique.length === 0) {
+		return "same";
+	}
+	if (unique.length === 1) {
+		return unique[0] as "same" | "gentle" | "none" | "steep";
+	}
+	// Mixed intensity groups are rendered in neutral intensity prose.
+	return "none";
+}
+
+function mergeNeighborLandformGroups(
+	groups: NeighborLandformGroup[],
+): NeighborLandformGroup[] {
+	if (groups.length === 0) {
+		return [];
+	}
+
+	const merged: NeighborLandformGroup[] = [];
+	for (const group of groups) {
+		const current: NeighborLandformGroup = {
+			directions: [...group.directions],
+			mode: group.mode,
+			band: group.band,
+			mergedFromCount: group.mergedFromCount ?? 1,
+			mergeBands: [...(group.mergeBands ?? [group.band])],
+		};
+		const previous = merged[merged.length - 1];
+		if (
+			previous &&
+			previous.mode === current.mode &&
+			isMergeCompatibleNeighborBand(previous.band, current.band)
+		) {
+			const nextBands = [...(previous.mergeBands ?? [previous.band]), ...(current.mergeBands ?? [current.band])];
+			previous.directions.push(...current.directions);
+			previous.mergeBands = nextBands;
+			previous.mergedFromCount =
+				(previous.mergedFromCount ?? 1) + (current.mergedFromCount ?? 1);
+			previous.band = collapseMergedNeighborBand(nextBands);
+			continue;
+		}
+		merged.push(current);
+	}
+
+	while (merged.length > 1) {
+		const first = merged[0] as NeighborLandformGroup;
+		const last = merged[merged.length - 1] as NeighborLandformGroup;
+		if (
+			first.mode !== last.mode ||
+			!isMergeCompatibleNeighborBand(first.band, last.band)
+		) {
+			break;
+		}
+
+		const nextBands = [...(last.mergeBands ?? [last.band]), ...(first.mergeBands ?? [first.band])];
+		const mergedWrap: NeighborLandformGroup = {
+			directions: [...last.directions, ...first.directions],
+			mode: first.mode,
+			band: collapseMergedNeighborBand(nextBands),
+			mergedFromCount:
+				(last.mergedFromCount ?? 1) + (first.mergedFromCount ?? 1),
+			mergeBands: nextBands,
+		};
+		merged.splice(0, 1);
+		merged.splice(merged.length - 1, 1);
+		merged.unshift(mergedWrap);
+	}
+
+	return merged;
+}
+
+function isContiguousDirectionRun(directions: readonly Direction[]): boolean {
+	if (directions.length <= 1) {
+		return true;
+	}
+	for (let i = 1; i < directions.length; i += 1) {
+		const previous = RING.indexOf(directions[i - 1] as Direction);
+		const current = RING.indexOf(directions[i] as Direction);
+		if (current !== (previous + 1) % RING.length) {
+			return false;
+		}
+	}
+	return true;
+}
+
+function formatDirectionArc(directions: readonly Direction[]): string {
+	const first = directions[0] as Direction;
+	const last = directions[directions.length - 1] as Direction;
+	return `from the ${DIR_LOWER[first]} to the ${DIR_LOWER[last]}`;
+}
+
 function qualifierForBand(
 	band: "flat" | "same" | "gentle" | "none" | "steep",
 ): string {
@@ -1203,6 +1325,15 @@ function renderNeighborLandformSentences(
 
 		const verb = group.mode === "rise" ? "rises" : "descends";
 		const qualifier = qualifierForBand(group.band);
+		if (
+			group.directions.length === 4 &&
+			isContiguousDirectionRun(group.directions)
+		) {
+			const directionArc = formatDirectionArc(group.directions);
+			return sanitizeSentence(
+				`${directionArc[0].toUpperCase()}${directionArc.slice(1)}, the land ${qualifier}${verb}.`,
+			);
+		}
 		return sanitizeSentence(
 			`To the ${directionNames}, the land ${qualifier}${verb}.`,
 		);
@@ -1228,18 +1359,24 @@ function renderDerivedLandform(
 	const riseDirection = oppositeDirection(input.slopeDirection);
 	const riseNeighborDelta = input.neighbors[riseDirection]?.elevDelta ?? 0;
 	const neighborSignals = collectNeighborLandformSignals(input);
-	const neighborGroups = groupNeighborLandformSignals(neighborSignals);
+	const neighborGroups = mergeNeighborLandformGroups(
+		groupNeighborLandformSignals(neighborSignals),
+	);
 	const neighborSentences = renderNeighborLandformSentences(neighborGroups);
 	const neighborContributions: NeighborLandformContribution[] = neighborGroups.map(
 		(group, index) => {
 			const deltas = group.directions.map((direction) =>
 				Math.abs(input.neighbors[direction].elevDelta),
 			);
+			const mergedFromCount = group.mergedFromCount ?? 1;
+			const mergeBands = [...(group.mergeBands ?? [group.band])];
 			const emission = shouldEmitNeighborLandformGroup(group);
 			return {
 				directions: [...group.directions],
 				mode: group.mode,
 				band: group.band,
+				...(mergedFromCount > 1 ? { mergedFromCount } : {}),
+				...(mergeBands.length > 1 ? { mergeBands } : {}),
 				minAbsDelta: deltas.length > 0 ? Math.min(...deltas) : 0,
 				maxAbsDelta: deltas.length > 0 ? Math.max(...deltas) : 0,
 				text: neighborSentences[index] as string,

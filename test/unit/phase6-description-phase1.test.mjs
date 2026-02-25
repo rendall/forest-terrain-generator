@@ -369,6 +369,285 @@ describe("Phase 1 description pipeline", () => {
 		).toBe(true);
 	});
 
+	it("merges adjacent descend groups when gentle and none bands are contiguous", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: -0.04 },
+					NE: { ...case04.neighbors.NE, elevDelta: -0.09 },
+					E: { ...case04.neighbors.E, elevDelta: 0 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0 },
+				},
+			},
+			"seed-landform-merge-compatible",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).toBe(
+			"To the north and northeast, the land descends.",
+		);
+		const mergedGroup = landform?.contributors?.neighbors?.find(
+			(group) =>
+				Array.isArray(group.directions) &&
+				group.directions.join(",") === "N,NE" &&
+				group.mode === "descend",
+		);
+		expect(mergedGroup).toBeDefined();
+		expect(mergedGroup?.mergedFromCount).toBe(2);
+		expect(mergedGroup?.mergeBands).toEqual(["gentle", "none"]);
+	});
+
+	it("does not merge non-contiguous descend groups separated by same-band neighbors", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: -0.09 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: -0.09 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0 },
+				},
+			},
+			"seed-landform-no-merge-noncontiguous",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).toContain("To the north, the land descends.");
+		expect(landform?.basicText).toContain("To the east, the land descends.");
+		expect(landform?.basicText).not.toContain(
+			"To the north and east, the land descends.",
+		);
+		const northGroup = landform?.contributors?.neighbors?.find(
+			(group) =>
+				Array.isArray(group.directions) &&
+				group.directions.join(",") === "N" &&
+				group.mode === "descend",
+		);
+		expect(northGroup?.mergedFromCount).toBeUndefined();
+		expect(northGroup?.mergeBands).toBeUndefined();
+	});
+
+	it("merges adjacent rise groups when none and steep bands are contiguous", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0.09 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0.12 },
+					E: { ...case04.neighbors.E, elevDelta: 0 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0 },
+				},
+			},
+			"seed-landform-merge-none-steep",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).toBe("To the north and northeast, the land rises.");
+		const mergedGroup = landform?.contributors?.neighbors?.find(
+			(group) =>
+				Array.isArray(group.directions) &&
+				group.directions.join(",") === "N,NE" &&
+				group.mode === "rise",
+		);
+		expect(mergedGroup?.mergedFromCount).toBe(2);
+		expect(mergedGroup?.mergeBands).toEqual(["none", "steep"]);
+		expect(mergedGroup?.band).toBe("none");
+	});
+
+	it("does not merge adjacent groups when bands differ by two steps (gentle vs steep)", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: -0.04 },
+					NE: { ...case04.neighbors.NE, elevDelta: -0.12 },
+					E: { ...case04.neighbors.E, elevDelta: 0 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0 },
+					NW: { ...case04.neighbors.NW, elevDelta: -0.04 },
+				},
+			},
+			"seed-landform-no-merge-gentle-steep",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).toContain(
+			"To the northwest and north, the land gently descends.",
+		);
+		expect(landform?.basicText).toContain("To the northeast, the land steeply descends.");
+		expect(landform?.basicText).not.toContain(
+			"To the northwest, north, and northeast, the land descends.",
+		);
+	});
+
+	it("uses arc wording for exactly four contiguous neighbor directions", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: -0.04 },
+					NE: { ...case04.neighbors.NE, elevDelta: -0.09 },
+					E: { ...case04.neighbors.E, elevDelta: -0.09 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0 },
+					NW: { ...case04.neighbors.NW, elevDelta: -0.04 },
+				},
+			},
+			"seed-landform-arc-four",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).toBe(
+			"From the northwest to the east, the land descends.",
+		);
+	});
+
+	it("does not use arc wording for five contiguous neighbor directions", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: -0.09 },
+					NE: { ...case04.neighbors.NE, elevDelta: -0.09 },
+					E: { ...case04.neighbors.E, elevDelta: -0.09 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: -0.04 },
+					NW: { ...case04.neighbors.NW, elevDelta: -0.04 },
+				},
+			},
+			"seed-landform-no-arc-five",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).toContain(
+			"To the west, northwest, north, northeast, and east, the land descends.",
+		);
+		expect(landform?.basicText).not.toContain("From the west to the east");
+	});
+
+	it("suppresses local sentence when merged neighbor group expresses same trend", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "slope",
+				slopeStrength: 0.07,
+				slopeDirection: "W",
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0.04 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0.09 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0 },
+				},
+			},
+			"seed-landform-merged-overlap-suppress",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.contributors?.local?.emitted).toBe(false);
+		expect(landform?.contributors?.local?.suppressedBy).toBe("neighbor_overlap");
+		expect(landform?.basicText).toBe(
+			"To the east and southeast, the land rises.",
+		);
+	});
+
+	it("preserves ring-order direction sequence for wrap-around merged groups", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: -0.09 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: -0.04 },
+					W: { ...case04.neighbors.W, elevDelta: -0.04 },
+					NW: { ...case04.neighbors.NW, elevDelta: -0.09 },
+				},
+			},
+			"seed-landform-wrap-order",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).toBe(
+			"From the southwest to the north, the land descends.",
+		);
+		const wrapGroup = landform?.contributors?.neighbors?.find(
+			(group) =>
+				Array.isArray(group.directions) &&
+				group.directions.join(",") === "SW,W,NW,N",
+		);
+		expect(wrapGroup).toBeDefined();
+		expect(wrapGroup?.mergedFromCount).toBe(2);
+		expect(wrapGroup?.mergeBands).toEqual(["gentle", "none"]);
+	});
+
+	it("is deterministic for merged-neighbor landform output", () => {
+		const mergedCase = {
+			...case04,
+			landform: "flat",
+			slopeStrength: 0.01,
+			neighbors: {
+				N: { ...case04.neighbors.N, elevDelta: -0.04 },
+				NE: { ...case04.neighbors.NE, elevDelta: -0.09 },
+				E: { ...case04.neighbors.E, elevDelta: 0 },
+				SE: { ...case04.neighbors.SE, elevDelta: 0 },
+				S: { ...case04.neighbors.S, elevDelta: 0 },
+				SW: { ...case04.neighbors.SW, elevDelta: 0 },
+				W: { ...case04.neighbors.W, elevDelta: 0 },
+				NW: { ...case04.neighbors.NW, elevDelta: 0 },
+			},
+		};
+		const a = generateRawDescription(mergedCase, "seed-landform-merge-deterministic");
+		const b = generateRawDescription(mergedCase, "seed-landform-merge-deterministic");
+		expect(a).toEqual(b);
+	});
+
 	it("emits followable sentence and places it immediately before movement prose", () => {
 		const result = generateRawDescription(
 			{
