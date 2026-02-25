@@ -208,7 +208,7 @@ describe("Phase 1 description pipeline", () => {
 	});
 
 	it("respects sentence cap and does not use merged where-clause anchor", () => {
-		const result = generateRawDescription(case01, "seed-101");
+		const result = generateRawDescription(case04, "seed-101");
 
 		expect(result.sentences.length).toBeLessThanOrEqual(4);
 		const anchor = result.sentences.find(
@@ -218,8 +218,8 @@ describe("Phase 1 description pipeline", () => {
 		expect(anchor.text).not.toContain(", where ");
 		expect(anchor.contributors).toContain("landform");
 		expect(anchor.contributors).toContain("biome");
-		expect(anchor.contributorKeys.landform).toBe(case01.landform);
-		expect(anchor.contributorKeys.biome).toBe(case01.biome);
+		expect(anchor.contributorKeys.landform).toBe(case04.landform);
+		expect(anchor.contributorKeys.biome).toBe(case04.biome);
 		expect(result.sentences.some((sentence) => sentence.slot === "biome")).toBe(
 			false,
 		);

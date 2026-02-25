@@ -2,7 +2,7 @@
 
 ## Stage 1 — Decouple Slot Generation
 
-- [ ] [description] Remove landform+biome anchor merge construction in function `generateRawDescription` in `src/pipeline/description.ts`
+- [x] [description] Remove landform+biome anchor merge construction in function `generateRawDescription` in `src/pipeline/description.ts`
 - [ ] [description] Create a standalone `landform` sentence object in function `generateRawDescription` in `src/pipeline/description.ts` with `slot`, `basicText`, `contributors`, and `contributorKeys.landform`
 - [ ] [description] Create a standalone `biome` sentence object in function `generateRawDescription` in `src/pipeline/description.ts` with `slot`, `basicText`, `contributors`, and `contributorKeys.biome`
 - [ ] [description] Stop assigning biome contributor metadata to the `landform` sentence object in function `generateRawDescription` in `src/pipeline/description.ts` (depends on previous two items)
@@ -35,4 +35,3 @@
 - [ ] [tests] Add integration assertion in `test/integration/cli-describe.test.mjs` that `landform.text === landform.basicText` and `biome.text === biome.basicText` in this phase
 - [ ] [tests] Add regression case in `test/unit/phase6-description-phase1.test.mjs` for sentence ordering (`landform` then `biome`) under capped output (depends on Stage 3 ordering item)
 - [ ] [tests] Add regression case in `test/unit/phase6-description-phase1.test.mjs` that `movement_structure` remains excluded from top-level prose text
-

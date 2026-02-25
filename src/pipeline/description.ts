@@ -1378,7 +1378,7 @@ export function generateRawDescription(
 	let anchorSentence =
 		input.biome === "lake"
 			? "This is lake surface."
-			: mergeAsClause(landformSentence, biomeSentence, "where");
+			: landformSentence;
 	let hydrologyMerged = false;
 	let obstacleMerged = false;
 	const anchorContributors: DescriptionSentenceContributor[] = [
