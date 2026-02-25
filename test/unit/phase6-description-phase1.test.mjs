@@ -829,6 +829,50 @@ describe("Phase 1 description pipeline", () => {
 		).toBe(false);
 	});
 
+	it("emits lake sentence before followable when lake adjacency exists", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				followable: ["shore"],
+				passability: passabilityFromOpen(["S", "SE", "SW"]),
+				neighbors: {
+					N: { ...case04.neighbors.N, water: "none", followable: [] },
+					NE: { ...case04.neighbors.NE, water: "none", followable: [] },
+					E: { ...case04.neighbors.E, water: "none", followable: [] },
+					SE: { ...case04.neighbors.SE, water: "none", followable: [] },
+					S: { ...case04.neighbors.S, water: "lake", followable: ["shore"] },
+					SW: { ...case04.neighbors.SW, water: "none", followable: [] },
+					W: { ...case04.neighbors.W, water: "none", followable: [] },
+					NW: { ...case04.neighbors.NW, water: "none", followable: [] },
+				},
+			},
+			"seed-lake-before-followable",
+		);
+
+		const lakeHydrology = result.sentences.find(
+			(sentence) =>
+				sentence.slot === "hydrology" &&
+				sentence.contributorKeys.hydrology === "lake_directional",
+		);
+		const followable = result.sentences.find(
+			(sentence) => sentence.slot === "followable",
+		);
+		expect(lakeHydrology).toBeDefined();
+		expect(followable).toBeDefined();
+		expect((lakeHydrology?.text ?? "").toLowerCase()).toContain("lake");
+		expect((lakeHydrology?.text ?? "").toLowerCase()).toContain("south");
+		const lakeIndex = result.sentences.findIndex(
+			(sentence) =>
+				sentence.slot === "hydrology" &&
+				sentence.contributorKeys.hydrology === "lake_directional",
+		);
+		const followableIndex = result.sentences.findIndex(
+			(sentence) => sentence.slot === "followable",
+		);
+		expect(lakeIndex).toBeGreaterThanOrEqual(0);
+		expect(followableIndex).toBeGreaterThan(lakeIndex);
+	});
+
 	it("emits movement_structure when any direction is blocked or difficult", () => {
 		const result = generateRawDescription(case04, "seed-move-1");
 		const movementSentences = result.sentences.filter(

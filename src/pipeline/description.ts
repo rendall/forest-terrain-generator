@@ -477,69 +477,92 @@ const DEFAULT_BIOME_PHRASES = [
 
 const BIOME_PHRASES: Partial<Record<KnownBiome, string[]>> = {
 	spruce_swamp: [
-		"Spruce dominate here, growing close together.",
-		"Dense spruce stand in tight ranks across the low ground.",
-		"The trees are mostly spruce, with little open space between trunks.",
-		"Dark spruce crowd the area, narrowing the lines of sight.",
-		"A thick stand of spruce fills this wet stretch of forest.",
-		"Spruce grow densely over soft ground here.",
-		"The forest is heavy with spruce on all sides.",
-		"Close-set spruce and low branches define this patch of trees.",
-		"Spruce cover is dense enough to break the view into short intervals.",
-		"The tree cover is dominated by spruce, thickest in the low spots.",
+		"Spruce crowd low, waterlogged ground broken by hummocks and dark pools.",
+		"Dense spruce rise from saturated soil, with standing water between the roots.",
+		"The ground is soft and uneven beneath tightly spaced spruce.",
+		"Spruce grow over peat-dark soil, with shallow water collecting in the hollows.",
+		"Close-set spruce stand in wet, sunken terrain threaded with still water.",
+		"The forest floor is spongy and irregular beneath the spruce canopy.",
+		"Spruce roots twist through soaked ground and patches of open water.",
+		"Low ground holds stagnant water among the trunks of dense spruce.",
+		"Spruce press together above dark, saturated earth.",
+		"The terrain dips and holds water beneath a tight stand of spruce."
 	],
 	pine_heath: [
-		"Pine dominate here, spaced widely enough for open sightlines.",
-		"Tall pines stand apart over drier ground.",
-		"The forest here is mostly pine, with light between trunks.",
-		"Pines rise above low ground cover in an open stand.",
-		"A dry pine stand stretches across this higher patch.",
-		"Pine and low undergrowth define the ground here.",
-		"The trees are mostly pine, with sparse lower growth.",
-		"Pines stand in a scattered pattern across firm footing.",
-		"The pine stand opens enough to see well between trunks.",
-		"Pine dominate this stretch, with little dense brush.",
+		"Scattered pine rise from dry, sandy ground covered in heather and lichen.",
+		"Tall pine stand over firm, acidic soil and low heath growth.",
+		"Heather and pale lichen spread beneath widely spaced pine.",
+		"The ground is dry and granular beneath an open stand of pine.",
+		"Pine grow over thin soil and low, woody heath plants.",
+		"Lichen and heather form a sparse mat under scattered pine.",
+		"Firm, sandy ground and low shrubs stretch between pine trunks.",
+		"Pine stand apart over dry heath and patches of reindeer moss.",
+		"The undergrowth stays low here, mostly heather and lichen beneath pine.",
+		"Open pine rise above pale ground cover and dry, compacted soil.",
+		"Dry, resin-scented pine stand over thin soil and scattered heather.",
+		"Sparse pine grow on slightly raised, well-drained ground.",
+		"The soil is pale and dry beneath pine and low woody shrubs.",
+		"Heath plants cling to sandy rises between open pine trunks.",
+		"Pine roots grip shallow, stony ground with little underbrush.",
+		"Dry needles gather over firm earth and low heath growth.",
+		"Scattered pine stand on gently sloping, well-drained terrain.",
+		"Low juniper and heather spread under open pine.",
+		"The ground is compact and dry, with lichen scattered between pine.",
+		"Pine stand over coarse, granular soil and sparse shrubs.",
+		"The heath is open and dry, broken only by widely spaced pine.",
+		"Thin soil and dry moss lie beneath tall pine.",
+		"Pale lichen patches contrast with darker pine trunks.",
 	],
 	mixed_forest: [
-		"Birch and spruce mix together across this patch of forest.",
-		"The stand alternates between lighter birch and darker spruce.",
-		"Mixed trees break up the canopy, with birch among spruce.",
-		"Birch appear regularly among the conifers here.",
-		"The forest is mixed, with both spruce and birch present.",
-		"Birch trunks brighten parts of the stand among darker conifers.",
-		"The tree cover shifts between birch and spruce across short distances.",
-		"Spruce and birch share the ground here in an uneven mix.",
-		"Mixed woodland fills this area, neither fully open nor fully dense.",
-		"The canopy is varied, with birch scattered through conifer growth.",
+		"Pale birch trunks rise among denser spruce, breaking up the shade.",
+		"The canopy varies here, with brighter gaps beside darker clusters of spruce.",
+		"Leaf litter and fallen needles mix across uneven forest floor.",
+		"Spruce thicken in places, then give way to lighter stands of birch.",
+		"The light changes over short distances beneath alternating birch and spruce.",
+		"Ground cover shifts between drier patches and softer, shaded hollows.",
+		"Birch brighten the understory between tighter stands of conifer.",
+		"The forest feels neither fully open nor fully closed, but varied throughout.",
+		"Low branches of spruce contrast with taller, bare birch trunks.",
+		"The terrain carries both dry leaf scatter and darker, needle-covered soil.",
+		"Spruce pockets narrow the space before birch open it again.",
+		"The canopy breaks unevenly, with mixed shade and filtered light.",
+		"Birch and spruce interlock, creating alternating bands of brightness and shadow."
 	],
 	esker_pine: [
-		"Pine dominate this higher, drier ground.",
-		"A stand of pine covers the raised ridge here.",
-		"The forest here is mostly pine over firm soil.",
-		"Tall pines follow the higher ground in a narrow band.",
-		"The trees are pine, spaced along elevated terrain.",
-		"Pine grow over sandy, well-drained soil.",
-		"The raised ground supports an open pine stand.",
-		"Pine form a dry crest above the surrounding low areas.",
+		"A narrow sandy ridge rises here, lined with scattered pine.",
+		"Pine follow the crest of a dry, gravelly spine.",
+		"The ground lifts into a firm, sandy ridge with pine along its top.",
+		"Loose sand and pine mark the raised back of the esker.",
+		"A long, dry ridge carries an open stand of pine.",
+		"Pine cling to elevated, well-drained sand above lower terrain.",
+		"The footing turns sandy and firm along this pine-covered ridge.",
+		"The ridge narrows here, with pine spaced along its crest.",
+		"Gravelly soil and open pine define this raised strip of ground.",
+		"Pine stand along a distinct, elongated rise in the landscape.",
+		"Dry sand and exposed roots mark the spine of the ridge.",
+		"The terrain slopes away on either side of this pine-lined height.",
+		"An elevated band of sandy ground supports sparse pine.",
+		"The crest remains dry and firm beneath widely spaced pine.",
+		"Pine trace the higher line of land through otherwise lower forest."
 	],
-	lake: [
-		"Open water covers this area.",
-		"A broad stretch of still water lies here.",
-		"The surface is open water with little vegetation.",
-		"This spot is part of a lake.",
-		"Water extends across this low-lying ground.",
-		"The forest gives way here to open water.",
-		"The area is occupied by still lake water.",
-	],
+	lake: ["Lake surface."], // Lake surface is not reachable here
+
 	open_bog: [
-		"Trees thin out across open, wet ground.",
-		"Low growth and scattered trees cover the boggy surface.",
-		"The forest loosens here into open, saturated ground.",
-		"Sparse trees stand over low, wet terrain.",
-		"Open bog replaces denser forest in this patch.",
-		"The ground is wet and open with only scattered trees.",
-		"Vegetation is low and broken across this bog.",
-		"Tree cover is sparse over the saturated ground.",
+		"Open peat stretches here, broken by shallow pools and low sedge.",
+		"The ground is flat and saturated, with dark water in scattered hollows.",
+		"Low bog plants spread across wet, uneven peat.",
+		"Still water collects between patches of sedge and dwarf shrubs.",
+		"The terrain opens into a broad, waterlogged expanse.",
+		"Peat-dark ground yields underfoot among sparse bog growth.",
+		"Shallow pools and matted grasses cover this open wetland.",
+		"The land lies flat and soft, with low vegetation and standing water.",
+		"Wet peat and scattered cottongrass define this open stretch.",
+		"The surface is spongy and broken by narrow channels of still water.",
+		"Low shrubs and sedge rise from saturated, dark soil.",
+		"The bog spreads wide here, with little cover and soft footing.",
+		"Water stands in shallow depressions across the peat.",
+		"The ground remains open and wet, with only low plants interrupting it.",
+		"Flat, saturated land extends outward with scattered bog growth."
 	],
 	stream_bank: [
 		"Trees line the edge of a nearby stream.",
@@ -570,11 +593,18 @@ const STREAM_PHRASES = [
 ];
 
 const LAKE_PHRASES = [
-	"open water lies nearby beyond the trees",
-	"the forest edges toward a lake a short distance away",
-	"a wider, still body of water is visible through gaps in the trunks",
-	"the tree line thins toward open water nearby",
-	"the ground slopes toward a lakeshore not far from here",
+	"A broad lake to the {dir} meets the land here along a firm, stony edge.",
+	"The ground slopes down to the ${dir} to meet the open water of a lake.",
+	"Sand and small stones mark the boundary between forest and lake to the {dir}.",
+	"Open water extends outward to the {dir} from a narrow band of shore.",
+	"Shoreline curves here, where land meets flat lake surface to the {dir}.",
+	"Reeds and stones line the edge of a lake to the {dir}.",
+	"Water lies open to the {dir} beyond a strip of damp earth and stones.",
+	"A shallow margin of shore borders a broad lake to the {dir}.",
+	"A lake begins here to the {dir}, its surface wide and uninterrupted.",
+	"To the {dir}, exposed roots and stones frame the edge of a lake.",
+	"The forest stops at a quiet band of sand beside a lake to the {dir}.",
+	"To the {dir}, the ground transitions from soil to sand at the edge of a lake.",
 ];
 
 const ROOT_TANGLE_PHRASES = [
@@ -1306,12 +1336,12 @@ function formatBroadDirectionForTriple(
 	}
 
 	const pairByIntercardinal: Record<Extract<Direction, "NE" | "SE" | "SW" | "NW">, string> =
-		{
-			NE: "broadly north and east",
-			SE: "broadly east and south",
-			SW: "broadly south and west",
-			NW: "broadly west and north",
-		};
+	{
+		NE: "broadly north and east",
+		SE: "broadly east and south",
+		SW: "broadly south and west",
+		NW: "broadly west and north",
+	};
 	return pairByIntercardinal[center as Extract<Direction, "NE" | "SE" | "SW" | "NW">];
 }
 
@@ -1541,67 +1571,38 @@ function chooseDirectional(input: DescriptionTileInput): Direction | null {
 	return best.score > 0.5 ? best.dir : null;
 }
 
-function renderDirectionalSentence(
-	input: DescriptionTileInput,
+function renderLakeSentence(
+	direction: Direction,
 	seedKey: string,
 	strict: boolean,
 ): string | null {
-	const direction = chooseDirectional(input);
-	if (!direction) {
+	const options = requirePhraseOptions(
+		LAKE_PHRASES,
+		{ slot: "hydrology", key: "lake" },
+		strict,
+	);
+	if (!options) {
 		return null;
 	}
+	const phrase = pickDeterministic(
+		options,
+		`${seedKey}:dir:lake:${direction}`,
+	);
 
-	const neighbor = input.neighbors[direction];
-	const connector = DIRECTIONAL_CONNECTORS[direction];
+	return phrase.replace(/\$?\{dir\}/g, DIR_LOWER[direction]);
+}
 
-	if (neighbor.water === "lake") {
-		const lakeOptions = requirePhraseOptions(
-			LAKE_PHRASES,
-			{ slot: "directional", key: "lake" },
-			strict,
-		);
-		if (!lakeOptions) {
-			return null;
-		}
-		const phrase = pickDeterministic(
-			lakeOptions,
-			`${seedKey}:dir:lake:${direction}`,
-		);
-		return `${connector}, ${phrase}.`;
+function chooseLakeSentenceDirection(input: DescriptionTileInput): Direction | null {
+	const lakeDirections = RING.filter(
+		(direction) => input.neighbors[direction].water === "lake",
+	);
+	if (lakeDirections.length === 0) {
+		return null;
 	}
-	if (neighbor.water === "stream") {
-		const streamOptions = requirePhraseOptions(
-			STREAM_PHRASES,
-			{ slot: "directional", key: "stream" },
-			strict,
-		);
-		if (!streamOptions) {
-			return null;
-		}
-		const phrase = pickDeterministic(
-			streamOptions,
-			`${seedKey}:dir:stream:${direction}`,
-		);
-		return `${connector}, ${phrase}.`;
-	}
-	if (neighbor.water === "marsh") {
-		return `${connector}, the ground becomes wetter.`;
-	}
-
-	if (neighbor.densityDelta >= 0.15) {
-		return `${connector}, the forest grows denser.`;
-	}
-	if (neighbor.densityDelta <= -0.15) {
-		return `${connector}, the trees thin slightly.`;
-	}
-	if (neighbor.elevDelta >= 0.08) {
-		return `${connector}, the land rises onto firmer earth.`;
-	}
-	if (neighbor.elevDelta <= -0.08) {
-		return `${connector}, the ground falls away.`;
-	}
-
-	return null;
+	const preferredCardinal = lakeDirections.find((direction) =>
+		CARDINALS.includes(direction),
+	);
+	return (preferredCardinal ?? lakeDirections[0]) ?? null;
 }
 
 function obstaclePriority(obstacle: Obstacle): number {
@@ -1747,6 +1748,7 @@ export function generateRawDescription(
 	);
 
 	let hydrologySentence: string | null = null;
+	let lakeSentence: string | null = null;
 	let obstacleSentence: string | null = null;
 	let chosenObstacle: Obstacle | null = null;
 
@@ -1768,6 +1770,10 @@ export function generateRawDescription(
 
 	chosenObstacle = chooseObstacle(input, seedKey);
 	obstacleSentence = renderObstacleSentence(chosenObstacle, seedKey, strict);
+	const lakeDirection = chooseLakeSentenceDirection(input);
+	if (lakeDirection) {
+		lakeSentence = renderLakeSentence(lakeDirection, seedKey, strict);
+	}
 
 	sentences.push({
 		slot: "biome",
@@ -1783,6 +1789,14 @@ export function generateRawDescription(
 		contributorKeys: { landform: input.landform },
 		contributors: derivedLandform.contributors,
 	});
+
+	if (lakeSentence) {
+		sentences.push({
+			slot: "hydrology",
+			text: lakeSentence,
+			contributorKeys: { hydrology: "lake_directional" },
+		});
+	}
 
 	const followableSentence = renderFollowableSentence(input);
 	if (followableSentence) {
