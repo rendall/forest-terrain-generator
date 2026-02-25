@@ -1059,6 +1059,7 @@ interface NeighborLandformGroup {
 	directions: Direction[];
 	mode: "rise" | "descend" | "same";
 	band: "same" | "gentle" | "none" | "steep";
+	sourceDirectionCount?: number;
 	mergedFromCount?: number;
 	mergeBands?: Array<"same" | "gentle" | "none" | "steep">;
 }
@@ -1378,13 +1379,38 @@ function renderNeighborLandformSentences(
 	});
 }
 
+function filterNeighborGroupsToPassableDirections(
+	groups: NeighborLandformGroup[],
+	passability: PassabilityByDir,
+): NeighborLandformGroup[] {
+	const filtered: NeighborLandformGroup[] = [];
+	for (const group of groups) {
+		const passableDirections = group.directions.filter(
+			(direction) => passability[direction] === "passable",
+		);
+		if (passableDirections.length === 0) {
+			continue;
+		}
+		filtered.push({
+			...group,
+			directions: passableDirections,
+			sourceDirectionCount: group.directions.length,
+		});
+	}
+	return filtered;
+}
+
 function shouldEmitNeighborLandformGroup(
 	group: NeighborLandformGroup,
 ): { emitted: boolean; suppressedBy?: "same_filtered" | "single_gentle_filtered" } {
 	if (group.mode === "same") {
 		return { emitted: false, suppressedBy: "same_filtered" };
 	}
-	if (group.band === "gentle" && group.directions.length === 1) {
+	if (
+		group.band === "gentle" &&
+		group.directions.length === 1 &&
+		(group.sourceDirectionCount ?? group.directions.length) === 1
+	) {
 		return { emitted: false, suppressedBy: "single_gentle_filtered" };
 	}
 	return { emitted: true };
@@ -1400,9 +1426,13 @@ function renderDerivedLandform(
 	const neighborGroups = mergeNeighborLandformGroups(
 		groupNeighborLandformSignals(neighborSignals),
 	);
-	const neighborSentences = renderNeighborLandformSentences(neighborGroups);
+	const proseNeighborGroups = filterNeighborGroupsToPassableDirections(
+		neighborGroups,
+		input.passability,
+	);
+	const neighborSentences = renderNeighborLandformSentences(proseNeighborGroups);
 	const neighborContributions: NeighborLandformContribution[] = neighborGroups.map(
-		(group, index) => {
+		(group) => {
 			const deltas = group.directions.map((direction) =>
 				Math.abs(input.neighbors[direction].elevDelta),
 			);
@@ -1417,7 +1447,7 @@ function renderDerivedLandform(
 				...(mergeBands.length > 1 ? { mergeBands } : {}),
 				minAbsDelta: deltas.length > 0 ? Math.min(...deltas) : 0,
 				maxAbsDelta: deltas.length > 0 ? Math.max(...deltas) : 0,
-				text: neighborSentences[index] as string,
+				text: renderNeighborLandformSentences([group])[0] as string,
 				...(emission.emitted ? { emitted: true } : { emitted: false }),
 				...(emission.suppressedBy
 					? { suppressedBy: emission.suppressedBy }
@@ -1425,9 +1455,35 @@ function renderDerivedLandform(
 			};
 		},
 	);
-	const emittedNeighborContributions = neighborContributions.filter(
-		(group) => group.emitted !== false,
-	);
+	const emittedNeighborContributions = proseNeighborGroups
+		.map((group, index) => {
+			const emission = shouldEmitNeighborLandformGroup(group);
+			const mergedFromCount = group.mergedFromCount ?? 1;
+			const mergeBands = [...(group.mergeBands ?? [group.band])];
+			return {
+				directions: [...group.directions],
+				mode: group.mode,
+				band: group.band,
+				...(mergedFromCount > 1 ? { mergedFromCount } : {}),
+				...(mergeBands.length > 1 ? { mergeBands } : {}),
+				minAbsDelta: Math.min(
+					...group.directions.map((direction) =>
+						Math.abs(input.neighbors[direction].elevDelta),
+					),
+				),
+				maxAbsDelta: Math.max(
+					...group.directions.map((direction) =>
+						Math.abs(input.neighbors[direction].elevDelta),
+					),
+				),
+				text: neighborSentences[index] as string,
+				...(emission.emitted ? { emitted: true } : { emitted: false }),
+				...(emission.suppressedBy
+					? { suppressedBy: emission.suppressedBy }
+					: {}),
+			};
+		})
+		.filter((group) => group.emitted !== false);
 	const localOverlapsNeighbor =
 		local.mode !== "flat" &&
 		local.direction !== null &&

@@ -268,6 +268,7 @@ describe("Phase 1 description pipeline", () => {
 				landform: "slope",
 				slopeStrength: 0.04,
 				slopeDirection: "W",
+				passability: passabilityFromOpen(DIRS),
 				neighbors: {
 					N: { ...case04.neighbors.N, elevDelta: 0 },
 					NE: { ...case04.neighbors.NE, elevDelta: 0 },
@@ -302,6 +303,7 @@ describe("Phase 1 description pipeline", () => {
 				...case04,
 				landform: "flat",
 				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
 				neighbors: {
 					N: { ...case04.neighbors.N, elevDelta: 0 },
 					NE: { ...case04.neighbors.NE, elevDelta: 0 },
@@ -411,6 +413,7 @@ describe("Phase 1 description pipeline", () => {
 				...case04,
 				landform: "flat",
 				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
 				neighbors: {
 					N: { ...case04.neighbors.N, elevDelta: -0.09 },
 					NE: { ...case04.neighbors.NE, elevDelta: 0 },
@@ -513,6 +516,7 @@ describe("Phase 1 description pipeline", () => {
 				...case04,
 				landform: "flat",
 				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
 				neighbors: {
 					N: { ...case04.neighbors.N, elevDelta: -0.04 },
 					NE: { ...case04.neighbors.NE, elevDelta: -0.09 },
@@ -540,6 +544,7 @@ describe("Phase 1 description pipeline", () => {
 				...case04,
 				landform: "flat",
 				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
 				neighbors: {
 					N: { ...case04.neighbors.N, elevDelta: -0.09 },
 					NE: { ...case04.neighbors.NE, elevDelta: -0.09 },
@@ -568,6 +573,7 @@ describe("Phase 1 description pipeline", () => {
 				...case04,
 				landform: "flat",
 				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
 				neighbors: {
 					N: { ...case04.neighbors.N, elevDelta: 0 },
 					NE: { ...case04.neighbors.NE, elevDelta: 0 },
@@ -594,6 +600,7 @@ describe("Phase 1 description pipeline", () => {
 				...case04,
 				landform: "flat",
 				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
 				neighbors: {
 					N: { ...case04.neighbors.N, elevDelta: 0.09 },
 					NE: { ...case04.neighbors.NE, elevDelta: 0.09 },
@@ -650,6 +657,7 @@ describe("Phase 1 description pipeline", () => {
 				landform: "slope",
 				slopeStrength: 0.07,
 				slopeDirection: "W",
+				passability: passabilityFromOpen(DIRS),
 				neighbors: {
 					N: { ...case04.neighbors.N, elevDelta: 0 },
 					NE: { ...case04.neighbors.NE, elevDelta: 0 },
@@ -680,6 +688,7 @@ describe("Phase 1 description pipeline", () => {
 				landform: "slope",
 				slopeStrength: 0.04,
 				slopeDirection: "W",
+				passability: passabilityFromOpen(DIRS),
 				neighbors: {
 					N: { ...case04.neighbors.N, elevDelta: 0 },
 					NE: { ...case04.neighbors.NE, elevDelta: 0 },
@@ -708,6 +717,7 @@ describe("Phase 1 description pipeline", () => {
 				...case04,
 				landform: "flat",
 				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
 				neighbors: {
 					N: { ...case04.neighbors.N, elevDelta: -0.09 },
 					NE: { ...case04.neighbors.NE, elevDelta: 0 },
@@ -756,6 +766,52 @@ describe("Phase 1 description pipeline", () => {
 		const a = generateRawDescription(mergedCase, "seed-landform-merge-deterministic");
 		const b = generateRawDescription(mergedCase, "seed-landform-merge-deterministic");
 		expect(a).toEqual(b);
+	});
+
+	it("filters landform neighbor prose to passable directions only", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				passability: {
+					N: "blocked",
+					NE: "blocked",
+					E: "passable",
+					SE: "passable",
+					S: "passable",
+					SW: "blocked",
+					W: "passable",
+					NW: "blocked",
+				},
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: -0.04 },
+					NE: { ...case04.neighbors.NE, elevDelta: -0.04 },
+					E: { ...case04.neighbors.E, elevDelta: 0 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: -0.04 },
+					W: { ...case04.neighbors.W, elevDelta: -0.04 },
+					NW: { ...case04.neighbors.NW, elevDelta: -0.04 },
+				},
+			},
+			"seed-landform-passable-filter",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).toBe("To the west, the land gently descends.");
+		expect(landform?.basicText).not.toContain("north");
+		expect(landform?.basicText).not.toContain("southwest");
+		expect(Array.isArray(landform?.contributors?.neighbors)).toBe(true);
+		expect(
+			landform?.contributors?.neighbors?.some(
+				(group) =>
+					Array.isArray(group.directions) &&
+					group.directions.includes("N") &&
+					group.text.includes("north"),
+			),
+		).toBe(true);
 	});
 
 	it("emits followable sentence and places it immediately before movement prose", () => {
@@ -1352,6 +1408,7 @@ describe("Phase 1 description pipeline", () => {
 				...case04,
 				landform: "flat",
 				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
 				neighbors: {
 					N: { ...case04.neighbors.N, elevDelta: 0 },
 					NE: { ...case04.neighbors.NE, elevDelta: 0 },
@@ -1382,6 +1439,7 @@ describe("Phase 1 description pipeline", () => {
 				...case04,
 				landform: "flat",
 				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
 				neighbors: {
 					N: { ...case04.neighbors.N, elevDelta: 0 },
 					NE: { ...case04.neighbors.NE, elevDelta: 0 },
