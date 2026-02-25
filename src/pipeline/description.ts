@@ -1178,6 +1178,49 @@ function collectNeighborLandformSignals(
 	});
 }
 
+function groupNeighborLandformSignals(
+	signals: NeighborLandformSignal[],
+): NeighborLandformGroup[] {
+	if (signals.length === 0) {
+		return [];
+	}
+
+	const groups: NeighborLandformGroup[] = [];
+	for (const signal of signals) {
+		const previous = groups[groups.length - 1];
+		if (
+			previous &&
+			previous.mode === signal.mode &&
+			previous.band === signal.band
+		) {
+			previous.directions.push(signal.direction);
+			continue;
+		}
+		groups.push({
+			directions: [signal.direction],
+			mode: signal.mode,
+			band: signal.band,
+		});
+	}
+
+	if (groups.length > 1) {
+		const first = groups[0] as NeighborLandformGroup;
+		const last = groups[groups.length - 1] as NeighborLandformGroup;
+		if (first.mode === last.mode && first.band === last.band) {
+			return [
+				{
+					directions: [...last.directions, ...first.directions],
+					mode: first.mode,
+					band: first.band,
+				},
+				...groups.slice(1, -1),
+			];
+		}
+	}
+
+	return groups;
+}
+
 function chooseSlopeBand(
 	slopeStrength: number,
 ): "gentle" | "noticeable" | "steep" | null {
