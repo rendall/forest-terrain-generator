@@ -595,7 +595,7 @@ const STREAM_PHRASES = [
 const LAKE_PHRASES = [
 	"A broad lake to the {dir} meets the land here along a firm, stony edge.",
 	"The ground slopes down to the ${dir} to meet the open water of a lake.",
-	"Sand and small stones mark the boundary between forest and lake to the {dir}.",
+	"Sand and small stones mark the shore of a lake to the {dir}.",
 	"Open water extends outward to the {dir} from a narrow band of shore.",
 	"Shoreline curves here, where land meets flat lake surface to the {dir}.",
 	"Reeds and stones line the edge of a lake to the {dir}.",
@@ -603,7 +603,7 @@ const LAKE_PHRASES = [
 	"A shallow margin of shore borders a broad lake to the {dir}.",
 	"A lake begins here to the {dir}, its surface wide and uninterrupted.",
 	"To the {dir}, exposed roots and stones frame the edge of a lake.",
-	"The forest stops at a quiet band of sand beside a lake to the {dir}.",
+	"A narrow band of sand borders a lake to the {dir}.",
 	"To the {dir}, the ground transitions from soil to sand at the edge of a lake.",
 ];
 
@@ -822,16 +822,6 @@ function renderRidgeSentence(directions: readonly Direction[]): string | null {
 	return `A ridge continues to the ${formatDirectionNames(directions)}.`;
 }
 
-function renderShoreSentence(directions: readonly Direction[]): string | null {
-	if (directions.length === 0) {
-		return null;
-	}
-	if (directions.length >= 4) {
-		return "Lakeshore surrounds much of this area.";
-	}
-	return `Lakeshore lies to the ${formatDirectionNames(directions)}.`;
-}
-
 function farthestDirectionFrom(
 	directions: readonly Direction[],
 	target: Direction,
@@ -915,15 +905,6 @@ function renderFollowableSentence(input: DescriptionTileInput): string | null {
 		);
 		if (streamText) {
 			parts.push(streamText);
-		}
-	}
-
-	if (tokenSet.has("shore")) {
-		const shoreText = renderShoreSentence(
-			collectFollowableDirections(input, "shore"),
-		);
-		if (shoreText) {
-			parts.push(shoreText);
 		}
 	}
 

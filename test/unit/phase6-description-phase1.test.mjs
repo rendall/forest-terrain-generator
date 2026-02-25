@@ -788,7 +788,7 @@ describe("Phase 1 description pipeline", () => {
 		);
 
 		expect(followable?.text).toBe(
-			"A stream flows from southwest to the north. Lakeshore surrounds much of this area.",
+			"A stream flows from southwest to the north.",
 		);
 		expect(movement?.text).toBeDefined();
 		expect(result.text).toContain(followable?.text);
@@ -833,14 +833,18 @@ describe("Phase 1 description pipeline", () => {
 		const result = generateRawDescription(
 			{
 				...case04,
-				followable: ["shore"],
+				followable: ["ridge", "shore"],
 				passability: passabilityFromOpen(["S", "SE", "SW"]),
 				neighbors: {
 					N: { ...case04.neighbors.N, water: "none", followable: [] },
 					NE: { ...case04.neighbors.NE, water: "none", followable: [] },
 					E: { ...case04.neighbors.E, water: "none", followable: [] },
 					SE: { ...case04.neighbors.SE, water: "none", followable: [] },
-					S: { ...case04.neighbors.S, water: "lake", followable: ["shore"] },
+					S: {
+						...case04.neighbors.S,
+						water: "lake",
+						followable: ["ridge", "shore"],
+					},
 					SW: { ...case04.neighbors.SW, water: "none", followable: [] },
 					W: { ...case04.neighbors.W, water: "none", followable: [] },
 					NW: { ...case04.neighbors.NW, water: "none", followable: [] },
