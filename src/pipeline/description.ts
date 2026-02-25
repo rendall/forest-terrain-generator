@@ -1221,6 +1221,35 @@ function groupNeighborLandformSignals(
 	return groups;
 }
 
+function qualifierForBand(
+	band: "flat" | "same" | "gentle" | "none" | "steep",
+): string {
+	if (band === "gentle") {
+		return "gently ";
+	}
+	if (band === "steep") {
+		return "steeply ";
+	}
+	return "";
+}
+
+function renderNeighborLandformSentences(
+	groups: NeighborLandformGroup[],
+): string[] {
+	return groups.map((group) => {
+		const directionNames = formatDirectionNames(group.directions);
+		if (group.mode === "same") {
+			return `To the ${directionNames}, the land stays level.`;
+		}
+
+		const verb = group.mode === "rise" ? "rises" : "descends";
+		const qualifier = qualifierForBand(group.band);
+		return sanitizeSentence(
+			`To the ${directionNames}, the land ${qualifier}${verb}.`,
+		);
+	});
+}
+
 function chooseSlopeBand(
 	slopeStrength: number,
 ): "gentle" | "noticeable" | "steep" | null {
