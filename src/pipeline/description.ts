@@ -1293,6 +1293,28 @@ function formatDirectionArc(directions: readonly Direction[]): string {
 	return `from the ${DIR_LOWER[first]} to the ${DIR_LOWER[last]}`;
 }
 
+function formatBroadDirectionForTriple(
+	directions: readonly Direction[],
+): string | null {
+	if (directions.length !== 3 || !isContiguousDirectionRun(directions)) {
+		return null;
+	}
+
+	const center = directions[1] as Direction;
+	if (center === "N" || center === "E" || center === "S" || center === "W") {
+		return `broadly ${DIR_LOWER[center]}`;
+	}
+
+	const pairByIntercardinal: Record<Extract<Direction, "NE" | "SE" | "SW" | "NW">, string> =
+		{
+			NE: "broadly north and east",
+			SE: "broadly east and south",
+			SW: "broadly south and west",
+			NW: "broadly west and north",
+		};
+	return pairByIntercardinal[center as Extract<Direction, "NE" | "SE" | "SW" | "NW">];
+}
+
 function qualifierForBand(
 	band: "flat" | "same" | "gentle" | "none" | "steep",
 ): string {
@@ -1324,6 +1346,12 @@ function renderNeighborLandformSentences(
 
 		const verb = group.mode === "rise" ? "rises" : "descends";
 		const qualifier = qualifierForBand(group.band);
+		const broadDirection = formatBroadDirectionForTriple(group.directions);
+		if (broadDirection) {
+			return sanitizeSentence(
+				`${broadDirection[0].toUpperCase()}${broadDirection.slice(1)}, the land ${qualifier}${verb}.`,
+			);
+		}
 		if (
 			group.directions.length === 4 &&
 			isContiguousDirectionRun(group.directions)

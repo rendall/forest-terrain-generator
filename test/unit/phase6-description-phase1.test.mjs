@@ -562,6 +562,87 @@ describe("Phase 1 description pipeline", () => {
 		expect(landform?.basicText).not.toContain("From the west to the east");
 	});
 
+	it("uses broadly wording for contiguous cardinal-centered triples", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: -0.09 },
+					W: { ...case04.neighbors.W, elevDelta: -0.09 },
+					NW: { ...case04.neighbors.NW, elevDelta: -0.09 },
+				},
+			},
+			"seed-landform-broadly-cardinal",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).toContain("Broadly west, the land descends.");
+		expect(landform?.basicText).not.toContain("To the southwest, west, and northwest");
+	});
+
+	it("uses broadly wording for contiguous intercardinal-centered triples", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0.09 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0.09 },
+					E: { ...case04.neighbors.E, elevDelta: 0.09 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0 },
+				},
+			},
+			"seed-landform-broadly-intercardinal",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).toContain(
+			"Broadly north and east, the land rises.",
+		);
+		expect(landform?.basicText).not.toContain(
+			"To the north, northeast, and east, the land rises.",
+		);
+	});
+
+	it("does not use broadly wording for non-contiguous triple groups", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0.09 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0.09 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0.09 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0 },
+				},
+			},
+			"seed-landform-no-broadly-noncontiguous",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).not.toContain("Broadly");
+	});
+
 	it("suppresses local sentence when merged neighbor group expresses same trend", () => {
 		const result = generateRawDescription(
 			{
