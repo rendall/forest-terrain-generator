@@ -1187,30 +1187,6 @@ function groupNeighborLandformSignals(
 	return groups;
 }
 
-function isMergeCompatibleNeighborBand(
-	a: "same" | "gentle" | "none" | "steep",
-	b: "same" | "gentle" | "none" | "steep",
-): boolean {
-	if (a === b) {
-		return true;
-	}
-	if (a === "same" || b === "same") {
-		return false;
-	}
-	const rank = (band: "gentle" | "none" | "steep"): number => {
-		if (band === "gentle") {
-			return 0;
-		}
-		if (band === "none") {
-			return 1;
-		}
-		return 2;
-	};
-	const aRank = rank(a);
-	const bRank = rank(b);
-	return Math.abs(aRank - bRank) <= 1;
-}
-
 function collapseMergedNeighborBand(
 	bands: readonly Array<"same" | "gentle" | "none" | "steep">,
 ): "same" | "gentle" | "none" | "steep" {
@@ -1242,11 +1218,7 @@ function mergeNeighborLandformGroups(
 			mergeBands: [...(group.mergeBands ?? [group.band])],
 		};
 		const previous = merged[merged.length - 1];
-		if (
-			previous &&
-			previous.mode === current.mode &&
-			isMergeCompatibleNeighborBand(previous.band, current.band)
-		) {
+		if (previous && previous.mode === current.mode) {
 			const nextBands = [...(previous.mergeBands ?? [previous.band]), ...(current.mergeBands ?? [current.band])];
 			previous.directions.push(...current.directions);
 			previous.mergeBands = nextBands;
@@ -1261,10 +1233,7 @@ function mergeNeighborLandformGroups(
 	while (merged.length > 1) {
 		const first = merged[0] as NeighborLandformGroup;
 		const last = merged[merged.length - 1] as NeighborLandformGroup;
-		if (
-			first.mode !== last.mode ||
-			!isMergeCompatibleNeighborBand(first.band, last.band)
-		) {
+		if (first.mode !== last.mode) {
 			break;
 		}
 

@@ -508,12 +508,13 @@ describe("Phase 1 description pipeline", () => {
 		expect(mergedGroup?.band).toBe("none");
 	});
 
-	it("does not merge adjacent groups when bands differ by two steps (gentle vs steep)", () => {
+	it("merges adjacent groups when bands differ by two steps and drops intensity", () => {
 		const result = generateRawDescription(
 			{
 				...case04,
 				landform: "flat",
 				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
 				neighbors: {
 					N: { ...case04.neighbors.N, elevDelta: -0.04 },
 					NE: { ...case04.neighbors.NE, elevDelta: -0.12 },
@@ -530,13 +531,16 @@ describe("Phase 1 description pipeline", () => {
 		const landform = result.sentences.find(
 			(sentence) => sentence.slot === "landform",
 		);
-		expect(landform?.basicText).toContain(
-			"To the northwest and north, the land gently descends.",
+		expect(landform?.basicText).toBe("Broadly north, the land descends.");
+		const mergedGroup = landform?.contributors?.neighbors?.find(
+			(group) =>
+				Array.isArray(group.directions) &&
+				group.directions.join(",") === "NW,N,NE" &&
+				group.mode === "descend",
 		);
-		expect(landform?.basicText).toContain("To the northeast, the land steeply descends.");
-		expect(landform?.basicText).not.toContain(
-			"To the northwest, north, and northeast, the land descends.",
-		);
+		expect(mergedGroup?.mergedFromCount).toBe(2);
+		expect(mergedGroup?.mergeBands).toEqual(["gentle", "steep"]);
+		expect(mergedGroup?.band).toBe("none");
 	});
 
 	it("uses arc wording for exactly four contiguous neighbor directions", () => {
