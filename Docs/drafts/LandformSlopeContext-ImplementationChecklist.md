@@ -3,7 +3,7 @@
 ## Stage 1: Data Contract
 
 - [x] [description] Add optional field `contributors?: Record<string, unknown>` to interface `DescriptionSentence` in `src/pipeline/description.ts`
-- [ ] [cli] Map `sentence.contributors` to `contributors` in structured sentence output inside `attachTileDescriptions` in `src/app/run-describe.ts` (depends on previous item)
+- [x] [cli] Map `sentence.contributors` to `contributors` in structured sentence output inside `attachTileDescriptions` in `src/app/run-describe.ts` (depends on previous item)
   - Keep `contributors` passthrough-only in this step; do not transform keys.
 
 ## Stage 2: Local Slope Derivation
