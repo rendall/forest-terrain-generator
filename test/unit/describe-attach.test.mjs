@@ -56,6 +56,22 @@ function makeValidTile(x, y) {
 }
 
 describe("describe attachment", () => {
+	function slopeDirectionForAspect(aspectDeg) {
+		const tile = makeValidTile(0, 0);
+		tile.topography.aspectDeg = aspectDeg;
+		tile.topography.landform = "ridge";
+		tile.topography.slopeMag = 0.08;
+		const envelope = {
+			meta: { specVersion: "forest-terrain-v1" },
+			tiles: [tile],
+		};
+		const out = attachTileDescriptions(envelope, true);
+		const slope = out.tiles[0].descriptionStructured.sentences.find(
+			(sentence) => sentence.slot === "slope",
+		);
+		return slope?.contributorKeys?.slope;
+	}
+
 	it("attaches text description for valid tiles", () => {
 		const envelope = {
 			meta: { specVersion: "forest-terrain-v1" },
@@ -234,5 +250,25 @@ describe("describe attachment", () => {
 		expect(movement).toBeDefined();
 		expect(typeof movement.basicText).toBe("string");
 		expect(movement.text).toBe(movement.basicText);
+	});
+
+	it("maps canonical aspectDeg sectors to spec-aligned slope directions", () => {
+		expect(slopeDirectionForAspect(0)).toBe("E");
+		expect(slopeDirectionForAspect(45)).toBe("SE");
+		expect(slopeDirectionForAspect(90)).toBe("S");
+		expect(slopeDirectionForAspect(135)).toBe("SW");
+		expect(slopeDirectionForAspect(180)).toBe("W");
+		expect(slopeDirectionForAspect(225)).toBe("NW");
+		expect(slopeDirectionForAspect(270)).toBe("N");
+		expect(slopeDirectionForAspect(315)).toBe("NE");
+	});
+
+	it("maps aspectDeg boundaries and normalized values deterministically", () => {
+		expect(slopeDirectionForAspect(22.4)).toBe("E");
+		expect(slopeDirectionForAspect(22.6)).toBe("SE");
+		expect(slopeDirectionForAspect(337.4)).toBe("NE");
+		expect(slopeDirectionForAspect(337.6)).toBe("E");
+		expect(slopeDirectionForAspect(-90)).toBe("N");
+		expect(slopeDirectionForAspect(450)).toBe("S");
 	});
 });

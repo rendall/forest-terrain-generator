@@ -93,13 +93,13 @@ const DIRECTION_DELTAS: Record<Direction, { dx: number; dy: number }> = {
 
 const ASPECT_DIRECTION_ORDER: readonly Direction[] = [
 	"E",
-	"NE",
-	"N",
-	"NW",
-	"W",
-	"SW",
-	"S",
 	"SE",
+	"S",
+	"SW",
+	"W",
+	"NW",
+	"N",
+	"NE",
 ];
 
 const VALID_WATER_CLASSES = new Set<WaterClass>([
