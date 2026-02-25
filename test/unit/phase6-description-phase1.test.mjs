@@ -678,7 +678,7 @@ describe("Phase 1 description pipeline", () => {
 
 		const landform = result.sentences.find((sentence) => sentence.slot === "landform");
 		expect(landform?.text).toBe("This is lake surface.");
-		expect(landform?.contributors).toEqual(["landform", "biome"]);
+		expect(landform?.contributors).toEqual(["landform"]);
 		expect(landform?.contributorKeys.obstacle).toBeUndefined();
 		const movement = result.sentences.find(
 			(sentence) => sentence.slot === "movement_structure",

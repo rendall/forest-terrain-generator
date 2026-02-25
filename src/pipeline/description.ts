@@ -1381,15 +1381,11 @@ export function generateRawDescription(
 			: landformSentence;
 	let hydrologyMerged = false;
 	let obstacleMerged = false;
-	const anchorContributors: DescriptionSentenceContributor[] = [
-		"landform",
-		"biome",
-	];
+	const anchorContributors: DescriptionSentenceContributor[] = ["landform"];
 	const anchorContributorKeys: Partial<
 		Record<DescriptionSentenceContributor, string>
 	> = {
 		landform: input.landform,
-		biome: input.biome,
 	};
 
 	if (shouldMentionWater(input)) {
