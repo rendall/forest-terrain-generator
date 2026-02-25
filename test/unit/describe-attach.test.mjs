@@ -219,4 +219,20 @@ describe("describe attachment", () => {
 		expect(tileC.descriptionStructured).toBeDefined();
 		expect(tileC.descriptionStructured.adjacency.streamFlow).toBeUndefined();
 	});
+
+	it("uses sentence.text ?? sentence.basicText fallback in structured mapping", () => {
+		const envelope = {
+			meta: { specVersion: "forest-terrain-v1" },
+			tiles: [makeValidTile(0, 0)],
+		};
+		const out = attachTileDescriptions(envelope, true);
+		const tile = out.tiles[0];
+		expect(tile.descriptionStructured).toBeDefined();
+		const movement = tile.descriptionStructured.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		expect(movement).toBeDefined();
+		expect(typeof movement.basicText).toBe("string");
+		expect(movement.text).toBe(movement.basicText);
+	});
 });
