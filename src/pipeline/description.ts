@@ -1164,6 +1164,20 @@ function classifyNeighborDelta(
 	return { mode: elevDelta > 0 ? "rise" : "descend", band };
 }
 
+function collectNeighborLandformSignals(
+	input: DescriptionTileInput,
+): NeighborLandformSignal[] {
+	return RING.map((direction) => {
+		const neighbor = input.neighbors[direction];
+		const classified = classifyNeighborDelta(neighbor.elevDelta);
+		return {
+			direction,
+			mode: classified.mode,
+			band: classified.band,
+		};
+	});
+}
+
 function chooseSlopeBand(
 	slopeStrength: number,
 ): "gentle" | "noticeable" | "steep" | null {
