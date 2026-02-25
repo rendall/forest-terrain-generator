@@ -217,7 +217,7 @@ describe("Phase 1 description pipeline", () => {
 		expect(anchor).toBeDefined();
 		expect(anchor.text).not.toContain(", where ");
 		expect(typeof anchor.basicText).toBe("string");
-		expect(anchor.contributors).toBeUndefined();
+		expect(typeof anchor.contributors).toBe("object");
 		expect(anchor.contributorKeys.landform).toBe(case04.landform);
 		expect(anchor.contributorKeys.biome).toBeUndefined();
 		const biome = result.sentences.find((sentence) => sentence.slot === "biome");
@@ -257,6 +257,43 @@ describe("Phase 1 description pipeline", () => {
 		expect(typeof landform?.basicText).toBe("string");
 		expect(landform?.basicText).toContain("Here the land");
 		expect(landform?.text).toBe(landform?.basicText);
+		expect(typeof landform?.contributors).toBe("object");
+		expect(landform?.contributors?.local).toBeDefined();
+		expect(Array.isArray(landform?.contributors?.neighbors)).toBe(true);
+	});
+
+	it("suppresses local landform sentence when an equivalent neighbor group covers it", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "slope",
+				slopeStrength: 0.04,
+				slopeDirection: "W",
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0.04 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0.05 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: -0.04 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0 },
+				},
+			},
+			"seed-landform-suppress-local",
+		);
+
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+
+		expect(landform).toBeDefined();
+		expect(landform?.basicText).not.toContain("Here the land");
+		expect(landform?.basicText).toContain(
+			"To the east and southeast, the land gently rises.",
+		);
+		expect(landform?.contributors?.local?.emitted).toBe(false);
+		expect(landform?.contributors?.local?.suppressedBy).toBe("neighbor_overlap");
 	});
 
 	it("emits followable sentence and places it immediately before movement prose", () => {
@@ -701,7 +738,8 @@ describe("Phase 1 description pipeline", () => {
 
 		const landform = result.sentences.find((sentence) => sentence.slot === "landform");
 		expect(landform?.text).toBe(landform?.basicText);
-		expect(landform?.contributors).toBeUndefined();
+		expect(typeof landform?.contributors).toBe("object");
+		expect(landform?.contributors?.local).toBeDefined();
 		expect(landform?.contributorKeys.obstacle).toBeUndefined();
 		const movement = result.sentences.find(
 			(sentence) => sentence.slot === "movement_structure",

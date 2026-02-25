@@ -1051,6 +1051,15 @@ interface NeighborLandformGroup {
 	band: "same" | "gentle" | "none" | "steep";
 }
 
+interface NeighborLandformContribution {
+	directions: Direction[];
+	mode: "rise" | "descend" | "same";
+	band: "same" | "gentle" | "none" | "steep";
+	minAbsDelta: number;
+	maxAbsDelta: number;
+	text: string;
+}
+
 function renderLocalLandformSentence(
 	input: DescriptionTileInput,
 ): LocalLandformSentence {
@@ -1194,20 +1203,13 @@ function renderDerivedLandform(
 	input: DescriptionTileInput,
 ): { basicText: string; contributors: Record<string, unknown> } {
 	const local = renderLocalLandformSentence(input);
+	const riseDirection = oppositeDirection(input.slopeDirection);
+	const riseNeighborDelta = input.neighbors[riseDirection]?.elevDelta ?? 0;
 	const neighborSignals = collectNeighborLandformSignals(input);
 	const neighborGroups = groupNeighborLandformSignals(neighborSignals);
 	const neighborSentences = renderNeighborLandformSentences(neighborGroups);
-	const basicText = sanitizeSentence([local.text, ...neighborSentences].join(" "));
-
-	const contributors: Record<string, unknown> = {
-		local: {
-			mode: local.mode,
-			direction: local.direction,
-			band: local.band,
-			slopeStrength: input.slopeStrength,
-			landform: input.landform,
-		},
-		neighbors: neighborGroups.map((group) => {
+	const neighborContributions: NeighborLandformContribution[] = neighborGroups.map(
+		(group, index) => {
 			const deltas = group.directions.map((direction) =>
 				Math.abs(input.neighbors[direction].elevDelta),
 			);
@@ -1217,8 +1219,44 @@ function renderDerivedLandform(
 				band: group.band,
 				minAbsDelta: deltas.length > 0 ? Math.min(...deltas) : 0,
 				maxAbsDelta: deltas.length > 0 ? Math.max(...deltas) : 0,
+				text: neighborSentences[index] as string,
 			};
-		}),
+		},
+	);
+	const localOverlapsNeighbor =
+		local.mode !== "flat" &&
+		local.direction !== null &&
+		neighborGroups.some(
+			(group) =>
+				group.mode === local.mode &&
+				group.band === local.band &&
+				group.directions.includes(local.direction as Direction),
+		);
+	const localEmitted = !localOverlapsNeighbor;
+	const sentenceParts = localEmitted
+		? [local.text, ...neighborSentences]
+		: [...neighborSentences];
+	const basicText = sanitizeSentence(sentenceParts.join(" "));
+
+	const contributors: Record<string, unknown> = {
+		local: {
+			input: {
+				slopeStrength: input.slopeStrength,
+				slopeDirection: input.slopeDirection,
+				landform: input.landform,
+				riseDirection,
+				riseNeighborDelta,
+			},
+			derived: {
+				mode: local.mode,
+				direction: local.direction,
+				band: local.band,
+				text: local.text,
+			},
+			emitted: localEmitted,
+			suppressedBy: localOverlapsNeighbor ? "neighbor_overlap" : null,
+		},
+		neighbors: neighborContributions,
 		thresholds: {
 			local: {
 				flatLandforms: ["flat", "plain"],
@@ -1490,6 +1528,15 @@ function sanitizeSentence(text: string): string {
 	return text.replace(/\s+/g, " ").trim();
 }
 
+function cloneContributors(
+	contributors: Record<string, unknown> | undefined,
+): Record<string, unknown> | undefined {
+	if (!contributors) {
+		return undefined;
+	}
+	return { ...contributors };
+}
+
 function stripTerminalPunctuation(text: string): string {
 	return sanitizeSentence(text).replace(/[.!?]+$/, "");
 }
@@ -1655,6 +1702,9 @@ export function generateRawDescription(
 			deduped.push({
 				slot: sentence.slot,
 				contributorKeys: sentence.contributorKeys,
+				...(sentence.contributors
+					? { contributors: cloneContributors(sentence.contributors) }
+					: {}),
 				...(typeof sentence.basicText === "string"
 					? { basicText: sanitizeSentence(sentence.basicText) }
 					: {}),
@@ -1679,6 +1729,14 @@ export function generateRawDescription(
 				...existing.contributorKeys,
 				...sentence.contributorKeys,
 			};
+			if (existing.contributors && sentence.contributors) {
+				existing.contributors = {
+					...existing.contributors,
+					...sentence.contributors,
+				};
+			} else if (!existing.contributors && sentence.contributors) {
+				existing.contributors = cloneContributors(sentence.contributors);
+			}
 			if (!existing.movement && sentence.movement) {
 				existing.movement = sentence.movement.map((run) => cloneMovementRun(run));
 			}
@@ -1692,6 +1750,9 @@ export function generateRawDescription(
 				? { basicText: sanitizeSentence(sentence.basicText) }
 				: {}),
 			contributorKeys: sentence.contributorKeys,
+			...(sentence.contributors
+				? { contributors: cloneContributors(sentence.contributors) }
+				: {}),
 			...(sentence.movement
 				? {
 					movement: sentence.movement.map((run) => cloneMovementRun(run)),
