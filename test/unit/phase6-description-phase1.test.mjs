@@ -224,6 +224,7 @@ describe("Phase 1 description pipeline", () => {
 		const biome = result.sentences.find((sentence) => sentence.slot === "biome");
 		expect(biome).toBeDefined();
 		expect(typeof biome?.basicText).toBe("string");
+		expect(biome?.text).toBe(biome?.basicText);
 		expect(biome?.contributors).toContain("biome");
 		expect(biome?.contributorKeys.biome).toBe(case04.biome);
 	});
