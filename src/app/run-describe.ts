@@ -509,8 +509,6 @@ export function attachTileDescriptions(
 									const structuredText =
 										typeof sentence.text === "string"
 											? sentence.text
-											: sentence.slot === "movement_structure"
-												? ""
 											: typeof sentence.basicText === "string"
 												? sentence.basicText
 												: null;
