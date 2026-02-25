@@ -17,7 +17,7 @@
 
 ## Stage 3: Neighbor Context Derivation
 
-- [ ] [description] Add helper `classifyNeighborDelta(elevDelta: number): { mode: "rise" | "descend" | "same"; band: "same" | "gentle" | "none" | "steep" }` in `src/pipeline/description.ts` using thresholds: `<0.03 same`, `0.03.. <0.086 gentle`, `0.086.. <=0.1 none`, `>0.1 steep`
+- [x] [description] Add helper `classifyNeighborDelta(elevDelta: number): { mode: "rise" | "descend" | "same"; band: "same" | "gentle" | "none" | "steep" }` in `src/pipeline/description.ts` using thresholds: `<0.03 same`, `0.03.. <0.086 gentle`, `0.086.. <=0.1 none`, `>0.1 steep`
 - [ ] [description] Add helper `collectNeighborLandformSignals(input: DescriptionTileInput): Array<{ direction: Direction; mode: "rise" | "descend" | "same"; band: "same" | "gentle" | "none" | "steep" }>` in `src/pipeline/description.ts` by evaluating all eight neighbors in canonical ring order (depends on previous item)
 - [ ] [description] Add helper `groupNeighborLandformSignals(signals: ReturnType<typeof collectNeighborLandformSignals>): Array<{ directions: Direction[]; mode: "rise" | "descend" | "same"; band: "same" | "gentle" | "none" | "steep" }>` in `src/pipeline/description.ts` that groups contiguous identical `(mode, band)` runs and merges wraparound runs when the first and last groups share the same `(mode, band)` (depends on previous item)
 - [ ] [description] Add helper `renderNeighborLandformSentences(groups: ReturnType<typeof groupNeighborLandformSignals>): string[]` in `src/pipeline/description.ts` that emits one sentence per group without optimization collapse (depends on previous item)

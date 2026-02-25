@@ -1103,6 +1103,18 @@ interface LocalLandformSentence {
 	band: "flat" | "gentle" | "none" | "steep";
 }
 
+interface NeighborLandformSignal {
+	direction: Direction;
+	mode: "rise" | "descend" | "same";
+	band: "same" | "gentle" | "none" | "steep";
+}
+
+interface NeighborLandformGroup {
+	directions: Direction[];
+	mode: "rise" | "descend" | "same";
+	band: "same" | "gentle" | "none" | "steep";
+}
+
 function renderLocalLandformSentence(
 	input: DescriptionTileInput,
 ): LocalLandformSentence {
@@ -1135,6 +1147,21 @@ function renderLocalLandformSentence(
 		direction,
 		band,
 	};
+}
+
+function classifyNeighborDelta(
+	elevDelta: number,
+): {
+	mode: "rise" | "descend" | "same";
+	band: "same" | "gentle" | "none" | "steep";
+} {
+	const absDelta = Math.abs(elevDelta);
+	if (absDelta < 0.03) {
+		return { mode: "same", band: "same" };
+	}
+	const band: "gentle" | "none" | "steep" =
+		absDelta < 0.086 ? "gentle" : absDelta <= 0.1 ? "none" : "steep";
+	return { mode: elevDelta > 0 ? "rise" : "descend", band };
 }
 
 function chooseSlopeBand(
