@@ -247,6 +247,18 @@ describe("Phase 1 description pipeline", () => {
 		expect(landform?.text).toBe(landform?.basicText);
 	});
 
+	it("derives landform basicText from slope context templates", () => {
+		const result = generateRawDescription(case04, "seed-landform-derived");
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+
+		expect(landform).toBeDefined();
+		expect(typeof landform?.basicText).toBe("string");
+		expect(landform?.basicText).toContain("Here the land");
+		expect(landform?.text).toBe(landform?.basicText);
+	});
+
 	it("emits followable sentence and places it immediately before movement prose", () => {
 		const result = generateRawDescription(
 			{
