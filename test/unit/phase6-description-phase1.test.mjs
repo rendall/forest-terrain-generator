@@ -1081,7 +1081,7 @@ describe("Phase 1 description pipeline", () => {
 		}
 	});
 
-	it("suppresses slope-intensity sentence when landform is slope", () => {
+	it("does not emit legacy slope slot", () => {
 		const result = generateRawDescription(caseSlope, "seed-slope-1");
 		expect(result.sentences.some((sentence) => sentence.slot === "slope")).toBe(
 			false,

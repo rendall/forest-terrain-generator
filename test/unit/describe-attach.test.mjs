@@ -66,10 +66,10 @@ describe("describe attachment", () => {
 			tiles: [tile],
 		};
 		const out = attachTileDescriptions(envelope, true);
-		const slope = out.tiles[0].descriptionStructured.sentences.find(
-			(sentence) => sentence.slot === "slope",
+		const landform = out.tiles[0].descriptionStructured.sentences.find(
+			(sentence) => sentence.slot === "landform",
 		);
-		return slope?.contributorKeys?.slope;
+		return landform?.contributors?.local?.input?.slopeDirection;
 	}
 
 	it("attaches text description for valid tiles", () => {

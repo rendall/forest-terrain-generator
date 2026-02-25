@@ -419,7 +419,6 @@ export interface DescriptionSentence {
 	| "biome"
 	| "hydrology"
 	| "obstacle"
-	| "slope"
 	| "followable"
 	| "movement_structure"
 	| "visibility"
@@ -1396,7 +1395,10 @@ function renderDerivedLandform(
 		emittedNeighborContributions.some(
 			(group) =>
 				group.mode === local.mode &&
-				group.band === local.band &&
+				isMergeCompatibleNeighborBand(
+					group.band,
+					local.band,
+				) &&
 				group.directions.includes(local.direction as Direction),
 		);
 	const localSuppressedBy: "flat_filtered" | "neighbor_overlap" | null =
@@ -1455,36 +1457,6 @@ function renderDerivedLandform(
 	};
 
 	return { basicText, contributors };
-}
-
-function chooseSlopeBand(
-	slopeStrength: number,
-): "gentle" | "noticeable" | "steep" | null {
-	if (slopeStrength < 0.03) {
-		return null;
-	}
-	if (slopeStrength < 0.07) {
-		return "gentle";
-	}
-	if (slopeStrength < 0.12) {
-		return "noticeable";
-	}
-	return "steep";
-}
-
-function renderSlopeSentence(input: DescriptionTileInput): string | null {
-	const band = chooseSlopeBand(input.slopeStrength);
-	if (!band) {
-		return null;
-	}
-
-	if (band === "gentle") {
-		return `${DIRECTIONAL_CONNECTORS[input.slopeDirection]}, the ground slopes gently.`;
-	}
-	if (band === "noticeable") {
-		return `${DIRECTIONAL_CONNECTORS[input.slopeDirection]}, the ground slopes noticeably.`;
-	}
-	return `${DIRECTIONAL_CONNECTORS[input.slopeDirection]}, the slope is steep enough to stand out clearly.`;
 }
 
 function directionalSignalStrength(neighbor: NeighborSignal): number {
@@ -1748,7 +1720,6 @@ export function generateRawDescription(
 
 	let hydrologySentence: string | null = null;
 	let obstacleSentence: string | null = null;
-	let slopeSentence: string | null = null;
 	let chosenObstacle: Obstacle | null = null;
 
 	if (shouldMentionWater(input)) {
@@ -1820,17 +1791,6 @@ export function generateRawDescription(
 		},
 		movement: transformedMovement.movement,
 	});
-
-	if (input.landform !== "slope") {
-		slopeSentence = renderSlopeSentence(input);
-	}
-	if (slopeSentence) {
-		sentences.push({
-			slot: "slope",
-			text: slopeSentence,
-			contributorKeys: { slope: input.slopeDirection },
-		});
-	}
 
 	if (hydrologySentence) {
 		sentences.push({
