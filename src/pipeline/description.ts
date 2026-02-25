@@ -1125,9 +1125,12 @@ function renderLocalLandformSentence(
 	const verb = mode === "rise" ? "rises" : "descends";
 	const qualifier =
 		band === "gentle" ? "gently " : band === "steep" ? "steeply " : "";
+	const text = sanitizeSentence(
+		`Here the land ${qualifier}${verb} to the ${DIR_LOWER[direction]}.`,
+	);
 
 	return {
-		text: `Here the land ${qualifier}${verb} to the ${DIR_LOWER[direction]}.`,
+		text,
 		mode,
 		direction,
 		band,
