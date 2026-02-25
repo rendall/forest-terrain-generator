@@ -470,64 +470,6 @@ export function isKnownDescriptionLandform(
 	return KNOWN_LANDFORMS.has(landform as KnownLandform);
 }
 
-const DEFAULT_LANDFORM_PHRASES = [
-	"The forest floor shifts between subtle rises and hollows.",
-	"The ground changes gently across this stretch of trees.",
-	"The terrain here varies without any sharp breaks.",
-];
-
-const LANDFORM_PHRASES: Partial<Record<KnownLandform, string[]>> = {
-	ridge: [
-		"A low ridge runs through the trees here.",
-		"The ground rises onto a narrow spine of higher earth.",
-		"The footing sits slightly above the surrounding low ground.",
-		"A gentle crest lifts the forest floor along this stretch.",
-		"The land forms a shallow high line between lower areas.",
-	],
-	basin: [
-		"The land dips into a shallow basin.",
-		"The ground lies low here, holding moisture in the hollow.",
-		"This spot sits in a gentle bowl of lower ground.",
-		"The terrain settles into a low pocket among the trees.",
-		"The forest floor drops into a broad, low depression.",
-	],
-	plain: [
-		"The ground is mostly level here.",
-		"The terrain lies flat beneath the trees.",
-		"The forest floor runs even with little rise or fall.",
-		"The land is low and level across this patch.",
-		"The ground stays level between the trunks.",
-	],
-	flat: [
-		"The ground is mostly level here.",
-		"The terrain lies flat beneath the trees.",
-		"The forest floor runs even with little rise or fall.",
-		"The land is low and level across this patch.",
-		"The ground stays level between the trunks.",
-	],
-	low_rise: [
-		"The ground breaks into small rises and shallow dips.",
-		"Low hummocks and minor hollows interrupt the forest floor.",
-		"The terrain is uneven with gentle undulations.",
-		"Small rises of firmer ground alternate with lower patches.",
-		"The forest floor shifts subtly between higher and lower spots.",
-	],
-	slope: [
-		"The ground slopes gently across this stretch of forest.",
-		"The terrain leans steadily in one direction.",
-		"The forest floor tilts at a noticeable angle.",
-		"The land rises on one side and falls on the other.",
-		"A steady incline runs through the trees here.",
-	],
-	valley: [
-		"The land narrows into a shallow valley between higher ground.",
-		"The forest follows a low trough through this area.",
-		"The terrain forms a subtle valley between gentle rises.",
-		"A broad dip runs between higher patches of forest.",
-		"The ground settles into a low corridor between slopes.",
-	],
-};
-
 const DEFAULT_BIOME_PHRASES = [
 	"Conifers and birch share this patch in an uneven stand.",
 	"Tree cover varies here, with denser and lighter pockets.",
@@ -1061,18 +1003,6 @@ function requirePhraseOptions(
 		throw new DescriptionPhraseError([detail]);
 	}
 	return lenientFallback.length > 0 ? lenientFallback : null;
-}
-
-function phraseOptionsForLandform(
-	landform: string,
-	strict: boolean,
-): readonly string[] {
-	return requirePhraseOptions(
-		LANDFORM_PHRASES[landform as KnownLandform],
-		{ slot: "landform", key: landform },
-		strict,
-		DEFAULT_LANDFORM_PHRASES,
-	) as readonly string[];
 }
 
 function phraseOptionsForBiome(

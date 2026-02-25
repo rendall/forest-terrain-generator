@@ -34,7 +34,7 @@
 
 ## Stage 5: Cleanup
 
-- [ ] [description] Remove unused landform-only phrase selection code in `src/pipeline/description.ts` after landform renderer migration (`DEFAULT_LANDFORM_PHRASES`, `LANDFORM_PHRASES`, `phraseOptionsForLandform`) (depends on Stage 4 completion)
-- [ ] [description] Do not modify `renderMovementStructureSentence` in `src/pipeline/description.ts` during this checklist implementation (depends on Stage 4 completion)
-- [ ] [description] Do not modify `renderFollowableSentence` in `src/pipeline/description.ts` during this checklist implementation (depends on Stage 4 completion)
-- [ ] [cli] Do not modify `runDescribe` behavior in `src/app/run-describe.ts` beyond `contributors` passthrough added in Stage 1 (depends on Stage 4 completion)
+- [x] [description] Remove unused landform-only phrase selection code in `src/pipeline/description.ts` after landform renderer migration (`DEFAULT_LANDFORM_PHRASES`, `LANDFORM_PHRASES`, `phraseOptionsForLandform`) (depends on Stage 4 completion)
+- [x] [description] Do not modify `renderMovementStructureSentence` in `src/pipeline/description.ts` during this checklist implementation (depends on Stage 4 completion)
+- [x] [description] Do not modify `renderFollowableSentence` in `src/pipeline/description.ts` during this checklist implementation (depends on Stage 4 completion)
+- [x] [cli] Do not modify `runDescribe` behavior in `src/app/run-describe.ts` beyond `contributors` passthrough added in Stage 1 (depends on Stage 4 completion)
