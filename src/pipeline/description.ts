@@ -1436,6 +1436,7 @@ export function generateRawDescription(
 
 	sentences.push({
 		slot: "landform",
+		basicText: landformSentence,
 		text: anchorSentence,
 		contributors: uniqueContributors(anchorContributors),
 		contributorKeys: anchorContributorKeys,

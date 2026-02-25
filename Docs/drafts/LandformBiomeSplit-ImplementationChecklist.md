@@ -3,7 +3,7 @@
 ## Stage 1 — Decouple Slot Generation
 
 - [x] [description] Remove landform+biome anchor merge construction in function `generateRawDescription` in `src/pipeline/description.ts`
-- [ ] [description] Create a standalone `landform` sentence object in function `generateRawDescription` in `src/pipeline/description.ts` with `slot`, `basicText`, `contributors`, and `contributorKeys.landform`
+- [x] [description] Create a standalone `landform` sentence object in function `generateRawDescription` in `src/pipeline/description.ts` with `slot`, `basicText`, `contributors`, and `contributorKeys.landform`
 - [ ] [description] Create a standalone `biome` sentence object in function `generateRawDescription` in `src/pipeline/description.ts` with `slot`, `basicText`, `contributors`, and `contributorKeys.biome`
 - [ ] [description] Stop assigning biome contributor metadata to the `landform` sentence object in function `generateRawDescription` in `src/pipeline/description.ts` (depends on previous two items)
 - [ ] [description] Ensure `landform.basicText` does not reference biome content in phrase selection path `phraseOptionsForLandform` in `src/pipeline/description.ts`
