@@ -2134,7 +2134,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The ground settles into a low corridor between slopes. Trees grow along the narrow channel nearby. To the south, the ground slopes gently.",
+      "description": "The ground settles into a low corridor between slopes. Trees grow along the narrow channel nearby. To the north, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -2184,9 +2184,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "S"
+              "slope": "N"
             },
-            "text": "To the south, the ground slopes gently."
+            "text": "To the north, the ground slopes gently."
           }
         ],
         "adjacency": {
@@ -7939,7 +7939,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The ground settles into a low corridor between slopes. This spot is part of a lake. To the southeast, the ground slopes gently.",
+      "description": "The ground settles into a low corridor between slopes. This spot is part of a lake. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -7984,9 +7984,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -8042,7 +8042,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The land dips into a shallow basin. The forest gives way here to open water. To the south, the ground slopes gently.",
+      "description": "The land dips into a shallow basin. The forest gives way here to open water. To the north, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -8087,9 +8087,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "S"
+              "slope": "N"
             },
-            "text": "To the south, the ground slopes gently."
+            "text": "To the north, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -10353,7 +10353,7 @@
           "NW": "passable"
         }
       },
-      "description": "A low ridge runs through the trees here. The trees are mostly pine, with sparse lower growth. To the north, the ground slopes noticeably.",
+      "description": "A low ridge runs through the trees here. The trees are mostly pine, with sparse lower growth. To the south, the ground slopes noticeably.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -10398,9 +10398,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "N"
+              "slope": "S"
             },
-            "text": "To the north, the ground slopes noticeably."
+            "text": "To the south, the ground slopes noticeably."
           }
         ],
         "adjacency": {
@@ -11051,7 +11051,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The ground lies low here, holding moisture in the hollow. Water extends across this low-lying ground. To the southeast, the ground slopes gently.",
+      "description": "The ground lies low here, holding moisture in the hollow. Water extends across this low-lying ground. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -11096,9 +11096,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -14260,7 +14260,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The land dips into a shallow basin. Open water covers this area. To the northwest, the ground slopes gently.",
+      "description": "The land dips into a shallow basin. Open water covers this area. To the southwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -14305,9 +14305,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NW"
+              "slope": "SW"
             },
-            "text": "To the northwest, the ground slopes gently."
+            "text": "To the southwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -15222,7 +15222,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The ground lies low here, holding moisture in the hollow. The surface is open water with little vegetation. To the south, the ground slopes gently.",
+      "description": "The ground lies low here, holding moisture in the hollow. The surface is open water with little vegetation. To the north, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -15267,9 +15267,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "S"
+              "slope": "N"
             },
-            "text": "To the south, the ground slopes gently."
+            "text": "To the north, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -15831,7 +15831,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The terrain settles into a low pocket among the trees. A broad stretch of still water lies here. To the southeast, the ground slopes gently.",
+      "description": "The terrain settles into a low pocket among the trees. A broad stretch of still water lies here. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -15876,9 +15876,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -17278,7 +17278,7 @@
           "NW": "passable"
         }
       },
-      "description": "The land forms a shallow high line between lower areas. Tall pines follow the higher ground in a narrow band. To the north, the ground slopes gently.",
+      "description": "The land forms a shallow high line between lower areas. Tall pines follow the higher ground in a narrow band. To the south, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -17323,9 +17323,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "N"
+              "slope": "S"
             },
-            "text": "To the north, the ground slopes gently."
+            "text": "To the south, the ground slopes gently."
           }
         ],
         "adjacency": {
@@ -17932,7 +17932,7 @@
           "NW": "blocked"
         }
       },
-      "description": "This spot sits in a gentle bowl of lower ground. This spot is part of a lake. To the northwest, the ground slopes gently.",
+      "description": "This spot sits in a gentle bowl of lower ground. This spot is part of a lake. To the southwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -17977,9 +17977,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NW"
+              "slope": "SW"
             },
-            "text": "To the northwest, the ground slopes gently."
+            "text": "To the southwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -19294,7 +19294,7 @@
           "NW": "passable"
         }
       },
-      "description": "The ground settles into a low corridor between slopes. The forest here is mostly pine, with light between trunks. To the southeast, the ground slopes gently.",
+      "description": "The ground settles into a low corridor between slopes. The forest here is mostly pine, with light between trunks. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -19339,9 +19339,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -20290,7 +20290,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The forest floor drops into a broad, low depression. The forest gives way here to open water. To the southwest, the ground slopes gently.",
+      "description": "The forest floor drops into a broad, low depression. The forest gives way here to open water. To the northwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -20335,9 +20335,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SW"
+              "slope": "NW"
             },
-            "text": "To the southwest, the ground slopes gently."
+            "text": "To the northwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -21925,7 +21925,7 @@
           "NW": "passable"
         }
       },
-      "description": "The ground rises onto a narrow spine of higher earth. Pine form a dry crest above the surrounding low areas. To the southwest, the ground slopes gently.",
+      "description": "The ground rises onto a narrow spine of higher earth. Pine form a dry crest above the surrounding low areas. To the northwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -21975,9 +21975,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SW"
+              "slope": "NW"
             },
-            "text": "To the southwest, the ground slopes gently."
+            "text": "To the northwest, the ground slopes gently."
           }
         ],
         "adjacency": {
@@ -22574,7 +22574,7 @@
           "NW": "passable"
         }
       },
-      "description": "The forest floor drops into a broad, low depression. The stand alternates between lighter birch and darker spruce. To the southwest, the ground slopes gently.",
+      "description": "The forest floor drops into a broad, low depression. The stand alternates between lighter birch and darker spruce. To the northwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -22619,9 +22619,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SW"
+              "slope": "NW"
             },
-            "text": "To the southwest, the ground slopes gently."
+            "text": "To the northwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -23305,7 +23305,7 @@
           "NW": "passable"
         }
       },
-      "description": "The terrain settles into a low pocket among the trees. Pines rise above low ground cover in an open stand. To the southeast, the ground slopes gently.",
+      "description": "The terrain settles into a low pocket among the trees. Pines rise above low ground cover in an open stand. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -23350,9 +23350,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -27173,7 +27173,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The terrain settles into a low pocket among the trees. The forest gives way here to open water. To the southeast, the ground slopes gently.",
+      "description": "The terrain settles into a low pocket among the trees. The forest gives way here to open water. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -27218,9 +27218,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -28498,7 +28498,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The ground rises onto a narrow spine of higher earth. A broad stretch of still water lies here. To the northwest, the ground slopes gently.",
+      "description": "The ground rises onto a narrow spine of higher earth. A broad stretch of still water lies here. To the southwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -28543,9 +28543,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NW"
+              "slope": "SW"
             },
-            "text": "To the northwest, the ground slopes gently."
+            "text": "To the southwest, the ground slopes gently."
           }
         ],
         "adjacency": {
@@ -30369,7 +30369,7 @@
           "NW": "passable"
         }
       },
-      "description": "The forest follows a low trough through this area. Pines stand in a scattered pattern across firm footing. To the southeast, the ground slopes gently.",
+      "description": "The forest follows a low trough through this area. Pines stand in a scattered pattern across firm footing. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -30414,9 +30414,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -31495,7 +31495,7 @@
           "NW": "passable"
         }
       },
-      "description": "The forest follows a low trough through this area. Pine dominate here, spaced widely enough for open sightlines. To the northwest, the ground slopes gently.",
+      "description": "The forest follows a low trough through this area. Pine dominate here, spaced widely enough for open sightlines. To the southwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -31540,9 +31540,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NW"
+              "slope": "SW"
             },
-            "text": "To the northwest, the ground slopes gently."
+            "text": "To the southwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -32497,7 +32497,7 @@
           "NW": "passable"
         }
       },
-      "description": "The land forms a shallow high line between lower areas. Mixed trees break up the canopy, with birch among spruce. To the southwest, the ground slopes gently.",
+      "description": "The land forms a shallow high line between lower areas. Mixed trees break up the canopy, with birch among spruce. To the northwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -32543,9 +32543,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SW"
+              "slope": "NW"
             },
-            "text": "To the southwest, the ground slopes gently."
+            "text": "To the northwest, the ground slopes gently."
           }
         ],
         "adjacency": {
@@ -34232,7 +34232,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The terrain settles into a low pocket among the trees. A broad stretch of still water lies here. To the north, the ground slopes gently.",
+      "description": "The terrain settles into a low pocket among the trees. A broad stretch of still water lies here. To the south, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -34277,9 +34277,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "N"
+              "slope": "S"
             },
-            "text": "To the north, the ground slopes gently."
+            "text": "To the south, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -36857,7 +36857,7 @@
           "NW": "passable"
         }
       },
-      "description": "A low ridge runs through the trees here. Tall pines stand apart over drier ground. To the northwest, the ground slopes gently.",
+      "description": "A low ridge runs through the trees here. Tall pines stand apart over drier ground. To the southwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -36902,9 +36902,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NW"
+              "slope": "SW"
             },
-            "text": "To the northwest, the ground slopes gently."
+            "text": "To the southwest, the ground slopes gently."
           }
         ],
         "adjacency": {
@@ -37067,7 +37067,7 @@
           "NW": "passable"
         }
       },
-      "description": "The land narrows into a shallow valley between higher ground. Pine dominate this stretch, with little dense brush. To the northeast, the ground slopes gently.",
+      "description": "The land narrows into a shallow valley between higher ground. Pine dominate this stretch, with little dense brush. To the southeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -37112,9 +37112,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NE"
+              "slope": "SE"
             },
-            "text": "To the northeast, the ground slopes gently."
+            "text": "To the southeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -46344,7 +46344,7 @@
           "NW": "blocked"
         }
       },
-      "description": "This spot sits in a gentle bowl of lower ground. The area is occupied by still lake water. To the northwest, the ground slopes gently.",
+      "description": "This spot sits in a gentle bowl of lower ground. The area is occupied by still lake water. To the southwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -46389,9 +46389,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NW"
+              "slope": "SW"
             },
-            "text": "To the northwest, the ground slopes gently."
+            "text": "To the southwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -46823,7 +46823,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The terrain settles into a low pocket among the trees. Open water covers this area. To the southwest, the ground slopes gently.",
+      "description": "The terrain settles into a low pocket among the trees. Open water covers this area. To the northwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -46868,9 +46868,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SW"
+              "slope": "NW"
             },
-            "text": "To the southwest, the ground slopes gently."
+            "text": "To the northwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -50567,7 +50567,7 @@
           "NW": "blocked"
         }
       },
-      "description": "This spot sits in a gentle bowl of lower ground. The surface is open water with little vegetation. To the northwest, the ground slopes gently.",
+      "description": "This spot sits in a gentle bowl of lower ground. The surface is open water with little vegetation. To the southwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -50612,9 +50612,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NW"
+              "slope": "SW"
             },
-            "text": "To the northwest, the ground slopes gently."
+            "text": "To the southwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -50810,7 +50810,7 @@
           "NW": "passable"
         }
       },
-      "description": "The footing sits slightly above the surrounding low ground. Pines rise above low ground cover in an open stand. To the northwest, the ground slopes gently.",
+      "description": "The footing sits slightly above the surrounding low ground. Pines rise above low ground cover in an open stand. To the southwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -50855,9 +50855,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NW"
+              "slope": "SW"
             },
-            "text": "To the northwest, the ground slopes gently."
+            "text": "To the southwest, the ground slopes gently."
           }
         ],
         "adjacency": {
@@ -54168,7 +54168,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The terrain settles into a low pocket among the trees. Water extends across this low-lying ground. To the southeast, the ground slopes gently.",
+      "description": "The terrain settles into a low pocket among the trees. Water extends across this low-lying ground. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -54213,9 +54213,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -56659,7 +56659,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The forest floor drops into a broad, low depression. This spot is part of a lake. To the northeast, the ground slopes gently.",
+      "description": "The forest floor drops into a broad, low depression. This spot is part of a lake. To the southeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -56704,9 +56704,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NE"
+              "slope": "SE"
             },
-            "text": "To the northeast, the ground slopes gently."
+            "text": "To the southeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -57965,7 +57965,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The terrain settles into a low pocket among the trees. Open water covers this area. To the northwest, the ground slopes gently.",
+      "description": "The terrain settles into a low pocket among the trees. Open water covers this area. To the southwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -58010,9 +58010,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NW"
+              "slope": "SW"
             },
-            "text": "To the northwest, the ground slopes gently."
+            "text": "To the southwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -60433,7 +60433,7 @@
           "NW": "passable"
         }
       },
-      "description": "The ground settles into a low corridor between slopes. Pines stand in a scattered pattern across firm footing. To the northwest, the ground slopes gently.",
+      "description": "The ground settles into a low corridor between slopes. Pines stand in a scattered pattern across firm footing. To the southwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -60478,9 +60478,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NW"
+              "slope": "SW"
             },
-            "text": "To the northwest, the ground slopes gently."
+            "text": "To the southwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -61061,7 +61061,7 @@
           "NW": "passable"
         }
       },
-      "description": "The terrain forms a subtle valley between gentle rises. The pine stand opens enough to see well between trunks. To the north, the ground slopes gently.",
+      "description": "The terrain forms a subtle valley between gentle rises. The pine stand opens enough to see well between trunks. To the south, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -61106,9 +61106,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "N"
+              "slope": "S"
             },
-            "text": "To the north, the ground slopes gently."
+            "text": "To the south, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -62290,7 +62290,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The land dips into a shallow basin. A broad stretch of still water lies here. To the north, the ground slopes gently.",
+      "description": "The land dips into a shallow basin. A broad stretch of still water lies here. To the south, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -62335,9 +62335,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "N"
+              "slope": "S"
             },
-            "text": "To the north, the ground slopes gently."
+            "text": "To the south, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -62981,7 +62981,7 @@
           "NW": "passable"
         }
       },
-      "description": "A broad dip runs between higher patches of forest. Birch and spruce mix together across this patch of forest. To the north, the ground slopes gently.",
+      "description": "A broad dip runs between higher patches of forest. Birch and spruce mix together across this patch of forest. To the south, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -63027,9 +63027,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "N"
+              "slope": "S"
             },
-            "text": "To the north, the ground slopes gently."
+            "text": "To the south, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -64310,7 +64310,7 @@
           "NW": "passable"
         }
       },
-      "description": "The ground rises onto a narrow spine of higher earth. A dry pine stand stretches across this higher patch. To the northwest, the ground slopes gently.",
+      "description": "The ground rises onto a narrow spine of higher earth. A dry pine stand stretches across this higher patch. To the southwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -64355,9 +64355,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NW"
+              "slope": "SW"
             },
-            "text": "To the northwest, the ground slopes gently."
+            "text": "To the southwest, the ground slopes gently."
           }
         ],
         "adjacency": {
@@ -66013,7 +66013,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The terrain settles into a low pocket among the trees. The forest gives way here to open water. To the north, the ground slopes gently.",
+      "description": "The terrain settles into a low pocket among the trees. The forest gives way here to open water. To the south, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -66058,9 +66058,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "N"
+              "slope": "S"
             },
-            "text": "To the north, the ground slopes gently."
+            "text": "To the south, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -67158,7 +67158,7 @@
           "NW": "passable"
         }
       },
-      "description": "The land narrows into a shallow valley between higher ground. Pine and low undergrowth define the ground here. To the southeast, the ground slopes gently.",
+      "description": "The land narrows into a shallow valley between higher ground. Pine and low undergrowth define the ground here. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -67203,9 +67203,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -69761,7 +69761,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The terrain settles into a low pocket among the trees. The forest gives way here to open water. To the northeast, the ground slopes gently.",
+      "description": "The terrain settles into a low pocket among the trees. The forest gives way here to open water. To the southeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -69806,9 +69806,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NE"
+              "slope": "SE"
             },
-            "text": "To the northeast, the ground slopes gently."
+            "text": "To the southeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -69976,7 +69976,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The ground lies low here, holding moisture in the hollow. The surface is open water with little vegetation. To the northwest, the ground slopes gently.",
+      "description": "The ground lies low here, holding moisture in the hollow. The surface is open water with little vegetation. To the southwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -70021,9 +70021,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NW"
+              "slope": "SW"
             },
-            "text": "To the northwest, the ground slopes gently."
+            "text": "To the southwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -70943,7 +70943,7 @@
           "NW": "passable"
         }
       },
-      "description": "The land narrows into a shallow valley between higher ground. Pines stand in a scattered pattern across firm footing. To the southeast, the ground slopes gently.",
+      "description": "The land narrows into a shallow valley between higher ground. Pines stand in a scattered pattern across firm footing. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -70988,9 +70988,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -77046,7 +77046,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The terrain settles into a low pocket among the trees. The area is occupied by still lake water. To the southeast, the ground slopes gently.",
+      "description": "The terrain settles into a low pocket among the trees. The area is occupied by still lake water. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -77092,9 +77092,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -78240,7 +78240,7 @@
           "NW": "passable"
         }
       },
-      "description": "The terrain forms a subtle valley between gentle rises. A dry pine stand stretches across this higher patch. To the southeast, the ground slopes gently.",
+      "description": "The terrain forms a subtle valley between gentle rises. A dry pine stand stretches across this higher patch. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -78285,9 +78285,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -78597,7 +78597,7 @@
           "NW": "blocked"
         }
       },
-      "description": "This spot sits in a gentle bowl of lower ground. Water extends across this low-lying ground. To the southwest, the ground slopes gently.",
+      "description": "This spot sits in a gentle bowl of lower ground. Water extends across this low-lying ground. To the northwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -78643,9 +78643,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SW"
+              "slope": "NW"
             },
-            "text": "To the southwest, the ground slopes gently."
+            "text": "To the northwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -80800,7 +80800,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The forest floor drops into a broad, low depression. The surface is open water with little vegetation. To the southwest, the ground slopes gently.",
+      "description": "The forest floor drops into a broad, low depression. The surface is open water with little vegetation. To the northwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -80845,9 +80845,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SW"
+              "slope": "NW"
             },
-            "text": "To the southwest, the ground slopes gently."
+            "text": "To the northwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -83833,7 +83833,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The land narrows into a shallow valley between higher ground. This spot is part of a lake. To the southeast, the ground slopes gently.",
+      "description": "The land narrows into a shallow valley between higher ground. This spot is part of a lake. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -83878,9 +83878,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -84435,7 +84435,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The land dips into a shallow basin. The surface is open water with little vegetation. To the south, the ground slopes gently.",
+      "description": "The land dips into a shallow basin. The surface is open water with little vegetation. To the north, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -84480,9 +84480,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "S"
+              "slope": "N"
             },
-            "text": "To the south, the ground slopes gently."
+            "text": "To the north, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -84540,7 +84540,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The terrain settles into a low pocket among the trees. Water extends across this low-lying ground. To the southwest, the ground slopes gently.",
+      "description": "The terrain settles into a low pocket among the trees. Water extends across this low-lying ground. To the northwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -84585,9 +84585,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SW"
+              "slope": "NW"
             },
-            "text": "To the southwest, the ground slopes gently."
+            "text": "To the northwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -85043,7 +85043,7 @@
           "NW": "passable"
         }
       },
-      "description": "The ground rises onto a narrow spine of higher earth. Birch trunks brighten parts of the stand among darker conifers. To the northwest, the ground slopes gently.",
+      "description": "The ground rises onto a narrow spine of higher earth. Birch trunks brighten parts of the stand among darker conifers. To the southwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -85088,9 +85088,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NW"
+              "slope": "SW"
             },
-            "text": "To the northwest, the ground slopes gently."
+            "text": "To the southwest, the ground slopes gently."
           }
         ],
         "adjacency": {
@@ -86143,7 +86143,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The ground lies low here, holding moisture in the hollow. This spot is part of a lake. To the northwest, the ground slopes gently.",
+      "description": "The ground lies low here, holding moisture in the hollow. This spot is part of a lake. To the southwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -86188,9 +86188,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NW"
+              "slope": "SW"
             },
-            "text": "To the northwest, the ground slopes gently."
+            "text": "To the southwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -87421,7 +87421,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The land narrows into a shallow valley between higher ground. Open water covers this area. To the southeast, the ground slopes gently.",
+      "description": "The land narrows into a shallow valley between higher ground. Open water covers this area. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -87466,9 +87466,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -88564,7 +88564,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The land dips into a shallow basin. A broad stretch of still water lies here. To the northwest, the ground slopes gently.",
+      "description": "The land dips into a shallow basin. A broad stretch of still water lies here. To the southwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -88609,9 +88609,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NW"
+              "slope": "SW"
             },
-            "text": "To the northwest, the ground slopes gently."
+            "text": "To the southwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -96151,7 +96151,7 @@
           "NW": "blocked"
         }
       },
-      "description": "This spot sits in a gentle bowl of lower ground. This spot is part of a lake. To the northwest, the ground slopes gently.",
+      "description": "This spot sits in a gentle bowl of lower ground. This spot is part of a lake. To the southwest, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -96196,9 +96196,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "NW"
+              "slope": "SW"
             },
-            "text": "To the northwest, the ground slopes gently."
+            "text": "To the southwest, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -96832,7 +96832,7 @@
           "NW": "passable"
         }
       },
-      "description": "The forest floor drops into a broad, low depression. The trees are mostly pine, with sparse lower growth. To the southeast, the ground slopes gently.",
+      "description": "The forest floor drops into a broad, low depression. The trees are mostly pine, with sparse lower growth. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -96884,9 +96884,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -96952,7 +96952,7 @@
           "NW": "passable"
         }
       },
-      "description": "A gentle crest lifts the forest floor along this stretch. Birch appear regularly among the conifers here. To the southeast, the ground slopes gently.",
+      "description": "A gentle crest lifts the forest floor along this stretch. Birch appear regularly among the conifers here. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -96998,9 +96998,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {
@@ -97380,7 +97380,7 @@
           "NW": "passable"
         }
       },
-      "description": "A broad dip runs between higher patches of forest. Birch trunks brighten parts of the stand among darker conifers. To the southeast, the ground slopes gently.",
+      "description": "A broad dip runs between higher patches of forest. Birch trunks brighten parts of the stand among darker conifers. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -97426,9 +97426,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -97876,7 +97876,7 @@
           "NW": "blocked"
         }
       },
-      "description": "The ground lies low here, holding moisture in the hollow. A broad stretch of still water lies here. To the north, the ground slopes gently.",
+      "description": "The ground lies low here, holding moisture in the hollow. A broad stretch of still water lies here. To the south, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -97921,9 +97921,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "N"
+              "slope": "S"
             },
-            "text": "To the north, the ground slopes gently."
+            "text": "To the south, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -102557,7 +102557,7 @@
           "NW": "passable"
         }
       },
-      "description": "The ground rises onto a narrow spine of higher earth. The forest is heavy with spruce on all sides. To the southeast, the ground slopes gently.",
+      "description": "The ground rises onto a narrow spine of higher earth. The forest is heavy with spruce on all sides. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -102603,9 +102603,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {
@@ -106644,7 +106644,7 @@
           "NW": "passable"
         }
       },
-      "description": "The ground settles into a low corridor between slopes. Spruce dominate here, growing close together. To the southeast, the ground slopes gently.",
+      "description": "The ground settles into a low corridor between slopes. Spruce dominate here, growing close together. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -106690,9 +106690,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {}
@@ -112380,7 +112380,7 @@
           "NW": "passable"
         }
       },
-      "description": "The footing sits slightly above the surrounding low ground. Birch and spruce mix together across this patch of forest. To the south, the ground slopes gently.",
+      "description": "The footing sits slightly above the surrounding low ground. Birch and spruce mix together across this patch of forest. To the north, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -112432,9 +112432,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "S"
+              "slope": "N"
             },
-            "text": "To the south, the ground slopes gently."
+            "text": "To the north, the ground slopes gently."
           }
         ],
         "adjacency": {
@@ -113255,7 +113255,7 @@
           "NW": "passable"
         }
       },
-      "description": "The footing sits slightly above the surrounding low ground. Spruce and birch share the ground here in an uneven mix. To the southeast, the ground slopes gently.",
+      "description": "The footing sits slightly above the surrounding low ground. Spruce and birch share the ground here in an uneven mix. To the northeast, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -113305,9 +113305,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "SE"
+              "slope": "NE"
             },
-            "text": "To the southeast, the ground slopes gently."
+            "text": "To the northeast, the ground slopes gently."
           }
         ],
         "adjacency": {
@@ -116307,7 +116307,7 @@
           "NW": "passable"
         }
       },
-      "description": "The land forms a shallow high line between lower areas. Spruce and birch share the ground here in an uneven mix. To the south, the ground slopes gently.",
+      "description": "The land forms a shallow high line between lower areas. Spruce and birch share the ground here in an uneven mix. To the north, the ground slopes gently.",
       "descriptionStructured": {
         "sentences": [
           {
@@ -116358,9 +116358,9 @@
           {
             "slot": "slope",
             "contributorKeys": {
-              "slope": "S"
+              "slope": "N"
             },
-            "text": "To the south, the ground slopes gently."
+            "text": "To the north, the ground slopes gently."
           }
         ],
         "adjacency": {
