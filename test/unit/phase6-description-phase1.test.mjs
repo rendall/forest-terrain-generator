@@ -592,6 +592,35 @@ describe("Phase 1 description pipeline", () => {
 		);
 	});
 
+	it("suppresses local sentence when overlapping neighbor group is intensity-compatible", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "slope",
+				slopeStrength: 0.04,
+				slopeDirection: "W",
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0.04 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0.09 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0 },
+				},
+			},
+			"seed-landform-compatible-overlap-suppress",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.contributors?.local?.derived?.band).toBe("gentle");
+		expect(landform?.contributors?.local?.emitted).toBe(false);
+		expect(landform?.contributors?.local?.suppressedBy).toBe("neighbor_overlap");
+		expect(landform?.basicText).toBe("To the east and southeast, the land rises.");
+	});
+
 	it("preserves ring-order direction sequence for wrap-around merged groups", () => {
 		const result = generateRawDescription(
 			{
