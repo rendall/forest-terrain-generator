@@ -500,7 +500,6 @@ export function attachTileDescriptions(
 							sentences: description.sentences.map((sentence) => {
 								const out: JsonObject = {
 									slot: sentence.slot,
-									contributors: [...sentence.contributors],
 									contributorKeys: { ...sentence.contributorKeys },
 								};
 								if (typeof sentence.basicText === "string") {

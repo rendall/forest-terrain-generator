@@ -217,15 +217,14 @@ describe("Phase 1 description pipeline", () => {
 		expect(anchor).toBeDefined();
 		expect(anchor.text).not.toContain(", where ");
 		expect(typeof anchor.basicText).toBe("string");
-		expect(anchor.contributors).toContain("landform");
+		expect(anchor.contributors).toBeUndefined();
 		expect(anchor.contributorKeys.landform).toBe(case04.landform);
-		expect(anchor.contributors).not.toContain("biome");
 		expect(anchor.contributorKeys.biome).toBeUndefined();
 		const biome = result.sentences.find((sentence) => sentence.slot === "biome");
 		expect(biome).toBeDefined();
 		expect(typeof biome?.basicText).toBe("string");
 		expect(biome?.text).toBe(biome?.basicText);
-		expect(biome?.contributors).toContain("biome");
+		expect(biome?.contributors).toBeUndefined();
 		expect(biome?.contributorKeys.biome).toBe(case04.biome);
 	});
 
@@ -325,7 +324,7 @@ describe("Phase 1 description pipeline", () => {
 		);
 		expect(movementSentences).toHaveLength(1);
 		const movement = movementSentences[0];
-		expect(movement?.contributors).toEqual(["movement_structure"]);
+		expect(movement?.contributors).toBeUndefined();
 		expect(typeof movement?.contributorKeys.movement_structure).toBe("string");
 		expect(Array.isArray(movement?.movement)).toBe(true);
 		expect(movement?.text.endsWith(".")).toBe(true);
@@ -690,7 +689,7 @@ describe("Phase 1 description pipeline", () => {
 
 		const landform = result.sentences.find((sentence) => sentence.slot === "landform");
 		expect(landform?.text).toBe(landform?.basicText);
-		expect(landform?.contributors).toEqual(["landform"]);
+		expect(landform?.contributors).toBeUndefined();
 		expect(landform?.contributorKeys.obstacle).toBeUndefined();
 		const movement = result.sentences.find(
 			(sentence) => sentence.slot === "movement_structure",

@@ -426,12 +426,9 @@ export interface DescriptionSentence {
 	| "directional";
 	text?: string;
 	basicText?: string;
-	contributors: DescriptionSentenceContributor[];
-	contributorKeys: Partial<Record<DescriptionSentenceContributor, string>>;
+	contributorKeys: Partial<Record<DescriptionSentence["slot"], string>>;
 	movement?: MovementRun[];
 }
-
-export type DescriptionSentenceContributor = DescriptionSentence["slot"];
 
 export interface DescriptionResult {
 	sentences: DescriptionSentence[];
@@ -1343,12 +1340,6 @@ function mergeAsClause(
 	return `${baseCore}, ${joiner} ${clauseCore}.`;
 }
 
-function uniqueContributors(
-	contributors: readonly DescriptionSentenceContributor[],
-): DescriptionSentenceContributor[] {
-	return [...new Set(contributors)];
-}
-
 function directionalMentionsWater(text: string): boolean {
 	return /\b(water|stream|lake)\b/i.test(text);
 }
@@ -1381,9 +1372,8 @@ export function generateRawDescription(
 			: landformSentence;
 	let hydrologyMerged = false;
 	let obstacleMerged = false;
-	const anchorContributors: DescriptionSentenceContributor[] = ["landform"];
 	const anchorContributorKeys: Partial<
-		Record<DescriptionSentenceContributor, string>
+		Record<DescriptionSentence["slot"], string>
 	> = {
 		landform: input.landform,
 	};
@@ -1411,7 +1401,6 @@ export function generateRawDescription(
 	) {
 		anchorSentence = mergeAsClause(anchorSentence, hydrologySentence, "where");
 		hydrologyMerged = true;
-		anchorContributors.push("hydrology");
 		anchorContributorKeys.hydrology = "standing_water";
 	}
 
@@ -1425,7 +1414,6 @@ export function generateRawDescription(
 		anchorSentence = mergeAsClause(anchorSentence, obstacleSentence, "and");
 		obstacleMerged = true;
 		if (chosenObstacle) {
-			anchorContributors.push("obstacle");
 			anchorContributorKeys.obstacle = chosenObstacle;
 		}
 	}
@@ -1434,14 +1422,12 @@ export function generateRawDescription(
 		slot: "landform",
 		basicText: landformSentence,
 		text: landformSentence,
-		contributors: uniqueContributors(anchorContributors),
 		contributorKeys: anchorContributorKeys,
 	});
 	sentences.push({
 		slot: "biome",
 		basicText: biomeSentence,
 		text: biomeSentence,
-		contributors: ["biome"],
 		contributorKeys: { biome: input.biome },
 	});
 
@@ -1450,7 +1436,6 @@ export function generateRawDescription(
 		sentences.push({
 			slot: "followable",
 			text: followableSentence,
-			contributors: ["followable"],
 			contributorKeys: { followable: "present" },
 		});
 	}
@@ -1467,7 +1452,6 @@ export function generateRawDescription(
 			? { text: transformedMovement.text }
 			: {}),
 		basicText: movementStructureSentence.text,
-		contributors: ["movement_structure"],
 		contributorKeys: {
 			movement_structure:
 				countPassableExits(input.passability) > 4 ? "blocked_bias" : "passage_bias",
@@ -1482,7 +1466,6 @@ export function generateRawDescription(
 		sentences.push({
 			slot: "slope",
 			text: slopeSentence,
-			contributors: ["slope"],
 			contributorKeys: { slope: input.slopeDirection },
 		});
 	}
@@ -1491,7 +1474,6 @@ export function generateRawDescription(
 		sentences.push({
 			slot: "hydrology",
 			text: hydrologySentence,
-			contributors: ["hydrology"],
 			contributorKeys: { hydrology: "standing_water" },
 		});
 		hydrologyMerged = true;
@@ -1501,7 +1483,6 @@ export function generateRawDescription(
 		sentences.push({
 			slot: "obstacle",
 			text: obstacleSentence,
-			contributors: ["obstacle"],
 			contributorKeys: { obstacle: chosenObstacle ?? "unknown" },
 		});
 	}
@@ -1512,7 +1493,6 @@ export function generateRawDescription(
 		if (typeof sentence.text !== "string") {
 			deduped.push({
 				slot: sentence.slot,
-				contributors: sentence.contributors,
 				contributorKeys: sentence.contributorKeys,
 				...(typeof sentence.basicText === "string"
 					? { basicText: sanitizeSentence(sentence.basicText) }
@@ -1534,10 +1514,6 @@ export function generateRawDescription(
 		const existingIndex = seen.get(key);
 		if (existingIndex !== undefined) {
 			const existing = deduped[existingIndex] as DescriptionSentence;
-			existing.contributors = uniqueContributors([
-				...existing.contributors,
-				...sentence.contributors,
-			]);
 			existing.contributorKeys = {
 				...existing.contributorKeys,
 				...sentence.contributorKeys,
@@ -1554,7 +1530,6 @@ export function generateRawDescription(
 			...(typeof sentence.basicText === "string"
 				? { basicText: sanitizeSentence(sentence.basicText) }
 				: {}),
-			contributors: sentence.contributors,
 			contributorKeys: sentence.contributorKeys,
 			...(sentence.movement
 				? {

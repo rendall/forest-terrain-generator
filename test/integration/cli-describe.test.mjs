@@ -125,8 +125,8 @@ describe("describe CLI", () => {
 			expect(first.descriptionStructured.text).toBeUndefined();
 		expect(Array.isArray(first.descriptionStructured.sentences)).toBe(true);
 		expect(
-			Array.isArray(first.descriptionStructured.sentences[0].contributors),
-		).toBe(true);
+			first.descriptionStructured.sentences[0].contributors,
+		).toBeUndefined();
 		expect(
 			typeof first.descriptionStructured.sentences[0].contributorKeys,
 		).toBe("object");
