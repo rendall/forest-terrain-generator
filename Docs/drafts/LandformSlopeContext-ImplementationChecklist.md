@@ -25,8 +25,8 @@
 
 ## Stage 4: Landform Slot Rendering
 
-- [ ] [description] Add helper `renderDerivedLandform(input: DescriptionTileInput): { basicText: string; contributors: Record<string, unknown> }` in `src/pipeline/description.ts` that combines local sentence + neighbor group sentences into one multi-sentence `basicText` (depends on Stage 2 and Stage 3 helpers)
-- [ ] [description] Set a stable minimum `contributors` payload shape in `renderDerivedLandform` in `src/pipeline/description.ts`: `{ local, neighbors, thresholds, exception }` (depends on previous item)
+- [x] [description] Add helper `renderDerivedLandform(input: DescriptionTileInput): { basicText: string; contributors: Record<string, unknown> }` in `src/pipeline/description.ts` that combines local sentence + neighbor group sentences into one multi-sentence `basicText` (depends on Stage 2 and Stage 3 helpers)
+- [x] [description] Set a stable minimum `contributors` payload shape in `renderDerivedLandform` in `src/pipeline/description.ts`: `{ local, neighbors, thresholds, exception }` (depends on previous item)
   - `local`: `{ mode, direction, band, slopeStrength, landform }`; `neighbors`: `[{ directions, mode, band, minAbsDelta, maxAbsDelta }]`; `thresholds`: numeric constants; `exception`: `{ applied, rule }`.
 - [ ] [description] Replace landform phrase-bank selection in `generateRawDescription` in `src/pipeline/description.ts` with `renderDerivedLandform(input)` output for the `landform` sentence object (depends on previous item)
 - [ ] [description] Set `landform` sentence fields in `generateRawDescription` to `basicText` (derived), `text` (same as `basicText`), `contributorKeys.landform` (legacy), and `contributors` (derived payload) (depends on previous item)

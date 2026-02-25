@@ -721,6 +721,12 @@ const DIR_LOWER: Record<Direction, string> = {
 	NW: "northwest",
 };
 
+const LOCAL_GENTLE_MAX = 0.05;
+const LOCAL_STEEP_MIN = 0.1;
+const NEIGHBOR_SAME_MAX = 0.03;
+const NEIGHBOR_GENTLE_MAX = 0.086;
+const NEIGHBOR_STEEP_MIN = 0.1;
+
 function directionRingDistance(a: Direction, b: Direction): number {
 	const ai = RING.indexOf(a);
 	const bi = RING.indexOf(b);
@@ -1087,10 +1093,10 @@ function classifyLocalSlopeBand(
 	if (input.landform === "flat" || input.landform === "plain") {
 		return "flat";
 	}
-	if (input.slopeStrength < 0.05) {
+	if (input.slopeStrength < LOCAL_GENTLE_MAX) {
 		return "gentle";
 	}
-	if (input.slopeStrength > 0.1) {
+	if (input.slopeStrength > LOCAL_STEEP_MIN) {
 		return "steep";
 	}
 	return "none";
@@ -1131,7 +1137,7 @@ function renderLocalLandformSentence(
 	const riseDirection = oppositeDirection(input.slopeDirection);
 	const riseNeighbor = input.neighbors[riseDirection];
 	const shouldUseDescend =
-		Math.abs(riseNeighbor?.elevDelta ?? 0) < 0.03;
+		Math.abs(riseNeighbor?.elevDelta ?? 0) < NEIGHBOR_SAME_MAX;
 	const mode: "rise" | "descend" = shouldUseDescend ? "descend" : "rise";
 	const direction = shouldUseDescend ? input.slopeDirection : riseDirection;
 	const verb = mode === "rise" ? "rises" : "descends";
@@ -1156,11 +1162,15 @@ function classifyNeighborDelta(
 	band: "same" | "gentle" | "none" | "steep";
 } {
 	const absDelta = Math.abs(elevDelta);
-	if (absDelta < 0.03) {
+	if (absDelta < NEIGHBOR_SAME_MAX) {
 		return { mode: "same", band: "same" };
 	}
 	const band: "gentle" | "none" | "steep" =
-		absDelta < 0.086 ? "gentle" : absDelta <= 0.1 ? "none" : "steep";
+		absDelta < NEIGHBOR_GENTLE_MAX
+			? "gentle"
+			: absDelta <= NEIGHBOR_STEEP_MIN
+				? "none"
+				: "steep";
 	return { mode: elevDelta > 0 ? "rise" : "descend", band };
 }
 
@@ -1248,6 +1258,59 @@ function renderNeighborLandformSentences(
 			`To the ${directionNames}, the land ${qualifier}${verb}.`,
 		);
 	});
+}
+
+function renderDerivedLandform(
+	input: DescriptionTileInput,
+): { basicText: string; contributors: Record<string, unknown> } {
+	const local = renderLocalLandformSentence(input);
+	const neighborSignals = collectNeighborLandformSignals(input);
+	const neighborGroups = groupNeighborLandformSignals(neighborSignals);
+	const neighborSentences = renderNeighborLandformSentences(neighborGroups);
+	const basicText = sanitizeSentence([local.text, ...neighborSentences].join(" "));
+
+	const contributors: Record<string, unknown> = {
+		local: {
+			mode: local.mode,
+			direction: local.direction,
+			band: local.band,
+			slopeStrength: input.slopeStrength,
+			landform: input.landform,
+		},
+		neighbors: neighborGroups.map((group) => {
+			const deltas = group.directions.map((direction) =>
+				Math.abs(input.neighbors[direction].elevDelta),
+			);
+			return {
+				directions: [...group.directions],
+				mode: group.mode,
+				band: group.band,
+				minAbsDelta: deltas.length > 0 ? Math.min(...deltas) : 0,
+				maxAbsDelta: deltas.length > 0 ? Math.max(...deltas) : 0,
+			};
+		}),
+		thresholds: {
+			local: {
+				flatLandforms: ["flat", "plain"],
+				gentleMaxExclusive: LOCAL_GENTLE_MAX,
+				steepMinExclusive: LOCAL_STEEP_MIN,
+			},
+			neighbor: {
+				sameMaxExclusive: NEIGHBOR_SAME_MAX,
+				gentleMaxExclusive: NEIGHBOR_GENTLE_MAX,
+				steepMinExclusive: NEIGHBOR_STEEP_MIN,
+			},
+		},
+		exception: {
+			applied: local.mode === "descend",
+			rule:
+				local.mode === "descend"
+					? "rise_neighbor_same_switch_to_descend"
+					: null,
+		},
+	};
+
+	return { basicText, contributors };
 }
 
 function chooseSlopeBand(
