@@ -319,8 +319,14 @@ describe("Phase 1 description pipeline", () => {
 		expect(movement?.text.endsWith(".")).toBe(true);
 		expect(movement?.text.includes("{openDirs}")).toBe(false);
 		expect(movement?.text.includes("{blockedDirs}")).toBe(false);
-		expect(result.sentences[0]?.slot).toBe("landform");
-		expect(result.sentences[1]?.slot).toBe("movement_structure");
+		const landformIndex = result.sentences.findIndex(
+			(sentence) => sentence.slot === "landform",
+		);
+		const movementIndex = result.sentences.findIndex(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		expect(landformIndex).toBeGreaterThanOrEqual(0);
+		expect(movementIndex).toBeGreaterThan(landformIndex);
 		const lowered = movement.text.toLowerCase();
 		expect(lowered).not.toContain("visibility");
 		expect(lowered).not.toContain("view");

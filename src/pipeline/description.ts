@@ -1441,6 +1441,12 @@ export function generateRawDescription(
 		contributors: uniqueContributors(anchorContributors),
 		contributorKeys: anchorContributorKeys,
 	});
+	sentences.push({
+		slot: "biome",
+		basicText: biomeSentence,
+		contributors: ["biome"],
+		contributorKeys: { biome: input.biome },
+	});
 
 	const followableSentence = renderFollowableSentence(input);
 	if (followableSentence) {
