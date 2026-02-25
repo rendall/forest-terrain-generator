@@ -176,6 +176,12 @@ const LAKE_WATER_PHRASES = [
 	"deep water",
 	"a broad stretch of water",
 ];
+const STREAM_BLOCKED_PHRASES = [
+	"a wide stream",
+	"running water",
+	"a fast-moving channel",
+	"the stream",
+];
 
 function hash32(text) {
 	let hash = 2166136261;
@@ -571,7 +577,7 @@ describe("Phase 1 description pipeline", () => {
 		);
 	});
 
-	it("does not use arc wording for five contiguous neighbor directions", () => {
+	it("uses majority wording for five contiguous neighbor directions", () => {
 		const result = generateRawDescription(
 			{
 				...case04,
@@ -594,10 +600,37 @@ describe("Phase 1 description pipeline", () => {
 		const landform = result.sentences.find(
 			(sentence) => sentence.slot === "landform",
 		);
-		expect(landform?.basicText).toContain(
-			"To the west, northwest, north, northeast, and east, the land descends.",
-		);
+		expect(landform?.basicText).toBe("The land descends in most directions.");
 		expect(landform?.basicText).not.toContain("From the west to the east");
+		expect(landform?.basicText).not.toContain("To the west, northwest");
+	});
+
+	it("uses majority/exception wording for six-direction dominance", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: -0.09 },
+					NE: { ...case04.neighbors.NE, elevDelta: -0.09 },
+					E: { ...case04.neighbors.E, elevDelta: 0 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0.09 },
+					S: { ...case04.neighbors.S, elevDelta: -0.09 },
+					SW: { ...case04.neighbors.SW, elevDelta: -0.09 },
+					W: { ...case04.neighbors.W, elevDelta: -0.09 },
+					NW: { ...case04.neighbors.NW, elevDelta: -0.09 },
+				},
+			},
+			"seed-landform-majority-exception-six",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).toBe(
+			"The land descends in nearly every direction, rising only to the southeast.",
+		);
 	});
 
 	it("uses broadly wording for contiguous cardinal-centered triples", () => {
@@ -1202,7 +1235,7 @@ describe("Phase 1 description pipeline", () => {
 					...case04.neighbors,
 					W: {
 						...case04.neighbors.W,
-						water: "lake",
+						water: "stream",
 					},
 				},
 			},
@@ -1289,7 +1322,10 @@ describe("Phase 1 description pipeline", () => {
 		expect(blockageRuns).toHaveLength(2);
 		expect(blockageRuns[0]?.blockedBy).toBeDefined();
 		expect(blockageRuns[0]?.blockedBy).toBe(blockageRuns[1]?.blockedBy);
-		expect(movement?.text).toContain("southeast and west");
+		expect(movement?.text).toBeUndefined();
+		expect(movement?.contributors?.emit).toBe(false);
+		expect(movement?.contributors?.suppressedBy).toBe("lake_directional_dedup");
+		expect(result.text.toLowerCase()).not.toContain("blocked by");
 	});
 
 	it("uses Appendix D seed-key formats for noun and blockage phrase picks", () => {
@@ -1297,7 +1333,10 @@ describe("Phase 1 description pipeline", () => {
 		const result = generateRawDescription(
 			{
 				...case04,
-				biome: "mixed_forest",
+				biome: "pine_heath",
+				landform: "flat",
+				slopeStrength: 0.01,
+				obstacles: [],
 				passability: {
 					N: "blocked",
 					NE: "blocked",
@@ -1310,9 +1349,14 @@ describe("Phase 1 description pipeline", () => {
 				},
 				neighbors: {
 					...case04.neighbors,
-					N: { ...case04.neighbors.N, water: "lake" },
-					NE: { ...case04.neighbors.NE, water: "none" },
-					E: { ...case04.neighbors.E, water: "none" },
+					N: { ...case04.neighbors.N, water: "stream", elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, water: "stream", elevDelta: 0 },
+					E: { ...case04.neighbors.E, water: "stream", elevDelta: 0 },
+					SE: { ...case04.neighbors.SE, water: "none", elevDelta: 0 },
+					S: { ...case04.neighbors.S, water: "none", elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, water: "none", elevDelta: 0 },
+					W: { ...case04.neighbors.W, water: "none", elevDelta: 0 },
+					NW: { ...case04.neighbors.NW, water: "none", elevDelta: 0 },
 				},
 			},
 			seed,
@@ -1329,13 +1373,49 @@ describe("Phase 1 description pipeline", () => {
 				hash32(`${seed}:movement_structure:noun`) % TRAVERSAL_NOUNS.length
 			];
 		const expectedPhrase =
-			LAKE_WATER_PHRASES[
+			STREAM_BLOCKED_PHRASES[
 				hash32(`${seed}:movement_structure:blockage:0:phrase`) %
-					LAKE_WATER_PHRASES.length
+					STREAM_BLOCKED_PHRASES.length
 			];
 
 		expect(blockageRun?.blockedBy).toBe(expectedPhrase);
 		expect(movement?.text?.toLowerCase()).toContain(`the ${expectedNoun} `);
+	});
+
+	it("keeps non-lake blockage prose when lake-directional dedup removes lake clauses", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				biome: "pine_heath",
+				landform: "flat",
+				slopeStrength: 0.01,
+				obstacles: ["windthrow"],
+				passability: {
+					N: "blocked",
+					NE: "passable",
+					E: "passable",
+					SE: "passable",
+					S: "blocked",
+					SW: "passable",
+					W: "passable",
+					NW: "passable",
+				},
+				neighbors: {
+					...case04.neighbors,
+					N: { ...case04.neighbors.N, water: "lake", elevDelta: 0 },
+					S: { ...case04.neighbors.S, water: "none", elevDelta: 0 },
+				},
+			},
+			"seed-lake-dedup-mixed",
+		);
+
+		const movement = result.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		expect(typeof movement?.text).toBe("string");
+		expect((movement?.text ?? "").toLowerCase()).not.toContain("lake");
+		expect((movement?.text ?? "").toLowerCase()).toContain("blocked by");
+		expect((movement?.contributors?.emit ?? false)).toBe(true);
 	});
 
 	it("falls back whole movement sentence to basicText when any blockage run has no pool", () => {

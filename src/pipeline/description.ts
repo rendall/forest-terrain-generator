@@ -202,6 +202,9 @@ const BLOCK_RULES: readonly BlockedPhraseRule[] = [
 		phrases: ["a dense stand of trees", "close-set trunks", "thick forest"],
 	},
 ];
+const LAKE_BLOCKED_PHRASES = new Set<string>(
+	(BLOCK_RULES[0]?.phrases ?? []) as readonly string[],
+);
 
 function isPassageRun(run: MovementRun): run is PassageRun {
 	return run.type === "passage";
@@ -342,6 +345,31 @@ function renderBlockageTransformedText(
 				`to the ${formatDirectionNames(group.directions)} by ${group.phrase}`,
 		);
 	return joinClausesWithAnd(firstClause, restClauses);
+}
+
+function isLakeBlockedPhrase(phrase: string): boolean {
+	return LAKE_BLOCKED_PHRASES.has(phrase);
+}
+
+function renderFilteredBlockageTransformedText(
+	seedKey: string,
+	movementRuns: readonly MovementRun[],
+): string | undefined {
+	const selections = collectBlockageRuns(movementRuns)
+		.filter((run) => typeof run.blockedBy === "string")
+		.filter((run) => !isLakeBlockedPhrase(run.blockedBy as string))
+		.map((run) => ({
+			directions: [...run.directions],
+			phrase: run.blockedBy as string,
+		}));
+	if (selections.length === 0) {
+		return undefined;
+	}
+	const noun = pickDeterministic(
+		TRAVERSAL_NOUNS,
+		`${seedKey}:movement_structure:noun`,
+	);
+	return renderBlockageTransformedText(noun, selections);
 }
 
 function renderTransformedMovementStructure(
@@ -1348,6 +1376,75 @@ function renderNeighborLandformSentences(
 	});
 }
 
+function normalizeNeighborModeBand(
+	groups: Array<Pick<NeighborLandformGroup, "band">>,
+): "gentle" | "none" | "steep" {
+	const unique = [
+		...new Set(
+			groups
+				.map((group) => group.band)
+				.filter((band): band is "gentle" | "none" | "steep" => band !== "same"),
+		),
+	];
+	if (unique.length === 1) {
+		return unique[0] as "gentle" | "none" | "steep";
+	}
+	return "none";
+}
+
+function directionsForNeighborMode(
+	groups: Array<Pick<NeighborLandformGroup, "mode" | "directions">>,
+	mode: "rise" | "descend",
+): Direction[] {
+	const inMode = groups.filter((group) => group.mode === mode);
+	const set = new Set(inMode.flatMap((group) => group.directions));
+	return RING.filter((direction) => set.has(direction));
+}
+
+function renderMajorityNeighborLandformSentence(
+	groups: Array<Pick<NeighborLandformGroup, "mode" | "band" | "directions">>,
+): string | null {
+	if (groups.length === 0) {
+		return null;
+	}
+	const riseDirections = directionsForNeighborMode(groups, "rise");
+	const descendDirections = directionsForNeighborMode(groups, "descend");
+	const riseCount = riseDirections.length;
+	const descendCount = descendDirections.length;
+	const majorMode: "rise" | "descend" =
+		riseCount >= descendCount ? "rise" : "descend";
+	const majorCount = majorMode === "rise" ? riseCount : descendCount;
+	if (majorCount < 5) {
+		return null;
+	}
+	const minorMode: "rise" | "descend" =
+		majorMode === "rise" ? "descend" : "rise";
+	const majorGroups = groups.filter((group) => group.mode === majorMode);
+	const minorGroups = groups.filter((group) => group.mode === minorMode);
+	const majorBand = normalizeNeighborModeBand(majorGroups);
+	const minorBand = normalizeNeighborModeBand(minorGroups);
+	const majorVerb = majorMode === "rise" ? "rises" : "descends";
+	const minorParticiple = minorMode === "rise" ? "rising" : "descending";
+	const majorQualifier = qualifierForBand(majorBand);
+	const minorQualifier = qualifierForBand(minorBand);
+	const majorScope =
+		majorCount >= 6 ? "in nearly every direction" : "in most directions";
+	const minorDirections = majorMode === "rise" ? descendDirections : riseDirections;
+	if (minorDirections.length === 0) {
+		return sanitizeSentence(
+			`The land ${majorQualifier}${majorVerb} ${majorScope}.`,
+		);
+	}
+	if (minorDirections.length === 1) {
+		return sanitizeSentence(
+			`The land ${majorQualifier}${majorVerb} ${majorScope}, ${minorParticiple} ${minorQualifier}only to the ${DIR_LOWER[minorDirections[0] as Direction]}.`,
+		);
+	}
+	return sanitizeSentence(
+		`The land ${majorQualifier}${majorVerb} ${majorScope}, ${minorParticiple} ${minorQualifier}toward the ${formatDirectionNames(minorDirections)}.`,
+	);
+}
+
 function filterNeighborGroupsToPassableDirections(
 	groups: NeighborLandformGroup[],
 	passability: PassabilityByDir,
@@ -1476,9 +1573,12 @@ function renderDerivedLandform(
 				? "neighbor_overlap"
 				: null;
 	const localEmitted = localSuppressedBy === null;
-	const emittedNeighborSentences = emittedNeighborContributions.map(
-		(group) => group.text,
+	const majorityNeighborSentence = renderMajorityNeighborLandformSentence(
+		emittedNeighborContributions,
 	);
+	const emittedNeighborSentences = majorityNeighborSentence
+		? [majorityNeighborSentence]
+		: emittedNeighborContributions.map((group) => group.text);
 	const sentenceParts = localEmitted
 		? [local.text, ...emittedNeighborSentences]
 		: [...emittedNeighborSentences];
@@ -1824,11 +1924,33 @@ export function generateRawDescription(
 		movementStructureSentence.movement,
 	);
 	const movementPassableExitCount = countPassableExits(input.passability);
-	const suppressMovementInProse = movementPassableExitCount === 8;
+	let movementText = transformedMovement.text;
+	let movementSuppressedBy: "fully_passable" | "lake_directional_dedup" | null =
+		null;
+	if (
+		lakeSentence &&
+		movementPassableExitCount > 4 &&
+		typeof movementText === "string"
+	) {
+		const filteredBlockageText = renderFilteredBlockageTransformedText(
+			seedKey,
+			transformedMovement.movement,
+		);
+		if (typeof filteredBlockageText === "string") {
+			movementText = filteredBlockageText;
+		} else {
+			movementText = undefined;
+			movementSuppressedBy = "lake_directional_dedup";
+		}
+	}
+	if (movementPassableExitCount === 8) {
+		movementSuppressedBy = "fully_passable";
+	}
+	const suppressMovementInProse = movementSuppressedBy !== null;
 	sentences.push({
 		slot: "movement_structure",
-		...(typeof transformedMovement.text === "string" && !suppressMovementInProse
-			? { text: transformedMovement.text }
+		...(typeof movementText === "string" && !suppressMovementInProse
+			? { text: movementText }
 			: {}),
 		basicText: movementStructureSentence.text,
 		contributorKeys: {
@@ -1837,9 +1959,7 @@ export function generateRawDescription(
 		},
 		contributors: {
 			emit: !suppressMovementInProse,
-			...(suppressMovementInProse
-				? { suppressedBy: "fully_passable" }
-				: {}),
+			...(movementSuppressedBy ? { suppressedBy: movementSuppressedBy } : {}),
 		},
 		movement: transformedMovement.movement,
 	});
