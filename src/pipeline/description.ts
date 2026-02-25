@@ -1484,21 +1484,25 @@ function renderDerivedLandform(
 			};
 		})
 		.filter((group) => group.emitted !== false);
+	const localDirectionBlocked =
+		local.mode !== "flat" &&
+		local.direction !== null &&
+		input.passability[local.direction as Direction] !== "passable";
 	const localOverlapsNeighbor =
 		local.mode !== "flat" &&
 		local.direction !== null &&
 		emittedNeighborContributions.some(
-			(group) =>
-				group.mode === local.mode &&
-				isMergeCompatibleNeighborBand(
-					group.band,
-					local.band,
-				) &&
-				group.directions.includes(local.direction as Direction),
+			(group) => group.directions.includes(local.direction as Direction),
 		);
-	const localSuppressedBy: "flat_filtered" | "neighbor_overlap" | null =
+	const localSuppressedBy:
+		| "flat_filtered"
+		| "blocked_direction"
+		| "neighbor_overlap"
+		| null =
 		local.mode === "flat"
 			? "flat_filtered"
+			: localDirectionBlocked
+				? "blocked_direction"
 			: localOverlapsNeighbor
 				? "neighbor_overlap"
 				: null;

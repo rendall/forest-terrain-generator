@@ -208,7 +208,13 @@ describe("Phase 1 description pipeline", () => {
 	});
 
 	it("does not use merged where-clause anchor", () => {
-		const result = generateRawDescription(case04, "seed-101");
+		const result = generateRawDescription(
+			{
+				...case04,
+				passability: passabilityFromOpen(DIRS),
+			},
+			"seed-101",
+		);
 
 		const anchor = result.sentences.find(
 			(sentence) => sentence.slot === "landform",
@@ -237,7 +243,13 @@ describe("Phase 1 description pipeline", () => {
 	});
 
 	it("uses landform basicText as landform text output", () => {
-		const result = generateRawDescription(case01, "seed-landform-basic");
+		const result = generateRawDescription(
+			{
+				...case01,
+				passability: passabilityFromOpen(DIRS),
+			},
+			"seed-landform-basic",
+		);
 		const landform = result.sentences.find(
 			(sentence) => sentence.slot === "landform",
 		);
@@ -247,7 +259,23 @@ describe("Phase 1 description pipeline", () => {
 	});
 
 	it("derives landform basicText from slope context templates", () => {
-		const result = generateRawDescription(case04, "seed-landform-derived");
+		const result = generateRawDescription(
+			{
+				...case04,
+				passability: passabilityFromOpen(DIRS),
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0 },
+				},
+			},
+			"seed-landform-derived",
+		);
 		const landform = result.sentences.find(
 			(sentence) => sentence.slot === "landform",
 		);
@@ -339,6 +367,7 @@ describe("Phase 1 description pipeline", () => {
 				landform: "slope",
 				slopeStrength: 0.04,
 				slopeDirection: "W",
+				passability: passabilityFromOpen(DIRS),
 				neighbors: {
 					N: { ...case04.neighbors.N, elevDelta: 0 },
 					NE: { ...case04.neighbors.NE, elevDelta: 0 },
@@ -709,6 +738,69 @@ describe("Phase 1 description pipeline", () => {
 		expect(landform?.contributors?.local?.emitted).toBe(false);
 		expect(landform?.contributors?.local?.suppressedBy).toBe("neighbor_overlap");
 		expect(landform?.basicText).toBe("To the east and southeast, the land rises.");
+	});
+
+	it("suppresses local sentence when overlapping neighbor group differs in intensity", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "slope",
+				slopeStrength: 0.12,
+				slopeDirection: "W",
+				passability: passabilityFromOpen(DIRS),
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0.04 },
+					E: { ...case04.neighbors.E, elevDelta: 0.04 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0 },
+				},
+			},
+			"seed-landform-intensity-mismatch-overlap-suppress",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.contributors?.local?.derived?.band).toBe("steep");
+		expect(landform?.contributors?.local?.emitted).toBe(false);
+		expect(landform?.contributors?.local?.suppressedBy).toBe("neighbor_overlap");
+		expect(landform?.basicText).toBe(
+			"To the northeast and east, the land gently rises.",
+		);
+		expect(landform?.basicText).not.toContain("Here the land");
+	});
+
+	it("suppresses local sentence when local direction is blocked", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "slope",
+				slopeStrength: 0.04,
+				slopeDirection: "NW",
+				passability: passabilityFromOpen(["SW"]),
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0 },
+					SE: { ...case04.neighbors.SE, elevDelta: -0.04 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: -0.12 },
+					W: { ...case04.neighbors.W, elevDelta: 0 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0 },
+				},
+			},
+			"seed-landform-local-blocked",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.contributors?.local?.emitted).toBe(false);
+		expect(landform?.contributors?.local?.suppressedBy).toBe("blocked_direction");
+		expect(landform?.basicText).toBe("To the southwest, the land steeply descends.");
+		expect(landform?.basicText).not.toContain("Here the land");
 	});
 
 	it("preserves ring-order direction sequence for wrap-around merged groups", () => {
