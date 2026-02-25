@@ -6,8 +6,8 @@
 - [x] [description] Create a standalone `landform` sentence object in function `generateRawDescription` in `src/pipeline/description.ts` with `slot`, `basicText`, `contributors`, and `contributorKeys.landform`
 - [x] [description] Create a standalone `biome` sentence object in function `generateRawDescription` in `src/pipeline/description.ts` with `slot`, `basicText`, `contributors`, and `contributorKeys.biome`
 - [x] [description] Stop assigning biome contributor metadata to the `landform` sentence object in function `generateRawDescription` in `src/pipeline/description.ts` (depends on previous two items)
-- [ ] [description] Ensure `landform.basicText` does not reference biome content in phrase selection path `phraseOptionsForLandform` in `src/pipeline/description.ts`
-- [ ] [description] Ensure `biome.basicText` does not reference landform content in phrase selection path `phraseOptionsForBiome` in `src/pipeline/description.ts`
+- [x] [description] Ensure `landform.basicText` does not reference biome content in phrase selection path `phraseOptionsForLandform` in `src/pipeline/description.ts`
+- [x] [description] Ensure `biome.basicText` does not reference landform content in phrase selection path `phraseOptionsForBiome` in `src/pipeline/description.ts`
 
 ## Stage 2 — Transition Output Without Transform Logic
 
