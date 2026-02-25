@@ -1096,6 +1096,44 @@ function classifyLocalSlopeBand(
 	return "none";
 }
 
+interface LocalLandformSentence {
+	text: string;
+	mode: "rise" | "descend" | "flat";
+	direction: Direction | null;
+	band: "flat" | "gentle" | "none" | "steep";
+}
+
+function renderLocalLandformSentence(
+	input: DescriptionTileInput,
+): LocalLandformSentence {
+	const band = classifyLocalSlopeBand(input);
+	if (band === "flat") {
+		return {
+			text: "Here the land is flat.",
+			mode: "flat",
+			direction: null,
+			band,
+		};
+	}
+
+	const riseDirection = oppositeDirection(input.slopeDirection);
+	const riseNeighbor = input.neighbors[riseDirection];
+	const shouldUseDescend =
+		Math.abs(riseNeighbor?.elevDelta ?? 0) < 0.03;
+	const mode: "rise" | "descend" = shouldUseDescend ? "descend" : "rise";
+	const direction = shouldUseDescend ? input.slopeDirection : riseDirection;
+	const verb = mode === "rise" ? "rises" : "descends";
+	const qualifier =
+		band === "gentle" ? "gently " : band === "steep" ? "steeply " : "";
+
+	return {
+		text: `Here the land ${qualifier}${verb} to the ${DIR_LOWER[direction]}.`,
+		mode,
+		direction,
+		band,
+	};
+}
+
 function chooseSlopeBand(
 	slopeStrength: number,
 ): "gentle" | "noticeable" | "steep" | null {

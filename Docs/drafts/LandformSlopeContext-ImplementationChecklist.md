@@ -11,7 +11,7 @@
 - [x] [description] Add helper `oppositeDirection(direction: Direction): Direction` in `src/pipeline/description.ts` using ring index math on the existing Dir8 order
 - [x] [description] Add helper `classifyLocalSlopeBand(input: DescriptionTileInput): "flat" | "gentle" | "none" | "steep"` in `src/pipeline/description.ts` using thresholds: `landform==="flat"` => `flat`, `<0.05` => `gentle`, `>0.1` => `steep`, otherwise `none`
 - [x] [description] Treat `landform === "plain"` as `flat` in `classifyLocalSlopeBand` in `src/pipeline/description.ts` (depends on previous item)
-- [ ] [description] Add helper `renderLocalLandformSentence(input: DescriptionTileInput): { text: string; mode: "rise" | "descend" | "flat"; direction: Direction | null; band: "flat" | "gentle" | "none" | "steep" }` in `src/pipeline/description.ts` (depends on previous two items)
+- [x] [description] Add helper `renderLocalLandformSentence(input: DescriptionTileInput): { text: string; mode: "rise" | "descend" | "flat"; direction: Direction | null; band: "flat" | "gentle" | "none" | "steep" }` in `src/pipeline/description.ts` (depends on previous two items)
   - Apply exception rule: if rise-direction neighbor is `same` (`abs(elevDelta) < 0.03`), render descend wording in downhill direction.
 - [ ] [description] Use fixed local sentence templates in `renderLocalLandformSentence` in `src/pipeline/description.ts`: `Here the land is flat.` or `Here the land ${qualifier}${verb} to the {dir}.` where `qualifier` is `"" | "gently " | "steeply "` and `verb` is `rises|descends` (depends on previous item)
 
