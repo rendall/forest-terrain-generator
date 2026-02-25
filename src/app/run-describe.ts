@@ -505,6 +505,9 @@ export function attachTileDescriptions(
 								if (typeof sentence.basicText === "string") {
 									out.basicText = sentence.basicText;
 								}
+								if (sentence.contributors) {
+									out.contributors = sentence.contributors;
+								}
 									const structuredText =
 										typeof sentence.text === "string"
 											? sentence.text
