@@ -221,9 +221,11 @@ describe("Phase 1 description pipeline", () => {
 		expect(anchor.contributors).toContain("biome");
 		expect(anchor.contributorKeys.landform).toBe(case04.landform);
 		expect(anchor.contributorKeys.biome).toBe(case04.biome);
-		expect(result.sentences.some((sentence) => sentence.slot === "biome")).toBe(
-			false,
-		);
+		const biome = result.sentences.find((sentence) => sentence.slot === "biome");
+		expect(biome).toBeDefined();
+		expect(typeof biome?.basicText).toBe("string");
+		expect(biome?.contributors).toContain("biome");
+		expect(biome?.contributorKeys.biome).toBe(case04.biome);
 	});
 
 	it("does not emit directional sentence slots", () => {
