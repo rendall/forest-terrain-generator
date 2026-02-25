@@ -19,11 +19,11 @@
 
 ## Stage 3 — Ordering, Dedupe, and Cap Behavior
 
-- [ ] [description] Insert `biome` sentence immediately after `landform` sentence in sentence assembly order in function `generateRawDescription` in `src/pipeline/description.ts`
-- [ ] [description] Update dedupe keying to avoid cross-slot collapse between `landform` and `biome` sentences in dedupe loop in function `generateRawDescription` in `src/pipeline/description.ts`
-- [ ] [description] Keep deterministic sentence cap behavior (`slice(0, 4)`) after separate slot insertion in function `generateRawDescription` in `src/pipeline/description.ts`
-- [ ] [description] Preserve prose text assembly so both `landform` and `biome` transformed/baseline `text` values are included in `DescriptionResult.text` in function `generateRawDescription` in `src/pipeline/description.ts`
-- [ ] [description] Preserve exclusion rule for `movement_structure` from top-level prose assembly in function `generateRawDescription` in `src/pipeline/description.ts`
+- [x] [description] Insert `biome` sentence immediately after `landform` sentence in sentence assembly order in function `generateRawDescription` in `src/pipeline/description.ts`
+- [x] [description] Update dedupe keying to avoid cross-slot collapse between `landform` and `biome` sentences in dedupe loop in function `generateRawDescription` in `src/pipeline/description.ts`
+- [x] [description] Keep deterministic sentence cap behavior (`slice(0, 4)`) after separate slot insertion in function `generateRawDescription` in `src/pipeline/description.ts`
+- [x] [description] Preserve prose text assembly so both `landform` and `biome` transformed/baseline `text` values are included in `DescriptionResult.text` in function `generateRawDescription` in `src/pipeline/description.ts`
+- [x] [description] Preserve exclusion rule for `movement_structure` from top-level prose assembly in function `generateRawDescription` in `src/pipeline/description.ts`
 
 ## Stage 4 — Tests (Override Allowed)
 
