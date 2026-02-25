@@ -218,9 +218,9 @@ describe("Phase 1 description pipeline", () => {
 		expect(anchor.text).not.toContain(", where ");
 		expect(typeof anchor.basicText).toBe("string");
 		expect(anchor.contributors).toContain("landform");
-		expect(anchor.contributors).toContain("biome");
 		expect(anchor.contributorKeys.landform).toBe(case04.landform);
-		expect(anchor.contributorKeys.biome).toBe(case04.biome);
+		expect(anchor.contributors).not.toContain("biome");
+		expect(anchor.contributorKeys.biome).toBeUndefined();
 		const biome = result.sentences.find((sentence) => sentence.slot === "biome");
 		expect(biome).toBeDefined();
 		expect(typeof biome?.basicText).toBe("string");
