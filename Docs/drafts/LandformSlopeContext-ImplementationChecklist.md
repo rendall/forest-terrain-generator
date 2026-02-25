@@ -9,7 +9,7 @@
 ## Stage 2: Local Slope Derivation
 
 - [x] [description] Add helper `oppositeDirection(direction: Direction): Direction` in `src/pipeline/description.ts` using ring index math on the existing Dir8 order
-- [ ] [description] Add helper `classifyLocalSlopeBand(input: DescriptionTileInput): "flat" | "gentle" | "none" | "steep"` in `src/pipeline/description.ts` using thresholds: `landform==="flat"` => `flat`, `<0.05` => `gentle`, `>0.1` => `steep`, otherwise `none`
+- [x] [description] Add helper `classifyLocalSlopeBand(input: DescriptionTileInput): "flat" | "gentle" | "none" | "steep"` in `src/pipeline/description.ts` using thresholds: `landform==="flat"` => `flat`, `<0.05` => `gentle`, `>0.1` => `steep`, otherwise `none`
 - [ ] [description] Treat `landform === "plain"` as `flat` in `classifyLocalSlopeBand` in `src/pipeline/description.ts` (depends on previous item)
 - [ ] [description] Add helper `renderLocalLandformSentence(input: DescriptionTileInput): { text: string; mode: "rise" | "descend" | "flat"; direction: Direction | null; band: "flat" | "gentle" | "none" | "steep" }` in `src/pipeline/description.ts` (depends on previous two items)
   - Apply exception rule: if rise-direction neighbor is `same` (`abs(elevDelta) < 0.03`), render descend wording in downhill direction.

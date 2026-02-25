@@ -1081,6 +1081,21 @@ function phraseOptionsForBiome(
 	) as readonly string[];
 }
 
+function classifyLocalSlopeBand(
+	input: DescriptionTileInput,
+): "flat" | "gentle" | "none" | "steep" {
+	if (input.landform === "flat") {
+		return "flat";
+	}
+	if (input.slopeStrength < 0.05) {
+		return "gentle";
+	}
+	if (input.slopeStrength > 0.1) {
+		return "steep";
+	}
+	return "none";
+}
+
 function chooseSlopeBand(
 	slopeStrength: number,
 ): "gentle" | "noticeable" | "steep" | null {
