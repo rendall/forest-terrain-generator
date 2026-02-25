@@ -207,22 +207,25 @@ describe("Phase 1 description pipeline", () => {
 		expect(a).toEqual(b);
 	});
 
-	it("respects sentence cap and merges landform+biome anchor", () => {
-		const result = generateRawDescription(case01, "seed-101");
+	it("respects sentence cap and does not use merged where-clause anchor", () => {
+		const result = generateRawDescription(case04, "seed-101");
 
 		expect(result.sentences.length).toBeLessThanOrEqual(4);
 		const anchor = result.sentences.find(
 			(sentence) => sentence.slot === "landform",
 		);
 		expect(anchor).toBeDefined();
-		expect(anchor.text).toContain(", where ");
-		expect(anchor.contributors).toContain("landform");
-		expect(anchor.contributors).toContain("biome");
-		expect(anchor.contributorKeys.landform).toBe(case01.landform);
-		expect(anchor.contributorKeys.biome).toBe(case01.biome);
-		expect(result.sentences.some((sentence) => sentence.slot === "biome")).toBe(
-			false,
-		);
+		expect(anchor.text).not.toContain(", where ");
+		expect(typeof anchor.basicText).toBe("string");
+		expect(anchor.contributors).toBeUndefined();
+		expect(anchor.contributorKeys.landform).toBe(case04.landform);
+		expect(anchor.contributorKeys.biome).toBeUndefined();
+		const biome = result.sentences.find((sentence) => sentence.slot === "biome");
+		expect(biome).toBeDefined();
+		expect(typeof biome?.basicText).toBe("string");
+		expect(biome?.text).toBe(biome?.basicText);
+		expect(biome?.contributors).toBeUndefined();
+		expect(biome?.contributorKeys.biome).toBe(case04.biome);
 	});
 
 	it("does not emit directional sentence slots", () => {
@@ -232,6 +235,16 @@ describe("Phase 1 description pipeline", () => {
 		);
 
 		expect(directionalSentences.length).toBe(0);
+	});
+
+	it("uses landform basicText as landform text output", () => {
+		const result = generateRawDescription(case01, "seed-landform-basic");
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform).toBeDefined();
+		expect(typeof landform?.basicText).toBe("string");
+		expect(landform?.text).toBe(landform?.basicText);
 	});
 
 	it("emits followable sentence and places it immediately before movement prose", () => {
@@ -267,7 +280,8 @@ describe("Phase 1 description pipeline", () => {
 			"A stream flows from southwest to the north. Lakeshore surrounds much of this area.",
 		);
 		expect(movement?.text).toBeDefined();
-		expect(result.text).toContain(`${followable?.text} ${movement?.text}`);
+		expect(result.text).toContain(followable?.text);
+		expect(result.text).not.toContain(movement?.text);
 		const followableIndex = result.sentences.findIndex(
 			(sentence) => sentence.slot === "followable",
 		);
@@ -310,14 +324,20 @@ describe("Phase 1 description pipeline", () => {
 		);
 		expect(movementSentences).toHaveLength(1);
 		const movement = movementSentences[0];
-		expect(movement?.contributors).toEqual(["movement_structure"]);
+		expect(movement?.contributors).toBeUndefined();
 		expect(typeof movement?.contributorKeys.movement_structure).toBe("string");
 		expect(Array.isArray(movement?.movement)).toBe(true);
 		expect(movement?.text.endsWith(".")).toBe(true);
 		expect(movement?.text.includes("{openDirs}")).toBe(false);
 		expect(movement?.text.includes("{blockedDirs}")).toBe(false);
-		expect(result.sentences[0]?.slot).toBe("landform");
-		expect(result.sentences[1]?.slot).toBe("movement_structure");
+		const landformIndex = result.sentences.findIndex(
+			(sentence) => sentence.slot === "landform",
+		);
+		const movementIndex = result.sentences.findIndex(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		expect(landformIndex).toBeGreaterThanOrEqual(0);
+		expect(movementIndex).toBeGreaterThan(landformIndex);
 		const lowered = movement.text.toLowerCase();
 		expect(lowered).not.toContain("visibility");
 		expect(lowered).not.toContain("view");
@@ -438,7 +458,7 @@ describe("Phase 1 description pipeline", () => {
 		);
 	});
 
-	it("attaches blocked_by for blockage runs when eligible phrases exist", () => {
+	it("attaches blockedBy for blockage runs when eligible phrases exist", () => {
 		const result = generateRawDescription(
 			{
 				...case04,
@@ -463,9 +483,9 @@ describe("Phase 1 description pipeline", () => {
 			(run) => run.type === "blockage",
 		);
 		expect(blockageRuns?.length).toBeGreaterThan(0);
-		expect(blockageRuns?.[0]?.blocked_by).toBeDefined();
+		expect(blockageRuns?.[0]?.blockedBy).toBeDefined();
 		expect((movement?.text ?? "").toLowerCase()).toContain(
-			(blockageRuns?.[0]?.blocked_by ?? "").toLowerCase(),
+			(blockageRuns?.[0]?.blockedBy ?? "").toLowerCase(),
 		);
 	});
 
@@ -499,7 +519,7 @@ describe("Phase 1 description pipeline", () => {
 		);
 		const blockageRun = movement?.movement?.find((run) => run.type === "blockage");
 		expect(blockageRun).toBeDefined();
-		expect(LAKE_WATER_PHRASES).toContain(blockageRun?.blocked_by);
+		expect(LAKE_WATER_PHRASES).toContain(blockageRun?.blockedBy);
 	});
 
 	it("reuses one lake phrase across multiple lake blockage runs in a tile", () => {
@@ -533,8 +553,8 @@ describe("Phase 1 description pipeline", () => {
 			(run) => run.type === "blockage",
 		);
 		expect(blockageRuns).toHaveLength(2);
-		expect(blockageRuns[0]?.blocked_by).toBeDefined();
-		expect(blockageRuns[0]?.blocked_by).toBe(blockageRuns[1]?.blocked_by);
+		expect(blockageRuns[0]?.blockedBy).toBeDefined();
+		expect(blockageRuns[0]?.blockedBy).toBe(blockageRuns[1]?.blockedBy);
 		expect(movement?.text).toContain("southeast and west");
 	});
 
@@ -568,7 +588,7 @@ describe("Phase 1 description pipeline", () => {
 			(sentence) => sentence.slot === "movement_structure",
 		);
 		const blockageRun = movement?.movement?.find((run) => run.type === "blockage");
-		expect(blockageRun?.blocked_by).toBeDefined();
+		expect(blockageRun?.blockedBy).toBeDefined();
 
 		const expectedNoun =
 			TRAVERSAL_NOUNS[
@@ -580,7 +600,7 @@ describe("Phase 1 description pipeline", () => {
 					LAKE_WATER_PHRASES.length
 			];
 
-		expect(blockageRun?.blocked_by).toBe(expectedPhrase);
+		expect(blockageRun?.blockedBy).toBe(expectedPhrase);
 		expect(movement?.text?.toLowerCase()).toContain(`the ${expectedNoun} `);
 	});
 
@@ -623,7 +643,7 @@ describe("Phase 1 description pipeline", () => {
 		expect(movement?.text).toBeUndefined();
 		expect(typeof movement?.basicText).toBe("string");
 		const anyBlockedBy = movement?.movement?.some(
-			(run) => run.type === "blockage" && typeof run.blocked_by === "string",
+			(run) => run.type === "blockage" && typeof run.blockedBy === "string",
 		);
 		expect(anyBlockedBy).toBe(false);
 	});
@@ -644,7 +664,7 @@ describe("Phase 1 description pipeline", () => {
 		);
 	});
 
-	it("uses fixed lake anchor text without obstacle merge and lake-aware movement wording", () => {
+	it("keeps standalone landform text and lake-aware movement wording", () => {
 		const result = generateRawDescription(
 			{
 				...case04,
@@ -668,8 +688,8 @@ describe("Phase 1 description pipeline", () => {
 		);
 
 		const landform = result.sentences.find((sentence) => sentence.slot === "landform");
-		expect(landform?.text).toBe("This is lake surface.");
-		expect(landform?.contributors).toEqual(["landform", "biome"]);
+		expect(landform?.text).toBe(landform?.basicText);
+		expect(landform?.contributors).toBeUndefined();
 		expect(landform?.contributorKeys.obstacle).toBeUndefined();
 		const movement = result.sentences.find(
 			(sentence) => sentence.slot === "movement_structure",
@@ -697,5 +717,21 @@ describe("Phase 1 description pipeline", () => {
 		expect(
 			result.sentences.some((sentence) => sentence.slot === "visibility"),
 		).toBe(false);
+	});
+
+	it("keeps landform then biome ordering under capped output", () => {
+		const result = generateRawDescription(case01, "seed-cap-order");
+		expect(result.sentences.length).toBeLessThanOrEqual(4);
+		expect(result.sentences[0]?.slot).toBe("landform");
+		expect(result.sentences[1]?.slot).toBe("biome");
+	});
+
+	it("excludes movement_structure text from top-level prose output", () => {
+		const result = generateRawDescription(case04, "seed-prose-exclude-move");
+		const movement = result.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		expect(typeof movement?.text).toBe("string");
+		expect(result.text).not.toContain(movement?.text ?? "");
 	});
 });

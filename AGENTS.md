@@ -108,3 +108,5 @@ Follow the scaffold policy in `docs/drafts/ImplementationPlan.md` for module bou
 
 * Use `docs/normative/ForestTerrainGeneration.md` for terrain-generation behavior requirements.
 * Treat informative appendix guidance as optional unless explicitly adopted in normative policy.
+* Use `docs/normative/checklist.md` for checklist authoring requirements.
+* Use `docs/normative/implementation.md` for checklist execution workflow requirements.

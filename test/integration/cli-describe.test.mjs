@@ -125,8 +125,8 @@ describe("describe CLI", () => {
 			expect(first.descriptionStructured.text).toBeUndefined();
 		expect(Array.isArray(first.descriptionStructured.sentences)).toBe(true);
 		expect(
-			Array.isArray(first.descriptionStructured.sentences[0].contributors),
-		).toBe(true);
+			first.descriptionStructured.sentences[0].contributors,
+		).toBeUndefined();
 		expect(
 			typeof first.descriptionStructured.sentences[0].contributorKeys,
 		).toBe("object");
@@ -137,8 +137,20 @@ describe("describe CLI", () => {
 			const movementSentence = first.descriptionStructured.sentences.find(
 				(sentence) => sentence.slot === "movement_structure",
 			);
+			const landformSentence = first.descriptionStructured.sentences.find(
+				(sentence) => sentence.slot === "landform",
+			);
+			const biomeSentence = first.descriptionStructured.sentences.find(
+				(sentence) => sentence.slot === "biome",
+			);
+			expect(landformSentence).toBeDefined();
+			expect(typeof landformSentence.basicText).toBe("string");
+			expect(landformSentence.text).toBe(landformSentence.basicText);
+			expect(biomeSentence).toBeDefined();
+			expect(typeof biomeSentence.basicText).toBe("string");
+			expect(biomeSentence.text).toBe(biomeSentence.basicText);
 			if (movementSentence) {
-				expect(typeof movementSentence.basic_text).toBe("string");
+				expect(typeof movementSentence.basicText).toBe("string");
 				expect(typeof movementSentence.text).toBe("string");
 				expect(Array.isArray(movementSentence.movement)).toBe(true);
 				expect(["passage", "blockage"]).toContain(

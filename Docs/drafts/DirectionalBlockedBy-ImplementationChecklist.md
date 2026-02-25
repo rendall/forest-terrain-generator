@@ -1,4 +1,4 @@
-# Directional `blocked_by` Implementation Checklist
+# Directional `blockedBy` Implementation Checklist
 
 Status: Draft execution checklist for disciplined implementation of cause-aware passage text.
 
@@ -6,9 +6,9 @@ Primary reference: `docs/drafts/DirectionalBlockedBy-Proposal.md`
 
 ## 0) Scope lock
 
-- [ ] Confirm this phase only adds `blocked_by` machinery to `movement_structure` and does not rewrite unrelated slots.
-- [ ] Confirm `movement_structure.basic_text` remains the baseline sentence.
-- [ ] Confirm `movement_structure.text` is transformed output (with fallback to `basic_text`).
+- [ ] Confirm this phase only adds `blockedBy` machinery to `movement_structure` and does not rewrite unrelated slots.
+- [ ] Confirm `movement_structure.basicText` remains the baseline sentence.
+- [ ] Confirm `movement_structure.text` is transformed output (with fallback to `basicText`).
 - [ ] Confirm no terrain-generation/spec changes are included in this phase.
 
 ## 1) Data model updates
@@ -32,13 +32,13 @@ Target file: `src/pipeline/description.ts`
   - `dense_trees`
   - `lichen_slick_rock`
   - `bramble_thicket`
-- [ ] Extend `MovementRun` to allow `blocked_by?: BlockedByReason` on runs with `type: "blockage"`.
+- [ ] Extend `MovementRun` to allow `blockedBy?: BlockedByReason` on runs with `type: "blockage"`.
 - [ ] Keep `DescriptionSentence.basicText` for baseline movement sentence.
 - [ ] Keep `DescriptionSentence.text` for transformed sentence output.
 
 Target file: `src/app/run-describe.ts`
 
-- [ ] Ensure structured mapping includes `movement[].blocked_by` when present.
+- [ ] Ensure structured mapping includes `movement[].blockedBy` when present.
 - [ ] Keep sentence-level fallback rule:
   - `out.text = sentence.text ?? sentence.basicText`.
 
@@ -129,14 +129,14 @@ Target file: `src/pipeline/description.ts`
   - pipeline: candidates -> eligible -> highest score -> precedence tie-break.
 - [ ] Explicit fall-through behavior:
   - If reason gate fails, do not select it.
-  - If no reason survives, keep `blocked_by` undefined and use generic blockage sentence.
+  - If no reason survives, keep `blockedBy` undefined and use generic blockage sentence.
 
 ## 6) Attach selected reason to movement runs
 
 Target file: `src/pipeline/description.ts`
 
 - [ ] In movement rendering path, after run extraction:
-  - for each blockage run, compute `blocked_by`.
+  - for each blockage run, compute `blockedBy`.
   - persist into `movement` array object.
 - [ ] Keep passage runs unchanged.
 - [ ] Keep adjacency run order stable (ring/canonical order as currently implemented).
@@ -152,9 +152,9 @@ Target file: `src/pipeline/description.ts`
   - For `lake` templates, prefer `lake` / `lake water` wording over `open water`.
 - [ ] Implement formatter `formatDirectionsForClause(directions)`.
 - [ ] Implement transformed movement text generator:
-  - Uses blockage-run reason templates where `blocked_by` exists.
+  - Uses blockage-run reason templates where `blockedBy` exists.
   - Chooses one template via deterministic seeded selection.
-  - Falls back to generic blockage wording when `blocked_by` missing.
+  - Falls back to generic blockage wording when `blockedBy` missing.
   - Leaves passage phrasing logic deterministic.
 - [ ] Write transformed sentence into `sentence.text`.
 - [ ] Preserve baseline in `sentence.basicText`.
@@ -163,10 +163,10 @@ Target file: `src/pipeline/description.ts`
 
 Target file: `src/app/run-describe.ts`
 
-- [ ] Ensure each structured movement run includes `blocked_by` when present.
+- [ ] Ensure each structured movement run includes `blockedBy` when present.
 - [ ] Ensure movement sentence emits:
-  - `basic_text` (always for movement_structure)
-  - `text` (transformed if available, fallback to basic_text)
+  - `basicText` (always for movement_structure)
+  - `text` (transformed if available, fallback to basicText)
 - [ ] Keep existing fields unchanged:
   - `slot`, `contributors`, `contributorKeys`, `movement`.
 
@@ -174,13 +174,13 @@ Target file: `src/app/run-describe.ts`
 
 Target file: `test/unit/phase6-description-phase1.test.mjs` (or new focused movement reason test file)
 
-- [ ] Add test: blockage run with lake context selects `blocked_by = lake`.
+- [ ] Add test: blockage run with lake context selects `blockedBy = lake`.
 - [ ] Add test: bog biome + high saturation selects `bog_deep_water`.
 - [ ] Add test: spruce_swamp + high saturation selects `spruce_swamp_deep_water`.
 - [ ] Add test: high saturation without bog/swamp selects `deep_water`.
 - [ ] Add test: stream context below strength threshold falls through to next eligible reason.
 - [ ] Add test: tie score resolves by precedence deterministically.
-- [ ] Add test: when no eligible reasons, `blocked_by` omitted and generic blocked text used.
+- [ ] Add test: when no eligible reasons, `blockedBy` omitted and generic blocked text used.
 - [ ] Add test: `movement_structure` has both `basicText` and transformed `text`.
 - [ ] Add test: transformed `text` differs from `basicText` when reason template applied.
 - [ ] Add test: template selection is deterministic for identical input+seed.
@@ -191,9 +191,9 @@ Target files:
 - `test/unit/describe-attach.test.mjs`
 - `test/integration/cli-describe.test.mjs`
 
-- [ ] Assert structured movement run objects may include `blocked_by`.
-- [ ] Assert movement sentence output includes `basic_text`.
-- [ ] Assert `text` exists and equals transformed output (or fallback to `basic_text`).
+- [ ] Assert structured movement run objects may include `blockedBy`.
+- [ ] Assert movement sentence output includes `basicText`.
+- [ ] Assert `text` exists and equals transformed output (or fallback to `basicText`).
 - [ ] Add regression fixture with known reason to lock exact sentence template output.
 
 ## 11) Determinism and safety checks
@@ -211,7 +211,7 @@ Target files:
 
 ## 13) Rollout sequence (recommended)
 
-- [ ] Step 1: Implement reason typing + run-level `blocked_by` attachment only.
+- [ ] Step 1: Implement reason typing + run-level `blockedBy` attachment only.
 - [ ] Step 2: Add candidate gating/scoring/tie-break logic.
 - [ ] Step 3: Add transformed reason templates to `movement_structure.text`.
 - [ ] Step 4: Update structured mapper and tests.
@@ -220,8 +220,8 @@ Target files:
 
 ## 14) Acceptance criteria
 
-- [ ] Every blockage run can carry at most one selected `blocked_by`.
-- [ ] `movement_structure.basic_text` always exists.
+- [ ] Every blockage run can carry at most one selected `blockedBy`.
+- [ ] `movement_structure.basicText` always exists.
 - [ ] `movement_structure.text` exists (transformed or fallback).
 - [ ] Biome-specific deep-water fall-through behaves exactly:
   - `bog_deep_water` -> `spruce_swamp_deep_water` -> `deep_water`.

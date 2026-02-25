@@ -38,7 +38,7 @@ For each blockage run:
 4. Collect phrases from passing rules by appending each rule's phrase array to a single pool.
 5. Keep duplicates in the pool (multiset behavior; no dedupe).
 6. Deterministically pick one phrase from the collected pool.
-7. Store that picked phrase directly on the run as `blocked_by` and render it directly in text.
+7. Store that picked phrase directly on the run as `blockedBy` and render it directly in text.
 
 No reason-key-to-template transformation stage is required in this proposal.
 
@@ -99,13 +99,13 @@ When `opening` is selected, sentence templates should use appropriate article/gr
    - `spruce_swamp` => `through the swamp`
    - fallback => `through the trees`
 2. For blockage runs, use selected phrase directly:
-   - `The {noun} to the {dirs} is blocked by {blocked_by_phrase}.`
+   - `The {noun} to the {dirs} is blocked by {blockedBy_phrase}.`
 3. Multiple blockage runs render as deterministic joined clauses.
 4. Lake override applies to the whole blockage run, not per-direction wording.
 5. Fallback is all-or-nothing for the movement sentence:
    - if any blockage run cannot produce an eligible phrase pool, do not emit partial transformed blockage text.
    - fall back the whole `movement_structure.text` to `basicText`.
-   - clear `blocked_by` on all runs for that movement sentence (no partial structured attribution when fallback triggers).
+   - clear `blockedBy` on all runs for that movement sentence (no partial structured attribution when fallback triggers).
 
 ## Proposed structured shape
 
@@ -115,11 +115,11 @@ No schema expansion required beyond existing `movement[]` run objects. Keep run-
 {
   "type": "blockage",
   "directions": ["N", "W", "E"],
-  "blocked_by": "a stand of trees"
+  "blockedBy": "a stand of trees"
 }
 ```
 
-`blocked_by` here is the selected phrase string, not a reason key.
+`blockedBy` here is the selected phrase string, not a reason key.
 
 ## Rationale
 
@@ -149,7 +149,7 @@ This appendix defines the exact v1 catalog to implement for fast movement phrase
 3. If Rule 1 does not pass, evaluate Rules 2..N and append phrases from passing rules.
 4. Duplicates are preserved (no dedupe).
 5. If any blockage run's final eligible pool is empty, use whole-sentence `basicText` fallback.
-6. On whole-sentence fallback, `blocked_by` is omitted on all runs for that sentence.
+6. On whole-sentence fallback, `blockedBy` is omitted on all runs for that sentence.
 
 Rule 1:
 

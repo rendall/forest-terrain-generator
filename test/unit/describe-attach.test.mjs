@@ -189,7 +189,7 @@ describe("describe attachment", () => {
 		expect(tileD.descriptionStructured.adjacency).toEqual({});
 	});
 
-	it("adds adjacency.streamflow only when stream is present in adjacency", () => {
+	it("adds adjacency.streamFlow only when stream is present in adjacency", () => {
 		const a = makeValidTile(0, 0);
 		const b = makeValidTile(1, 0);
 		const c = makeValidTile(0, 1);
@@ -212,11 +212,27 @@ describe("describe attachment", () => {
 		expect(tileA.descriptionStructured).toBeDefined();
 		expect(tileA.descriptionStructured.adjacency).toEqual({
 			stream: ["E"],
-			streamflow: "NE",
+			streamFlow: "NE",
 		});
 
 		const tileC = out.tiles.find((tile) => tile.x === 0 && tile.y === 1);
 		expect(tileC.descriptionStructured).toBeDefined();
-		expect(tileC.descriptionStructured.adjacency.streamflow).toBeUndefined();
+		expect(tileC.descriptionStructured.adjacency.streamFlow).toBeUndefined();
+	});
+
+	it("uses sentence.text ?? sentence.basicText fallback in structured mapping", () => {
+		const envelope = {
+			meta: { specVersion: "forest-terrain-v1" },
+			tiles: [makeValidTile(0, 0)],
+		};
+		const out = attachTileDescriptions(envelope, true);
+		const tile = out.tiles[0];
+		expect(tile.descriptionStructured).toBeDefined();
+		const movement = tile.descriptionStructured.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		expect(movement).toBeDefined();
+		expect(typeof movement.basicText).toBe("string");
+		expect(movement.text).toBe(movement.basicText);
 	});
 });

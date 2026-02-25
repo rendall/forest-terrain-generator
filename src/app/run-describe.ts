@@ -493,24 +493,21 @@ export function attachTileDescriptions(
 						Object.prototype.hasOwnProperty.call(adjacencyByToken, "stream") &&
 						signals.flowDirection !== null
 					) {
-						adjacency.streamflow = signals.flowDirection;
+						adjacency.streamFlow = signals.flowDirection;
 					}
 
 						outputTile.descriptionStructured = {
 							sentences: description.sentences.map((sentence) => {
 								const out: JsonObject = {
 									slot: sentence.slot,
-									contributors: [...sentence.contributors],
 									contributorKeys: { ...sentence.contributorKeys },
 								};
 								if (typeof sentence.basicText === "string") {
-									out.basic_text = sentence.basicText;
+									out.basicText = sentence.basicText;
 								}
 									const structuredText =
 										typeof sentence.text === "string"
 											? sentence.text
-											: sentence.slot === "movement_structure"
-												? ""
 											: typeof sentence.basicText === "string"
 												? sentence.basicText
 												: null;
@@ -522,8 +519,8 @@ export function attachTileDescriptions(
 										type: run.type,
 										directions: [...run.directions],
 										...(run.type === "blockage" &&
-										typeof run.blocked_by === "string"
-											? { blocked_by: run.blocked_by }
+										typeof run.blockedBy === "string"
+											? { blockedBy: run.blockedBy }
 											: {}),
 									}));
 								}

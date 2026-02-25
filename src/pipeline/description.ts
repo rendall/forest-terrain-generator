@@ -84,7 +84,7 @@ export interface PassageRun {
 export interface BlockageRun {
 	type: "blockage";
 	directions: Direction[];
-	blocked_by?: string;
+	blockedBy?: string;
 }
 
 export type MovementRun = PassageRun | BlockageRun;
@@ -218,7 +218,7 @@ function cloneMovementRun(run: MovementRun): MovementRun {
 	return {
 		type: "blockage",
 		directions: [...run.directions],
-		...(typeof run.blocked_by === "string" ? { blocked_by: run.blocked_by } : {}),
+		...(typeof run.blockedBy === "string" ? { blockedBy: run.blockedBy } : {}),
 	};
 }
 
@@ -373,7 +373,7 @@ function renderTransformedMovementStructure(
 		const ctx = buildBlockageRunContext(input, run);
 		const eligiblePhrases = eligibleBlockedPhrasesForRun(ctx);
 		if (eligiblePhrases.length === 0) {
-			// Whole-sentence fallback: omit transformed text and all blocked_by fields.
+			// Whole-sentence fallback: omit transformed text and all blockedBy fields.
 			return { movement: movementRuns.map((entry) => cloneMovementRun(entry)) };
 		}
 		const lakeRule = BLOCK_RULES[0];
@@ -403,7 +403,7 @@ function renderTransformedMovementStructure(
 		transformedRuns.push({
 			type: "blockage",
 			directions: [...run.directions],
-			blocked_by: selection?.phrase,
+			blockedBy: selection?.phrase,
 		});
 	}
 
@@ -426,12 +426,9 @@ export interface DescriptionSentence {
 	| "directional";
 	text?: string;
 	basicText?: string;
-	contributors: DescriptionSentenceContributor[];
-	contributorKeys: Partial<Record<DescriptionSentenceContributor, string>>;
+	contributorKeys: Partial<Record<DescriptionSentence["slot"], string>>;
 	movement?: MovementRun[];
 }
-
-export type DescriptionSentenceContributor = DescriptionSentence["slot"];
 
 export interface DescriptionResult {
 	sentences: DescriptionSentence[];
@@ -1004,7 +1001,7 @@ function renderBlockageText(blockages: readonly BlockageRun[]): string {
  * - If number of open exits are 5..8: describe each blockage arc.
  *
  * Returned `movement` always contains the full ring run breakdown used by structured output.
- * Returned `text` is the baseline sentence (later exposed as `basic_text` in structured output).
+ * Returned `text` is the baseline sentence (later exposed as `basicText` in structured output).
  */
 function renderMovementStructureSentence(
 	input: DescriptionTileInput,
@@ -1343,12 +1340,6 @@ function mergeAsClause(
 	return `${baseCore}, ${joiner} ${clauseCore}.`;
 }
 
-function uniqueContributors(
-	contributors: readonly DescriptionSentenceContributor[],
-): DescriptionSentenceContributor[] {
-	return [...new Set(contributors)];
-}
-
 function directionalMentionsWater(text: string): boolean {
 	return /\b(water|stream|lake)\b/i.test(text);
 }
@@ -1378,18 +1369,13 @@ export function generateRawDescription(
 	let anchorSentence =
 		input.biome === "lake"
 			? "This is lake surface."
-			: mergeAsClause(landformSentence, biomeSentence, "where");
+			: landformSentence;
 	let hydrologyMerged = false;
 	let obstacleMerged = false;
-	const anchorContributors: DescriptionSentenceContributor[] = [
-		"landform",
-		"biome",
-	];
 	const anchorContributorKeys: Partial<
-		Record<DescriptionSentenceContributor, string>
+		Record<DescriptionSentence["slot"], string>
 	> = {
 		landform: input.landform,
-		biome: input.biome,
 	};
 
 	if (shouldMentionWater(input)) {
@@ -1415,7 +1401,6 @@ export function generateRawDescription(
 	) {
 		anchorSentence = mergeAsClause(anchorSentence, hydrologySentence, "where");
 		hydrologyMerged = true;
-		anchorContributors.push("hydrology");
 		anchorContributorKeys.hydrology = "standing_water";
 	}
 
@@ -1429,16 +1414,21 @@ export function generateRawDescription(
 		anchorSentence = mergeAsClause(anchorSentence, obstacleSentence, "and");
 		obstacleMerged = true;
 		if (chosenObstacle) {
-			anchorContributors.push("obstacle");
 			anchorContributorKeys.obstacle = chosenObstacle;
 		}
 	}
 
 	sentences.push({
 		slot: "landform",
-		text: anchorSentence,
-		contributors: uniqueContributors(anchorContributors),
+		basicText: landformSentence,
+		text: landformSentence,
 		contributorKeys: anchorContributorKeys,
+	});
+	sentences.push({
+		slot: "biome",
+		basicText: biomeSentence,
+		text: biomeSentence,
+		contributorKeys: { biome: input.biome },
 	});
 
 	const followableSentence = renderFollowableSentence(input);
@@ -1446,7 +1436,6 @@ export function generateRawDescription(
 		sentences.push({
 			slot: "followable",
 			text: followableSentence,
-			contributors: ["followable"],
 			contributorKeys: { followable: "present" },
 		});
 	}
@@ -1463,7 +1452,6 @@ export function generateRawDescription(
 			? { text: transformedMovement.text }
 			: {}),
 		basicText: movementStructureSentence.text,
-		contributors: ["movement_structure"],
 		contributorKeys: {
 			movement_structure:
 				countPassableExits(input.passability) > 4 ? "blocked_bias" : "passage_bias",
@@ -1478,7 +1466,6 @@ export function generateRawDescription(
 		sentences.push({
 			slot: "slope",
 			text: slopeSentence,
-			contributors: ["slope"],
 			contributorKeys: { slope: input.slopeDirection },
 		});
 	}
@@ -1487,7 +1474,6 @@ export function generateRawDescription(
 		sentences.push({
 			slot: "hydrology",
 			text: hydrologySentence,
-			contributors: ["hydrology"],
 			contributorKeys: { hydrology: "standing_water" },
 		});
 		hydrologyMerged = true;
@@ -1497,7 +1483,6 @@ export function generateRawDescription(
 		sentences.push({
 			slot: "obstacle",
 			text: obstacleSentence,
-			contributors: ["obstacle"],
 			contributorKeys: { obstacle: chosenObstacle ?? "unknown" },
 		});
 	}
@@ -1508,7 +1493,6 @@ export function generateRawDescription(
 		if (typeof sentence.text !== "string") {
 			deduped.push({
 				slot: sentence.slot,
-				contributors: sentence.contributors,
 				contributorKeys: sentence.contributorKeys,
 				...(typeof sentence.basicText === "string"
 					? { basicText: sanitizeSentence(sentence.basicText) }
@@ -1526,14 +1510,10 @@ export function generateRawDescription(
 		if (text.length === 0) {
 			continue;
 		}
-		const key = text.toLowerCase();
+		const key = `${sentence.slot}:${text.toLowerCase()}`;
 		const existingIndex = seen.get(key);
 		if (existingIndex !== undefined) {
 			const existing = deduped[existingIndex] as DescriptionSentence;
-			existing.contributors = uniqueContributors([
-				...existing.contributors,
-				...sentence.contributors,
-			]);
 			existing.contributorKeys = {
 				...existing.contributorKeys,
 				...sentence.contributorKeys,
@@ -1550,7 +1530,6 @@ export function generateRawDescription(
 			...(typeof sentence.basicText === "string"
 				? { basicText: sanitizeSentence(sentence.basicText) }
 				: {}),
-			contributors: sentence.contributors,
 			contributorKeys: sentence.contributorKeys,
 			...(sentence.movement
 				? {
@@ -1577,15 +1556,6 @@ export function generateRawDescription(
 	);
 	if (typeof followableForProse?.text === "string") {
 		proseParts.push(followableForProse.text);
-	}
-	const movementSentence = capped.find(
-		(sentence) =>
-			sentence.slot === "movement_structure" &&
-			typeof sentence.text === "string" &&
-			sanitizeSentence(sentence.text).length > 0,
-	);
-	if (typeof movementSentence?.text === "string") {
-		proseParts.push(movementSentence.text);
 	}
 	const proseText = proseParts.join(" ");
 
