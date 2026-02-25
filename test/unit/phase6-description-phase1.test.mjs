@@ -237,6 +237,16 @@ describe("Phase 1 description pipeline", () => {
 		expect(directionalSentences.length).toBe(0);
 	});
 
+	it("uses landform basicText as landform text output", () => {
+		const result = generateRawDescription(case01, "seed-landform-basic");
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform).toBeDefined();
+		expect(typeof landform?.basicText).toBe("string");
+		expect(landform?.text).toBe(landform?.basicText);
+	});
+
 	it("emits followable sentence and places it immediately before movement prose", () => {
 		const result = generateRawDescription(
 			{
