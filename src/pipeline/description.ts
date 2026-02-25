@@ -1440,6 +1440,7 @@ export function generateRawDescription(
 	sentences.push({
 		slot: "biome",
 		basicText: biomeSentence,
+		text: biomeSentence,
 		contributors: ["biome"],
 		contributorKeys: { biome: input.biome },
 	});

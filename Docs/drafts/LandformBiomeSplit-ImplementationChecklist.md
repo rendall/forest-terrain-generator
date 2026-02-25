@@ -12,7 +12,7 @@
 ## Stage 2 — Transition Output Without Transform Logic
 
 - [x] [description] Set `text` from `basicText` for `landform` sentence objects in function `generateRawDescription` in `src/pipeline/description.ts`
-- [ ] [description] Set `text` from `basicText` for `biome` sentence objects in function `generateRawDescription` in `src/pipeline/description.ts`
+- [x] [description] Set `text` from `basicText` for `biome` sentence objects in function `generateRawDescription` in `src/pipeline/description.ts`
 - [ ] [cli] Keep structured sentence mapping fallback rule `text = sentence.text ?? sentence.basicText` in function `attachTileDescriptions` in `src/app/run-describe.ts`
 - [ ] [cli] Emit `basicText` for both `landform` and `biome` sentence objects in structured output mapping in function `attachTileDescriptions` in `src/app/run-describe.ts`
 - [ ] [description] Preserve existing `movement_structure` `basicText`/`text` handling in function `generateRawDescription` in `src/pipeline/description.ts` (depends on Stage 2 items above)
