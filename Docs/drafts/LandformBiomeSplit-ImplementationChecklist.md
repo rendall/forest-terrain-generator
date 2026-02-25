@@ -27,11 +27,11 @@
 
 ## Stage 4 — Tests (Override Allowed)
 
-- [ ] [tests] Add unit assertion in `test/unit/phase6-description-phase1.test.mjs` that `generateRawDescription` emits separate `landform` and `biome` slots
-- [ ] [tests] Add unit assertion in `test/unit/phase6-description-phase1.test.mjs` that merged `", where "` landform/biome anchor text is no longer emitted
-- [ ] [tests] Add unit assertion in `test/unit/phase6-description-phase1.test.mjs` that both `landform` and `biome` sentences include `basicText`
-- [ ] [tests] Add unit assertion in `test/unit/phase6-description-phase1.test.mjs` that both `landform` and `biome` sentences include `text` fallback from `basicText`
-- [ ] [tests] Add integration assertion in `test/integration/cli-describe.test.mjs` that structured output contains both `landform` and `biome` sentence objects with `basicText`
-- [ ] [tests] Add integration assertion in `test/integration/cli-describe.test.mjs` that `landform.text === landform.basicText` and `biome.text === biome.basicText` in this phase
-- [ ] [tests] Add regression case in `test/unit/phase6-description-phase1.test.mjs` for sentence ordering (`landform` then `biome`) under capped output (depends on Stage 3 ordering item)
-- [ ] [tests] Add regression case in `test/unit/phase6-description-phase1.test.mjs` that `movement_structure` remains excluded from top-level prose text
+- [x] [tests] Add unit assertion in `test/unit/phase6-description-phase1.test.mjs` that `generateRawDescription` emits separate `landform` and `biome` slots
+- [x] [tests] Add unit assertion in `test/unit/phase6-description-phase1.test.mjs` that merged `", where "` landform/biome anchor text is no longer emitted
+- [x] [tests] Add unit assertion in `test/unit/phase6-description-phase1.test.mjs` that both `landform` and `biome` sentences include `basicText`
+- [x] [tests] Add unit assertion in `test/unit/phase6-description-phase1.test.mjs` that both `landform` and `biome` sentences include `text` fallback from `basicText`
+- [x] [tests] Add integration assertion in `test/integration/cli-describe.test.mjs` that structured output contains both `landform` and `biome` sentence objects with `basicText`
+- [x] [tests] Add integration assertion in `test/integration/cli-describe.test.mjs` that `landform.text === landform.basicText` and `biome.text === biome.basicText` in this phase
+- [x] [tests] Add regression case in `test/unit/phase6-description-phase1.test.mjs` for sentence ordering (`landform` then `biome`) under capped output (depends on Stage 3 ordering item)
+- [x] [tests] Add regression case in `test/unit/phase6-description-phase1.test.mjs` that `movement_structure` remains excluded from top-level prose text

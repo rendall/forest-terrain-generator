@@ -1582,15 +1582,6 @@ export function generateRawDescription(
 	if (typeof followableForProse?.text === "string") {
 		proseParts.push(followableForProse.text);
 	}
-	const movementSentence = capped.find(
-		(sentence) =>
-			sentence.slot === "movement_structure" &&
-			typeof sentence.text === "string" &&
-			sanitizeSentence(sentence.text).length > 0,
-	);
-	if (typeof movementSentence?.text === "string") {
-		proseParts.push(movementSentence.text);
-	}
 	const proseText = proseParts.join(" ");
 
 	return {
