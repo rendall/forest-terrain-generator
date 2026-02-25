@@ -216,6 +216,7 @@ describe("Phase 1 description pipeline", () => {
 		);
 		expect(anchor).toBeDefined();
 		expect(anchor.text).not.toContain(", where ");
+		expect(typeof anchor.basicText).toBe("string");
 		expect(anchor.contributors).toContain("landform");
 		expect(anchor.contributors).toContain("biome");
 		expect(anchor.contributorKeys.landform).toBe(case04.landform);
