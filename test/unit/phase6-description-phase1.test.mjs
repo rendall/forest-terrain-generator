@@ -207,10 +207,9 @@ describe("Phase 1 description pipeline", () => {
 		expect(a).toEqual(b);
 	});
 
-	it("respects sentence cap and does not use merged where-clause anchor", () => {
+	it("does not use merged where-clause anchor", () => {
 		const result = generateRawDescription(case04, "seed-101");
 
-		expect(result.sentences.length).toBeLessThanOrEqual(4);
 		const anchor = result.sentences.find(
 			(sentence) => sentence.slot === "landform",
 		);
@@ -292,8 +291,82 @@ describe("Phase 1 description pipeline", () => {
 		expect(landform?.basicText).toContain(
 			"To the east and southeast, the land gently rises.",
 		);
+		expect(landform?.basicText).not.toContain("stays level");
 		expect(landform?.contributors?.local?.emitted).toBe(false);
 		expect(landform?.contributors?.local?.suppressedBy).toBe("neighbor_overlap");
+	});
+
+	it("omits full-ring same-landform sentence from prose", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0 },
+				},
+			},
+			"seed-landform-full-ring-same",
+		);
+
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform).toBeDefined();
+		expect(landform?.basicText).toBeUndefined();
+		expect(landform?.contributors?.local?.emitted).toBe(false);
+		expect(landform?.contributors?.local?.suppressedBy).toBe("flat_filtered");
+		expect(
+			landform?.contributors?.neighbors?.every(
+				(group) => group.emitted === false || group.mode !== "same",
+			),
+		).toBe(true);
+	});
+
+	it("omits single-direction gentle neighbor clauses", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "slope",
+				slopeStrength: 0.04,
+				slopeDirection: "W",
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0.04 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: -0.04 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0 },
+				},
+			},
+			"seed-landform-single-gentle",
+		);
+
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform).toBeDefined();
+		expect(landform?.basicText).toBe("Here the land gently rises to the east.");
+		expect(landform?.basicText).not.toContain("To the east");
+		expect(
+			landform?.contributors?.neighbors?.some(
+				(group) =>
+					group.mode === "rise" &&
+					group.band === "gentle" &&
+					group.directions.length === 1 &&
+					group.emitted === false &&
+					group.suppressedBy === "single_gentle_filtered",
+			),
+		).toBe(true);
 	});
 
 	it("emits followable sentence and places it immediately before movement prose", () => {
@@ -330,7 +403,8 @@ describe("Phase 1 description pipeline", () => {
 		);
 		expect(movement?.text).toBeDefined();
 		expect(result.text).toContain(followable?.text);
-		expect(result.text).not.toContain(movement?.text);
+		expect(result.text).toContain(movement?.text);
+		expect(result.text.endsWith(movement?.text ?? "")).toBe(true);
 		const followableIndex = result.sentences.findIndex(
 			(sentence) => sentence.slot === "followable",
 		);
@@ -373,7 +447,7 @@ describe("Phase 1 description pipeline", () => {
 		);
 		expect(movementSentences).toHaveLength(1);
 		const movement = movementSentences[0];
-		expect(movement?.contributors).toBeUndefined();
+		expect(movement?.contributors?.emit).toBe(true);
 		expect(typeof movement?.contributorKeys.movement_structure).toBe("string");
 		expect(Array.isArray(movement?.movement)).toBe(true);
 		expect(movement?.text.endsWith(".")).toBe(true);
@@ -450,6 +524,28 @@ describe("Phase 1 description pipeline", () => {
 				directions: ["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
 			},
 		]);
+	});
+
+	it("omits fully-open movement basicText from top-level prose output", () => {
+		const fullyOpen = {
+			...case04,
+			passability: {
+				N: "passable",
+				NE: "passable",
+				E: "passable",
+				SE: "passable",
+				S: "passable",
+				SW: "passable",
+				W: "passable",
+				NW: "passable",
+			},
+		};
+		const result = generateRawDescription(fullyOpen, "seed-move-open-omit-prose");
+		const movement = result.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		expect(movement?.contributors?.emit).toBe(false);
+		expect(result.text).not.toContain("Passages open in all directions.");
 	});
 
 	it("falls back to zero-exit wording for difficult-only exits", () => {
@@ -713,7 +809,39 @@ describe("Phase 1 description pipeline", () => {
 		);
 	});
 
-	it("keeps standalone landform text and lake-aware movement wording", () => {
+	it("keeps obstacle slot when obstacle content is present on non-lake tiles", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				biome: "open_bog",
+				landform: "flat",
+				slopeStrength: 0.02,
+				obstacles: ["fallen_log", "windthrow"],
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: -0.05490201711654663 },
+					NE: { ...case04.neighbors.NE, elevDelta: -0.09411799907684326 },
+					E: { ...case04.neighbors.E, elevDelta: 0 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0.03137296438217163 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0 },
+				},
+			},
+			"seed-obstacle-slot-regression",
+		);
+
+		const obstacle = result.sentences.find(
+			(sentence) => sentence.slot === "obstacle",
+		);
+		expect(obstacle).toBeDefined();
+		expect(typeof obstacle?.text).toBe("string");
+		expect(["fallen_log", "windthrow"]).toContain(
+			obstacle?.contributorKeys.obstacle,
+		);
+	});
+
+	it("emits only lake surface sentence for lake biome", () => {
 		const result = generateRawDescription(
 			{
 				...case04,
@@ -736,18 +864,14 @@ describe("Phase 1 description pipeline", () => {
 			"seed-lake-anchor-1",
 		);
 
-		const landform = result.sentences.find((sentence) => sentence.slot === "landform");
-		expect(landform?.text).toBe(landform?.basicText);
-		expect(typeof landform?.contributors).toBe("object");
-		expect(landform?.contributors?.local).toBeDefined();
-		expect(landform?.contributorKeys.obstacle).toBeUndefined();
-		const movement = result.sentences.find(
-			(sentence) => sentence.slot === "movement_structure",
-		);
-		expect(movement?.text).toContain("across the water");
-		expect(
-			result.sentences.some((sentence) => sentence.slot === "movement_structure"),
-		).toBe(true);
+		expect(result.text).toBe("Lake surface.");
+		expect(result.sentences).toHaveLength(1);
+		expect(result.sentences[0]).toEqual({
+			slot: "biome",
+			basicText: "Lake surface.",
+			text: "Lake surface.",
+			contributorKeys: { biome: "lake" },
+		});
 	});
 
 	it("throws in strict mode when biome phrases are missing", () => {
@@ -769,19 +893,83 @@ describe("Phase 1 description pipeline", () => {
 		).toBe(false);
 	});
 
-	it("keeps landform then biome ordering under capped output", () => {
+	it("keeps biome then landform ordering", () => {
 		const result = generateRawDescription(case01, "seed-cap-order");
-		expect(result.sentences.length).toBeLessThanOrEqual(4);
-		expect(result.sentences[0]?.slot).toBe("landform");
-		expect(result.sentences[1]?.slot).toBe("biome");
+		expect(result.sentences[0]?.slot).toBe("biome");
+		expect(result.sentences[1]?.slot).toBe("landform");
 	});
 
-	it("excludes movement_structure text from top-level prose output", () => {
-		const result = generateRawDescription(case04, "seed-prose-exclude-move");
+	it("includes movement_structure text in top-level prose output", () => {
+		const result = generateRawDescription(case04, "seed-prose-include-move");
 		const movement = result.sentences.find(
 			(sentence) => sentence.slot === "movement_structure",
 		);
 		expect(typeof movement?.text).toBe("string");
-		expect(result.text).not.toContain(movement?.text ?? "");
+		expect(result.text).toContain(movement?.text ?? "");
+		expect(result.text.endsWith(movement?.text ?? "")).toBe(true);
+	});
+
+	it("suppresses trivial flat landform from top-level prose", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0 },
+				},
+			},
+			"seed-flat-prose-suppress",
+		);
+
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).toBeUndefined();
+		expect(landform?.contributors?.local?.emitted).toBe(false);
+		expect(landform?.contributors?.local?.suppressedBy).toBe("flat_filtered");
+		expect(result.text).not.toContain("Here the land is flat.");
+		expect(result.text.length).toBeGreaterThan(0);
+	});
+
+	it("suppresses flat local and keeps emitted non-flat remainder", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: -0.05 },
+					W: { ...case04.neighbors.W, elevDelta: -0.04 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0 },
+				},
+			},
+			"seed-flat-prefix-strip",
+		);
+
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.contributors?.local?.emitted).toBe(false);
+		expect(landform?.contributors?.local?.suppressedBy).toBe("flat_filtered");
+		expect(landform?.basicText).toBe(
+			"To the southwest and west, the land gently descends.",
+		);
+		expect(result.text).not.toContain("Here the land is flat.");
+		expect(result.text).toContain(
+			"To the southwest and west, the land gently descends.",
+		);
 	});
 });

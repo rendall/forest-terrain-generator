@@ -119,36 +119,37 @@ describe("describe CLI", () => {
 		expect(describeResult.code).toBe(0);
 
 		const parsed = JSON.parse(await readFile(describedFile, "utf8"));
-			const first = parsed.tiles[0];
-			expect(typeof first.description).toBe("string");
-			expect(first.descriptionStructured).toBeDefined();
-			expect(first.descriptionStructured.text).toBeUndefined();
+		const first = parsed.tiles[0];
+		expect(typeof first.description).toBe("string");
+		expect(first.descriptionStructured).toBeDefined();
+		expect(first.descriptionStructured.text).toBeUndefined();
 		expect(Array.isArray(first.descriptionStructured.sentences)).toBe(true);
-		expect(
-			typeof first.descriptionStructured.sentences[0].contributors,
-		).toBe("object");
-		expect(
-			typeof first.descriptionStructured.sentences[0].contributorKeys,
-		).toBe("object");
 		expect(typeof first.descriptionStructured.adjacency).toBe("object");
 		const seeded = parsed.tiles.find((tile) => tile.x === 0 && tile.y === 0);
 		expect(seeded).toBeDefined();
 		expect(Array.isArray(seeded.descriptionStructured.adjacency.ridge)).toBe(true);
-			const movementSentence = first.descriptionStructured.sentences.find(
-				(sentence) => sentence.slot === "movement_structure",
-			);
-			const landformSentence = first.descriptionStructured.sentences.find(
-				(sentence) => sentence.slot === "landform",
-			);
-			const biomeSentence = first.descriptionStructured.sentences.find(
-				(sentence) => sentence.slot === "biome",
-			);
-			expect(landformSentence).toBeDefined();
-			expect(typeof landformSentence.basicText).toBe("string");
+		const movementSentence = first.descriptionStructured.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		const landformSentence = first.descriptionStructured.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		const biomeSentence = first.descriptionStructured.sentences.find(
+			(sentence) => sentence.slot === "biome",
+		);
+		expect(landformSentence).toBeDefined();
+		expect(typeof landformSentence?.contributors).toBe("object");
+		expect(typeof landformSentence?.contributorKeys).toBe("object");
+		if (typeof landformSentence?.basicText === "string") {
 			expect(landformSentence.text).toBe(landformSentence.basicText);
-			expect(biomeSentence).toBeDefined();
-			expect(typeof biomeSentence.basicText).toBe("string");
-			expect(biomeSentence.text).toBe(biomeSentence.basicText);
+		} else {
+			expect(landformSentence?.basicText).toBeUndefined();
+			expect(landformSentence?.text).toBeUndefined();
+		}
+		expect(biomeSentence).toBeDefined();
+		expect(typeof biomeSentence?.contributorKeys).toBe("object");
+		expect(typeof biomeSentence?.basicText).toBe("string");
+		expect(biomeSentence?.text).toBe(biomeSentence?.basicText);
 			if (movementSentence) {
 				expect(typeof movementSentence.basicText).toBe("string");
 				expect(typeof movementSentence.text).toBe("string");

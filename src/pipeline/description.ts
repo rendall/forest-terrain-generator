@@ -1058,6 +1058,8 @@ interface NeighborLandformContribution {
 	minAbsDelta: number;
 	maxAbsDelta: number;
 	text: string;
+	emitted?: boolean;
+	suppressedBy?: "same_filtered" | "single_gentle_filtered";
 }
 
 function renderLocalLandformSentence(
@@ -1185,6 +1187,14 @@ function qualifierForBand(
 function renderNeighborLandformSentences(
 	groups: NeighborLandformGroup[],
 ): string[] {
+	if (
+		groups.length === 1 &&
+		(groups[0] as NeighborLandformGroup).mode === "same" &&
+		(groups[0] as NeighborLandformGroup).directions.length === RING.length
+	) {
+		return ["The surrounding land stays level."];
+	}
+
 	return groups.map((group) => {
 		const directionNames = formatDirectionNames(group.directions);
 		if (group.mode === "same") {
@@ -1197,6 +1207,18 @@ function renderNeighborLandformSentences(
 			`To the ${directionNames}, the land ${qualifier}${verb}.`,
 		);
 	});
+}
+
+function shouldEmitNeighborLandformGroup(
+	group: NeighborLandformGroup,
+): { emitted: boolean; suppressedBy?: "same_filtered" | "single_gentle_filtered" } {
+	if (group.mode === "same") {
+		return { emitted: false, suppressedBy: "same_filtered" };
+	}
+	if (group.band === "gentle" && group.directions.length === 1) {
+		return { emitted: false, suppressedBy: "single_gentle_filtered" };
+	}
+	return { emitted: true };
 }
 
 function renderDerivedLandform(
@@ -1213,6 +1235,7 @@ function renderDerivedLandform(
 			const deltas = group.directions.map((direction) =>
 				Math.abs(input.neighbors[direction].elevDelta),
 			);
+			const emission = shouldEmitNeighborLandformGroup(group);
 			return {
 				directions: [...group.directions],
 				mode: group.mode,
@@ -1220,22 +1243,38 @@ function renderDerivedLandform(
 				minAbsDelta: deltas.length > 0 ? Math.min(...deltas) : 0,
 				maxAbsDelta: deltas.length > 0 ? Math.max(...deltas) : 0,
 				text: neighborSentences[index] as string,
+				...(emission.emitted ? { emitted: true } : { emitted: false }),
+				...(emission.suppressedBy
+					? { suppressedBy: emission.suppressedBy }
+					: {}),
 			};
 		},
+	);
+	const emittedNeighborContributions = neighborContributions.filter(
+		(group) => group.emitted !== false,
 	);
 	const localOverlapsNeighbor =
 		local.mode !== "flat" &&
 		local.direction !== null &&
-		neighborGroups.some(
+		emittedNeighborContributions.some(
 			(group) =>
 				group.mode === local.mode &&
 				group.band === local.band &&
 				group.directions.includes(local.direction as Direction),
 		);
-	const localEmitted = !localOverlapsNeighbor;
+	const localSuppressedBy: "flat_filtered" | "neighbor_overlap" | null =
+		local.mode === "flat"
+			? "flat_filtered"
+			: localOverlapsNeighbor
+				? "neighbor_overlap"
+				: null;
+	const localEmitted = localSuppressedBy === null;
+	const emittedNeighborSentences = emittedNeighborContributions.map(
+		(group) => group.text,
+	);
 	const sentenceParts = localEmitted
-		? [local.text, ...neighborSentences]
-		: [...neighborSentences];
+		? [local.text, ...emittedNeighborSentences]
+		: [...emittedNeighborSentences];
 	const basicText = sanitizeSentence(sentenceParts.join(" "));
 
 	const contributors: Record<string, unknown> = {
@@ -1254,7 +1293,7 @@ function renderDerivedLandform(
 				text: local.text,
 			},
 			emitted: localEmitted,
-			suppressedBy: localOverlapsNeighbor ? "neighbor_overlap" : null,
+			suppressedBy: localSuppressedBy,
 		},
 		neighbors: neighborContributions,
 		thresholds: {
@@ -1537,27 +1576,6 @@ function cloneContributors(
 	return { ...contributors };
 }
 
-function stripTerminalPunctuation(text: string): string {
-	return sanitizeSentence(text).replace(/[.!?]+$/, "");
-}
-
-function lowercaseFirst(text: string): string {
-	if (text.length === 0) {
-		return text;
-	}
-	return text[0].toLowerCase() + text.slice(1);
-}
-
-function mergeAsClause(
-	base: string,
-	clause: string,
-	joiner: "where" | "and",
-): string {
-	const baseCore = stripTerminalPunctuation(base);
-	const clauseCore = lowercaseFirst(stripTerminalPunctuation(clause));
-	return `${baseCore}, ${joiner} ${clauseCore}.`;
-}
-
 function directionalMentionsWater(text: string): boolean {
 	return /\b(water|stream|lake)\b/i.test(text);
 }
@@ -1568,6 +1586,20 @@ export function generateRawDescription(
 	options: DescriptionGenerationOptions = {},
 ): DescriptionResult {
 	const strict = options.strict === true;
+
+	if (input.biome === "lake") {
+		const lakeSentence: DescriptionSentence = {
+			slot: "biome",
+			basicText: "Lake surface.",
+			text: "Lake surface.",
+			contributorKeys: { biome: "lake" },
+		};
+		return {
+			sentences: [lakeSentence],
+			text: "Lake surface.",
+		};
+	}
+
 	const sentences: DescriptionSentence[] = [];
 	const derivedLandform = renderDerivedLandform(input);
 
@@ -1581,13 +1613,6 @@ export function generateRawDescription(
 	let obstacleSentence: string | null = null;
 	let slopeSentence: string | null = null;
 	let chosenObstacle: Obstacle | null = null;
-
-	let anchorSentence =
-		input.biome === "lake"
-			? "This is lake surface."
-			: landformSentence;
-	let hydrologyMerged = false;
-	let obstacleMerged = false;
 
 	if (shouldMentionWater(input)) {
 		if (input.standingWater) {
@@ -1605,38 +1630,22 @@ export function generateRawDescription(
 		}
 	}
 
-	if (
-		hydrologySentence &&
-		input.standingWater &&
-		(input.landform === "basin" || input.landform === "valley")
-	) {
-		anchorSentence = mergeAsClause(anchorSentence, hydrologySentence, "where");
-		hydrologyMerged = true;
-	}
-
 	chosenObstacle = chooseObstacle(input, seedKey);
 	obstacleSentence = renderObstacleSentence(chosenObstacle, seedKey, strict);
-	if (
-		obstacleSentence &&
-		input.biome !== "lake" &&
-		sanitizeSentence(anchorSentence).length < 100
-	) {
-		anchorSentence = mergeAsClause(anchorSentence, obstacleSentence, "and");
-		obstacleMerged = true;
-	}
 
-	sentences.push({
-		slot: "landform",
-		basicText: landformSentence,
-		text: landformSentence,
-		contributorKeys: { landform: input.landform },
-		contributors: derivedLandform.contributors,
-	});
 	sentences.push({
 		slot: "biome",
 		basicText: biomeSentence,
 		text: biomeSentence,
 		contributorKeys: { biome: input.biome },
+	});
+	sentences.push({
+		slot: "landform",
+		...(landformSentence.length > 0
+			? { basicText: landformSentence, text: landformSentence }
+			: {}),
+		contributorKeys: { landform: input.landform },
+		contributors: derivedLandform.contributors,
 	});
 
 	const followableSentence = renderFollowableSentence(input);
@@ -1654,15 +1663,23 @@ export function generateRawDescription(
 		seedKey,
 		movementStructureSentence.movement,
 	);
+	const movementPassableExitCount = countPassableExits(input.passability);
+	const suppressMovementInProse = movementPassableExitCount === 8;
 	sentences.push({
 		slot: "movement_structure",
-		...(typeof transformedMovement.text === "string"
+		...(typeof transformedMovement.text === "string" && !suppressMovementInProse
 			? { text: transformedMovement.text }
 			: {}),
 		basicText: movementStructureSentence.text,
 		contributorKeys: {
 			movement_structure:
-				countPassableExits(input.passability) > 4 ? "blocked_bias" : "passage_bias",
+				movementPassableExitCount > 4 ? "blocked_bias" : "passage_bias",
+		},
+		contributors: {
+			emit: !suppressMovementInProse,
+			...(suppressMovementInProse
+				? { suppressedBy: "fully_passable" }
+				: {}),
 		},
 		movement: transformedMovement.movement,
 	});
@@ -1678,16 +1695,15 @@ export function generateRawDescription(
 		});
 	}
 
-	if (hydrologySentence && !hydrologyMerged) {
+	if (hydrologySentence) {
 		sentences.push({
 			slot: "hydrology",
 			text: hydrologySentence,
 			contributorKeys: { hydrology: "standing_water" },
 		});
-		hydrologyMerged = true;
 	}
 
-	if (obstacleSentence && !obstacleMerged) {
+	if (obstacleSentence) {
 		sentences.push({
 			slot: "obstacle",
 			text: obstacleSentence,
@@ -1761,8 +1777,8 @@ export function generateRawDescription(
 		});
 	}
 
-	const capped = deduped.slice(0, 4);
-	const proseParts = capped
+	const selected = deduped;
+	const proseParts = selected
 		.filter(
 			(sentence) =>
 				sentence.slot !== "movement_structure" &&
@@ -1770,7 +1786,7 @@ export function generateRawDescription(
 				typeof sentence.text === "string",
 		)
 		.map((sentence) => sentence.text as string);
-	const followableForProse = capped.find(
+	const followableForProse = selected.find(
 		(sentence) =>
 			sentence.slot === "followable" &&
 			typeof sentence.text === "string" &&
@@ -1779,10 +1795,24 @@ export function generateRawDescription(
 	if (typeof followableForProse?.text === "string") {
 		proseParts.push(followableForProse.text);
 	}
+	const movementForProse = selected.find(
+		(sentence) =>
+			sentence.slot === "movement_structure" &&
+			(sentence.contributors as { emit?: boolean } | undefined)?.emit !== false &&
+			((typeof sentence.text === "string" &&
+				sanitizeSentence(sentence.text).length > 0) ||
+				(typeof sentence.basicText === "string" &&
+					sanitizeSentence(sentence.basicText).length > 0)),
+	);
+	if (typeof movementForProse?.text === "string") {
+		proseParts.push(movementForProse.text);
+	} else if (typeof movementForProse?.basicText === "string") {
+		proseParts.push(movementForProse.basicText);
+	}
 	const proseText = proseParts.join(" ");
 
 	return {
-		sentences: capped,
+		sentences: selected,
 		text: proseText,
 	};
 }
