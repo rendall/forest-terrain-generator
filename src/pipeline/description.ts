@@ -1084,7 +1084,7 @@ function phraseOptionsForBiome(
 function classifyLocalSlopeBand(
 	input: DescriptionTileInput,
 ): "flat" | "gentle" | "none" | "steep" {
-	if (input.landform === "flat") {
+	if (input.landform === "flat" || input.landform === "plain") {
 		return "flat";
 	}
 	if (input.slopeStrength < 0.05) {
