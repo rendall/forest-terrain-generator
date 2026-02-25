@@ -281,7 +281,8 @@ describe("Phase 1 description pipeline", () => {
 			"A stream flows from southwest to the north. Lakeshore surrounds much of this area.",
 		);
 		expect(movement?.text).toBeDefined();
-		expect(result.text).toContain(`${followable?.text} ${movement?.text}`);
+		expect(result.text).toContain(followable?.text);
+		expect(result.text).not.toContain(movement?.text);
 		const followableIndex = result.sentences.findIndex(
 			(sentence) => sentence.slot === "followable",
 		);
@@ -717,5 +718,21 @@ describe("Phase 1 description pipeline", () => {
 		expect(
 			result.sentences.some((sentence) => sentence.slot === "visibility"),
 		).toBe(false);
+	});
+
+	it("keeps landform then biome ordering under capped output", () => {
+		const result = generateRawDescription(case01, "seed-cap-order");
+		expect(result.sentences.length).toBeLessThanOrEqual(4);
+		expect(result.sentences[0]?.slot).toBe("landform");
+		expect(result.sentences[1]?.slot).toBe("biome");
+	});
+
+	it("excludes movement_structure text from top-level prose output", () => {
+		const result = generateRawDescription(case04, "seed-prose-exclude-move");
+		const movement = result.sentences.find(
+			(sentence) => sentence.slot === "movement_structure",
+		);
+		expect(typeof movement?.text).toBe("string");
+		expect(result.text).not.toContain(movement?.text ?? "");
 	});
 });
