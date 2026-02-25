@@ -1592,11 +1592,9 @@ export function generateRawDescription(
 ): DescriptionResult {
 	const strict = options.strict === true;
 	const sentences: DescriptionSentence[] = [];
+	const derivedLandform = renderDerivedLandform(input);
 
-	const landformSentence = pickDeterministic(
-		phraseOptionsForLandform(input.landform, strict),
-		`${seedKey}:landform:${input.landform}`,
-	);
+	const landformSentence = derivedLandform.basicText;
 	const biomeSentence = pickDeterministic(
 		phraseOptionsForBiome(input.biome, strict),
 		`${seedKey}:biome:${input.biome}`,
@@ -1613,11 +1611,6 @@ export function generateRawDescription(
 			: landformSentence;
 	let hydrologyMerged = false;
 	let obstacleMerged = false;
-	const anchorContributorKeys: Partial<
-		Record<DescriptionSentence["slot"], string>
-	> = {
-		landform: input.landform,
-	};
 
 	if (shouldMentionWater(input)) {
 		if (input.standingWater) {
@@ -1642,7 +1635,6 @@ export function generateRawDescription(
 	) {
 		anchorSentence = mergeAsClause(anchorSentence, hydrologySentence, "where");
 		hydrologyMerged = true;
-		anchorContributorKeys.hydrology = "standing_water";
 	}
 
 	chosenObstacle = chooseObstacle(input, seedKey);
@@ -1654,16 +1646,14 @@ export function generateRawDescription(
 	) {
 		anchorSentence = mergeAsClause(anchorSentence, obstacleSentence, "and");
 		obstacleMerged = true;
-		if (chosenObstacle) {
-			anchorContributorKeys.obstacle = chosenObstacle;
-		}
 	}
 
 	sentences.push({
 		slot: "landform",
 		basicText: landformSentence,
 		text: landformSentence,
-		contributorKeys: anchorContributorKeys,
+		contributorKeys: { landform: input.landform },
+		contributors: derivedLandform.contributors,
 	});
 	sentences.push({
 		slot: "biome",
