@@ -427,6 +427,7 @@ export interface DescriptionSentence {
 	text?: string;
 	basicText?: string;
 	contributorKeys: Partial<Record<DescriptionSentence["slot"], string>>;
+	contributors?: Record<string, unknown>;
 	movement?: MovementRun[];
 }
 
