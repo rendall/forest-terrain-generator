@@ -84,7 +84,7 @@ export interface PassageRun {
 export interface BlockageRun {
 	type: "blockage";
 	directions: Direction[];
-	blocked_by?: string;
+	blockedBy?: string;
 }
 
 export type MovementRun = PassageRun | BlockageRun;
@@ -218,7 +218,7 @@ function cloneMovementRun(run: MovementRun): MovementRun {
 	return {
 		type: "blockage",
 		directions: [...run.directions],
-		...(typeof run.blocked_by === "string" ? { blocked_by: run.blocked_by } : {}),
+		...(typeof run.blockedBy === "string" ? { blockedBy: run.blockedBy } : {}),
 	};
 }
 
@@ -373,7 +373,7 @@ function renderTransformedMovementStructure(
 		const ctx = buildBlockageRunContext(input, run);
 		const eligiblePhrases = eligibleBlockedPhrasesForRun(ctx);
 		if (eligiblePhrases.length === 0) {
-			// Whole-sentence fallback: omit transformed text and all blocked_by fields.
+			// Whole-sentence fallback: omit transformed text and all blockedBy fields.
 			return { movement: movementRuns.map((entry) => cloneMovementRun(entry)) };
 		}
 		const lakeRule = BLOCK_RULES[0];
@@ -403,7 +403,7 @@ function renderTransformedMovementStructure(
 		transformedRuns.push({
 			type: "blockage",
 			directions: [...run.directions],
-			blocked_by: selection?.phrase,
+			blockedBy: selection?.phrase,
 		});
 	}
 
@@ -1004,7 +1004,7 @@ function renderBlockageText(blockages: readonly BlockageRun[]): string {
  * - If number of open exits are 5..8: describe each blockage arc.
  *
  * Returned `movement` always contains the full ring run breakdown used by structured output.
- * Returned `text` is the baseline sentence (later exposed as `basic_text` in structured output).
+ * Returned `text` is the baseline sentence (later exposed as `basicText` in structured output).
  */
 function renderMovementStructureSentence(
 	input: DescriptionTileInput,

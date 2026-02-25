@@ -7,6 +7,7 @@ This document is a living ledger of significant technical decisions made within 
 **Timestamp:** 2026-02-23 00:00 (UTC)
 
 ### Decision
+
 Adjust directional passability lake handling to be asymmetric in v1:
 
 - `non-lake -> lake` is `blocked`.
@@ -15,13 +16,16 @@ Adjust directional passability lake handling to be asymmetric in v1:
 - Out-of-bounds and destination `NonPlayable` remain `blocked`.
 
 ### Rationale
+
 Symmetric lake blocking can trap players if they are placed on a lake tile due to an upstream bug or content error. The asymmetric rule preserves normal "no entry into lake" behavior while providing deterministic recovery paths off lake tiles. The constrained `lake -> lake` exception supports fully water-enclosed interiors without opening general lake traversal.
 
 ### Alternatives Considered
+
 - Keep symmetric lake blocking (`origin==lake OR destination==lake`) - rejected because it can hard-lock mistaken placements on lake tiles.
 - Allow all `lake -> lake` movement - rejected because it broadens unintended water traversal beyond the recovery-focused scope.
 
 ### References
+
 - PR: None
 - Commit: Pending
 - File(s): docs/normative/ForestTerrainGeneration.md, docs/drafts/ImplementationPlan.md
@@ -32,6 +36,7 @@ Symmetric lake blocking can trap players if they are placed on a lake tile due t
 **Timestamp:** 2026-02-22 00:00 (UTC)
 
 ### Decision
+
 Add an optional lake-growth pass inside hydrology that expands `LakeMask` before stream/moisture derivation.
 
 - Growth is controlled by:
@@ -45,13 +50,16 @@ Add an optional lake-growth pass inside hydrology that expands `LakeMask` before
 - Stream/moisture/water-class are derived from the grown `LakeMask`.
 
 ### Rationale
+
 Observed lake fragmentation produced many isolated single-tile lakes. Component-based growth provides more coherent lake bodies while preserving deterministic behavior and avoiding per-seed order bias.
 
 ### Alternatives Considered
+
 - Per-seed growth BFS — rejected due to stronger order sensitivity and shape bias.
 - 8-way growth expansion — rejected as default behavior because it is materially more aggressive and can over-merge lakes in typical parameter ranges.
 
 ### References
+
 - PR: None
 - Commit: Pending
 - File(s): src/pipeline/hydrology.ts, src/lib/default-params.ts, docs/normative/ForestTerrainGeneration.md, docs/drafts/ImplementationPlan.md
@@ -62,6 +70,7 @@ Observed lake fragmentation produced many isolated single-tile lakes. Component-
 **Timestamp:** 2026-02-22 00:00 (UTC)
 
 ### Decision
+
 For v1 `debug` mode, support a second input path that consumes an existing terrain envelope JSON.
 
 - Add `--input-file <path>` to `debug`.
@@ -71,13 +80,16 @@ For v1 `debug` mode, support a second input path that consumes an existing terra
 - Keep `--input-file` invalid in `generate` and `derive`.
 
 ### Rationale
+
 This supports post-hoc debugging and visualization of already generated terrain outputs without requiring regeneration inputs. It improves workflow efficiency while preserving existing mode semantics.
 
 ### Alternatives Considered
+
 - Require regeneration-only debug path (no input replay) – rejected because users cannot debug historical outputs directly.
 - Add a new command (`debug-from-file`) – rejected for v1 to avoid unnecessary command-surface expansion.
 
 ### References
+
 - PR: None
 - Commit: Pending
 - File(s): src/cli/main.ts, src/app/run-generator.ts, src/app/validate-input.ts, src/io/read-envelope.ts, docs/drafts/ImplementationPlan.md
@@ -88,6 +100,7 @@ This supports post-hoc debugging and visualization of already generated terrain 
 **Timestamp:** 2026-02-21 20:43 (UTC)
 
 ### Decision
+
 For v1, non-zero CLI exits must meet a minimum diagnostics contract.
 
 - Include error category, mode/stage context, and primary failing subject.
@@ -98,16 +111,19 @@ For v1, non-zero CLI exits must meet a minimum diagnostics contract.
 - Include corrective hints when available and suppress raw stack traces in normal CLI output.
 
 ### Rationale
+
 Consistent, context-rich diagnostics reduce troubleshooting time and keep CLI behavior predictable for both users and automated tests.
 
 ### Alternatives Considered
+
 - Minimal free-form error text – rejected because it leads to inconsistent, low-actionability diagnostics.
 - Structured machine-readable diagnostics only – rejected for v1 because primary CLI UX remains human-oriented.
 
 ### References
+
 - PR: None
 - Commit: Pending
-- File(s): Docs/drafts/ImplementationPlan.md
+- File(s): docs/drafts/ImplementationPlan.md
 - Related ADRs: Lock Phase 6 CLI Integration Test Matrix
 
 ## Lock Phase 6 CLI Integration Test Matrix
@@ -115,6 +131,7 @@ Consistent, context-rich diagnostics reduce troubleshooting time and keep CLI be
 **Timestamp:** 2026-02-21 20:43 (UTC)
 
 ### Decision
+
 Lock a Phase 6 CLI integration-test matrix spanning `generate`, `derive`, and `debug`.
 
 - `generate`: success path, invalid output-argument combinations, overwrite behavior, and unknown-input handling.
@@ -123,16 +140,19 @@ Lock a Phase 6 CLI integration-test matrix spanning `generate`, `derive`, and `d
 - Matrix assertions include expected exit codes and key diagnostics for each scenario.
 
 ### Rationale
+
 A locked matrix prevents coverage drift and ensures CLI contract behaviors stay stable as implementation hardening proceeds.
 
 ### Alternatives Considered
+
 - Lightweight ad hoc integration tests – rejected because it can miss mode-specific regressions.
 - Exhaustive combinatorial matrix – rejected for v1 due to maintenance/runtime overhead.
 
 ### References
+
 - PR: None
 - Commit: Pending
-- File(s): Docs/drafts/ImplementationPlan.md
+- File(s): docs/drafts/ImplementationPlan.md
 - Related ADRs: Adopt Balanced End-to-End Golden Scope for Phase 6
 
 ## Adopt Balanced End-to-End Golden Scope for Phase 6
@@ -140,6 +160,7 @@ A locked matrix prevents coverage drift and ensures CLI contract behaviors stay 
 **Timestamp:** 2026-02-21 20:42 (UTC)
 
 ### Decision
+
 For Phase 6, adopt a balanced end-to-end golden regression scope.
 
 - Modes: `generate`, `derive`, and `debug`.
@@ -149,16 +170,19 @@ For Phase 6, adopt a balanced end-to-end golden regression scope.
 - Golden updates are opt-in only via an explicit update workflow flag.
 
 ### Rationale
+
 This scope provides high confidence in deterministic behavior across commands while keeping runtime and maintenance cost reasonable for v1.
 
 ### Alternatives Considered
+
 - Minimal scope (single seed/size per mode) – rejected because it risks missing regressions.
 - Heavy exhaustive scope (many seeds/sizes/artifacts) – rejected for v1 due to runtime/maintenance overhead.
 
 ### References
+
 - PR: None
 - Commit: Pending
-- File(s): Docs/drafts/ImplementationPlan.md
+- File(s): docs/drafts/ImplementationPlan.md
 - Related ADRs: Use Atomic Debug Output Publication (v1)
 
 ## Use Atomic Debug Output Publication (v1)
@@ -166,6 +190,7 @@ This scope provides high confidence in deterministic behavior across commands wh
 **Timestamp:** 2026-02-21 20:38 (UTC)
 
 ### Decision
+
 For v1 `debug` mode, adopt atomic all-or-nothing publication for `--output-dir`.
 
 - Stage all debug artifacts in a temporary directory.
@@ -174,16 +199,19 @@ For v1 `debug` mode, adopt atomic all-or-nothing publication for `--output-dir`.
 - Surface failures as file I/O errors (exit `4`) with actionable path/context details.
 
 ### Rationale
+
 Atomic publication gives deterministic and trustworthy debug outputs for both users and tests. Downstream tooling can assume either a complete debug artifact set or a failed run, never a partial ambiguous state.
 
 ### Alternatives Considered
+
 - Best-effort partial writes – rejected because partial output states are harder to reason about and increase troubleshooting ambiguity.
 - Hybrid atomic/partial behavior – rejected for v1 to keep failure semantics simple and predictable.
 
 ### References
+
 - PR: None
 - Commit: Pending
-- File(s): Docs/drafts/ImplementationPlan.md
+- File(s): docs/drafts/ImplementationPlan.md
 - Related ADRs: Define v1 Debug Artifact Output Contract
 
 ## Define v1 Debug Artifact Output Contract
@@ -191,6 +219,7 @@ Atomic publication gives deterministic and trustworthy debug outputs for both us
 **Timestamp:** 2026-02-21 20:36 (UTC)
 
 ### Decision
+
 For v1 `debug` mode, adopt a minimal stable output-directory contract.
 
 - Emit `debug-manifest.json` at the output-directory root.
@@ -198,16 +227,19 @@ For v1 `debug` mode, adopt a minimal stable output-directory contract.
 - `debug-manifest.json` includes deterministic metadata fields: `mode`, `specVersion`, `width`, `height`, `tileCount`, and `artifacts`.
 
 ### Rationale
+
 A fixed, minimal artifact set provides predictable downstream tooling integration and straightforward regression testing without introducing optional/variable debug schemas in v1.
 
 ### Alternatives Considered
+
 - Rich debug contract with timings/counters/optional artifact variants – rejected for v1 to keep scope and schema surface small.
 - Raw internal-array dump contract – rejected because it is harder for downstream consumers to treat as stable and increases churn risk.
 
 ### References
+
 - PR: None
 - Commit: Pending
-- File(s): Docs/drafts/ImplementationPlan.md
+- File(s): docs/drafts/ImplementationPlan.md
 - Related ADRs: Emit `navigation.gameTrailId` in Standard Tile Payload (v1)
 
 ## Emit `navigation.gameTrailId` in Standard Tile Payload (v1)
@@ -215,6 +247,7 @@ A fixed, minimal artifact set provides predictable downstream tooling integratio
 **Timestamp:** 2026-02-21 19:15 (UTC)
 
 ### Decision
+
 For v1, the standard tile payload includes `navigation.gameTrailId` as an optional integer field.
 
 - Emit `navigation.gameTrailId` when a tile has a generated trail id.
@@ -223,13 +256,16 @@ For v1, the standard tile payload includes `navigation.gameTrailId` as an option
 - On overlapping routes, keep existing tile id assignment (first-writer-wins).
 
 ### Rationale
+
 Including `navigation.gameTrailId` in the standard envelope gives downstream gameplay and tooling immediate trail attribution without requiring debug-mode artifacts. This keeps v1 payloads useful in-game while staying compact and deterministic.
 
 ### Alternatives Considered
+
 - Debug-only `GameTrailId` – rejected because in-game consumers would lose direct trail-id access in standard output.
 - Standard `trailManifest` (`routeId -> ordered tile list`) – rejected for v1 due to higher payload/schema complexity; deferred until route-level fidelity is required.
 
 ### References
+
 - PR: None
 - Commit: Pending
 - File(s): docs/normative/ForestTerrainGeneration.md
@@ -240,6 +276,7 @@ Including `navigation.gameTrailId` in the standard envelope gives downstream gam
 **Timestamp:** 2026-02-21 09:35 (UTC)
 
 ### Decision
+
 For v1, params files are JSON-only.
 
 - Supported params file format: JSON.
@@ -247,13 +284,16 @@ For v1, params files are JSON-only.
 - Non-JSON params inputs are validation errors (exit `2`) with explicit guidance to provide/convert JSON.
 
 ### Rationale
+
 JSON-only keeps the input contract strict and predictable, reduces parser/dependency surface area, and simplifies validation/error handling for a lean v1 CLI. This aligns with deterministic behavior goals and avoids YAML-specific parsing/coercion ambiguities.
 
 ### Alternatives Considered
+
 - YAML-only params files – rejected due to parser complexity and higher ambiguity risk in type coercion/interpretation.
 - Supporting both JSON and YAML – rejected for v1 because it increases implementation and testing overhead without clear functional benefit at this stage.
 
 ### References
+
 - PR: None
 - Commit: Pending
 - File(s): docs/drafts/ImplementationPlan.md
@@ -264,6 +304,7 @@ JSON-only keeps the input contract strict and predictable, reduces parser/depend
 **Timestamp:** 2026-02-21 09:05 (UTC)
 
 ### Decision
+
 Adopt the initial dependency set and versioning policy for the CLI:
 
 - Runtime dependency: `commander`.
@@ -273,14 +314,17 @@ Adopt the initial dependency set and versioning policy for the CLI:
 - Require local project TypeScript; global TypeScript is optional convenience only and not part of project requirements.
 
 ### Rationale
+
 This keeps the dependency footprint minimal while preserving deterministic and reproducible development/CI behavior. Exact version pinning and lockfile usage reduce drift and avoid accidental changes caused by floating ranges or machine-specific global toolchains.
 
 ### Alternatives Considered
+
 - Floating semver ranges (for example `^x.y.z`) – rejected due to update drift and reduced reproducibility.
 - Requiring global TypeScript for contributors – rejected because global tooling is not captured by project metadata and can cause version mismatch/confusion.
 - Larger initial dependency set – rejected to keep early implementation lean and add libraries only when needed.
 
 ### References
+
 - PR: None
 - Commit: Pending
 - File(s): docs/drafts/ImplementationPlan.md

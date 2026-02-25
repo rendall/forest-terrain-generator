@@ -438,7 +438,7 @@ describe("Phase 1 description pipeline", () => {
 		);
 	});
 
-	it("attaches blocked_by for blockage runs when eligible phrases exist", () => {
+	it("attaches blockedBy for blockage runs when eligible phrases exist", () => {
 		const result = generateRawDescription(
 			{
 				...case04,
@@ -463,9 +463,9 @@ describe("Phase 1 description pipeline", () => {
 			(run) => run.type === "blockage",
 		);
 		expect(blockageRuns?.length).toBeGreaterThan(0);
-		expect(blockageRuns?.[0]?.blocked_by).toBeDefined();
+		expect(blockageRuns?.[0]?.blockedBy).toBeDefined();
 		expect((movement?.text ?? "").toLowerCase()).toContain(
-			(blockageRuns?.[0]?.blocked_by ?? "").toLowerCase(),
+			(blockageRuns?.[0]?.blockedBy ?? "").toLowerCase(),
 		);
 	});
 
@@ -499,7 +499,7 @@ describe("Phase 1 description pipeline", () => {
 		);
 		const blockageRun = movement?.movement?.find((run) => run.type === "blockage");
 		expect(blockageRun).toBeDefined();
-		expect(LAKE_WATER_PHRASES).toContain(blockageRun?.blocked_by);
+		expect(LAKE_WATER_PHRASES).toContain(blockageRun?.blockedBy);
 	});
 
 	it("reuses one lake phrase across multiple lake blockage runs in a tile", () => {
@@ -533,8 +533,8 @@ describe("Phase 1 description pipeline", () => {
 			(run) => run.type === "blockage",
 		);
 		expect(blockageRuns).toHaveLength(2);
-		expect(blockageRuns[0]?.blocked_by).toBeDefined();
-		expect(blockageRuns[0]?.blocked_by).toBe(blockageRuns[1]?.blocked_by);
+		expect(blockageRuns[0]?.blockedBy).toBeDefined();
+		expect(blockageRuns[0]?.blockedBy).toBe(blockageRuns[1]?.blockedBy);
 		expect(movement?.text).toContain("southeast and west");
 	});
 
@@ -568,7 +568,7 @@ describe("Phase 1 description pipeline", () => {
 			(sentence) => sentence.slot === "movement_structure",
 		);
 		const blockageRun = movement?.movement?.find((run) => run.type === "blockage");
-		expect(blockageRun?.blocked_by).toBeDefined();
+		expect(blockageRun?.blockedBy).toBeDefined();
 
 		const expectedNoun =
 			TRAVERSAL_NOUNS[
@@ -580,7 +580,7 @@ describe("Phase 1 description pipeline", () => {
 					LAKE_WATER_PHRASES.length
 			];
 
-		expect(blockageRun?.blocked_by).toBe(expectedPhrase);
+		expect(blockageRun?.blockedBy).toBe(expectedPhrase);
 		expect(movement?.text?.toLowerCase()).toContain(`the ${expectedNoun} `);
 	});
 
@@ -623,7 +623,7 @@ describe("Phase 1 description pipeline", () => {
 		expect(movement?.text).toBeUndefined();
 		expect(typeof movement?.basicText).toBe("string");
 		const anyBlockedBy = movement?.movement?.some(
-			(run) => run.type === "blockage" && typeof run.blocked_by === "string",
+			(run) => run.type === "blockage" && typeof run.blockedBy === "string",
 		);
 		expect(anyBlockedBy).toBe(false);
 	});

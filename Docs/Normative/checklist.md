@@ -17,6 +17,6 @@ e.g.
 ```md
 - [ ] [description] Add optional field `basicText?: string` to interface `DescriptionSentence` in `src/pipeline/description.ts`
 - [ ] [description] Set `basicText` on the `movement_structure` sentence object in `generateRawDescription` in `src/pipeline/description.ts` (depends on previous item)
-- [ ] [cli] Map `sentence.basicText` to `basic_text` in structured sentence output inside `attachTileDescriptions` in `src/app/run-describe.ts` (depends on first item)
+- [ ] [cli] Map `sentence.basicText` to `basicText` in structured sentence output inside `attachTileDescriptions` in `src/app/run-describe.ts` (depends on first item)
   - Keeps baseline text available for later transformed rendering.
 ```

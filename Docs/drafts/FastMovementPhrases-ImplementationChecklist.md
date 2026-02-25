@@ -17,15 +17,15 @@ Primary reference: `docs/drafts/FastMovementPhrases-Proposal.md`
 Target file: `src/pipeline/description.ts`
 
 - [ ] Keep existing `MovementRun` extraction behavior.
-- [ ] Add optional `blocked_by?: string` on blockage runs to store selected phrase text directly.
-- [ ] Invariant: `blocked_by` is only allowed on runs where `type === "blockage"` (never on `passage` runs).
+- [ ] Add optional `blockedBy?: string` on blockage runs to store selected phrase text directly.
+- [ ] Invariant: `blockedBy` is only allowed on runs where `type === "blockage"` (never on `passage` runs).
 - [ ] Keep passage runs unchanged.
 - [ ] Keep `DescriptionSentence.basicText` as baseline movement sentence.
 - [ ] Keep `DescriptionSentence.text` as transformed movement sentence.
 
 Target file: `src/app/run-describe.ts`
 
-- [ ] Ensure structured output mapping includes `movement[].blocked_by` when present.
+- [ ] Ensure structured output mapping includes `movement[].blockedBy` when present.
 - [ ] Keep sentence-level fallback:
   - [ ] `out.text = sentence.text ?? sentence.basicText`
 
@@ -61,7 +61,7 @@ Target file: `src/pipeline/description.ts`
 - [ ] For each blockage run:
   - [ ] Pick one phrase from the eligible pool.
   - [ ] When lake override is active for a run, ensure selected phrase comes only from the `lake_water` phrase list.
-  - [ ] Attach phrase as `run.blocked_by`.
+  - [ ] Attach phrase as `run.blockedBy`.
 
 ## 4) Traversal noun rotation
 
@@ -85,7 +85,7 @@ Target file: `src/pipeline/description.ts`
     - [ ] `open_bog` => `across the bog`
     - [ ] `spruce_swamp` => `through the swamp`
     - [ ] default => `through the trees`
-  - [ ] Blockage-oriented text uses `blocked_by` phrase directly (no transformation layer).
+  - [ ] Blockage-oriented text uses `blockedBy` phrase directly (no transformation layer).
   - [ ] Multi-run blockage output format is fixed:
     - [ ] Run order: canonical movement run order.
     - [ ] Single blockage run: `The {noun} to the {dirs} is blocked by {phrase}.`
@@ -93,7 +93,7 @@ Target file: `src/pipeline/description.ts`
   - [ ] Fallback policy is all-or-nothing:
     - [ ] if any blockage run lacks an eligible phrase pool, do not emit partial transformed blockage text.
     - [ ] leave transformed `sentence.text` unset and rely on `basicText` fallback for the whole movement sentence.
-    - [ ] when this fallback triggers, omit `blocked_by` from all runs in that movement sentence.
+    - [ ] when this fallback triggers, omit `blockedBy` from all runs in that movement sentence.
 - [ ] Write transformed output to `sentence.text`.
 
 ## 6) Plausibility guards
@@ -108,7 +108,7 @@ Target file: `src/pipeline/description.ts`
 
 Target file: `test/unit/phase6-description-phase1.test.mjs` (or focused movement text test file)
 
-- [ ] Add test: identical input+seed yields identical selected `blocked_by` phrases.
+- [ ] Add test: identical input+seed yields identical selected `blockedBy` phrases.
 - [ ] Add test: different seed key can vary phrase/noun selection deterministically.
 - [ ] Add test: no eligible phrase pool falls back to whole-sentence `basicText`.
 - [ ] Add test: blockage run phrase is inserted directly into transformed text.
@@ -118,7 +118,7 @@ Target file: `test/unit/phase6-description-phase1.test.mjs` (or focused movement
 - [ ] Add test: implemented rule IDs/predicate outcomes match Appendix A fixtures (at least one fixture per rule).
 - [ ] Add test: mixed-cause blockage run containing any lake direction uses `lake_water` override for the entire run.
 - [ ] Add test: if one blockage run has phrases but another does not, transformed text is not emitted and output falls back to `basicText`.
-- [ ] Add test: when whole-sentence fallback triggers, all run-level `blocked_by` fields are omitted.
+- [ ] Add test: when whole-sentence fallback triggers, all run-level `blockedBy` fields are omitted.
 - [ ] Add test: seed-key construction for noun and blockage phrase picks matches Appendix D format and is stable.
 
 ## 8) Integration checks
@@ -127,8 +127,8 @@ Target files:
 - `test/unit/describe-attach.test.mjs`
 - `test/integration/cli-describe.test.mjs`
 
-- [ ] Assert structured movement runs may include `blocked_by` phrase strings.
-- [ ] Assert `movement_structure` still exposes `basic_text` and `text`.
+- [ ] Assert structured movement runs may include `blockedBy` phrase strings.
+- [ ] Assert `movement_structure` still exposes `basicText` and `text`.
 - [ ] Assert transformed text differs from baseline when eligible phrases exist.
 
 ## 9) Verification commands

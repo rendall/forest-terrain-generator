@@ -138,7 +138,7 @@ describe("describe CLI", () => {
 				(sentence) => sentence.slot === "movement_structure",
 			);
 			if (movementSentence) {
-				expect(typeof movementSentence.basic_text).toBe("string");
+				expect(typeof movementSentence.basicText).toBe("string");
 				expect(typeof movementSentence.text).toBe("string");
 				expect(Array.isArray(movementSentence.movement)).toBe(true);
 				expect(["passage", "blockage"]).toContain(

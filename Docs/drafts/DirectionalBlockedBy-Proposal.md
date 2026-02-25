@@ -1,4 +1,4 @@
-# Directional `blocked_by` Proposal (Discussion Draft)
+# Directional `blockedBy` Proposal (Discussion Draft)
 
 ## Purpose
 
@@ -30,7 +30,7 @@ Out of scope:
 
 ## Core idea
 
-`blocked_by` is attached to each blockage run in `movement[]` as a single selected reason.
+`blockedBy` is attached to each blockage run in `movement[]` as a single selected reason.
 
 Reasoning:
 
@@ -51,7 +51,7 @@ Attach this to the `movement_structure` sentence object:
     {
       "type": "blockage",
       "directions": ["W", "NW"],
-      "blocked_by": "wide_stream"
+      "blockedBy": "wide_stream"
     }
   ]
 }
@@ -59,7 +59,7 @@ Attach this to the `movement_structure` sentence object:
 
 Notes:
 
-1. `blocked_by` appears only on objects where `type == "blockage"`.
+1. `blockedBy` appears only on objects where `type == "blockage"`.
 2. Each blockage run has exactly one selected reason.
 3. If adjacent blocked directions need different selected reasons, they must be represented as separate blockage runs.
 
@@ -246,7 +246,7 @@ Goal: replace generic blocked text with cause-aware blockage-run text when possi
 
 Process:
 
-1. Render one sentence clause per blockage run using that run's `blocked_by`.
+1. Render one sentence clause per blockage run using that run's `blockedBy`.
 2. If there are multiple blockage runs, render multiple clauses/sentences in deterministic order.
 3. Fall back to generic blocked phrasing only if no reason could be selected.
 
@@ -284,7 +284,7 @@ Rough terrain:
 Input:
 
 - blockage run directions: `W`, `NW`
-- selected reason on run: `blocked_by = wide_stream`
+- selected reason on run: `blockedBy = wide_stream`
 
 Output:
 
@@ -294,8 +294,8 @@ Output:
 
 Input:
 
-- blockage run 1: `N`, `NE`, `E`, `blocked_by = lake`
-- blockage run 2: `SW`, `blocked_by = windthrow`
+- blockage run 1: `N`, `NE`, `E`, `blockedBy = lake`
+- blockage run 2: `SW`, `blockedBy = windthrow`
 
 Output:
 
@@ -306,17 +306,17 @@ Output:
 
 Input:
 
-- blockage run: `N`, `NE`, `E`, `blocked_by = bog_deep_water`
+- blockage run: `N`, `NE`, `E`, `blockedBy = bog_deep_water`
 - one passable direction `W`
 
 Output:
 
 1. `Bog water lies too deep to cross north, northeast, and east.`
-2. `A drier hummock offers passage to the west.` (optional passage hint, separate from `blocked_by`)
+2. `A drier hummock offers passage to the west.` (optional passage hint, separate from `blockedBy`)
 
 ## Non-goals and guardrails
 
-1. `blocked_by` explains blocked movement; it does not replace passability truth.
+1. `blockedBy` explains blocked movement; it does not replace passability truth.
 2. Causes are plausible and signal-grounded; avoid unsupported narrative invention.
 3. Blockage-run-to-cause binding must be preserved in structured output.
 
@@ -330,6 +330,6 @@ Output:
 
 ## Proposed rollout
 
-1. Add `blocked_by` structured output only.
+1. Add `blockedBy` structured output only.
 2. Validate reason coverage and direction binding on real maps.
 3. Introduce reason-based sentence rendering once mappings are stable.
