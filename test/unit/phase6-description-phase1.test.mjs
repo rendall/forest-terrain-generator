@@ -663,7 +663,7 @@ describe("Phase 1 description pipeline", () => {
 		);
 	});
 
-	it("uses fixed lake anchor text without obstacle merge and lake-aware movement wording", () => {
+	it("keeps standalone landform text and lake-aware movement wording", () => {
 		const result = generateRawDescription(
 			{
 				...case04,
@@ -687,7 +687,7 @@ describe("Phase 1 description pipeline", () => {
 		);
 
 		const landform = result.sentences.find((sentence) => sentence.slot === "landform");
-		expect(landform?.text).toBe("This is lake surface.");
+		expect(landform?.text).toBe(landform?.basicText);
 		expect(landform?.contributors).toEqual(["landform"]);
 		expect(landform?.contributorKeys.obstacle).toBeUndefined();
 		const movement = result.sentences.find(

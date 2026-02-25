@@ -1433,7 +1433,7 @@ export function generateRawDescription(
 	sentences.push({
 		slot: "landform",
 		basicText: landformSentence,
-		text: anchorSentence,
+		text: landformSentence,
 		contributors: uniqueContributors(anchorContributors),
 		contributorKeys: anchorContributorKeys,
 	});
