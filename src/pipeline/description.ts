@@ -731,6 +731,14 @@ function directionRingDistance(a: Direction, b: Direction): number {
 	return Math.min(delta, RING.length - delta);
 }
 
+function oppositeDirection(direction: Direction): Direction {
+	const index = RING.indexOf(direction);
+	if (index < 0) {
+		return direction;
+	}
+	return RING[(index + 4) % RING.length] as Direction;
+}
+
 function movementTypeForPassability(passability: Passability): MovementRun["type"] {
 	return passability === "passable" ? "passage" : "blockage";
 }
