@@ -577,6 +577,35 @@ describe("Phase 1 description pipeline", () => {
 		);
 	});
 
+	it("uses side-clause wording for contiguous four-direction landform groups", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: -0.04 },
+					NE: { ...case04.neighbors.NE, elevDelta: -0.09 },
+					E: { ...case04.neighbors.E, elevDelta: -0.09 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0 },
+					NW: { ...case04.neighbors.NW, elevDelta: -0.04 },
+				},
+			},
+			"seed-landform-side-clause-four",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).toBe(
+			"The land descends across the northern and eastern sides.",
+		);
+		expect(landform?.basicText).not.toContain("From the northwest to the east");
+	});
+
 	it("uses majority wording for five contiguous neighbor directions", () => {
 		const result = generateRawDescription(
 			{
