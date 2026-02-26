@@ -1089,6 +1089,35 @@ describe("Phase 1 description pipeline", () => {
 		expect(followableIndex).toBeGreaterThan(lakeIndex);
 	});
 
+	it("uses article-correct shoreline lake phrasing", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				followable: [],
+				passability: passabilityFromOpen(DIRS),
+				neighbors: {
+					N: { ...case04.neighbors.N, water: "lake", followable: [] },
+					NE: { ...case04.neighbors.NE, water: "none", followable: [] },
+					E: { ...case04.neighbors.E, water: "none", followable: [] },
+					SE: { ...case04.neighbors.SE, water: "none", followable: [] },
+					S: { ...case04.neighbors.S, water: "none", followable: [] },
+					SW: { ...case04.neighbors.SW, water: "none", followable: [] },
+					W: { ...case04.neighbors.W, water: "none", followable: [] },
+					NW: { ...case04.neighbors.NW, water: "none", followable: [] },
+				},
+			},
+			"seed-18",
+		);
+		const lakeHydrology = result.sentences.find(
+			(sentence) =>
+				sentence.slot === "hydrology" &&
+				sentence.contributorKeys.hydrology === "lake_directional",
+		);
+		expect(lakeHydrology?.text).toBe(
+			"The shoreline curves where land meets lake to the north.",
+		);
+	});
+
 	it("emits movement_structure when any direction is blocked or difficult", () => {
 		const result = generateRawDescription(case04, "seed-move-1");
 		const movementSentences = result.sentences.filter(
