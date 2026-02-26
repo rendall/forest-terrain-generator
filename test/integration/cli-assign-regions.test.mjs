@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -45,6 +45,46 @@ async function makeTempDir() {
 	const dir = await mkdtemp(join(tmpdir(), "forest-terrain-generator-"));
 	tempDirs.push(dir);
 	return dir;
+}
+
+function makeTile(x, y, biome) {
+	return {
+		x,
+		y,
+		topography: { h: 0, r: 0, v: 0, slopeMag: 0, aspectDeg: 0, landform: "flat" },
+		hydrology: {
+			fd: 255,
+			fa: 1,
+			faN: 0,
+			lakeMask: false,
+			isStream: false,
+			distWater: 0,
+			moisture: 0,
+			waterClass: "none",
+		},
+		ecology: {
+			biome,
+			treeDensity: 0,
+			canopyCover: 0,
+			dominant: [],
+			ground: { soil: "sandy_till", firmness: 0.5, surfaceFlags: [] },
+			roughness: { obstruction: 0, featureFlags: [] },
+		},
+		navigation: {
+			moveCost: 1,
+			followable: [],
+			passability: {
+				N: "passable",
+				NE: "passable",
+				E: "passable",
+				SE: "passable",
+				S: "passable",
+				SW: "passable",
+				W: "passable",
+				NW: "passable",
+			},
+		},
+	};
 }
 
 afterEach(async () => {
@@ -131,5 +171,42 @@ describe("assign-regions CLI", () => {
 		]);
 		expect(thirdWithForce.code).toBe(0);
 	});
-});
 
+	it("emits parentRegionId for enclosed island regions", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-manual.json");
+		const enrichedFile = join(dir, "enriched-manual.json");
+
+		const tiles = [];
+		for (let y = 0; y < 3; y += 1) {
+			for (let x = 0; x < 3; x += 1) {
+				const biome = x === 1 && y === 1 ? "lake" : "pine_heath";
+				tiles.push(makeTile(x, y, biome));
+			}
+		}
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(
+				{
+					meta: { specVersion: "forest-terrain-v1" },
+					tiles,
+				},
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		const assignResult = await runCli(ASSIGN_REGIONS_CLI_ENTRY, [
+			"--input-file",
+			sourceFile,
+			"--output-file",
+			enrichedFile,
+		]);
+		expect(assignResult.code).toBe(0);
+
+		const parsed = JSON.parse(await readFile(enrichedFile, "utf8"));
+		expect(parsed.regions).toHaveLength(2);
+		expect(parsed.regions[1].parentRegionId).toBe(0);
+	});
+});

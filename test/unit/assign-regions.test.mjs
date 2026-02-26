@@ -113,5 +113,64 @@ describe("assignRegions", () => {
 		expect(() => assignRegions(envelope)).toThrow(InputValidationError);
 		expect(() => assignRegions(envelope)).toThrow(/ecology\.biome/);
 	});
-});
 
+	it("assigns parentRegionId for enclosed interior island regions", () => {
+		const tiles = [];
+		for (let y = 0; y < 3; y += 1) {
+			for (let x = 0; x < 3; x += 1) {
+				const biome = x === 1 && y === 1 ? "lake" : "pine_heath";
+				tiles.push(makeTile(x, y, biome));
+			}
+		}
+
+		const out = assignRegions({
+			meta: { specVersion: "forest-terrain-v1" },
+			tiles,
+		});
+		expect(out.regions).toHaveLength(2);
+		expect(out.regions[0].parentRegionId).toBeUndefined();
+		expect(out.regions[1].parentRegionId).toBe(0);
+	});
+
+	it("does not assign parentRegionId when region touches map boundary", () => {
+		const tiles = [];
+		for (let y = 0; y < 3; y += 1) {
+			for (let x = 0; x < 3; x += 1) {
+				const biome = x === 0 && y === 1 ? "lake" : "pine_heath";
+				tiles.push(makeTile(x, y, biome));
+			}
+		}
+
+		const out = assignRegions({
+			meta: { specVersion: "forest-terrain-v1" },
+			tiles,
+		});
+		expect(out.regions).toHaveLength(2);
+		expect(out.regions[1].parentRegionId).toBeUndefined();
+	});
+
+	it("does not assign parentRegionId when perimeter neighbors span multiple regions", () => {
+		const tiles = [];
+		const biomeAt = (x, y) => {
+			if (x === 1 && y === 1) {
+				return "lake";
+			}
+			if (y === 2 || x === 2) {
+				return "spruce_swamp";
+			}
+			return "pine_heath";
+		};
+		for (let y = 0; y < 3; y += 1) {
+			for (let x = 0; x < 3; x += 1) {
+				tiles.push(makeTile(x, y, biomeAt(x, y)));
+			}
+		}
+
+		const out = assignRegions({
+			meta: { specVersion: "forest-terrain-v1" },
+			tiles,
+		});
+		expect(out.regions).toHaveLength(3);
+		expect(out.regions[1].parentRegionId).toBeUndefined();
+	});
+});

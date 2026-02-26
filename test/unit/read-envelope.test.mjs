@@ -68,6 +68,7 @@ describe("read terrain envelope", () => {
 				biome: "mixed_forest",
 				tileCount: 1,
 				bbox: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
+				parentRegionId: 2,
 			},
 		];
 		await writeFile(
@@ -129,5 +130,34 @@ describe("read terrain envelope", () => {
 			/Invalid envelope "regions"/,
 		);
 	});
-});
 
+	it("rejects malformed parentRegionId when present", async () => {
+		const dir = await makeTempDir();
+		const path = join(dir, "terrain.json");
+		await writeFile(
+			path,
+			`${JSON.stringify(
+				{
+					meta: { specVersion: "forest-terrain-v1" },
+					regions: [
+						{
+							id: 0,
+							biome: "mixed_forest",
+							tileCount: 1,
+							bbox: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
+							parentRegionId: "bad",
+						},
+					],
+					tiles: [makeValidTile()],
+				},
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		await expect(readTerrainEnvelopeFile(path)).rejects.toThrow(
+			/parentRegionId/,
+		);
+	});
+});
