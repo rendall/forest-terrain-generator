@@ -202,9 +202,6 @@ const BLOCK_RULES: readonly BlockedPhraseRule[] = [
 		phrases: ["a dense stand of trees", "close-set trunks", "thick forest"],
 	},
 ];
-const LAKE_BLOCKED_PHRASES = new Set<string>(
-	(BLOCK_RULES[0]?.phrases ?? []) as readonly string[],
-);
 
 function isPassageRun(run: MovementRun): run is PassageRun {
 	return run.type === "passage";
@@ -345,31 +342,6 @@ function renderBlockageTransformedText(
 				`to the ${formatDirectionNames(group.directions)} by ${group.phrase}`,
 		);
 	return joinClausesWithAnd(firstClause, restClauses);
-}
-
-function isLakeBlockedPhrase(phrase: string): boolean {
-	return LAKE_BLOCKED_PHRASES.has(phrase);
-}
-
-function renderFilteredBlockageTransformedText(
-	seedKey: string,
-	movementRuns: readonly MovementRun[],
-): string | undefined {
-	const selections = collectBlockageRuns(movementRuns)
-		.filter((run) => typeof run.blockedBy === "string")
-		.filter((run) => !isLakeBlockedPhrase(run.blockedBy as string))
-		.map((run) => ({
-			directions: [...run.directions],
-			phrase: run.blockedBy as string,
-		}));
-	if (selections.length === 0) {
-		return undefined;
-	}
-	const noun = pickDeterministic(
-		TRAVERSAL_NOUNS,
-		`${seedKey}:movement_structure:noun`,
-	);
-	return renderBlockageTransformedText(noun, selections);
 }
 
 function renderTransformedMovementStructure(
@@ -625,13 +597,13 @@ const LAKE_PHRASES = [
 	"The ground slopes down to the ${dir} to meet the open water of a lake.",
 	"Sand and small stones mark the shore of a lake to the {dir}.",
 	"Open water extends outward to the {dir} from a narrow band of shore.",
-	"Shoreline curves here, where land meets flat lake surface to the {dir}.",
+	"Shoreline curves where land meets lake to the {dir}.",
 	"Reeds and stones line the edge of a lake to the {dir}.",
-	"Water lies open to the {dir} beyond a strip of damp earth and stones.",
+	"The open water of a lake is to the {dir} beyond a strip of damp earth and stones.",
 	"A shallow margin of shore borders a broad lake to the {dir}.",
 	"A lake begins here to the {dir}, its surface wide and uninterrupted.",
-	"To the {dir}, exposed roots and stones frame the edge of a lake.",
-	"A narrow band of sand borders a lake to the {dir}.",
+	"To the {dir}, a lake is bordered by roots and stones.",
+	"A narrow rocky beach here borders a lake to the {dir}.",
 	"To the {dir}, the ground transitions from soil to sand at the edge of a lake.",
 ];
 
@@ -1087,7 +1059,6 @@ interface NeighborLandformGroup {
 	directions: Direction[];
 	mode: "rise" | "descend" | "same";
 	band: "same" | "gentle" | "none" | "steep";
-	sourceDirectionCount?: number;
 	mergedFromCount?: number;
 	mergeBands?: Array<"same" | "gentle" | "none" | "steep">;
 }
@@ -1215,6 +1186,30 @@ function groupNeighborLandformSignals(
 	return groups;
 }
 
+function isMergeCompatibleNeighborBand(
+	a: "same" | "gentle" | "none" | "steep",
+	b: "same" | "gentle" | "none" | "steep",
+): boolean {
+	if (a === b) {
+		return true;
+	}
+	if (a === "same" || b === "same") {
+		return false;
+	}
+	const rank = (band: "gentle" | "none" | "steep"): number => {
+		if (band === "gentle") {
+			return 0;
+		}
+		if (band === "none") {
+			return 1;
+		}
+		return 2;
+	};
+	const aRank = rank(a);
+	const bRank = rank(b);
+	return Math.abs(aRank - bRank) <= 1;
+}
+
 function collapseMergedNeighborBand(
 	bands: readonly Array<"same" | "gentle" | "none" | "steep">,
 ): "same" | "gentle" | "none" | "steep" {
@@ -1246,7 +1241,11 @@ function mergeNeighborLandformGroups(
 			mergeBands: [...(group.mergeBands ?? [group.band])],
 		};
 		const previous = merged[merged.length - 1];
-		if (previous && previous.mode === current.mode) {
+		if (
+			previous &&
+			previous.mode === current.mode &&
+			isMergeCompatibleNeighborBand(previous.band, current.band)
+		) {
 			const nextBands = [...(previous.mergeBands ?? [previous.band]), ...(current.mergeBands ?? [current.band])];
 			previous.directions.push(...current.directions);
 			previous.mergeBands = nextBands;
@@ -1261,7 +1260,10 @@ function mergeNeighborLandformGroups(
 	while (merged.length > 1) {
 		const first = merged[0] as NeighborLandformGroup;
 		const last = merged[merged.length - 1] as NeighborLandformGroup;
-		if (first.mode !== last.mode) {
+		if (
+			first.mode !== last.mode ||
+			!isMergeCompatibleNeighborBand(first.band, last.band)
+		) {
 			break;
 		}
 
@@ -1376,107 +1378,13 @@ function renderNeighborLandformSentences(
 	});
 }
 
-function normalizeNeighborModeBand(
-	groups: Array<Pick<NeighborLandformGroup, "band">>,
-): "gentle" | "none" | "steep" {
-	const unique = [
-		...new Set(
-			groups
-				.map((group) => group.band)
-				.filter((band): band is "gentle" | "none" | "steep" => band !== "same"),
-		),
-	];
-	if (unique.length === 1) {
-		return unique[0] as "gentle" | "none" | "steep";
-	}
-	return "none";
-}
-
-function directionsForNeighborMode(
-	groups: Array<Pick<NeighborLandformGroup, "mode" | "directions">>,
-	mode: "rise" | "descend",
-): Direction[] {
-	const inMode = groups.filter((group) => group.mode === mode);
-	const set = new Set(inMode.flatMap((group) => group.directions));
-	return RING.filter((direction) => set.has(direction));
-}
-
-function renderMajorityNeighborLandformSentence(
-	groups: Array<Pick<NeighborLandformGroup, "mode" | "band" | "directions">>,
-): string | null {
-	if (groups.length === 0) {
-		return null;
-	}
-	const riseDirections = directionsForNeighborMode(groups, "rise");
-	const descendDirections = directionsForNeighborMode(groups, "descend");
-	const riseCount = riseDirections.length;
-	const descendCount = descendDirections.length;
-	const majorMode: "rise" | "descend" =
-		riseCount >= descendCount ? "rise" : "descend";
-	const majorCount = majorMode === "rise" ? riseCount : descendCount;
-	if (majorCount < 5) {
-		return null;
-	}
-	const minorMode: "rise" | "descend" =
-		majorMode === "rise" ? "descend" : "rise";
-	const majorGroups = groups.filter((group) => group.mode === majorMode);
-	const minorGroups = groups.filter((group) => group.mode === minorMode);
-	const majorBand = normalizeNeighborModeBand(majorGroups);
-	const minorBand = normalizeNeighborModeBand(minorGroups);
-	const majorVerb = majorMode === "rise" ? "rises" : "descends";
-	const minorParticiple = minorMode === "rise" ? "rising" : "descending";
-	const majorQualifier = qualifierForBand(majorBand);
-	const minorQualifier = qualifierForBand(minorBand);
-	const majorScope =
-		majorCount >= 6 ? "in nearly every direction" : "in most directions";
-	const minorDirections = majorMode === "rise" ? descendDirections : riseDirections;
-	if (minorDirections.length === 0) {
-		return sanitizeSentence(
-			`The land ${majorQualifier}${majorVerb} ${majorScope}.`,
-		);
-	}
-	if (minorDirections.length === 1) {
-		return sanitizeSentence(
-			`The land ${majorQualifier}${majorVerb} ${majorScope}, ${minorParticiple} ${minorQualifier}only to the ${DIR_LOWER[minorDirections[0] as Direction]}.`,
-		);
-	}
-	return sanitizeSentence(
-		`The land ${majorQualifier}${majorVerb} ${majorScope}, ${minorParticiple} ${minorQualifier}toward the ${formatDirectionNames(minorDirections)}.`,
-	);
-}
-
-function filterNeighborGroupsToPassableDirections(
-	groups: NeighborLandformGroup[],
-	passability: PassabilityByDir,
-): NeighborLandformGroup[] {
-	const filtered: NeighborLandformGroup[] = [];
-	for (const group of groups) {
-		const passableDirections = group.directions.filter(
-			(direction) => passability[direction] === "passable",
-		);
-		if (passableDirections.length === 0) {
-			continue;
-		}
-		filtered.push({
-			...group,
-			directions: passableDirections,
-			sourceDirectionCount: group.directions.length,
-		});
-	}
-	return filtered;
-}
-
 function shouldEmitNeighborLandformGroup(
 	group: NeighborLandformGroup,
 ): { emitted: boolean; suppressedBy?: "same_filtered" | "single_gentle_filtered" } {
 	if (group.mode === "same") {
 		return { emitted: false, suppressedBy: "same_filtered" };
 	}
-	if (
-		group.band === "gentle" &&
-		group.directions.length === 1 &&
-		(group.sourceDirectionCount ?? group.directions.length) === 1
-	) {
+	if (group.band === "gentle" && group.directions.length === 1) {
 		return { emitted: false, suppressedBy: "single_gentle_filtered" };
 	}
 	return { emitted: true };
@@ -1492,13 +1400,9 @@ function renderDerivedLandform(
 	const neighborGroups = mergeNeighborLandformGroups(
 		groupNeighborLandformSignals(neighborSignals),
 	);
-	const proseNeighborGroups = filterNeighborGroupsToPassableDirections(
-		neighborGroups,
-		input.passability,
-	);
-	const neighborSentences = renderNeighborLandformSentences(proseNeighborGroups);
+	const neighborSentences = renderNeighborLandformSentences(neighborGroups);
 	const neighborContributions: NeighborLandformContribution[] = neighborGroups.map(
-		(group) => {
+		(group, index) => {
 			const deltas = group.directions.map((direction) =>
 				Math.abs(input.neighbors[direction].elevDelta),
 			);
@@ -1513,7 +1417,7 @@ function renderDerivedLandform(
 				...(mergeBands.length > 1 ? { mergeBands } : {}),
 				minAbsDelta: deltas.length > 0 ? Math.min(...deltas) : 0,
 				maxAbsDelta: deltas.length > 0 ? Math.max(...deltas) : 0,
-				text: renderNeighborLandformSentences([group])[0] as string,
+				text: neighborSentences[index] as string,
 				...(emission.emitted ? { emitted: true } : { emitted: false }),
 				...(emission.suppressedBy
 					? { suppressedBy: emission.suppressedBy }
@@ -1521,64 +1425,31 @@ function renderDerivedLandform(
 			};
 		},
 	);
-	const emittedNeighborContributions = proseNeighborGroups
-		.map((group, index) => {
-			const emission = shouldEmitNeighborLandformGroup(group);
-			const mergedFromCount = group.mergedFromCount ?? 1;
-			const mergeBands = [...(group.mergeBands ?? [group.band])];
-			return {
-				directions: [...group.directions],
-				mode: group.mode,
-				band: group.band,
-				...(mergedFromCount > 1 ? { mergedFromCount } : {}),
-				...(mergeBands.length > 1 ? { mergeBands } : {}),
-				minAbsDelta: Math.min(
-					...group.directions.map((direction) =>
-						Math.abs(input.neighbors[direction].elevDelta),
-					),
-				),
-				maxAbsDelta: Math.max(
-					...group.directions.map((direction) =>
-						Math.abs(input.neighbors[direction].elevDelta),
-					),
-				),
-				text: neighborSentences[index] as string,
-				...(emission.emitted ? { emitted: true } : { emitted: false }),
-				...(emission.suppressedBy
-					? { suppressedBy: emission.suppressedBy }
-					: {}),
-			};
-		})
-		.filter((group) => group.emitted !== false);
-	const localDirectionBlocked =
-		local.mode !== "flat" &&
-		local.direction !== null &&
-		input.passability[local.direction as Direction] !== "passable";
+	const emittedNeighborContributions = neighborContributions.filter(
+		(group) => group.emitted !== false,
+	);
 	const localOverlapsNeighbor =
 		local.mode !== "flat" &&
 		local.direction !== null &&
 		emittedNeighborContributions.some(
-			(group) => group.directions.includes(local.direction as Direction),
+			(group) =>
+				group.mode === local.mode &&
+				isMergeCompatibleNeighborBand(
+					group.band,
+					local.band,
+				) &&
+				group.directions.includes(local.direction as Direction),
 		);
-	const localSuppressedBy:
-		| "flat_filtered"
-		| "blocked_direction"
-		| "neighbor_overlap"
-		| null =
+	const localSuppressedBy: "flat_filtered" | "neighbor_overlap" | null =
 		local.mode === "flat"
 			? "flat_filtered"
-			: localDirectionBlocked
-				? "blocked_direction"
 			: localOverlapsNeighbor
 				? "neighbor_overlap"
 				: null;
 	const localEmitted = localSuppressedBy === null;
-	const majorityNeighborSentence = renderMajorityNeighborLandformSentence(
-		emittedNeighborContributions,
+	const emittedNeighborSentences = emittedNeighborContributions.map(
+		(group) => group.text,
 	);
-	const emittedNeighborSentences = majorityNeighborSentence
-		? [majorityNeighborSentence]
-		: emittedNeighborContributions.map((group) => group.text);
 	const sentenceParts = localEmitted
 		? [local.text, ...emittedNeighborSentences]
 		: [...emittedNeighborSentences];
@@ -1924,33 +1795,11 @@ export function generateRawDescription(
 		movementStructureSentence.movement,
 	);
 	const movementPassableExitCount = countPassableExits(input.passability);
-	let movementText = transformedMovement.text;
-	let movementSuppressedBy: "fully_passable" | "lake_directional_dedup" | null =
-		null;
-	if (
-		lakeSentence &&
-		movementPassableExitCount > 4 &&
-		typeof movementText === "string"
-	) {
-		const filteredBlockageText = renderFilteredBlockageTransformedText(
-			seedKey,
-			transformedMovement.movement,
-		);
-		if (typeof filteredBlockageText === "string") {
-			movementText = filteredBlockageText;
-		} else {
-			movementText = undefined;
-			movementSuppressedBy = "lake_directional_dedup";
-		}
-	}
-	if (movementPassableExitCount === 8) {
-		movementSuppressedBy = "fully_passable";
-	}
-	const suppressMovementInProse = movementSuppressedBy !== null;
+	const suppressMovementInProse = movementPassableExitCount === 8;
 	sentences.push({
 		slot: "movement_structure",
-		...(typeof movementText === "string" && !suppressMovementInProse
-			? { text: movementText }
+		...(typeof transformedMovement.text === "string" && !suppressMovementInProse
+			? { text: transformedMovement.text }
 			: {}),
 		basicText: movementStructureSentence.text,
 		contributorKeys: {
@@ -1959,7 +1808,9 @@ export function generateRawDescription(
 		},
 		contributors: {
 			emit: !suppressMovementInProse,
-			...(movementSuppressedBy ? { suppressedBy: movementSuppressedBy } : {}),
+			...(suppressMovementInProse
+				? { suppressedBy: "fully_passable" }
+				: {}),
 		},
 		movement: transformedMovement.movement,
 	});
