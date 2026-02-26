@@ -550,7 +550,7 @@ const BIOME_PHRASES: Partial<Record<KnownBiome, string[]>> = {
 		"Ground cover shifts between drier patches and softer, shaded hollows.",
 		"Birch brighten the understory between tighter stands of conifer.",
 		"The forest feels neither fully open nor fully closed, but varied throughout.",
-		"Low branches of spruce contrast with taller, bare birch trunks.",
+		"Low branches of spruce spread beneath tall, bare birch trunks.",
 		"The terrain carries both dry leaf scatter and darker, needle-covered soil.",
 		"Spruce pockets narrow the space before birch open it again.",
 		"The canopy breaks unevenly, with mixed shade and filtered light.",
@@ -565,7 +565,7 @@ const BIOME_PHRASES: Partial<Record<KnownBiome, string[]>> = {
 		"Pine cling to elevated, well-drained sand above lower terrain.",
 		"The footing turns sandy and firm along this pine-covered ridge.",
 		"The ridge narrows here, with pine spaced along its crest.",
-		"Gravelly soil and open pine define this raised strip of ground.",
+		"Gravelly soil and open pine cover this raised strip of ground.",
 		"Pine stand along a distinct, elongated rise in the landscape.",
 		"Dry sand and exposed roots mark the spine of the ridge.",
 		"The terrain slopes away on either side of this pine-lined height.",
@@ -576,7 +576,7 @@ const BIOME_PHRASES: Partial<Record<KnownBiome, string[]>> = {
 	lake: ["Lake surface."], // Lake surface is not reachable here
 
 	open_bog: [
-		"Open peat stretches here, broken by shallow pools and low sedge.",
+		"Open peat covers the ground here, broken by shallow pools and low sedge.",
 		"The ground is flat and saturated, with dark water in scattered hollows.",
 		"Low bog plants spread across wet, uneven peat.",
 		"Still water collects between patches of sedge and dwarf shrubs.",
@@ -584,7 +584,7 @@ const BIOME_PHRASES: Partial<Record<KnownBiome, string[]>> = {
 		"Peat-dark ground yields underfoot among sparse bog growth.",
 		"Shallow pools and matted grasses cover this open wetland.",
 		"The land lies flat and soft, with low vegetation and standing water.",
-		"Wet peat and scattered cottongrass define this open stretch.",
+		"Wet peat and scattered cottongrass cover this open stretch.",
 		"The surface is spongy and broken by narrow channels of still water.",
 		"Low shrubs and sedge rise from saturated, dark soil.",
 		"The bog spreads wide here, with little cover and soft footing.",
@@ -1709,9 +1709,9 @@ function renderDerivedLandform(
 			? "flat_filtered"
 			: localDirectionBlocked
 				? "blocked_direction"
-			: localOverlapsNeighbor
-				? "neighbor_overlap"
-				: null;
+				: localOverlapsNeighbor
+					? "neighbor_overlap"
+					: null;
 	const localEmitted = localSuppressedBy === null;
 	const majorityNeighborSentence = renderMajorityNeighborLandformSentence(
 		emittedNeighborContributions,
