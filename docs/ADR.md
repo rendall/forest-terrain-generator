@@ -2,6 +2,41 @@
 
 This document is a living ledger of significant technical decisions made within this project. Each entry captures the context in which a decision was made, the options considered, the decision itself, and its consequences. The purpose is not to justify past choices defensively, but to preserve intent and reasoning so future contributors can understand why the system is shaped the way it is. Over time, this file forms a chronological record of trade-offs, constraints, and design direction, providing continuity as the codebase and team evolve.
 
+## Add Separate Region-Enrichment Executable and Envelope Region Index (v1)
+
+**Timestamp:** 2026-02-26 00:00 (UTC)
+
+### Decision
+
+Add deterministic region assignment as a companion post-process executable:
+
+- Add `forest-terrain-assign-regions` as a separate executable entrypoint (not a `src/cli/main.ts` subcommand).
+- Input/output contract: read terrain envelope via `--input-file`, write enriched terrain envelope via `--output-file`.
+- Enriched output always includes top-level `regions` array (empty array allowed).
+- Enriched output also includes per-tile `region.biomeRegionId`.
+- Region derivation uses deterministic 8-way connected components over `ecology.biome` with:
+  - row-major seed scan
+  - canonical Dir8 neighbor expansion order (`E, SE, S, SW, W, NW, N, NE`)
+  - first-seen component ID assignment.
+- Reader behavior remains backward-compatible with pre-enrichment envelopes that omit `regions`.
+
+### Rationale
+
+Region assignment is useful metadata for downstream prose/tooling but should not alter core terrain generation or the `generate|derive|debug` command surface. A separate executable keeps simulator behavior stable while enabling additive enrichment workflows.
+
+### Alternatives Considered
+
+- Add `regions` as a new subcommand in `src/cli/main.ts` — rejected to avoid expanding/changing core simulator command behavior.
+- Compute regions inside core generation pipeline — rejected because it mixes post-process metadata concerns into terrain derivation flow.
+- Keep top-level `regions` optional in enriched output — rejected; a required index creates a stable downstream contract.
+
+### References
+
+- PR: None
+- Commit: Pending
+- File(s): docs/drafts/RegionEnrichment-Proposal.md, docs/drafts/RegionEnrichment-ImplementationChecklist.md, docs/drafts/ImplementationPlan.md
+- Related ADRs: None
+
 ## Adopt Asymmetric Lake Passability for Recovery Safety (v1)
 
 **Timestamp:** 2026-02-23 00:00 (UTC)
