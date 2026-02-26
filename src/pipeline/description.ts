@@ -825,73 +825,42 @@ function formatDirectionNames(directions: readonly Direction[]): string {
 }
 
 function cardinalSidesForDirections(directions: readonly Direction[]): Direction[] {
-	if (
-		directions.length < 2 ||
-		directions.length > 4 ||
-		!isContiguousDirectionRun(directions)
-	) {
+	if (directions.length < 2) {
 		return [];
 	}
-
-	const sideWindows: Record<Direction, Direction[]> = {
-		N: ["NW", "N", "NE"],
-		E: ["NE", "E", "SE"],
-		S: ["SE", "S", "SW"],
-		W: ["SW", "W", "NW"],
-		NE: [],
-		SE: [],
-		SW: [],
-		NW: [],
-	};
-	const scoredSides = CARDINAL_RING.map((side) => ({
-		side,
-		score: directions.filter((direction) =>
-			(sideWindows[side] as Direction[]).includes(direction),
-		).length,
-	})).filter((entry) => entry.score > 0);
-
-	if (scoredSides.length === 0) {
-		return [];
-	}
-
-	scoredSides.sort((a, b) => {
-		if (b.score !== a.score) {
-			return b.score - a.score;
+	const directionSet = new Set(directions);
+	const includesDirection = (direction: Direction): boolean =>
+		directionSet.has(direction);
+	const includesCardinalSide = (
+		cardinal: "N" | "E" | "S" | "W",
+	): boolean => {
+		if (cardinal === "N") {
+			return (
+				includesDirection("N") ||
+				(includesDirection("NW") && includesDirection("NE"))
+			);
 		}
-		return CARDINAL_RING.indexOf(a.side) - CARDINAL_RING.indexOf(b.side);
-	});
+		if (cardinal === "E") {
+			return (
+				includesDirection("E") ||
+				(includesDirection("NE") && includesDirection("SE"))
+			);
+		}
+		if (cardinal === "S") {
+			return (
+				includesDirection("S") ||
+				(includesDirection("SE") && includesDirection("SW"))
+			);
+		}
+		return (
+			includesDirection("W") ||
+			(includesDirection("SW") && includesDirection("NW"))
+		);
+	};
 
-	const primary = scoredSides[0]?.side;
-	if (!primary) {
-		return [];
-	}
-
-	const primaryIndex = CARDINAL_RING.indexOf(primary);
-	const adjacentSides = [
-		CARDINAL_RING[(primaryIndex + 1) % CARDINAL_RING.length] as Direction,
-		CARDINAL_RING[(primaryIndex + CARDINAL_RING.length - 1) % CARDINAL_RING.length] as Direction,
-	];
-	const secondary = scoredSides.find(
-		(entry) => entry.score >= 2 && adjacentSides.includes(entry.side),
+	return CARDINAL_RING.filter((side) =>
+		includesCardinalSide(side as "N" | "E" | "S" | "W"),
 	);
-	if (!secondary) {
-		return [primary];
-	}
-
-	const pair = [primary, secondary.side] as Direction[];
-	if (pair.includes("N") && pair.includes("E")) {
-		return ["N", "E"];
-	}
-	if (pair.includes("E") && pair.includes("S")) {
-		return ["E", "S"];
-	}
-	if (pair.includes("S") && pair.includes("W")) {
-		return ["S", "W"];
-	}
-	if (pair.includes("W") && pair.includes("N")) {
-		return ["W", "N"];
-	}
-	return [primary];
 }
 
 function formatLandformSideLabel(directions: readonly Direction[]): string | null {
@@ -899,44 +868,58 @@ function formatLandformSideLabel(directions: readonly Direction[]): string | nul
 	if (sides.length === 0) {
 		return null;
 	}
+	const adjectiveBySide: Record<"N" | "E" | "S" | "W", string> = {
+		N: "northern",
+		E: "eastern",
+		S: "southern",
+		W: "western",
+	};
+	const adjectives = sides.map(
+		(side) => adjectiveBySide[side as "N" | "E" | "S" | "W"],
+	);
 	if (sides.length === 1) {
-		const side = sides[0] as Direction;
-		const sideLabel: Record<Direction, string> = {
-			N: "the northern side",
-			E: "the eastern side",
-			S: "the southern side",
-			W: "the western side",
-			NE: "the northern side",
-			SE: "the eastern side",
-			SW: "the southern side",
-			NW: "the western side",
-		};
-		return sideLabel[side];
+		return `the ${adjectives[0]} side`;
 	}
 	if (sides.length === 2) {
-		const pair = sides.join(",");
-		const pairLabel: Record<string, string> = {
-			"N,E": "the northern and eastern sides",
-			"E,S": "the eastern and southern sides",
-			"S,W": "the southern and western sides",
-			"W,N": "the western and northern sides",
-		};
-		return pairLabel[pair] ?? null;
+		return `the ${adjectives[0]} and ${adjectives[1]} sides`;
 	}
-	return null;
+	return `the ${adjectives.slice(0, -1).join(", ")}, and ${adjectives[adjectives.length - 1]} sides`;
+}
+
+function renderLandformSidePhrase(
+	mode: "rise" | "descend",
+	band: "gentle" | "none" | "steep",
+	directions: readonly Direction[],
+): string | null {
+	const sideLabel = formatLandformSideLabel(directions);
+	if (!sideLabel) {
+		return null;
+	}
+	const qualifier = qualifierForBand(band);
+	const verb = mode === "rise" ? "rises" : "descends";
+	return `${qualifier}${verb} across ${sideLabel}`;
+}
+
+function renderLandformSideSentence(
+	mode: "rise" | "descend",
+	band: "gentle" | "none" | "steep",
+	directions: readonly Direction[],
+): string | null {
+	const phrase = renderLandformSidePhrase(mode, band, directions);
+	if (!phrase) {
+		return null;
+	}
+	return sanitizeSentence(`The land ${phrase}.`);
 }
 
 function renderLandformSideClause(group: NeighborLandformGroup): string | null {
 	if (group.mode === "same") {
 		return null;
 	}
-	const sideLabel = formatLandformSideLabel(group.directions);
-	if (!sideLabel) {
+	if (group.band === "same") {
 		return null;
 	}
-	const qualifier = qualifierForBand(group.band);
-	const verb = group.mode === "rise" ? "rises" : "descends";
-	return sanitizeSentence(`The land ${qualifier}${verb} across ${sideLabel}.`);
+	return renderLandformSideSentence(group.mode, group.band, group.directions);
 }
 
 function collectFollowableDirections(
@@ -1345,6 +1328,25 @@ function collapseMergedNeighborBand(
 	return "none";
 }
 
+function collapseBandForSameMode(
+	bands: readonly Array<"same" | "gentle" | "none" | "steep">,
+): "gentle" | "none" | "steep" {
+	const unique = [
+		...new Set(
+			bands.filter(
+				(band): band is "gentle" | "none" | "steep" => band !== "same",
+			),
+		),
+	];
+	if (unique.length === 0) {
+		return "none";
+	}
+	if (unique.length === 1) {
+		return unique[0] as "gentle" | "none" | "steep";
+	}
+	return "none";
+}
+
 function mergeNeighborLandformGroups(
 	groups: NeighborLandformGroup[],
 ): NeighborLandformGroup[] {
@@ -1516,17 +1518,7 @@ function renderNeighborLandformSentences(
 function normalizeNeighborModeBand(
 	groups: Array<Pick<NeighborLandformGroup, "band">>,
 ): "gentle" | "none" | "steep" {
-	const unique = [
-		...new Set(
-			groups
-				.map((group) => group.band)
-				.filter((band): band is "gentle" | "none" | "steep" => band !== "same"),
-		),
-	];
-	if (unique.length === 1) {
-		return unique[0] as "gentle" | "none" | "steep";
-	}
-	return "none";
+	return collapseBandForSameMode(groups.map((group) => group.band));
 }
 
 function directionsForNeighborMode(

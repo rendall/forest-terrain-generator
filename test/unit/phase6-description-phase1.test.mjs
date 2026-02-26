@@ -920,7 +920,7 @@ describe("Phase 1 description pipeline", () => {
 			(sentence) => sentence.slot === "landform",
 		);
 		expect(landform?.basicText).toBe(
-			"The land descends across the western and northern sides.",
+			"The land descends across the northern and western sides.",
 		);
 		const wrapGroup = landform?.contributors?.neighbors?.find(
 			(group) =>
