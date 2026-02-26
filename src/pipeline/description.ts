@@ -625,7 +625,7 @@ const LAKE_PHRASES = [
 	"The ground slopes down to the ${dir} to meet the open water of a lake.",
 	"Sand and small stones mark the shore of a lake to the {dir}.",
 	"Open water extends outward to the {dir} from a narrow band of shore.",
-	"Shoreline curves here, where land meets flat lake surface to the {dir}.",
+	"The shoreline curves where land meets lake to the {dir}.",
 	"Reeds and stones line the edge of a lake to the {dir}.",
 	"Water lies open to the {dir} beyond a strip of damp earth and stones.",
 	"A shallow margin of shore borders a broad lake to the {dir}.",
