@@ -44,6 +44,13 @@ Companion post-process executable decision:
 3. It reads an existing terrain envelope via `--input-file` and writes an enriched envelope via `--output-file`.
 4. It MUST NOT modify generator/derivation behavior for `generate`, `derive`, or `debug`.
 
+`forest-terrain-assign-regions` usage/output decision:
+
+1. Usage flags: `--input-file <path>`, `--output-file <path>`, and optional `--force`.
+2. Output tiles include per-tile `region.biomeRegionId` for every tile.
+3. Output envelope always includes required top-level `regions` array (empty array allowed when no tiles/components exist).
+4. Reader compatibility remains broad: pre-enrichment envelopes without `regions` remain valid input.
+
 ### 3.2 Input Contract
 
 Required conformance inputs align with normative Sections 2.1 and 2.2:

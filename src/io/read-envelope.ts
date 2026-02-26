@@ -145,8 +145,10 @@ export async function readTerrainEnvelopeFile(
 			`Input terrain file "${inputFilePath}" is missing required envelope array "tiles".`,
 		);
 	}
-	if (Object.prototype.hasOwnProperty.call(parsed, "regions")) {
-		assertRegionsShape(parsed.regions, inputFilePath);
+	const hasRegions = Object.prototype.hasOwnProperty.call(parsed, "regions");
+	const parsedRegions = hasRegions ? parsed.regions : undefined;
+	if (hasRegions) {
+		assertRegionsShape(parsedRegions, inputFilePath);
 	}
 
 	for (let i = 0; i < parsed.tiles.length; i += 1) {
@@ -163,8 +165,8 @@ export async function readTerrainEnvelopeFile(
 		meta: {
 			specVersion: parsed.meta.specVersion,
 		},
-		...(Object.prototype.hasOwnProperty.call(parsed, "regions")
-			? { regions: parsed.regions as RegionSummary[] }
+		...(hasRegions
+			? { regions: parsedRegions as unknown as RegionSummary[] }
 			: {}),
 		tiles: parsed.tiles as JsonObject[],
 	};

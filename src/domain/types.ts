@@ -66,30 +66,26 @@ export interface TerrainEnvelopeMeta {
 	specVersion: string;
 }
 
-export interface RegionSummaryBbox {
+export interface RegionSummaryBbox extends JsonObject {
 	minX: number;
 	minY: number;
 	maxX: number;
 	maxY: number;
 }
 
-export interface RegionSummary {
+export interface RegionSummary extends JsonObject {
 	id: number;
 	biome: string;
 	tileCount: number;
 	bbox: RegionSummaryBbox;
 }
 
-export interface RegionTileAttachment {
+export interface RegionTileAttachment extends JsonObject {
 	biomeRegionId: number;
-}
-
-export interface TerrainTile extends JsonObject {
-	region?: RegionTileAttachment;
 }
 
 export interface TerrainEnvelope {
 	meta: TerrainEnvelopeMeta;
 	regions?: RegionSummary[];
-	tiles: TerrainTile[];
+	tiles: JsonObject[];
 }
