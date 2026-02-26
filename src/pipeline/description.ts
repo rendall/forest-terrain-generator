@@ -1412,6 +1412,31 @@ function isContiguousDirectionRun(directions: readonly Direction[]): boolean {
 	return true;
 }
 
+function isContiguousDirectionSet(directions: readonly Direction[]): boolean {
+	if (directions.length <= 1) {
+		return true;
+	}
+	const indexSet = new Set(
+		directions.map((direction) => RING.indexOf(direction)).filter((idx) => idx >= 0),
+	);
+	if (indexSet.size !== directions.length) {
+		return false;
+	}
+	for (const start of indexSet) {
+		let contiguous = true;
+		for (let offset = 0; offset < directions.length; offset += 1) {
+			if (!indexSet.has((start + offset) % RING.length)) {
+				contiguous = false;
+				break;
+			}
+		}
+		if (contiguous) {
+			return true;
+		}
+	}
+	return false;
+}
+
 function formatDirectionArc(directions: readonly Direction[]): string {
 	const first = directions[0] as Direction;
 	const last = directions[directions.length - 1] as Direction;
@@ -1525,8 +1550,9 @@ function renderMajorityNeighborLandformSentence(
 	const descendCount = descendDirections.length;
 	const majorMode: "rise" | "descend" =
 		riseCount >= descendCount ? "rise" : "descend";
-	const majorCount = majorMode === "rise" ? riseCount : descendCount;
-	if (majorCount < 5) {
+	const majorDirections = majorMode === "rise" ? riseDirections : descendDirections;
+	const majorCount = majorDirections.length;
+	if (majorCount < 5 || !isContiguousDirectionSet(majorDirections)) {
 		return null;
 	}
 	const minorMode: "rise" | "descend" =
