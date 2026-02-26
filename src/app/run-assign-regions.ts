@@ -1,6 +1,6 @@
 import { isAbsolute, resolve } from "node:path";
 import { InputValidationError } from "../domain/errors.js";
-import type { RegionTileAttachment, TerrainEnvelope } from "../domain/types.js";
+import type { TerrainEnvelope } from "../domain/types.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
 import { writeStandardOutput } from "../io/write-outputs.js";
 import { deriveBiomeRegions, summarizeBiomeRegions } from "./assign-regions.js";
@@ -36,7 +36,7 @@ export function assignRegions(envelope: TerrainEnvelope): TerrainEnvelope {
 		...tile,
 		region: {
 			biomeRegionId: derived.tileRegionIds[tileIndex],
-		} as RegionTileAttachment,
+		},
 	}));
 
 	return {
