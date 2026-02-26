@@ -2,18 +2,22 @@
 
 When complete, these items will make landform prose read as terrain shape rather than coordinate output while preserving navigational precision in traversal sentences. Landform descriptions will prefer side-based phrasing over arc-style direction spans, majority/exception wording will stay deterministic and intensity-safe, lake directional grammar will be normalized, and the existing slot order and suppression behavior will remain intact.
 
-- [ ] [description] Add helper `cardinalSidesForDirections(directions: readonly Direction[]): Direction[]` in `src/pipeline/description.ts` that maps a contiguous direction run to one or two cardinal side labels (`N`, `E`, `S`, `W`) for landform prose
+- [x] [description] Add helper `cardinalSidesForDirections(directions: readonly Direction[]): Direction[]` in `src/pipeline/description.ts` that maps a contiguous direction run to one or two cardinal side labels (`N`, `E`, `S`, `W`) for landform prose
   - Uses ring-contiguous directional membership to derive side coverage deterministically.
+  - Apply this helper only to contiguous runs of length `2..4`; runs of length `>=5` must use majority wording instead.
 
 - [ ] [description] Add helper `formatLandformSideLabel(directions: readonly Direction[]): string | null` in `src/pipeline/description.ts` that returns phrases like `"the northern side"` or `"the northern and eastern sides"` (depends on previous item)
+  - If side labeling is ambiguous for a `2..4` run, return `null` and let rendering fall back to explicit direction-list wording.
 
 - [ ] [description] Add helper `renderLandformSideClause(group: NeighborLandformGroup): string | null` in `src/pipeline/description.ts` that renders side-based terrain clauses like `"The land descends across the northern and eastern sides."` for slope/shape narration only (depends on previous item)
 
 - [ ] [description] Update `renderNeighborLandformSentences` in `src/pipeline/description.ts` to stop using arc wording (`"From X to Y, ..."`) for landform clauses and use `renderLandformSideClause` when side labeling is available (depends on previous item)
+  - If `renderLandformSideClause` returns `null`, render explicit `"To the ..."` direction-list wording (not arc wording).
 
 - [ ] [description] Keep explicit direction-list rendering in `renderPassageTransformedText` and `renderBlockageTransformedText` in `src/pipeline/description.ts` unchanged so navigation mechanics remain compass-precise
 
 - [ ] [description] Update `renderMajorityNeighborLandformSentence` in `src/pipeline/description.ts` to prefer `across/on` side wording for the dominant mode when the minority mode still exists, while preserving current `most directions`/`nearly every direction` thresholds
+  - This renderer has precedence whenever contiguous directional dominance is length `>=5`.
 
 - [ ] [description] Update `renderMajorityNeighborLandformSentence` in `src/pipeline/description.ts` to keep intensity adjectives only when all contributing groups for that mode share one band, and omit intensity when bands are mixed
 

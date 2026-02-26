@@ -709,6 +709,7 @@ const DIRECTIONAL_CONNECTORS: Record<Direction, string> = {
 const CARDINALS: Direction[] = ["N", "E", "S", "W"];
 const DIAGONALS: Direction[] = ["NE", "SE", "SW", "NW"];
 const RING: Direction[] = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+const CARDINAL_RING: Direction[] = ["N", "E", "S", "W"];
 const DIR_LOWER: Record<Direction, string> = {
 	N: "north",
 	NE: "northeast",
@@ -821,6 +822,76 @@ function formatDirectionNames(directions: readonly Direction[]): string {
 		return `${names[0]} and ${names[1]}`;
 	}
 	return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+}
+
+function cardinalSidesForDirections(directions: readonly Direction[]): Direction[] {
+	if (
+		directions.length < 2 ||
+		directions.length > 4 ||
+		!isContiguousDirectionRun(directions)
+	) {
+		return [];
+	}
+
+	const sideWindows: Record<Direction, Direction[]> = {
+		N: ["NW", "N", "NE"],
+		E: ["NE", "E", "SE"],
+		S: ["SE", "S", "SW"],
+		W: ["SW", "W", "NW"],
+		NE: [],
+		SE: [],
+		SW: [],
+		NW: [],
+	};
+	const scoredSides = CARDINAL_RING.map((side) => ({
+		side,
+		score: directions.filter((direction) =>
+			(sideWindows[side] as Direction[]).includes(direction),
+		).length,
+	})).filter((entry) => entry.score > 0);
+
+	if (scoredSides.length === 0) {
+		return [];
+	}
+
+	scoredSides.sort((a, b) => {
+		if (b.score !== a.score) {
+			return b.score - a.score;
+		}
+		return CARDINAL_RING.indexOf(a.side) - CARDINAL_RING.indexOf(b.side);
+	});
+
+	const primary = scoredSides[0]?.side;
+	if (!primary) {
+		return [];
+	}
+
+	const primaryIndex = CARDINAL_RING.indexOf(primary);
+	const adjacentSides = [
+		CARDINAL_RING[(primaryIndex + 1) % CARDINAL_RING.length] as Direction,
+		CARDINAL_RING[(primaryIndex + CARDINAL_RING.length - 1) % CARDINAL_RING.length] as Direction,
+	];
+	const secondary = scoredSides.find(
+		(entry) => entry.score >= 2 && adjacentSides.includes(entry.side),
+	);
+	if (!secondary) {
+		return [primary];
+	}
+
+	const pair = [primary, secondary.side] as Direction[];
+	if (pair.includes("N") && pair.includes("E")) {
+		return ["N", "E"];
+	}
+	if (pair.includes("E") && pair.includes("S")) {
+		return ["E", "S"];
+	}
+	if (pair.includes("S") && pair.includes("W")) {
+		return ["S", "W"];
+	}
+	if (pair.includes("W") && pair.includes("N")) {
+		return ["W", "N"];
+	}
+	return [primary];
 }
 
 function collectFollowableDirections(
