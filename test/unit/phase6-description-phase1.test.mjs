@@ -656,7 +656,7 @@ describe("Phase 1 description pipeline", () => {
 			(sentence) => sentence.slot === "landform",
 		);
 		expect(landform?.basicText).toBe(
-			"The land descends in nearly every direction, rising only to the southeast.",
+			"The land descends on nearly every side, rising only to the southeast.",
 		);
 	});
 
