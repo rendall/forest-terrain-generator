@@ -926,6 +926,19 @@ function formatLandformSideLabel(directions: readonly Direction[]): string | nul
 	return null;
 }
 
+function renderLandformSideClause(group: NeighborLandformGroup): string | null {
+	if (group.mode === "same") {
+		return null;
+	}
+	const sideLabel = formatLandformSideLabel(group.directions);
+	if (!sideLabel) {
+		return null;
+	}
+	const qualifier = qualifierForBand(group.band);
+	const verb = group.mode === "rise" ? "rises" : "descends";
+	return sanitizeSentence(`The land ${qualifier}${verb} across ${sideLabel}.`);
+}
+
 function collectFollowableDirections(
 	input: DescriptionTileInput,
 	token: string,
