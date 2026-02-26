@@ -660,6 +660,35 @@ describe("Phase 1 description pipeline", () => {
 		);
 	});
 
+	it("does not use majority wording for non-contiguous five-direction dominance", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: -0.09 },
+					NE: { ...case04.neighbors.NE, elevDelta: -0.09 },
+					E: { ...case04.neighbors.E, elevDelta: -0.09 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0.09 },
+					S: { ...case04.neighbors.S, elevDelta: -0.09 },
+					SW: { ...case04.neighbors.SW, elevDelta: -0.09 },
+					W: { ...case04.neighbors.W, elevDelta: 0.09 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0.09 },
+				},
+			},
+			"seed-landform-majority-noncontiguous-five",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).not.toContain("in most directions");
+		expect(landform?.basicText).not.toContain("on most sides");
+		expect(landform?.basicText).toContain("The land descends");
+		expect(landform?.basicText).toContain("The land rises");
+	});
+
 	it("uses side wording for contiguous cardinal-centered triples", () => {
 		const result = generateRawDescription(
 			{
