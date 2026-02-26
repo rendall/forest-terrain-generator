@@ -25,6 +25,6 @@ When complete, these items will make landform prose read as terrain shape rather
 
 - [x] [description] Normalize lake directional phrase grammar in `LAKE_PHRASES` in `src/pipeline/description.ts` by replacing article-less forms (e.g. `"Shoreline curves here..."`) with article-correct forms (e.g. `"The shoreline curves..."`)
 
-- [ ] [description] Normalize placeholder usage in `LAKE_PHRASES` in `src/pipeline/description.ts` to `{dir}` only (remove mixed `${dir}` forms) so phrase templates are internally consistent
+- [x] [description] Normalize placeholder usage in `LAKE_PHRASES` in `src/pipeline/description.ts` to `{dir}` only (remove mixed `${dir}` forms) so phrase templates are internally consistent
 
 - [ ] [description] Keep sentence slot ordering in `generateRawDescription` in `src/pipeline/description.ts` as `biome -> landform -> hydrology/lake -> followable -> movement_structure` while applying the updated landform wording rules

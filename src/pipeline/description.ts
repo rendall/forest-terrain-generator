@@ -622,7 +622,7 @@ const STREAM_PHRASES = [
 
 const LAKE_PHRASES = [
 	"A broad lake to the {dir} meets the land here along a firm, stony edge.",
-	"The ground slopes down to the ${dir} to meet the open water of a lake.",
+	"The ground slopes down to the {dir} to meet the open water of a lake.",
 	"Sand and small stones mark the shore of a lake to the {dir}.",
 	"Open water extends outward to the {dir} from a narrow band of shore.",
 	"The shoreline curves where land meets lake to the {dir}.",
