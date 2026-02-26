@@ -21,7 +21,7 @@ When complete, these items will make landform prose read as terrain shape rather
 
 - [x] [description] Update `renderMajorityNeighborLandformSentence` in `src/pipeline/description.ts` to keep intensity adjectives only when all contributing groups for that mode share one band, and omit intensity when bands are mixed
 
-- [ ] [description] Keep local-overlap suppression in `renderDerivedLandform` in `src/pipeline/description.ts` unchanged so local landform text remains suppressed whenever an emitted neighbor clause already covers the same direction
+- [x] [description] Keep local-overlap suppression in `renderDerivedLandform` in `src/pipeline/description.ts` unchanged so local landform text remains suppressed whenever an emitted neighbor clause already covers the same direction
 
 - [ ] [description] Normalize lake directional phrase grammar in `LAKE_PHRASES` in `src/pipeline/description.ts` by replacing article-less forms (e.g. `"Shoreline curves here..."`) with article-correct forms (e.g. `"The shoreline curves..."`)
 
