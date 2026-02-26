@@ -271,4 +271,22 @@ describe("describe attachment", () => {
 		expect(slopeDirectionForAspect(-90)).toBe("N");
 		expect(slopeDirectionForAspect(450)).toBe("S");
 	});
+
+	it("preserves top-level regions in described output envelope", () => {
+		const envelope = {
+			meta: { specVersion: "forest-terrain-v1" },
+			regions: [
+				{
+					id: 0,
+					biome: "mixed_forest",
+					tileCount: 1,
+					bbox: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
+				},
+			],
+			tiles: [makeValidTile(0, 0)],
+		};
+
+		const out = attachTileDescriptions(envelope, false);
+		expect(out.regions).toEqual(envelope.regions);
+	});
 });
