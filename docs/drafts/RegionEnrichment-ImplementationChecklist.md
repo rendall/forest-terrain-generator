@@ -5,7 +5,7 @@ Primary reference: `docs/drafts/RegionEnrichment-Proposal.md`
 - [x] [scope] Confirm this task remains a post-process enrichment only and does not modify terrain derivation behavior.
 - [x] [scope] Confirm no changes are made to `src/app/run-generator.ts`, `src/pipeline/*` terrain derivation modules, or `src/cli/main.ts`.
 - [x] [scope] Confirm assign-regions is implemented as a separate executable and is not added as a `src/cli/main.ts` subcommand.
-- [ ] [policy] Record the separate post-process executable (`forest-terrain-assign-regions`) in `docs/drafts/ImplementationPlan.md` as an extension outside the core `generate|derive|debug` simulator surface.
+- [x] [policy] Record the separate post-process executable (`forest-terrain-assign-regions`) in `docs/drafts/ImplementationPlan.md` as an extension outside the core `generate|derive|debug` simulator surface.
 - [ ] [policy] Add ADR entry in `docs/ADR.md` for the region-enrichment data contract and determinism rules.
 - [ ] [types] Add `RegionTileAttachment` and `RegionSummary` interfaces in `src/domain/types.ts` for per-tile and top-level region payloads.
 - [ ] [types] Extend `TerrainEnvelope` in `src/domain/types.ts` with top-level `regions` support and per-tile `region` payload support; define assign-regions output contract to always emit `regions` (depends on previous item).

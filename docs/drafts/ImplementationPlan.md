@@ -37,6 +37,13 @@ The CLI exposes three commands aligned with normative Section 2.1:
 2. `derive` - consume authored maps (and required inputs) and run derivation.
 3. `debug` - run generation/derivation and emit debug artifacts.
 
+Companion post-process executable decision:
+
+1. Region assignment is implemented as a separate executable: `forest-terrain-assign-regions`.
+2. This executable is outside the primary `src/cli/main.ts` command surface.
+3. It reads an existing terrain envelope via `--input-file` and writes an enriched envelope via `--output-file`.
+4. It MUST NOT modify generator/derivation behavior for `generate`, `derive`, or `debug`.
+
 ### 3.2 Input Contract
 
 Required conformance inputs align with normative Sections 2.1 and 2.2:
