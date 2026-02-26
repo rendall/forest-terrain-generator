@@ -49,7 +49,10 @@ Companion post-process executable decision:
 1. Usage flags: `--input-file <path>`, `--output-file <path>`, and optional `--force`.
 2. Output tiles include per-tile `region.biomeRegionId` for every tile.
 3. Output envelope always includes required top-level `regions` array (empty array allowed when no tiles/components exist).
-4. Reader compatibility remains broad: pre-enrichment envelopes without `regions` remain valid input.
+4. Region summaries may include optional `parentRegionId` when enclosure is deterministic:
+   - the region does not touch map boundary
+   - and its external perimeter neighbors map to exactly one distinct region ID.
+5. Reader compatibility remains broad: pre-enrichment envelopes without `regions` remain valid input.
 
 ### 3.2 Input Contract
 

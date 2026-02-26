@@ -7,7 +7,8 @@ Add a post-generation companion executable that appends deterministic region con
 Goal outcomes:
 
 1. Identify disconnected biome components (`biomeRegionId`).
-2. Persist this context in JSON for downstream use (description, tooling, analysis).
+2. Identify enclosed-region parent linkage (`parentRegionId`) as additive metadata on region summaries.
+3. Persist this context in JSON for downstream use (description, tooling, analysis).
 
 ## Why a Post-Generation Executable
 
@@ -90,7 +91,8 @@ Top-level index (required):
       "id": 12,
       "biome": "spruce_swamp",
       "tileCount": 87,
-      "bbox": { "minX": 20, "minY": 14, "maxX": 33, "maxY": 26 }
+      "bbox": { "minX": 20, "minY": 14, "maxX": 33, "maxY": 26 },
+      "parentRegionId": 7
     }
   ]
 }
@@ -101,6 +103,18 @@ Semantics:
 1. `tile.region.biomeRegionId` is primary lookup.
 2. `regions[]` is a required denormalized index for discovery/debug/reporting.
 3. `assign-regions` output MUST always include `regions` (empty array is allowed when no tiles/components exist).
+4. `regions[].parentRegionId` is optional and additive; when present it indicates deterministic enclosure by another single region.
+
+## Enclosure Parent Rule
+
+`parentRegionId` assignment rules:
+
+1. Evaluate each region perimeter using 8-way neighbor inspection around member tiles.
+2. If any region tile touches map boundary (or has out-of-bounds perimeter), omit `parentRegionId`.
+3. Collect distinct neighboring region IDs outside the region across the full perimeter.
+4. If and only if the distinct external region-ID set size is exactly `1`, set `parentRegionId` to that ID.
+5. If external region-ID set size is `0` or greater than `1`, omit `parentRegionId`.
+6. `biomeRegionId` assignment is unchanged; parent linkage is metadata only.
 
 ## Compatibility Requirements
 
@@ -119,7 +133,8 @@ Implementation boundary note:
 1. Stable component seed order: row-major.
 2. Stable neighbor order: canonical Dir8 order.
 3. Stable region ID assignment: first-seen component order.
-4. No hash-order dependence in output ordering.
+4. Stable parent linkage assignment from deterministic perimeter traversal and set cardinality rule.
+5. No hash-order dependence in output ordering.
 
 ## Non-goals (Initial)
 

@@ -21,3 +21,18 @@ Primary reference: `docs/drafts/RegionEnrichment-Proposal.md`
 - [x] [cli] Implement command runtime wiring to read input envelope, compute regions, append region data, and write output envelope using existing IO boundaries (depends on previous item).
 - [x] [cli] Ensure validation errors for missing `--input-file` or `--output-file` follow existing invalid-input error conventions.
 - [x] [docs] Document region enrichment command usage and output fields in project docs after command wiring is complete.
+
+## Parent Region Linkage Extension
+
+- [x] [policy] Record `regions[].parentRegionId` as additive metadata in `docs/drafts/ImplementationPlan.md` and `docs/ADR.md` with explicit enclosure semantics.
+- [ ] [types] Extend `RegionSummary` in `src/domain/types.ts` with optional `parentRegionId?: number`.
+- [ ] [io] Update `readTerrainEnvelopeFile` in `src/io/read-envelope.ts` to accept optional integer `regions[].parentRegionId` and reject malformed values.
+- [ ] [app] In `src/app/assign-regions.ts`, implement deterministic parent linkage assignment:
+  - Region touching map boundary gets no parent.
+  - Region whose full external perimeter neighbors map to exactly one distinct region ID gets that `parentRegionId`.
+  - Otherwise omit parent.
+- [ ] [app] Keep `biomeRegionId` and `tile.region.biomeRegionId` unchanged while adding parent linkage as summary-only metadata.
+- [ ] [tests] Add/extend unit tests in `test/unit/assign-regions.test.mjs` for enclosed-island parent assignment, edge-touch no-parent, and multi-neighbor no-parent.
+- [ ] [tests] Extend envelope IO tests in `test/unit/read-envelope.test.mjs` for valid and invalid `parentRegionId`.
+- [ ] [tests] Extend integration verification in `test/integration/cli-assign-regions.test.mjs` for parent metadata presence on enclosed fixtures.
+- [x] [docs] Update `docs/drafts/RegionEnrichment-Proposal.md` examples/semantics to include `parentRegionId`.

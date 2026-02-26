@@ -2,6 +2,39 @@
 
 This document is a living ledger of significant technical decisions made within this project. Each entry captures the context in which a decision was made, the options considered, the decision itself, and its consequences. The purpose is not to justify past choices defensively, but to preserve intent and reasoning so future contributors can understand why the system is shaped the way it is. Over time, this file forms a chronological record of trade-offs, constraints, and design direction, providing continuity as the codebase and team evolve.
 
+## Add Deterministic `parentRegionId` for Enclosed Regions (v1)
+
+**Timestamp:** 2026-02-26 00:00 (UTC)
+
+### Decision
+
+Extend region summaries with optional parent linkage metadata:
+
+- Add optional `regions[].parentRegionId` to enriched output.
+- Parent linkage is metadata only; `biomeRegionId` and tile region assignment remain unchanged.
+- Parent linkage is assigned deterministically per region using 8-way perimeter neighbors:
+  - if a region touches map boundary, omit parent
+  - collect distinct external neighboring region IDs around the full region perimeter
+  - assign parent only when the distinct external set size is exactly `1`.
+- If external set size is `0` or `>1`, omit parent.
+
+### Rationale
+
+Small enclosed regions (for example, 1-2 tile islands) are valid raw components but can be noisy for downstream grouping and prose. Optional parent linkage lets consumers collapse or contextualize such regions without mutating canonical component IDs.
+
+### Alternatives Considered
+
+- Collapse enclosed child tiles into parent region IDs during assignment — rejected because it loses raw component information and couples policy to a single consumer behavior.
+- Allow parent assignment when multiple external region IDs are present via tie-break — rejected because enclosure is ambiguous and this introduces arbitrary hierarchy.
+- Use 4-way perimeter instead of 8-way — rejected for v1 to align with existing 8-way component connectivity model.
+
+### References
+
+- PR: None
+- Commit: Pending
+- File(s): docs/drafts/RegionEnrichment-Proposal.md, docs/drafts/RegionEnrichment-ImplementationChecklist.md, docs/drafts/ImplementationPlan.md
+- Related ADRs: Add Separate Region-Enrichment Executable and Envelope Region Index (v1)
+
 ## Add Separate Region-Enrichment Executable and Envelope Region Index (v1)
 
 **Timestamp:** 2026-02-26 00:00 (UTC)
