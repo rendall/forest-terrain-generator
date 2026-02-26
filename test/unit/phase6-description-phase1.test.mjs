@@ -689,6 +689,90 @@ describe("Phase 1 description pipeline", () => {
 		expect(landform?.basicText).toContain("The land rises");
 	});
 
+	it("merges two same-mode same-band neighbor groups into one sentence", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0.04 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0.04 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0.04 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0.04 },
+				},
+			},
+			"seed-landform-two-group-same-band",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).toBe(
+			"The land gently rises across the eastern and western sides.",
+		);
+	});
+
+	it("merges two same-mode mixed-band neighbor groups and drops intensity", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0.09 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0.09 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0.04 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0.04 },
+				},
+			},
+			"seed-landform-two-group-mixed-band",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).toBe(
+			"The land rises across the eastern and western sides.",
+		);
+	});
+
+	it("renders two opposite-mode neighbor groups in one contrast sentence", () => {
+		const result = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0.09 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0.09 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: -0.04 },
+					NW: { ...case04.neighbors.NW, elevDelta: -0.04 },
+				},
+			},
+			"seed-landform-two-group-contrast",
+		);
+		const landform = result.sentences.find(
+			(sentence) => sentence.slot === "landform",
+		);
+		expect(landform?.basicText).toBe(
+			"The land rises across the eastern side and gently descends across the western side.",
+		);
+	});
+
 	it("uses side wording for contiguous cardinal-centered triples", () => {
 		const result = generateRawDescription(
 			{
