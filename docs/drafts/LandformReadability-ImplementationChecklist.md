@@ -6,7 +6,7 @@ When complete, these items will make landform prose read as terrain shape rather
   - Uses ring-contiguous directional membership to derive side coverage deterministically.
   - Apply this helper only to contiguous runs of length `2..4`; runs of length `>=5` must use majority wording instead.
 
-- [ ] [description] Add helper `formatLandformSideLabel(directions: readonly Direction[]): string | null` in `src/pipeline/description.ts` that returns phrases like `"the northern side"` or `"the northern and eastern sides"` (depends on previous item)
+- [x] [description] Add helper `formatLandformSideLabel(directions: readonly Direction[]): string | null` in `src/pipeline/description.ts` that returns phrases like `"the northern side"` or `"the northern and eastern sides"` (depends on previous item)
   - If side labeling is ambiguous for a `2..4` run, return `null` and let rendering fall back to explicit direction-list wording.
 
 - [ ] [description] Add helper `renderLandformSideClause(group: NeighborLandformGroup): string | null` in `src/pipeline/description.ts` that renders side-based terrain clauses like `"The land descends across the northern and eastern sides."` for slope/shape narration only (depends on previous item)

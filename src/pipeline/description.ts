@@ -894,6 +894,38 @@ function cardinalSidesForDirections(directions: readonly Direction[]): Direction
 	return [primary];
 }
 
+function formatLandformSideLabel(directions: readonly Direction[]): string | null {
+	const sides = cardinalSidesForDirections(directions);
+	if (sides.length === 0) {
+		return null;
+	}
+	if (sides.length === 1) {
+		const side = sides[0] as Direction;
+		const sideLabel: Record<Direction, string> = {
+			N: "the northern side",
+			E: "the eastern side",
+			S: "the southern side",
+			W: "the western side",
+			NE: "the northern side",
+			SE: "the eastern side",
+			SW: "the southern side",
+			NW: "the western side",
+		};
+		return sideLabel[side];
+	}
+	if (sides.length === 2) {
+		const pair = sides.join(",");
+		const pairLabel: Record<string, string> = {
+			"N,E": "the northern and eastern sides",
+			"E,S": "the eastern and southern sides",
+			"S,W": "the southern and western sides",
+			"W,N": "the western and northern sides",
+		};
+		return pairLabel[pair] ?? null;
+	}
+	return null;
+}
+
 function collectFollowableDirections(
 	input: DescriptionTileInput,
 	token: string,
