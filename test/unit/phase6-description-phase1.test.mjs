@@ -440,7 +440,7 @@ describe("Phase 1 description pipeline", () => {
 		expect(mergedGroup?.mergeBands).toEqual(["gentle", "none"]);
 	});
 
-	it("does not merge non-contiguous descend groups separated by same-band neighbors", () => {
+	it("merges two non-contiguous descend groups at sentence level", () => {
 		const result = generateRawDescription(
 			{
 				...case04,
@@ -463,10 +463,8 @@ describe("Phase 1 description pipeline", () => {
 		const landform = result.sentences.find(
 			(sentence) => sentence.slot === "landform",
 		);
-		expect(landform?.basicText).toContain("To the north, the land descends.");
-		expect(landform?.basicText).toContain("To the east, the land descends.");
-		expect(landform?.basicText).not.toContain(
-			"To the north and east, the land descends.",
+		expect(landform?.basicText).toBe(
+			"The land descends across the northern and eastern sides.",
 		);
 		const northGroup = landform?.contributors?.neighbors?.find(
 			(group) =>
@@ -771,6 +769,56 @@ describe("Phase 1 description pipeline", () => {
 		expect(landform?.basicText).toBe(
 			"The land rises across the eastern side and gently descends across the western side.",
 		);
+	});
+
+	it("records two-group merge strategy in landform contributors", () => {
+		const sameMode = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0.04 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0.04 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: 0.04 },
+					NW: { ...case04.neighbors.NW, elevDelta: 0.04 },
+				},
+			},
+			"seed-landform-two-group-contrib-same",
+		).sentences.find((sentence) => sentence.slot === "landform");
+		expect(sameMode?.contributors?.neighborsMerged).toEqual({
+			applied: true,
+			strategy: "same_mode",
+		});
+
+		const contrast = generateRawDescription(
+			{
+				...case04,
+				landform: "flat",
+				slopeStrength: 0.01,
+				passability: passabilityFromOpen(DIRS),
+				neighbors: {
+					N: { ...case04.neighbors.N, elevDelta: 0 },
+					NE: { ...case04.neighbors.NE, elevDelta: 0 },
+					E: { ...case04.neighbors.E, elevDelta: 0.09 },
+					SE: { ...case04.neighbors.SE, elevDelta: 0.09 },
+					S: { ...case04.neighbors.S, elevDelta: 0 },
+					SW: { ...case04.neighbors.SW, elevDelta: 0 },
+					W: { ...case04.neighbors.W, elevDelta: -0.04 },
+					NW: { ...case04.neighbors.NW, elevDelta: -0.04 },
+				},
+			},
+			"seed-landform-two-group-contrib-contrast",
+		).sentences.find((sentence) => sentence.slot === "landform");
+		expect(contrast?.contributors?.neighborsMerged).toEqual({
+			applied: true,
+			strategy: "contrast",
+		});
 	});
 
 	it("uses side wording for contiguous cardinal-centered triples", () => {

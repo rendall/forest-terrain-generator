@@ -1577,6 +1577,62 @@ function renderMajorityNeighborLandformSentence(
 	);
 }
 
+function renderTwoGroupLandformSentence(
+	groups: Array<Pick<NeighborLandformGroup, "mode" | "band" | "directions">>,
+): { text: string; strategy: "same_mode" | "mixed_band" | "contrast" } | null {
+	if (groups.length !== 2) {
+		return null;
+	}
+	const [first, second] = groups;
+	if (!first || !second) {
+		return null;
+	}
+	if (
+		first.mode === "same" ||
+		second.mode === "same" ||
+		first.band === "same" ||
+		second.band === "same"
+	) {
+		return null;
+	}
+
+	if (first.mode === second.mode) {
+		const mergedDirections = RING.filter((direction) =>
+			[...first.directions, ...second.directions].includes(direction),
+		);
+		const mergedBand = collapseBandForSameMode([first.band, second.band]);
+		const text = renderLandformSideSentence(
+			first.mode,
+			mergedBand,
+			mergedDirections,
+		);
+		if (!text) {
+			return null;
+		}
+		const strategy =
+			first.band === second.band ? "same_mode" : "mixed_band";
+		return { text, strategy };
+	}
+
+	const firstPhrase = renderLandformSidePhrase(
+		first.mode,
+		first.band,
+		first.directions,
+	);
+	const secondPhrase = renderLandformSidePhrase(
+		second.mode,
+		second.band,
+		second.directions,
+	);
+	if (!firstPhrase || !secondPhrase) {
+		return null;
+	}
+	return {
+		text: sanitizeSentence(`The land ${firstPhrase} and ${secondPhrase}.`),
+		strategy: "contrast",
+	};
+}
+
 function filterNeighborGroupsToPassableDirections(
 	groups: NeighborLandformGroup[],
 	passability: PassabilityByDir,
@@ -1708,9 +1764,14 @@ function renderDerivedLandform(
 	const majorityNeighborSentence = renderMajorityNeighborLandformSentence(
 		emittedNeighborContributions,
 	);
+	const twoGroupNeighborSentence = majorityNeighborSentence
+		? null
+		: renderTwoGroupLandformSentence(emittedNeighborContributions);
 	const emittedNeighborSentences = majorityNeighborSentence
 		? [majorityNeighborSentence]
-		: emittedNeighborContributions.map((group) => group.text);
+		: twoGroupNeighborSentence
+			? [twoGroupNeighborSentence.text]
+			: emittedNeighborContributions.map((group) => group.text);
 	const sentenceParts = localEmitted
 		? [local.text, ...emittedNeighborSentences]
 		: [...emittedNeighborSentences];
@@ -1753,6 +1814,10 @@ function renderDerivedLandform(
 				local.mode === "descend"
 					? "rise_neighbor_same_switch_to_descend"
 					: null,
+		},
+		neighborsMerged: {
+			applied: twoGroupNeighborSentence !== null,
+			strategy: twoGroupNeighborSentence?.strategy ?? null,
 		},
 	};
 
