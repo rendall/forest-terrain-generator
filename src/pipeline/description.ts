@@ -1469,21 +1469,17 @@ function renderNeighborLandformSentences(
 			return `To the ${directionNames}, the land stays level.`;
 		}
 
+		const sideClause = renderLandformSideClause(group);
+		if (sideClause) {
+			return sideClause;
+		}
+
 		const verb = group.mode === "rise" ? "rises" : "descends";
 		const qualifier = qualifierForBand(group.band);
 		const broadDirection = formatBroadDirectionForTriple(group.directions);
 		if (broadDirection) {
 			return sanitizeSentence(
 				`${broadDirection[0].toUpperCase()}${broadDirection.slice(1)}, the land ${qualifier}${verb}.`,
-			);
-		}
-		if (
-			group.directions.length === 4 &&
-			isContiguousDirectionRun(group.directions)
-		) {
-			const directionArc = formatDirectionArc(group.directions);
-			return sanitizeSentence(
-				`${directionArc[0].toUpperCase()}${directionArc.slice(1)}, the land ${qualifier}${verb}.`,
 			);
 		}
 		return sanitizeSentence(

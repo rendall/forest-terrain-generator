@@ -324,7 +324,7 @@ describe("Phase 1 description pipeline", () => {
 		expect(landform).toBeDefined();
 		expect(landform?.basicText).not.toContain("Here the land");
 		expect(landform?.basicText).toContain(
-			"To the east and southeast, the land gently rises.",
+			"The land gently rises across the eastern side.",
 		);
 		expect(landform?.basicText).not.toContain("stays level");
 		expect(landform?.contributors?.local?.emitted).toBe(false);
@@ -428,9 +428,7 @@ describe("Phase 1 description pipeline", () => {
 		const landform = result.sentences.find(
 			(sentence) => sentence.slot === "landform",
 		);
-		expect(landform?.basicText).toBe(
-			"To the north and northeast, the land descends.",
-		);
+		expect(landform?.basicText).toBe("The land descends across the northern side.");
 		const mergedGroup = landform?.contributors?.neighbors?.find(
 			(group) =>
 				Array.isArray(group.directions) &&
@@ -502,7 +500,7 @@ describe("Phase 1 description pipeline", () => {
 		const landform = result.sentences.find(
 			(sentence) => sentence.slot === "landform",
 		);
-		expect(landform?.basicText).toBe("To the north and northeast, the land rises.");
+		expect(landform?.basicText).toBe("The land rises across the northern side.");
 		const mergedGroup = landform?.contributors?.neighbors?.find(
 			(group) =>
 				Array.isArray(group.directions) &&
@@ -537,7 +535,7 @@ describe("Phase 1 description pipeline", () => {
 		const landform = result.sentences.find(
 			(sentence) => sentence.slot === "landform",
 		);
-		expect(landform?.basicText).toBe("Broadly north, the land descends.");
+		expect(landform?.basicText).toBe("The land descends across the northern side.");
 		const mergedGroup = landform?.contributors?.neighbors?.find(
 			(group) =>
 				Array.isArray(group.directions) &&
@@ -549,7 +547,7 @@ describe("Phase 1 description pipeline", () => {
 		expect(mergedGroup?.band).toBe("none");
 	});
 
-	it("uses arc wording for exactly four contiguous neighbor directions", () => {
+	it("uses side wording for exactly four contiguous neighbor directions", () => {
 		const result = generateRawDescription(
 			{
 				...case04,
@@ -573,7 +571,7 @@ describe("Phase 1 description pipeline", () => {
 			(sentence) => sentence.slot === "landform",
 		);
 		expect(landform?.basicText).toBe(
-			"From the northwest to the east, the land descends.",
+			"The land descends across the northern and eastern sides.",
 		);
 	});
 
@@ -662,7 +660,7 @@ describe("Phase 1 description pipeline", () => {
 		);
 	});
 
-	it("uses broadly wording for contiguous cardinal-centered triples", () => {
+	it("uses side wording for contiguous cardinal-centered triples", () => {
 		const result = generateRawDescription(
 			{
 				...case04,
@@ -685,11 +683,13 @@ describe("Phase 1 description pipeline", () => {
 		const landform = result.sentences.find(
 			(sentence) => sentence.slot === "landform",
 		);
-		expect(landform?.basicText).toContain("Broadly west, the land descends.");
-		expect(landform?.basicText).not.toContain("To the southwest, west, and northwest");
+		expect(landform?.basicText).toContain(
+			"The land descends across the western side.",
+		);
+		expect(landform?.basicText).not.toContain("Broadly");
 	});
 
-	it("uses broadly wording for contiguous intercardinal-centered triples", () => {
+	it("uses side wording for contiguous intercardinal-centered triples", () => {
 		const result = generateRawDescription(
 			{
 				...case04,
@@ -713,11 +713,9 @@ describe("Phase 1 description pipeline", () => {
 			(sentence) => sentence.slot === "landform",
 		);
 		expect(landform?.basicText).toContain(
-			"Broadly north and east, the land rises.",
+			"The land rises across the northern and eastern sides.",
 		);
-		expect(landform?.basicText).not.toContain(
-			"To the north, northeast, and east, the land rises.",
-		);
+		expect(landform?.basicText).not.toContain("Broadly");
 	});
 
 	it("does not use broadly wording for non-contiguous triple groups", () => {
@@ -772,7 +770,7 @@ describe("Phase 1 description pipeline", () => {
 		expect(landform?.contributors?.local?.emitted).toBe(false);
 		expect(landform?.contributors?.local?.suppressedBy).toBe("neighbor_overlap");
 		expect(landform?.basicText).toBe(
-			"To the east and southeast, the land rises.",
+			"The land rises across the eastern side.",
 		);
 	});
 
@@ -803,7 +801,7 @@ describe("Phase 1 description pipeline", () => {
 		expect(landform?.contributors?.local?.derived?.band).toBe("gentle");
 		expect(landform?.contributors?.local?.emitted).toBe(false);
 		expect(landform?.contributors?.local?.suppressedBy).toBe("neighbor_overlap");
-		expect(landform?.basicText).toBe("To the east and southeast, the land rises.");
+		expect(landform?.basicText).toBe("The land rises across the eastern side.");
 	});
 
 	it("suppresses local sentence when overlapping neighbor group differs in intensity", () => {
@@ -834,7 +832,7 @@ describe("Phase 1 description pipeline", () => {
 		expect(landform?.contributors?.local?.emitted).toBe(false);
 		expect(landform?.contributors?.local?.suppressedBy).toBe("neighbor_overlap");
 		expect(landform?.basicText).toBe(
-			"To the northeast and east, the land gently rises.",
+			"The land gently rises across the eastern side.",
 		);
 		expect(landform?.basicText).not.toContain("Here the land");
 	});
@@ -893,7 +891,7 @@ describe("Phase 1 description pipeline", () => {
 			(sentence) => sentence.slot === "landform",
 		);
 		expect(landform?.basicText).toBe(
-			"From the southwest to the north, the land descends.",
+			"The land descends across the western and northern sides.",
 		);
 		const wrapGroup = landform?.contributors?.neighbors?.find(
 			(group) =>
@@ -1665,11 +1663,9 @@ describe("Phase 1 description pipeline", () => {
 		expect(landform?.contributors?.local?.emitted).toBe(false);
 		expect(landform?.contributors?.local?.suppressedBy).toBe("flat_filtered");
 		expect(landform?.basicText).toBe(
-			"To the southwest and west, the land gently descends.",
+			"The land gently descends across the western side.",
 		);
 		expect(result.text).not.toContain("Here the land is flat.");
-		expect(result.text).toContain(
-			"To the southwest and west, the land gently descends.",
-		);
+		expect(result.text).toContain("The land gently descends across the western side.");
 	});
 });

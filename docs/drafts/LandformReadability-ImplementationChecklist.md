@@ -11,7 +11,7 @@ When complete, these items will make landform prose read as terrain shape rather
 
 - [x] [description] Add helper `renderLandformSideClause(group: NeighborLandformGroup): string | null` in `src/pipeline/description.ts` that renders side-based terrain clauses like `"The land descends across the northern and eastern sides."` for slope/shape narration only (depends on previous item)
 
-- [ ] [description] Update `renderNeighborLandformSentences` in `src/pipeline/description.ts` to stop using arc wording (`"From X to Y, ..."`) for landform clauses and use `renderLandformSideClause` when side labeling is available (depends on previous item)
+- [x] [description] Update `renderNeighborLandformSentences` in `src/pipeline/description.ts` to stop using arc wording (`"From X to Y, ..."`) for landform clauses and use `renderLandformSideClause` when side labeling is available (depends on previous item)
   - If `renderLandformSideClause` returns `null`, render explicit `"To the ..."` direction-list wording (not arc wording).
 
 - [ ] [description] Keep explicit direction-list rendering in `renderPassageTransformedText` and `renderBlockageTransformedText` in `src/pipeline/description.ts` unchanged so navigation mechanics remain compass-precise
