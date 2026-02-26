@@ -567,6 +567,21 @@ export function attachTileDescriptions(
 		meta: {
 			specVersion: envelope.meta.specVersion,
 		},
+		...(envelope.regions
+			? {
+					regions: envelope.regions.map((region) => ({
+						id: region.id,
+						biome: region.biome,
+						tileCount: region.tileCount,
+						bbox: {
+							minX: region.bbox.minX,
+							minY: region.bbox.minY,
+							maxX: region.bbox.maxX,
+							maxY: region.bbox.maxY,
+						},
+					})),
+				}
+			: {}),
 		tiles,
 	};
 }
