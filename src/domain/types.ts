@@ -78,6 +78,7 @@ export interface RegionSummary extends JsonObject {
 	biome: string;
 	tileCount: number;
 	bbox: RegionSummaryBbox;
+	parentRegionId?: number;
 }
 
 export interface RegionTileAttachment extends JsonObject {

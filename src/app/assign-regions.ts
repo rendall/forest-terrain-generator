@@ -155,6 +155,24 @@ export function summarizeBiomeRegions(
 			maxY: Number.NEGATIVE_INFINITY,
 		},
 	}));
+	if (tiles.length === 0) {
+		return summaries;
+	}
+
+	const { nodes, byCoord } = buildTileNodes(tiles);
+	let minX = Number.POSITIVE_INFINITY;
+	let minY = Number.POSITIVE_INFINITY;
+	let maxX = Number.NEGATIVE_INFINITY;
+	let maxY = Number.NEGATIVE_INFINITY;
+	for (const node of nodes) {
+		minX = Math.min(minX, node.x);
+		minY = Math.min(minY, node.y);
+		maxX = Math.max(maxX, node.x);
+		maxY = Math.max(maxY, node.y);
+	}
+
+	const touchesBoundary = new Array<boolean>(summaries.length).fill(false);
+	const externalNeighborIds = summaries.map(() => new Set<number>());
 
 	for (let tileIndex = 0; tileIndex < tiles.length; tileIndex += 1) {
 		const { x, y } = readTileCoordBiome(tiles[tileIndex], tileIndex);
@@ -172,6 +190,26 @@ export function summarizeBiomeRegions(
 		summary.bbox.minY = Math.min(summary.bbox.minY, y);
 		summary.bbox.maxX = Math.max(summary.bbox.maxX, x);
 		summary.bbox.maxY = Math.max(summary.bbox.maxY, y);
+
+		for (const delta of DIR8_DELTAS) {
+			const nx = x + delta.dx;
+			const ny = y + delta.dy;
+			if (nx < minX || nx > maxX || ny < minY || ny > maxY) {
+				touchesBoundary[regionId] = true;
+				continue;
+			}
+
+			const neighbor = byCoord.get(coordKey(nx, ny));
+			if (!neighbor) {
+				touchesBoundary[regionId] = true;
+				continue;
+			}
+
+			const neighborRegionId = derived.tileRegionIds[neighbor.tileIndex];
+			if (neighborRegionId !== regionId) {
+				externalNeighborIds[regionId].add(neighborRegionId);
+			}
+		}
 	}
 
 	for (const summary of summaries) {
@@ -179,6 +217,10 @@ export function summarizeBiomeRegions(
 			throw new InputValidationError(
 				`Region summary ${summary.id} has zero tiles, which violates determinism invariants.`,
 			);
+		}
+		if (!touchesBoundary[summary.id] && externalNeighborIds[summary.id].size === 1) {
+			const [parentRegionId] = [...externalNeighborIds[summary.id]];
+			summary.parentRegionId = parentRegionId;
 		}
 	}
 

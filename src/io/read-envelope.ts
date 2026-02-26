@@ -83,6 +83,15 @@ function assertRegionSummaryShape(
 			`Invalid region at index ${index} in "${inputFilePath}". Expected integer bbox fields "minX|minY|maxX|maxY".`,
 		);
 	}
+
+	if (
+		Object.prototype.hasOwnProperty.call(region, "parentRegionId") &&
+		!Number.isInteger(region.parentRegionId)
+	) {
+		throw new InputValidationError(
+			`Invalid region at index ${index} in "${inputFilePath}". Expected integer "parentRegionId" when present.`,
+		);
+	}
 }
 
 function assertRegionsShape(
