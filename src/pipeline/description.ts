@@ -1541,6 +1541,8 @@ function renderMajorityNeighborLandformSentence(
 	const minorQualifier = qualifierForBand(minorBand);
 	const majorScope =
 		majorCount >= 6 ? "in nearly every direction" : "in most directions";
+	const majorScopeWithMinority =
+		majorCount >= 6 ? "on nearly every side" : "on most sides";
 	const minorDirections = majorMode === "rise" ? descendDirections : riseDirections;
 	if (minorDirections.length === 0) {
 		return sanitizeSentence(
@@ -1549,11 +1551,11 @@ function renderMajorityNeighborLandformSentence(
 	}
 	if (minorDirections.length === 1) {
 		return sanitizeSentence(
-			`The land ${majorQualifier}${majorVerb} ${majorScope}, ${minorParticiple} ${minorQualifier}only to the ${DIR_LOWER[minorDirections[0] as Direction]}.`,
+			`The land ${majorQualifier}${majorVerb} ${majorScopeWithMinority}, ${minorParticiple} ${minorQualifier}only to the ${DIR_LOWER[minorDirections[0] as Direction]}.`,
 		);
 	}
 	return sanitizeSentence(
-		`The land ${majorQualifier}${majorVerb} ${majorScope}, ${minorParticiple} ${minorQualifier}toward the ${formatDirectionNames(minorDirections)}.`,
+		`The land ${majorQualifier}${majorVerb} ${majorScopeWithMinority}, ${minorParticiple} ${minorQualifier}toward the ${formatDirectionNames(minorDirections)}.`,
 	);
 }
 

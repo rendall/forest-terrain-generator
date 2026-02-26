@@ -16,7 +16,7 @@ When complete, these items will make landform prose read as terrain shape rather
 
 - [x] [description] Keep explicit direction-list rendering in `renderPassageTransformedText` and `renderBlockageTransformedText` in `src/pipeline/description.ts` unchanged so navigation mechanics remain compass-precise
 
-- [ ] [description] Update `renderMajorityNeighborLandformSentence` in `src/pipeline/description.ts` to prefer `across/on` side wording for the dominant mode when the minority mode still exists, while preserving current `most directions`/`nearly every direction` thresholds
+- [x] [description] Update `renderMajorityNeighborLandformSentence` in `src/pipeline/description.ts` to prefer `across/on` side wording for the dominant mode when the minority mode still exists, while preserving current `most directions`/`nearly every direction` thresholds
   - This renderer has precedence whenever contiguous directional dominance is length `>=5`.
 
 - [ ] [description] Update `renderMajorityNeighborLandformSentence` in `src/pipeline/description.ts` to keep intensity adjectives only when all contributing groups for that mode share one band, and omit intensity when bands are mixed
