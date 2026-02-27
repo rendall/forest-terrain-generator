@@ -2,6 +2,46 @@
 
 This document is a living ledger of significant technical decisions made within this project. Each entry captures the context in which a decision was made, the options considered, the decision itself, and its consequences. The purpose is not to justify past choices defensively, but to preserve intent and reasoning so future contributors can understand why the system is shaped the way it is. Over time, this file forms a chronological record of trade-offs, constraints, and design direction, providing continuity as the codebase and team evolve.
 
+## Adopt v2 Stream-Coherence Decision Slate (D-01..D-12)
+
+**Timestamp:** 2026-02-27 00:00 (UTC)
+
+### Decision
+
+Adopt the full stream-coherence slate recorded in `docs/drafts/V2-Stream-Coherence-ImplementationPlan.md` Section 14 without modification.
+
+Adopted stream contract direction:
+
+- Stream topology baseline is path-aware tracing from deterministic source candidates (not threshold-only local marking).
+- Optional headwater enrichment is supported via parameterized boost, default off.
+- Terminal stream sinks may be classified as `waterClass: "pool"` under valid sink gates.
+- Pool semantics are non-blocking for movement/passability by default.
+- Stream direction uses existing outputs (`fd`, `isStream`, `waterClass`) with no duplicate stream-direction field.
+- Stream continuity is a hard invariant for stream tiles (`stream -> stream|lake|pool`).
+- `fd==NONE` remains a valid non-stream terrain state.
+- Deterministic cleanup remains optional and default off.
+- First-wave default policy is non-adaptive across map sizes (single baseline), with adaptive scaling deferred.
+- Stream params surface expands to explicit threshold and optional headwater-boost controls with strict validation.
+- Stream coherence metrics are mandatory for baseline and regression comparison.
+- ADR/spec synchronization is required before implementation completion.
+
+### Rationale
+
+Observed stream behavior in current outputs is fragmented and difficult to trace end-to-end. The adopted slate establishes a deterministic, explainable topology contract while preserving controlled tuning surfaces and avoiding duplicate direction schema. The pool sink rule balances strict continuity with practical handling of local depressions in small/noisy maps.
+
+### Alternatives Considered
+
+- Keep threshold-only stream marking and rely on retuning/cleanup only - rejected because it does not reliably enforce continuity.
+- Add a duplicate stream-direction field - rejected because `fd` already provides directional truth and duplication creates drift risk.
+- Force all sinks to drain through carve/breach rerouting - rejected for first wave due to complexity and large topology side effects.
+
+### References
+
+- PR: None
+- Commit: Pending
+- File(s): docs/drafts/V2-Stream-Coherence-ImplementationPlan.md, docs/drafts/V2-Simulation-Repair-ProposedSolutions.md, docs/normative/ForestTerrainGeneration.md, docs/drafts/ImplementationPlan.md
+- Related ADRs: None
+
 ## Add Deterministic `parentRegionId` for Enclosed Regions (v1)
 
 **Timestamp:** 2026-02-26 00:00 (UTC)

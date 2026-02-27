@@ -2,7 +2,19 @@
 
 Status: draft
 Scope: implementation of the Forest Terrain Generator CLI in this repository
-Last updated: 2026-02-23
+Last updated: 2026-02-27
+
+## 0. Active Policy Addenda
+
+The v2 stream-coherence policy slate (`D-01` through `D-12`) is adopted and tracked in:
+
+1. `docs/drafts/V2-Stream-Coherence-ImplementationPlan.md` (Section 14, locked slate)
+2. `docs/ADR.md` (stream-coherence ADR entry)
+3. `docs/normative/ForestTerrainGeneration.md` (Section 17 stream-coherence v2 addendum)
+
+Execution note:
+
+1. Stream-coherence implementation sequencing and validation for this track MUST follow the dedicated v2 stream plan document above.
 
 ## 1. Authority and Precedence
 

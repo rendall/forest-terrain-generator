@@ -2,7 +2,7 @@
 
 Status: draft  
 Scope: stream coherence planning and sequencing only (no code changes defined here)  
-Last updated: 2026-02-26
+Last updated: 2026-02-27
 
 References:
 
@@ -179,14 +179,10 @@ Before implementation completion:
 
 ## 12. Open Decisions
 
-Items to resolve before coding:
+All Section 14 decisions are adopted for this stream-coherence track.  
+No open design decisions remain in this document at this time.
 
-1. Exact threshold criteria for assigning `waterClass: "pool"` as a terminal sink (for example, `fd==NONE` plus moisture/accumulation gates).
-2. Whether strict continuity is always required or tolerance-based in specific edge cases.
-3. Default behavior for small maps (same defaults vs adaptive scaling hooks).
-4. Whether cleanup pass remains as optional mode or is removed entirely.
-5. Confirm normative precedence and passability ordering including `pool`.
-6. Finalize exact default and cap values for `hydrology.streamHeadwaterBoost.*`.
+Follow-through before implementation completion still applies (see Sections 11 and 14 `D-12`).
 
 ## 13. Options and Recommendation (Educational Brief)
 
@@ -323,31 +319,31 @@ Recommendation:
 1. Start with W0 for stream-coherence first wave.
 2. Revisit W1 after baseline coherence metrics stabilize.
 
-## 14. Decision List for Review and Sign-Off
+## 14. Adopted Decision Slate (Locked)
 
-This is the full stream-coherence decision list to review before implementation.
+This is the adopted stream-coherence decision slate, accepted without modification.
 
 1. `D-01` Source model baseline:
-   Recommended: Option B (accumulation+slope + path tracing).
+   Adopted: Option B (accumulation+slope + path tracing).
 2. `D-02` Headwater enrichment:
-   Recommended: Option C as optional tweak, default off.
+   Adopted: Option C as optional tweak, default off.
 3. `D-03` Terminal sink semantics:
-   Recommended: S1 (`waterClass: "pool"` for valid terminal sinks).
+   Adopted: S1 (`waterClass: "pool"` for valid terminal sinks).
 4. `D-04` Pool passability:
-   Recommended: non-blocking by default.
+   Adopted: non-blocking by default.
 5. `D-05` Direction representation:
-   Recommended: D1 (use existing `fd` + stream flags; no duplicate field).
+   Adopted: D1 (use existing `fd` + stream flags; no duplicate field).
 6. `D-06` Continuity policy:
-   Recommended: C1 hard invariant for stream tiles.
+   Adopted: C1 hard invariant for stream tiles.
 7. `D-07` `fd==NONE` interpretation:
-   Recommended: valid non-stream terrain state; stream endpoints may use `pool` when gates pass.
+   Adopted: valid non-stream terrain state; stream endpoints may use `pool` when gates pass.
 8. `D-08` Cleanup mode:
-   Recommended: optional deterministic cleanup, default off.
+   Adopted: optional deterministic cleanup, default off.
 9. `D-09` Small-map default policy:
-   Recommended: W0 for first wave; defer adaptive scaling.
+   Adopted: W0 for first wave; defer adaptive scaling.
 10. `D-10` Parameter surface:
-    Recommended: expose explicit `streamThresholds.*` and `streamHeadwaterBoost.*` with strict validation.
+    Adopted: expose explicit `streamThresholds.*` and `streamHeadwaterBoost.*` with strict validation.
 11. `D-11` Metrics contract:
-    Recommended: baseline and post-change tracking for continuation violations, component fragmentation, and stream share.
+    Adopted: baseline and post-change tracking for continuation violations, component fragmentation, and stream share.
 12. `D-12` Governance:
-    Recommended: update ADR and normative spec text before declaring implementation complete.
+    Adopted: update ADR and normative spec text before declaring implementation complete.

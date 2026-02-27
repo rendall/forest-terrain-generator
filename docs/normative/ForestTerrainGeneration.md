@@ -1139,6 +1139,67 @@ Recommended float epsilon: `1e-6`.
 
 ---
 
+## 17. Stream-Coherence v2 Addendum (Adopted Policy)
+
+This section records the adopted stream-coherence policy slate (`D-01` through `D-12`) for the v2 repair track.
+
+Applicability:
+
+- Normative for v2 stream-coherence implementation work.
+- Informative for current v1 behavior until v2 implementation is released.
+
+When implementing v2 stream coherence, this section supersedes conflicting details in Sections `6.5`, `6.7`, and `13.2`.
+
+### 17.1 Topology Model
+
+1. Streams MUST be derived by deterministic path-aware tracing from source candidates; threshold-only local marking is not sufficient as the primary model.
+2. Source candidacy MUST use explicit stream-threshold parameters under `hydrology.streamThresholds.*`.
+3. Optional headwater enrichment MAY add extra sources under `hydrology.streamHeadwaterBoost.*`, and MUST default to disabled.
+4. Deterministic tie-break behavior MUST be preserved.
+
+### 17.2 Continuity Contract
+
+1. Stream continuity is a hard invariant for stream tiles.
+2. Every stream tile MUST have one valid downstream continuation to exactly one of:
+   - another stream tile
+   - a lake tile
+   - a valid terminal sink classified as `waterClass: "pool"`
+3. `fd==NONE` remains valid for non-stream terrain tiles and does not itself imply error.
+
+### 17.3 Sink and Water-Class Semantics
+
+1. `pool` is an allowed water class for valid terminal stream sinks.
+2. `pool` is not a lake and MUST NOT inherit lake-only blocking rules.
+3. Pool passability is non-blocking by default.
+4. Stream-direction semantics MUST come from existing fields (`fd`, `isStream`, `waterClass`) with no duplicate stream-direction field.
+
+### 17.4 Cleanup and Small-World Policy
+
+1. Deterministic stream cleanup is optional and defaults to off.
+2. First-wave v2 stream coherence uses one default threshold policy across map sizes.
+3. Size-adaptive scaling is explicitly deferred until after baseline coherence metrics stabilize.
+
+### 17.5 Params and Validation Contract
+
+1. Stream coherence controls MUST expose explicit parameter groups:
+   - `hydrology.streamThresholds.*`
+   - `hydrology.streamHeadwaterBoost.*`
+2. Unknown keys under these groups MUST fail schema validation.
+3. Effective values MUST be deterministic for a given input set.
+
+### 17.6 Required Metrics for v2 Stream Coherence
+
+v2 implementation and regression checks MUST report, at minimum:
+
+1. stream downstream-continuation violation rate
+2. stream component count
+3. stream singleton component count
+4. largest stream component size
+5. stream tile share
+6. no-stream fallback frequency
+
+---
+
 ## Appendix A: Recommended Parameter Defaults (v1)
 
 ```json
