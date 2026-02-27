@@ -20,7 +20,8 @@ export const WATER_CLASS_CODE = {
   none: 0,
   lake: 1,
   stream: 2,
-  marsh: 3
+  marsh: 3,
+  pool: 4
 } as const;
 
 export type WaterClassCode = (typeof WATER_CLASS_CODE)[keyof typeof WATER_CLASS_CODE];
@@ -32,6 +33,7 @@ export interface HydrologyMapsSoA {
   faN: Float32Array;
   lakeMask: Uint8Array;
   isStream: Uint8Array;
+  poolMask: Uint8Array;
   distWater: Uint32Array;
   moisture: Float32Array;
   waterClass: Uint8Array;
@@ -46,6 +48,7 @@ export function createHydrologyMaps(shape: GridShape): HydrologyMapsSoA {
     faN: new Float32Array(shape.size),
     lakeMask: new Uint8Array(shape.size),
     isStream: new Uint8Array(shape.size),
+    poolMask: new Uint8Array(shape.size),
     distWater: new Uint32Array(shape.size),
     moisture: new Float32Array(shape.size),
     waterClass: new Uint8Array(shape.size).fill(WATER_CLASS_CODE.none),

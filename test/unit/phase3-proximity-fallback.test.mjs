@@ -12,7 +12,7 @@ describe("Phase 3 proximity fallbacks", () => {
     const lakeMask = new Uint8Array(shape.size).fill(0);
     const isStream = new Uint8Array(shape.size).fill(0);
 
-    const distWater = hydrology.deriveDistWater(shape, lakeMask, isStream, {
+    const distWater = hydrology.deriveDistWater(shape, lakeMask, isStream, undefined, {
       waterProxMaxDist: 6
     });
     expect(Array.from(distWater)).toEqual(new Array(shape.size).fill(6));

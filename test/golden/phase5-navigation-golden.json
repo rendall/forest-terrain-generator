@@ -5,10 +5,10 @@
       "width": 16,
       "height": 16,
       "artifacts": {
-        "C": "9aca95b20816e19f24efb0f8ce093f1e9833d3f8cd79525c3a8fdc910f0f4bbd",
+        "C": "a3b06252e2f5b480400ac6652e01c6f51ed4f9bb1b35f225b5ef71db9e3c5ef8",
         "GameTrail": "2cc9773375fb99603b80250aec82661262494e9b88cb5525081e98b16d0344c8",
         "GameTrailId": "fa1c3d556ca500a22c6b075e704623a0a7d2fd2678a27154fbf465d7311fd0a1",
-        "MoveCost": "2a959eb160373639e4da1e1c16984abfcb78f3b97c38f55ced02de8370254cf4",
+        "MoveCost": "abfe1e1c498f85ac28ae8ad468080251dc3a7c3e2cb030a7d16a1bbcc4e04b55",
         "Passability": "76af2a36ea60973071462df48a1e98dc8f7dcbc5d04c9b13fdcd452c09c685cf",
         "CliffEdge": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
         "Followable": "8f503758f19305c47de2a4b4fdd0d8ad57ff98e4f8226a5b807605820dfb4c8a"
@@ -19,13 +19,13 @@
       "width": 64,
       "height": 64,
       "artifacts": {
-        "C": "3bb2aea69bb3e1c4a6180fc8d3f5ce815850b3cea461fd86193f6729158d5418",
-        "GameTrail": "fd05e57e32cd57a335b9a5f8ee990522d90fd60df0e7a5621af36650ea3e4bac",
-        "GameTrailId": "65fef2e54f48dc063a1618c07208e4f1041f79d4983998dddb49c4c54288217a",
-        "MoveCost": "8a0b88e7f4c6f2403544f05650d108333c3a2988a8717b1f7071558edab197a2",
+        "C": "12fc99bd2ce84673ea20a3871e7537c8fa472485e5c19f8403f164dbd4cb9638",
+        "GameTrail": "7b03389f48cc9706c49bb8e59ec45ca7a2fdeb8a751d07a7aab227c9f717056b",
+        "GameTrailId": "25bbaa7f2d19a36f5957f1a7ac20d1396878ef178d6184402d8022220f95d13b",
+        "MoveCost": "22ae8d8ed511be9cc15434f25e8142df0abcec6d096b0769f74ad4431e93ecbd",
         "Passability": "a93f00cfd4c4fe9ba5d858610c94c88a85af16fb1b5b1e49a5e7671db54aa5d7",
         "CliffEdge": "ad7facb2586fc6e966c004d7d1d16b024f5805ff7cb47c7a85dabd8b48892ca7",
-        "Followable": "bc1f70ef62d564f78570fec43dbc240472204a509cda2ecf57f5efc747bd2932"
+        "Followable": "91af791a9323e877d3ce83fd0ef8e939d70ae1a31c9cca44d82c9439591741af"
       }
     },
     {
@@ -33,13 +33,13 @@
       "width": 16,
       "height": 16,
       "artifacts": {
-        "C": "d1a09b64080ec54591b2f02de05293ed23f3f7e6b203359f6d882755bc2c1870",
+        "C": "a1ffed0f7e89e7944e13da67aa1b998b346acebe67cb075d5f9a39940d3fb7de",
         "GameTrail": "e3922dcdc791c0ebe4a68862d75725e53b4de0390b99c62239faeaf8c11fd7b1",
         "GameTrailId": "82f9d1930e45dfda930763c9313a3f9f8a84b3576eaa8a33373528232879a292",
-        "MoveCost": "8df145cc3e5114c06b0a4b64846fbebeb23c392b535b4883b8e633966759e513",
+        "MoveCost": "41476d900af5d650e75ae0a93179927c6537a71fc1d6ef313ff10650f735eedd",
         "Passability": "1c5b88543a65122bb48c50e32886565c5731e3cc5203e63569bc787e55bb3b0b",
         "CliffEdge": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
-        "Followable": "5109b491e1925e8d159147f4d325dd920ade6dd1ed910a36da15279b945870cb"
+        "Followable": "3c7b742684bd08cf9b7304ae7481559343abbace744ea59c38168ddf48947def"
       }
     },
     {
@@ -47,13 +47,13 @@
       "width": 64,
       "height": 64,
       "artifacts": {
-        "C": "8b99158ab23f3e4781bcc536757c713c933ac37c9f25512281752db405df9753",
-        "GameTrail": "b928d2ad6d80c2927e5d705075976c8aedbd4e96ab1e841308ae5d6013378d47",
-        "GameTrailId": "054aacd8b86e414bc2536a0a6e88c5195bb42ccbfc52ace5fd4359ef46ed3e87",
-        "MoveCost": "77b5891ce0981334f0a5a1d4f22c713d1f01f141d6e2ad5181c432db00643ed1",
+        "C": "d57115a7fe1cbf71f04f37bac0565550c05442a926b3e013b10d1561515d3ce8",
+        "GameTrail": "5db67919851e7f765b59061085324d483a305836543cd7c6bceb2b7c14eead3d",
+        "GameTrailId": "f1307119cf355386918deebce9c5883ecee105f488e036123fff048e4407abbf",
+        "MoveCost": "7d91604d404c2895f80b6bdfd98f0e26fe01b588f065582176ef0543f8027a87",
         "Passability": "e03857cf8fc8e39ee9738ebf1e01620dc2ee376fb14b45e4b91794c7b688f8b5",
         "CliffEdge": "ad7facb2586fc6e966c004d7d1d16b024f5805ff7cb47c7a85dabd8b48892ca7",
-        "Followable": "cf4f24d9d5fbad005f4ff82a678bfb067d45daa033f4ce35e37d9876161c0e75"
+        "Followable": "2b9fc7239832e8ba94357c9a181f2bad4487134b5ddc4812a4eb8b776b9113c2"
       }
     },
     {
@@ -61,13 +61,13 @@
       "width": 16,
       "height": 16,
       "artifacts": {
-        "C": "bd7b82e42a0cac203326f59880d26bf507d79040b7f739efa570f9be47e7dc63",
-        "GameTrail": "7d39b7d7bc3ec1724574d8c85b94f0ed3e77e8099349e844709b2b507deeddba",
-        "GameTrailId": "2174bb017949499361f568e688985722d31e9085b68620e4101612425ad975aa",
-        "MoveCost": "81c269bb122b231befed71e47710bf04bbffd3b47fc77220824c1b1ee8d401ed",
+        "C": "151ca403993d6ece0e888eae0bce8f516a2497992064dc9f88c971f8877c41bf",
+        "GameTrail": "13ff3a4eec13e785547ad2eb4e75811254758344d25d4ca2f1f2f43a6a9b5b3d",
+        "GameTrailId": "8fd8a259a857f03a74bfbba80c1e30d2510cb41dcdfa7ed12687b1050fdae988",
+        "MoveCost": "4f9e87cee2e2e293bbbc4a56c9b375b5cb1390306c76e7369c2f2c3d744521bf",
         "Passability": "c0808f3a77968b3b381969e68306e53c154ac76d5d81cef821d4b9b6449e1ebc",
         "CliffEdge": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
-        "Followable": "20e7d5ca82305c99a21e6ad86a529870b22a65237c75f7a4eed9a17bb2712a03"
+        "Followable": "51fac6a4a303923a24d82299e9d76f74711b8f1ca87cf70a591f988a0ba05a4e"
       }
     },
     {
@@ -75,13 +75,13 @@
       "width": 64,
       "height": 64,
       "artifacts": {
-        "C": "db8ba47792f5aa3d8d376659eca704d89fe5e12ff07de1aec5b5f3bc8d56d9d5",
+        "C": "f828c164b7af3f5131bf5f669c5cd9241abc2961044cae23839b1fd2cead4417",
         "GameTrail": "75dd10b6e91495876da69c79bfb461a6448018a2db58767172ee6c8313ffd3c0",
         "GameTrailId": "2d4f9165ea1ce7fb107631f4ccefda25e7f70ee391bd2f368e2329743d9753ad",
-        "MoveCost": "248d9f10ae075c2ba6f0c487d7d4292785aff2886de0b568b8ba6d757c4b8bef",
+        "MoveCost": "9930cd3902f5bceb03765675a917c545f247735be9e2ea6e13f7790800dbed49",
         "Passability": "592edd8b584a5898cab91a5fe38f74caa6991e53cc34d74a0801f447e2eeecbb",
         "CliffEdge": "ad7facb2586fc6e966c004d7d1d16b024f5805ff7cb47c7a85dabd8b48892ca7",
-        "Followable": "e78e248c24e59cd468d8ed2de0f2a219722964e205e06d28ce8ea16278e3d997"
+        "Followable": "fe43a46c102da1ef3a2ae2725572bd00ec0d6b546fb41b61447e0df34102659d"
       }
     },
     {
@@ -89,13 +89,13 @@
       "width": 16,
       "height": 16,
       "artifacts": {
-        "C": "577ba7155cfb32391e6318a7f5092a1d6d5083ea32e4a9095a4a3152eb81e249",
+        "C": "f149e60a1a65c9c633299780dfe40706becb409f55b9c2796e19f9b4166c3914",
         "GameTrail": "db01e67f47a347d1f83824fc950cce1596ead51b80edd536242b61dfd9ef5862",
         "GameTrailId": "dd33edc9adbf08ba944fcf179c83f4980f89b21c1f2f8fbb1960a1eb32c7f684",
-        "MoveCost": "e6b14a27874b17607a28731912abfa2a6bae95233559ef70743b11e200555e7e",
+        "MoveCost": "ce3e9e4034d2ad83b92827e90c2c52414871d0a174702238f39849bdf0055272",
         "Passability": "7e7f8d1b9fde5deaf5161f34a47015fe0a3212a802eb7bcbe9d63913f78747f0",
         "CliffEdge": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
-        "Followable": "b1fa0a6df7a349e0416fda2639c9e4cc6a45766f217dfd36c1dd4b841c6e02aa"
+        "Followable": "154df1c50d87e8712db33e4507b0ff0127db1a06a31cd57461caf3d17224a6ff"
       }
     },
     {
@@ -103,13 +103,13 @@
       "width": 64,
       "height": 64,
       "artifacts": {
-        "C": "ade2fae9c42482c533b765ce2c3a4e15dd5ef85f8bdaedf43939f302c09189e2",
-        "GameTrail": "b54e9aa7d297b7febbf3d25673178da87db16072b11f8e150dbca74ff1a71be9",
-        "GameTrailId": "31e7b0497d70e0cfa9ad61fdfa3bbdd425ca26f9b6e3189c5857a892d7143825",
-        "MoveCost": "798d30fa4ab86d65a0afc79a0070f2dbf6a7f36d879296d80aef09e1c788e7b0",
+        "C": "44757a1c0053023e7058b8cf97efac715729ce36092d8216ccf9ad15293bdaef",
+        "GameTrail": "654938d6f8c1dcaaabe54fe5101ef218bb8e146db1dc123b673df099fba81409",
+        "GameTrailId": "4f2c0596a4683e8063c7b5f17e12836ccba1c2cf08219cb804ae7ae87e911eaf",
+        "MoveCost": "bbe4707b890cbd3c2daaccc673f8945236aae4ec3a43f26c5fdd5d37a085d7c7",
         "Passability": "def70c015e6d68b686a83624ae95395cbf08bc4f16544c9d882f5bb716faa6a7",
         "CliffEdge": "ad7facb2586fc6e966c004d7d1d16b024f5805ff7cb47c7a85dabd8b48892ca7",
-        "Followable": "91ee69ff3c35f9993ef837217dbba552bfcd551ad868921bf18b04b242fd904e"
+        "Followable": "f848d08db245919ca26bb4a893f2c37803f89ce9b7dd59215586c3b6b691eef2"
       }
     }
   ]

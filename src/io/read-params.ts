@@ -50,6 +50,58 @@ function validateUnknownKeys(
   }
 }
 
+function finiteNumberOrUndefined(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function normalizeLegacyHydrologyAliases(params: JsonObject): void {
+  if (!isObject(params.hydrology)) {
+    return;
+  }
+
+  const hydrology = params.hydrology as JsonObject;
+  const legacyAccum = hydrology.streamAccumThreshold;
+  const legacySlope = hydrology.streamMinSlopeThreshold;
+
+  if (
+    legacyAccum !== undefined &&
+    !(typeof legacyAccum === "number" && Number.isFinite(legacyAccum))
+  ) {
+    throw new InputValidationError(
+      'Invalid params value "params.hydrology.streamAccumThreshold". Expected a finite number.'
+    );
+  }
+  if (
+    legacySlope !== undefined &&
+    !(typeof legacySlope === "number" && Number.isFinite(legacySlope))
+  ) {
+    throw new InputValidationError(
+      'Invalid params value "params.hydrology.streamMinSlopeThreshold". Expected a finite number.'
+    );
+  }
+
+  const streamThresholds = isObject(hydrology.streamThresholds)
+    ? (hydrology.streamThresholds as JsonObject)
+    : {};
+
+  const sourceAccumMin = finiteNumberOrUndefined(streamThresholds.sourceAccumMin);
+  if (sourceAccumMin === undefined && legacyAccum !== undefined) {
+    streamThresholds.sourceAccumMin = legacyAccum;
+  }
+
+  const minSlope = finiteNumberOrUndefined(streamThresholds.minSlope);
+  if (minSlope === undefined && legacySlope !== undefined) {
+    streamThresholds.minSlope = legacySlope;
+  }
+
+  if (Object.keys(streamThresholds).length > 0) {
+    hydrology.streamThresholds = streamThresholds;
+  }
+
+  delete hydrology.streamAccumThreshold;
+  delete hydrology.streamMinSlopeThreshold;
+}
+
 export async function readParamsFile(
   paramsPath: string | undefined,
   cwd: string
@@ -135,6 +187,7 @@ export async function readParamsFile(
       : undefined;
   const force = typeof parsed.force === "boolean" ? parsed.force : undefined;
   const params = isObject(parsed.params) ? parsed.params : parsed;
+  normalizeLegacyHydrologyAliases(params);
   validateUnknownKeys(params, PARAMS_VALIDATION_SCHEMA, "params");
 
   return {

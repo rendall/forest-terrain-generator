@@ -15,6 +15,7 @@ describe("Phase 3 hydrology map model", () => {
     expect(maps.faN).toBeInstanceOf(Float32Array);
     expect(maps.lakeMask).toBeInstanceOf(Uint8Array);
     expect(maps.isStream).toBeInstanceOf(Uint8Array);
+    expect(maps.poolMask).toBeInstanceOf(Uint8Array);
     expect(maps.distWater).toBeInstanceOf(Uint32Array);
     expect(maps.moisture).toBeInstanceOf(Float32Array);
     expect(maps.waterClass).toBeInstanceOf(Uint8Array);
@@ -25,6 +26,7 @@ describe("Phase 3 hydrology map model", () => {
     expect(maps.faN.length).toBe(shape.size);
     expect(maps.lakeMask.length).toBe(shape.size);
     expect(maps.isStream.length).toBe(shape.size);
+    expect(maps.poolMask.length).toBe(shape.size);
     expect(maps.distWater.length).toBe(shape.size);
     expect(maps.moisture.length).toBe(shape.size);
     expect(maps.waterClass.length).toBe(shape.size);
@@ -35,5 +37,6 @@ describe("Phase 3 hydrology map model", () => {
     expect(WATER_CLASS_CODE.lake).toBe(1);
     expect(WATER_CLASS_CODE.stream).toBe(2);
     expect(WATER_CLASS_CODE.marsh).toBe(3);
+    expect(WATER_CLASS_CODE.pool).toBe(4);
   });
 });

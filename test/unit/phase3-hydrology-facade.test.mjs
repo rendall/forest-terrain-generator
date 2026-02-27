@@ -16,6 +16,12 @@ describe("Phase 3 hydrology facade", () => {
 			"deriveLakeMask",
 			"growLakeMask",
 			"deriveStreamMask",
+			"deriveStreamTopology",
+			"deriveDownstreamIndexMap",
+			"applyHeadwaterBoostSources",
+			"deriveBaseStreamSources",
+			"validateStreamContinuity",
+			"deriveStreamCoherenceMetrics",
 			"deriveDistWater",
 			"deriveDistStream",
 			"deriveMoisture",
@@ -32,6 +38,7 @@ describe("Phase 3 hydrology facade", () => {
 			lake: 1,
 			stream: 2,
 			marsh: 3,
+			pool: 4,
 		});
 	});
 
@@ -46,8 +53,19 @@ describe("Phase 3 hydrology facade", () => {
 			tieEps: 0.000001,
 			lakeFlatSlopeThreshold: 0.5,
 			lakeAccumThreshold: 0.5,
-			streamAccumThreshold: 0.5,
-			streamMinSlopeThreshold: 0.5,
+			streamThresholds: {
+				sourceAccumMin: 0.5,
+				channelAccumMin: 0.5,
+				minSlope: 0.5,
+				maxGapFillSteps: 0,
+			},
+			streamHeadwaterBoost: {
+				enabled: false,
+				minElevationPct: 0.7,
+				minSlope: 0.015,
+				minSourceSpacing: 6,
+				maxExtraSources: 24,
+			},
 			waterProxMaxDist: 6,
 			streamProxMaxDist: 5,
 			moistureAccumStart: 0.35,
@@ -67,6 +85,7 @@ describe("Phase 3 hydrology facade", () => {
 		expect(maps.faN.length).toBe(shape.size);
 		expect(maps.lakeMask.length).toBe(shape.size);
 		expect(maps.isStream.length).toBe(shape.size);
+		expect(maps.poolMask.length).toBe(shape.size);
 		expect(maps.distWater.length).toBe(shape.size);
 		expect(maps.moisture.length).toBe(shape.size);
 		expect(maps.waterClass.length).toBe(shape.size);

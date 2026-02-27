@@ -16,8 +16,11 @@ describe("Phase 3 threshold precision", () => {
     expect(Array.from(lakeMask)).toEqual([0, 1]);
 
     const isStream = deriveStreamMask(shape, lakeMask, faN, slopeMag, {
-      streamAccumThreshold: 0.65,
-      streamMinSlopeThreshold: 0.03
+      streamThresholds: {
+        sourceAccumMin: 0.65,
+        channelAccumMin: 0.65,
+        minSlope: 0.03
+      }
     });
     expect(Array.from(isStream)).toEqual([1, 0]);
   });

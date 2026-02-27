@@ -19,8 +19,11 @@ describe("Phase 3 water derivations", () => {
 		const params = {
 			lakeFlatSlopeThreshold: 0.5,
 			lakeAccumThreshold: 0.5,
-			streamAccumThreshold: 0.5,
-			streamMinSlopeThreshold: 0.5,
+			streamThresholds: {
+				sourceAccumMin: 0.5,
+				channelAccumMin: 0.5,
+				minSlope: 0.5,
+			},
 		};
 
 		const lakeMask = hydrology.deriveLakeMask(
@@ -80,6 +83,7 @@ describe("Phase 3 water derivations", () => {
 		const shape = createGridShape(4, 1);
 		const lakeMask = new Uint8Array([1, 0, 0, 0]);
 		const isStream = new Uint8Array([1, 1, 0, 0]);
+		const poolMask = new Uint8Array([0, 0, 0, 0]);
 		const moisture = new Float32Array([0.9, 0.9, 0.9, 0.4]);
 		const slopeMag = new Float32Array([0.01, 0.01, 0.01, 0.2]);
 		const params = {
@@ -91,6 +95,7 @@ describe("Phase 3 water derivations", () => {
 			shape,
 			lakeMask,
 			isStream,
+			poolMask,
 			moisture,
 			slopeMag,
 			params,
@@ -116,5 +121,45 @@ describe("Phase 3 water derivations", () => {
 		// The seed component reference is min(H)=0.2, so threshold is 0.21.
 		expect(Array.from(grown)).toEqual([0, 0, 0, 0, 1, 1, 0, 1, 0]);
 		expect(Array.from(lakeMask)).toEqual([0, 0, 0, 0, 1, 0, 0, 1, 0]);
+	});
+
+	it("emits terminal sinks as pool waterClass instead of stream", async () => {
+		const hydrology = await loadHydrologyModule();
+		const shape = createGridShape(2, 1);
+		const downstream = new Int32Array([1, -1]);
+		const lakeMask = new Uint8Array([0, 0]);
+		const sourceMask = new Uint8Array([1, 0]);
+		const faN = new Float32Array([0.7, 0.8]);
+		const streamThresholds = {
+			sourceAccumMin: 0.55,
+			channelAccumMin: 0.75,
+			minSlope: 0.01,
+			maxGapFillSteps: 0,
+		};
+		const waterClassParams = {
+			marshMoistureThreshold: 0.78,
+			marshSlopeThreshold: 0.04,
+		};
+
+		const topology = hydrology.deriveStreamTopology(
+			shape,
+			downstream,
+			lakeMask,
+			sourceMask,
+			faN,
+			streamThresholds,
+		);
+		const waterClass = hydrology.classifyWaterClass(
+			shape,
+			lakeMask,
+			topology.isStream,
+			topology.poolMask,
+			new Float32Array([0.2, 0.2]),
+			new Float32Array([0.2, 0.2]),
+			waterClassParams,
+		);
+
+		expect(topology.poolMask[1]).toBe(1);
+		expect(waterClass[1]).toBe(hydrology.WATER_CLASS_CODE.pool);
 	});
 });
