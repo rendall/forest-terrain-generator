@@ -122,4 +122,44 @@ describe("Phase 3 water derivations", () => {
 		expect(Array.from(grown)).toEqual([0, 0, 0, 0, 1, 1, 0, 1, 0]);
 		expect(Array.from(lakeMask)).toEqual([0, 0, 0, 0, 1, 0, 0, 1, 0]);
 	});
+
+	it("emits terminal sinks as pool waterClass instead of stream", async () => {
+		const hydrology = await loadHydrologyModule();
+		const shape = createGridShape(2, 1);
+		const downstream = new Int32Array([1, -1]);
+		const lakeMask = new Uint8Array([0, 0]);
+		const sourceMask = new Uint8Array([1, 0]);
+		const faN = new Float32Array([0.7, 0.8]);
+		const streamThresholds = {
+			sourceAccumMin: 0.55,
+			channelAccumMin: 0.75,
+			minSlope: 0.01,
+			maxGapFillSteps: 0,
+		};
+		const waterClassParams = {
+			marshMoistureThreshold: 0.78,
+			marshSlopeThreshold: 0.04,
+		};
+
+		const topology = hydrology.deriveStreamTopology(
+			shape,
+			downstream,
+			lakeMask,
+			sourceMask,
+			faN,
+			streamThresholds,
+		);
+		const waterClass = hydrology.classifyWaterClass(
+			shape,
+			lakeMask,
+			topology.isStream,
+			topology.poolMask,
+			new Float32Array([0.2, 0.2]),
+			new Float32Array([0.2, 0.2]),
+			waterClassParams,
+		);
+
+		expect(topology.poolMask[1]).toBe(1);
+		expect(waterClass[1]).toBe(hydrology.WATER_CLASS_CODE.pool);
+	});
 });

@@ -823,6 +823,7 @@ export function deriveStreamTopology(
 			faN[terminal] >= streamThresholds.channelAccumMin
 		) {
 			poolMask[terminal] = 1;
+			isStream[terminal] = 0;
 		}
 	}
 

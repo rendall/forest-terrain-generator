@@ -5,13 +5,13 @@
       "width": 16,
       "height": 16,
       "artifacts": {
-        "C": "f355ac399e02dfad59a9a2d4cfad81fb60f818ebd5ccfb77f3ee1d7665b016da",
+        "C": "a3b06252e2f5b480400ac6652e01c6f51ed4f9bb1b35f225b5ef71db9e3c5ef8",
         "GameTrail": "2cc9773375fb99603b80250aec82661262494e9b88cb5525081e98b16d0344c8",
         "GameTrailId": "fa1c3d556ca500a22c6b075e704623a0a7d2fd2678a27154fbf465d7311fd0a1",
         "MoveCost": "abfe1e1c498f85ac28ae8ad468080251dc3a7c3e2cb030a7d16a1bbcc4e04b55",
         "Passability": "76af2a36ea60973071462df48a1e98dc8f7dcbc5d04c9b13fdcd452c09c685cf",
         "CliffEdge": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1",
-        "Followable": "934536d6830c2eece7b77d178118241796b686263e65a077d59b3897258288c1"
+        "Followable": "8f503758f19305c47de2a4b4fdd0d8ad57ff98e4f8226a5b807605820dfb4c8a"
       }
     },
     {
@@ -75,13 +75,13 @@
       "width": 64,
       "height": 64,
       "artifacts": {
-        "C": "63672bf9fc3f480588e8127119daf1c2a99e2654e38f968e0e44980a0361ca4c",
+        "C": "f828c164b7af3f5131bf5f669c5cd9241abc2961044cae23839b1fd2cead4417",
         "GameTrail": "75dd10b6e91495876da69c79bfb461a6448018a2db58767172ee6c8313ffd3c0",
         "GameTrailId": "2d4f9165ea1ce7fb107631f4ccefda25e7f70ee391bd2f368e2329743d9753ad",
         "MoveCost": "9930cd3902f5bceb03765675a917c545f247735be9e2ea6e13f7790800dbed49",
         "Passability": "592edd8b584a5898cab91a5fe38f74caa6991e53cc34d74a0801f447e2eeecbb",
         "CliffEdge": "ad7facb2586fc6e966c004d7d1d16b024f5805ff7cb47c7a85dabd8b48892ca7",
-        "Followable": "045441bf3b88fdab50a2c7ac2353e75b464bfd67d37c3b740821f75fee95d307"
+        "Followable": "fe43a46c102da1ef3a2ae2725572bd00ec0d6b546fb41b61447e0df34102659d"
       }
     },
     {
@@ -103,13 +103,13 @@
       "width": 64,
       "height": 64,
       "artifacts": {
-        "C": "a0534e89a9f70bc18aa1dc4fd1d3624b755632dd2593e21f6100d61d1989dd52",
+        "C": "44757a1c0053023e7058b8cf97efac715729ce36092d8216ccf9ad15293bdaef",
         "GameTrail": "654938d6f8c1dcaaabe54fe5101ef218bb8e146db1dc123b673df099fba81409",
         "GameTrailId": "4f2c0596a4683e8063c7b5f17e12836ccba1c2cf08219cb804ae7ae87e911eaf",
         "MoveCost": "bbe4707b890cbd3c2daaccc673f8945236aae4ec3a43f26c5fdd5d37a085d7c7",
         "Passability": "def70c015e6d68b686a83624ae95395cbf08bc4f16544c9d882f5bb716faa6a7",
         "CliffEdge": "ad7facb2586fc6e966c004d7d1d16b024f5805ff7cb47c7a85dabd8b48892ca7",
-        "Followable": "301f8821c0455ad2eac18185e2da72181c48e7a1851d799dbbf23d3b33c84dde"
+        "Followable": "f848d08db245919ca26bb4a893f2c37803f89ce9b7dd59215586c3b6b691eef2"
       }
     }
   ]
