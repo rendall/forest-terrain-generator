@@ -19,8 +19,11 @@ describe("Phase 3 water derivations", () => {
 		const params = {
 			lakeFlatSlopeThreshold: 0.5,
 			lakeAccumThreshold: 0.5,
-			streamAccumThreshold: 0.5,
-			streamMinSlopeThreshold: 0.5,
+			streamThresholds: {
+				sourceAccumMin: 0.5,
+				channelAccumMin: 0.5,
+				minSlope: 0.5,
+			},
 		};
 
 		const lakeMask = hydrology.deriveLakeMask(
@@ -80,6 +83,7 @@ describe("Phase 3 water derivations", () => {
 		const shape = createGridShape(4, 1);
 		const lakeMask = new Uint8Array([1, 0, 0, 0]);
 		const isStream = new Uint8Array([1, 1, 0, 0]);
+		const poolMask = new Uint8Array([0, 0, 0, 0]);
 		const moisture = new Float32Array([0.9, 0.9, 0.9, 0.4]);
 		const slopeMag = new Float32Array([0.01, 0.01, 0.01, 0.2]);
 		const params = {
@@ -91,6 +95,7 @@ describe("Phase 3 water derivations", () => {
 			shape,
 			lakeMask,
 			isStream,
+			poolMask,
 			moisture,
 			slopeMag,
 			params,

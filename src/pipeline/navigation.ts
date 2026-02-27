@@ -760,6 +760,7 @@ export function deriveDirectionalPassability(
         cliffPacked |= 1 << dirIndex;
       }
 
+      // Lake remains blocking; pool is intentionally non-blocking by default.
       if (
         inputs.waterClass[i] === WATER_CLASS_CODE.lake ||
         inputs.waterClass[nIndex] === WATER_CLASS_CODE.lake

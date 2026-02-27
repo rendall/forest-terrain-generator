@@ -22,7 +22,11 @@ import {
 	soilTypeCodeToName,
 	surfaceFlagsToOrderedList,
 } from "../pipeline/ecology.js";
-import { deriveHydrology } from "../pipeline/hydrology.js";
+import {
+	deriveDownstreamIndexMap,
+	deriveHydrology,
+	deriveStreamCoherenceMetrics,
+} from "../pipeline/hydrology.js";
 import {
 	assertPostProcessingDisabled,
 	buildTrailPlan,
@@ -55,6 +59,7 @@ const WATER_CLASS_NAME_BY_CODE: Record<number, string> = {
 	1: "lake",
 	2: "stream",
 	3: "marsh",
+	4: "pool",
 };
 
 type HydrologyParams = Parameters<typeof deriveHydrology>[5];
@@ -122,6 +127,20 @@ function applyLegacyVegVarianceStrengthOverride(
 		...nested,
 		strength: legacyStrength,
 	};
+}
+
+function buildHydrologyParams(params: JsonObject): HydrologyParams {
+	const hydrology = isJsonObject(params.hydrology)
+		? (params.hydrology as Record<string, unknown>)
+		: {};
+	const gameTrails = isJsonObject(params.gameTrails)
+		? (params.gameTrails as Record<string, unknown>)
+		: {};
+
+	return {
+		...hydrology,
+		streamProxMaxDist: gameTrails.streamProxMaxDist,
+	} as unknown as HydrologyParams;
 }
 
 export async function resolveInputs(
@@ -197,6 +216,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			validated.debugOutputFile,
 			envelope,
 			validated.force,
+			undefined,
 		);
 		return;
 	}
@@ -217,11 +237,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		baseMaps,
 		validated.params,
 	);
-	const hydrologyParams = {
-		...(validated.params.hydrology as Record<string, unknown>),
-		streamProxMaxDist: (validated.params.gameTrails as Record<string, unknown>)
-			?.streamProxMaxDist,
-	} as unknown as HydrologyParams;
+	const hydrologyParams = buildHydrologyParams(validated.params);
 	const hydrology = deriveHydrology(
 		shape,
 		topography.h,
@@ -229,6 +245,13 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		topography.landform,
 		validated.seed,
 		hydrologyParams,
+	);
+	const streamCoherence = deriveStreamCoherenceMetrics(
+		shape,
+		deriveDownstreamIndexMap(shape, hydrology.fd),
+		hydrology.isStream,
+		hydrology.lakeMask,
+		hydrology.poolMask,
 	);
 	const ecologyParams = {
 		vegVarianceNoise: validated.params.vegVarianceNoise as
@@ -441,5 +464,6 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		validated.debugOutputFile,
 		envelope,
 		validated.force,
+		streamCoherence,
 	);
 }

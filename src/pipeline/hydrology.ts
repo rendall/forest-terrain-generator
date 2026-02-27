@@ -39,9 +39,25 @@ export interface LakeMaskParams {
 	lakeGrowHeightDelta?: number;
 }
 
-export interface StreamMaskParams {
-	streamAccumThreshold: number;
-	streamMinSlopeThreshold: number;
+export interface StreamThresholdParams {
+	sourceAccumMin: number;
+	channelAccumMin: number;
+	minSlope: number;
+	maxGapFillSteps?: number;
+}
+
+export interface StreamHeadwaterBoostParams {
+	enabled: boolean;
+	minElevationPct: number;
+	minSlope: number;
+	minSourceSpacing: number;
+	maxExtraSources: number;
+}
+
+interface StreamThresholdCompatParams {
+	streamThresholds?: Partial<StreamThresholdParams>;
+	streamAccumThreshold?: number;
+	streamMinSlopeThreshold?: number;
 }
 
 export interface MoistureParams {
@@ -70,14 +86,27 @@ export interface DistStreamParams {
 
 export interface HydrologyParams
 	extends FlowDirectionParams,
-		LakeMaskParams,
-		StreamMaskParams,
-		DistWaterParams,
-		DistStreamParams,
-		MoistureParams,
-		WaterClassParams {}
+			LakeMaskParams,
+			StreamThresholdCompatParams,
+			DistWaterParams,
+			DistStreamParams,
+			MoistureParams,
+			WaterClassParams {
+	streamHeadwaterBoost?: Partial<StreamHeadwaterBoostParams>;
+}
 
 const U32_MAX = 0xffffffff;
+const DEFAULT_STREAM_SOURCE_ACCUM_MIN = 0.55;
+const DEFAULT_STREAM_CHANNEL_ACCUM_MIN = 0.55;
+const DEFAULT_STREAM_MIN_SLOPE = 0.01;
+
+const DEFAULT_HEADWATER_BOOST: StreamHeadwaterBoostParams = {
+	enabled: false,
+	minElevationPct: 0.7,
+	minSlope: 0.015,
+	minSourceSpacing: 6,
+	maxExtraSources: 24,
+};
 
 function u64(value: bigint): bigint {
 	return value & U64_MASK;
@@ -91,6 +120,73 @@ function clamp01(value: number): number {
 		return 1;
 	}
 	return value;
+}
+
+function finiteOrFallback(value: unknown, fallback: number): number {
+	if (typeof value !== "number" || !Number.isFinite(value)) {
+		return fallback;
+	}
+	return value;
+}
+
+function normalizeStreamThresholdParams(
+	params: StreamThresholdCompatParams,
+): StreamThresholdParams {
+	const nested = params.streamThresholds ?? {};
+	const sourceAccumMin = finiteOrFallback(
+		nested.sourceAccumMin,
+		finiteOrFallback(params.streamAccumThreshold, DEFAULT_STREAM_SOURCE_ACCUM_MIN),
+	);
+	const channelAccumMin = finiteOrFallback(
+		nested.channelAccumMin,
+		sourceAccumMin,
+	);
+	const minSlope = finiteOrFallback(
+		nested.minSlope,
+		finiteOrFallback(params.streamMinSlopeThreshold, DEFAULT_STREAM_MIN_SLOPE),
+	);
+	const maxGapFillSteps = Math.max(
+		0,
+		Math.floor(finiteOrFallback(nested.maxGapFillSteps, 0)),
+	);
+
+	return {
+		sourceAccumMin,
+		channelAccumMin,
+		minSlope,
+		maxGapFillSteps,
+	};
+}
+
+function normalizeHeadwaterBoostParams(
+	params: HydrologyParams,
+): StreamHeadwaterBoostParams {
+	const raw = params.streamHeadwaterBoost ?? {};
+	return {
+		enabled: raw.enabled === true,
+		minElevationPct: clamp01(
+			finiteOrFallback(raw.minElevationPct, DEFAULT_HEADWATER_BOOST.minElevationPct),
+		),
+		minSlope: Math.max(
+			0,
+			finiteOrFallback(raw.minSlope, DEFAULT_HEADWATER_BOOST.minSlope),
+		),
+		minSourceSpacing: Math.max(
+			0,
+			Math.floor(
+				finiteOrFallback(
+					raw.minSourceSpacing,
+					DEFAULT_HEADWATER_BOOST.minSourceSpacing,
+				),
+			),
+		),
+		maxExtraSources: Math.max(
+			0,
+			Math.floor(
+				finiteOrFallback(raw.maxExtraSources, DEFAULT_HEADWATER_BOOST.maxExtraSources),
+			),
+		),
+	};
 }
 
 function validateMapLength(
@@ -245,6 +341,22 @@ function downstreamIndex(
 		});
 	}
 	return ny * shape.width + nx;
+}
+
+export function deriveDownstreamIndexMap(
+	shape: GridShape,
+	fd: Uint8Array,
+): Int32Array {
+	validateMapLength(shape, fd, "FD");
+	const out = new Int32Array(shape.size).fill(-1);
+	for (let i = 0; i < shape.size; i += 1) {
+		const dir = fd[i];
+		if (dir === DIR8_NONE) {
+			continue;
+		}
+		out[i] = downstreamIndex(shape, i, dir, "downstream_map");
+	}
+	return out;
 }
 
 export function deriveFlowAccumulation(
@@ -556,13 +668,14 @@ export function deriveStreamMask(
 	lakeMask: Uint8Array,
 	faN: Float32Array,
 	slopeMag: Float32Array,
-	params: StreamMaskParams,
+	params: StreamThresholdCompatParams,
 ): Uint8Array {
 	validateMapLength(shape, lakeMask, "LakeMask");
 	validateMapLength(shape, faN, "FA_N");
 	validateMapLength(shape, slopeMag, "SlopeMag");
-	const accumThreshold = Math.fround(params.streamAccumThreshold);
-	const minSlopeThreshold = Math.fround(params.streamMinSlopeThreshold);
+	const thresholds = normalizeStreamThresholdParams(params);
+	const accumThreshold = Math.fround(thresholds.sourceAccumMin);
+	const minSlopeThreshold = Math.fround(thresholds.minSlope);
 
 	const stream = new Uint8Array(shape.size);
 	for (let i = 0; i < shape.size; i += 1) {
@@ -575,6 +688,214 @@ export function deriveStreamMask(
 		}
 	}
 	return stream;
+}
+
+export function deriveBaseStreamSources(
+	shape: GridShape,
+	lakeMask: Uint8Array,
+	faN: Float32Array,
+	slopeMag: Float32Array,
+	thresholds: StreamThresholdParams,
+): Uint8Array {
+	return deriveStreamMask(shape, lakeMask, faN, slopeMag, {
+		streamThresholds: thresholds,
+	});
+}
+
+function hasSourceWithinSpacing(
+	shape: GridShape,
+	sourceMask: Uint8Array,
+	index: number,
+	minSpacing: number,
+): boolean {
+	if (minSpacing <= 0) {
+		return sourceMask[index] === 1;
+	}
+	const x = index % shape.width;
+	const y = Math.floor(index / shape.width);
+	for (let ny = Math.max(0, y - minSpacing); ny <= Math.min(shape.height - 1, y + minSpacing); ny += 1) {
+		for (let nx = Math.max(0, x - minSpacing); nx <= Math.min(shape.width - 1, x + minSpacing); nx += 1) {
+			const i = ny * shape.width + nx;
+			if (sourceMask[i] !== 1) {
+				continue;
+			}
+			const chebyshev = Math.max(Math.abs(nx - x), Math.abs(ny - y));
+			if (chebyshev <= minSpacing) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+export function applyHeadwaterBoostSources(
+	shape: GridShape,
+	h: Float32Array,
+	slopeMag: Float32Array,
+	lakeMask: Uint8Array,
+	baseSources: Uint8Array,
+	boost: StreamHeadwaterBoostParams,
+): Uint8Array {
+	validateMapLength(shape, h, "H");
+	validateMapLength(shape, slopeMag, "SlopeMag");
+	validateMapLength(shape, lakeMask, "LakeMask");
+	validateMapLength(shape, baseSources, "BaseStreamSources");
+
+	const out = baseSources.slice();
+	if (!boost.enabled || boost.maxExtraSources <= 0) {
+		return out;
+	}
+
+	let added = 0;
+	for (let i = 0; i < shape.size; i += 1) {
+		if (added >= boost.maxExtraSources) {
+			break;
+		}
+		if (lakeMask[i] === 1 || out[i] === 1) {
+			continue;
+		}
+		if (h[i] < boost.minElevationPct || slopeMag[i] < boost.minSlope) {
+			continue;
+		}
+		if (hasSourceWithinSpacing(shape, out, i, boost.minSourceSpacing)) {
+			continue;
+		}
+		out[i] = 1;
+		added += 1;
+	}
+
+	return out;
+}
+
+export function deriveStreamTopology(
+	shape: GridShape,
+	downstream: Int32Array,
+	lakeMask: Uint8Array,
+	sourceMask: Uint8Array,
+	faN: Float32Array,
+	streamThresholds: StreamThresholdParams,
+): { isStream: Uint8Array; poolMask: Uint8Array } {
+	validateMapLength(shape, downstream, "DownstreamIndexMap");
+	validateMapLength(shape, lakeMask, "LakeMask");
+	validateMapLength(shape, sourceMask, "StreamSourceMask");
+	validateMapLength(shape, faN, "FA_N");
+
+	const isStream = new Uint8Array(shape.size);
+	const poolMask = new Uint8Array(shape.size);
+
+	for (let i = 0; i < shape.size; i += 1) {
+		if (sourceMask[i] !== 1) {
+			continue;
+		}
+
+		const path: number[] = [];
+		let current = i;
+		let guard = 0;
+
+		while (current >= 0 && guard < shape.size) {
+			guard += 1;
+			if (lakeMask[current] === 1) {
+				break;
+			}
+
+			path.push(current);
+			const next = downstream[current];
+			if (next < 0) {
+				break;
+			}
+			if (lakeMask[next] === 1 || isStream[next] === 1) {
+				break;
+			}
+			current = next;
+		}
+
+		for (const tile of path) {
+			if (lakeMask[tile] === 0) {
+				isStream[tile] = 1;
+			}
+		}
+
+		const terminal = path[path.length - 1];
+		if (
+			terminal !== undefined &&
+			lakeMask[terminal] === 0 &&
+			downstream[terminal] < 0 &&
+			faN[terminal] >= streamThresholds.channelAccumMin
+		) {
+			poolMask[terminal] = 1;
+		}
+	}
+
+	return { isStream, poolMask };
+}
+
+export function applyOptionalStreamCleanup(
+	shape: GridShape,
+	downstream: Int32Array,
+	isStream: Uint8Array,
+	lakeMask: Uint8Array,
+	poolMask: Uint8Array,
+	maxGapFillSteps: number,
+): Uint8Array {
+	validateMapLength(shape, downstream, "DownstreamIndexMap");
+	validateMapLength(shape, isStream, "isStream");
+	validateMapLength(shape, lakeMask, "LakeMask");
+	validateMapLength(shape, poolMask, "poolMask");
+
+	const gapSteps = Math.max(0, Math.floor(maxGapFillSteps));
+	if (gapSteps === 0) {
+		return isStream;
+	}
+
+	const out = isStream.slice();
+	for (let i = 0; i < shape.size; i += 1) {
+		if (isStream[i] !== 1) {
+			continue;
+		}
+		let current = i;
+		for (let step = 0; step < gapSteps; step += 1) {
+			const next = downstream[current];
+			if (next < 0 || lakeMask[next] === 1 || poolMask[next] === 1 || out[next] === 1) {
+				break;
+			}
+			out[next] = 1;
+			current = next;
+		}
+	}
+	return out;
+}
+
+export function validateStreamContinuity(
+	shape: GridShape,
+	downstream: Int32Array,
+	isStream: Uint8Array,
+	lakeMask: Uint8Array,
+	poolMask: Uint8Array,
+): void {
+	validateMapLength(shape, downstream, "DownstreamIndexMap");
+	validateMapLength(shape, isStream, "isStream");
+	validateMapLength(shape, lakeMask, "LakeMask");
+	validateMapLength(shape, poolMask, "poolMask");
+
+	for (let i = 0; i < shape.size; i += 1) {
+		if (isStream[i] !== 1) {
+			continue;
+		}
+		const next = downstream[i];
+		if (next >= 0) {
+			if (isStream[next] === 1 || lakeMask[next] === 1 || poolMask[next] === 1) {
+				continue;
+			}
+		} else if (poolMask[i] === 1) {
+			continue;
+		}
+		hydrologyFail(
+			"stream_continuity",
+			"stream_downstream_continuation",
+			"invalid_stream_termination",
+			{ tile: i, next },
+		);
+	}
 }
 
 export function deriveMoisture(
@@ -610,12 +931,15 @@ export function classifyWaterClass(
 	shape: GridShape,
 	lakeMask: Uint8Array,
 	isStream: Uint8Array,
+	poolMask: Uint8Array | undefined,
 	moisture: Float32Array,
 	slopeMag: Float32Array,
 	params: WaterClassParams,
 ): Uint8Array {
 	validateMapLength(shape, lakeMask, "LakeMask");
 	validateMapLength(shape, isStream, "isStream");
+	const pools = poolMask ?? new Uint8Array(shape.size);
+	validateMapLength(shape, pools, "poolMask");
 	validateMapLength(shape, moisture, "Moisture");
 	validateMapLength(shape, slopeMag, "SlopeMag");
 	const marshMoistureThreshold = Math.fround(params.marshMoistureThreshold);
@@ -629,6 +953,10 @@ export function classifyWaterClass(
 		}
 		if (isStream[i] === 1) {
 			waterClass[i] = WATER_CLASS_CODE.stream;
+			continue;
+		}
+		if (pools[i] === 1) {
+			waterClass[i] = WATER_CLASS_CODE.pool;
 			continue;
 		}
 		if (
@@ -695,13 +1023,17 @@ export function deriveDistWater(
 	shape: GridShape,
 	lakeMask: Uint8Array,
 	isStream: Uint8Array,
+	poolMask: Uint8Array | undefined,
 	params: DistWaterParams,
 ): Uint32Array {
 	validateMapLength(shape, lakeMask, "LakeMask");
 	validateMapLength(shape, isStream, "isStream");
+	const pools = poolMask ?? new Uint8Array(shape.size);
+	validateMapLength(shape, pools, "poolMask");
 	const source = new Uint8Array(shape.size);
 	for (let i = 0; i < shape.size; i += 1) {
-		source[i] = lakeMask[i] === 1 || isStream[i] === 1 ? 1 : 0;
+		source[i] =
+			lakeMask[i] === 1 || isStream[i] === 1 || pools[i] === 1 ? 1 : 0;
 	}
 	return deriveDistanceFromSources(shape, source, params.waterProxMaxDist);
 }
@@ -715,6 +1047,96 @@ export function deriveDistStream(
 	return deriveDistanceFromSources(shape, isStream, params.streamProxMaxDist);
 }
 
+export interface StreamCoherenceMetrics {
+	continuationViolations: number;
+	componentCount: number;
+	singletonCount: number;
+	largestComponentSize: number;
+	streamTileShare: number;
+	noStreamFallback: boolean;
+}
+
+export function deriveStreamCoherenceMetrics(
+	shape: GridShape,
+	downstream: Int32Array,
+	isStream: Uint8Array,
+	lakeMask: Uint8Array,
+	poolMask: Uint8Array,
+): StreamCoherenceMetrics {
+	validateMapLength(shape, downstream, "DownstreamIndexMap");
+	validateMapLength(shape, isStream, "isStream");
+	validateMapLength(shape, lakeMask, "LakeMask");
+	validateMapLength(shape, poolMask, "poolMask");
+
+	let streamCount = 0;
+	let continuationViolations = 0;
+	for (let i = 0; i < shape.size; i += 1) {
+		if (isStream[i] !== 1) {
+			continue;
+		}
+		streamCount += 1;
+		const next = downstream[i];
+		if (next >= 0) {
+			if (isStream[next] === 1 || lakeMask[next] === 1 || poolMask[next] === 1) {
+				continue;
+			}
+		} else if (poolMask[i] === 1) {
+			continue;
+		}
+		continuationViolations += 1;
+	}
+
+	let componentCount = 0;
+	let singletonCount = 0;
+	let largestComponentSize = 0;
+	const visited = new Uint8Array(shape.size);
+	for (let i = 0; i < shape.size; i += 1) {
+		if (isStream[i] !== 1 || visited[i] === 1) {
+			continue;
+		}
+		componentCount += 1;
+		const queue: number[] = [i];
+		visited[i] = 1;
+		let head = 0;
+		let size = 0;
+		while (head < queue.length) {
+			const tile = queue[head];
+			head += 1;
+			size += 1;
+			const x = tile % shape.width;
+			const y = Math.floor(tile / shape.width);
+			for (const step of DIR8_NEIGHBORS) {
+				const nx = x + step.dx;
+				const ny = y + step.dy;
+				if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
+					continue;
+				}
+				const n = ny * shape.width + nx;
+				if (isStream[n] !== 1 || visited[n] === 1) {
+					continue;
+				}
+				visited[n] = 1;
+				queue.push(n);
+			}
+		}
+		if (size === 1) {
+			singletonCount += 1;
+		}
+		if (size > largestComponentSize) {
+			largestComponentSize = size;
+		}
+	}
+
+	return {
+		continuationViolations,
+		componentCount,
+		singletonCount,
+		largestComponentSize,
+		streamTileShare: shape.size > 0 ? streamCount / shape.size : 0,
+		noStreamFallback: streamCount === 0,
+	};
+}
+
 export function deriveHydrology(
 	shape: GridShape,
 	h: Float32Array,
@@ -725,19 +1147,61 @@ export function deriveHydrology(
 ): HydrologyMapsSoA {
 	const maps = createHydrologyMaps(shape);
 	maps.fd = deriveFlowDirection(shape, h, seed, params);
+	const downstream = deriveDownstreamIndexMap(shape, maps.fd);
 	maps.inDeg = deriveInDegree(shape, maps.fd);
 	maps.fa = deriveFlowAccumulation(shape, maps.fd);
 	maps.faN = normalizeFlowAccumulation(maps.fa);
 	maps.lakeMask = deriveLakeMask(shape, landform, slopeMag, maps.faN, params);
 	maps.lakeMask = growLakeMask(shape, maps.lakeMask, h, slopeMag, params);
-	maps.isStream = deriveStreamMask(
+
+	const streamThresholds = normalizeStreamThresholdParams(params);
+	const headwaterBoost = normalizeHeadwaterBoostParams(params);
+	const baseSources = deriveBaseStreamSources(
 		shape,
 		maps.lakeMask,
 		maps.faN,
 		slopeMag,
+		streamThresholds,
+	);
+	const sourceMask = applyHeadwaterBoostSources(
+		shape,
+		h,
+		slopeMag,
+		maps.lakeMask,
+		baseSources,
+		headwaterBoost,
+	);
+	const topology = deriveStreamTopology(
+		shape,
+		downstream,
+		maps.lakeMask,
+		sourceMask,
+		maps.faN,
+		streamThresholds,
+	);
+	maps.isStream = applyOptionalStreamCleanup(
+		shape,
+		downstream,
+		topology.isStream,
+		maps.lakeMask,
+		topology.poolMask,
+		streamThresholds.maxGapFillSteps ?? 0,
+	);
+	maps.poolMask = topology.poolMask;
+	validateStreamContinuity(
+		shape,
+		downstream,
+		maps.isStream,
+		maps.lakeMask,
+		maps.poolMask,
+	);
+	maps.distWater = deriveDistWater(
+		shape,
+		maps.lakeMask,
+		maps.isStream,
+		maps.poolMask,
 		params,
 	);
-	maps.distWater = deriveDistWater(shape, maps.lakeMask, maps.isStream, params);
 	maps.moisture = deriveMoisture(
 		shape,
 		maps.faN,
@@ -749,6 +1213,7 @@ export function deriveHydrology(
 		shape,
 		maps.lakeMask,
 		maps.isStream,
+		maps.poolMask,
 		maps.moisture,
 		slopeMag,
 		params,

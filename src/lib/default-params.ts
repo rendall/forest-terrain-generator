@@ -26,8 +26,19 @@ export const APPENDIX_A_DEFAULTS: JsonObject = {
 	hydrology: {
 		minDropThreshold: 0.0005,
 		tieEps: 0.000001,
-		streamAccumThreshold: 0.55,
-		streamMinSlopeThreshold: 0.01,
+		streamThresholds: {
+			sourceAccumMin: 0.55,
+			channelAccumMin: 0.55,
+			minSlope: 0.01,
+			maxGapFillSteps: 0,
+		},
+		streamHeadwaterBoost: {
+			enabled: false,
+			minElevationPct: 0.7,
+			minSlope: 0.015,
+			minSourceSpacing: 6,
+			maxExtraSources: 24,
+		},
 		lakeFlatSlopeThreshold: 0.03,
 		lakeAccumThreshold: 0.65,
 		lakeGrowSteps: 0,

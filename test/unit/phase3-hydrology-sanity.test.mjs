@@ -77,10 +77,14 @@ describe("Phase 3 hydrology sanity (red tests before implementation)", () => {
 			"deriveLakeMask",
 			"growLakeMask",
 			"deriveStreamMask",
+			"deriveStreamTopology",
+			"deriveDownstreamIndexMap",
 			"deriveDistWater",
 			"deriveDistStream",
 			"deriveMoisture",
 			"classifyWaterClass",
+			"deriveStreamCoherenceMetrics",
+			"validateStreamContinuity",
 		];
 		for (const fn of expected) {
 			expect(typeof hydrology[fn]).toBe("function");
@@ -127,7 +131,7 @@ describe("Phase 3 hydrology sanity (red tests before implementation)", () => {
 		const shape = createGridShape(5, 4);
 		const lakeMask = new Uint8Array(shape.size).fill(0);
 		const isStream = new Uint8Array(shape.size).fill(0);
-		const distWater = hydrology.deriveDistWater(shape, lakeMask, isStream, {
+		const distWater = hydrology.deriveDistWater(shape, lakeMask, isStream, undefined, {
 			waterProxMaxDist: 6,
 		});
 		for (let i = 0; i < shape.size; i += 1) {
@@ -154,8 +158,11 @@ describe("Phase 3 hydrology sanity (red tests before implementation)", () => {
 			faN,
 			slopeMag,
 			{
-				streamAccumThreshold: 0.65,
-				streamMinSlopeThreshold: 0.03,
+				streamThresholds: {
+					sourceAccumMin: 0.65,
+					channelAccumMin: 0.65,
+					minSlope: 0.03,
+				},
 			},
 		);
 		// lake override + inclusive stream thresholds
@@ -213,6 +220,7 @@ describe("Phase 3 hydrology sanity (red tests before implementation)", () => {
 			shape,
 			new Uint8Array([1]),
 			new Uint8Array([1]),
+			new Uint8Array([0]),
 			moistureHigh,
 			slopeLow,
 			params,
@@ -221,6 +229,7 @@ describe("Phase 3 hydrology sanity (red tests before implementation)", () => {
 			shape,
 			new Uint8Array([0]),
 			new Uint8Array([1]),
+			new Uint8Array([0]),
 			moistureHigh,
 			slopeLow,
 			params,
@@ -229,12 +238,14 @@ describe("Phase 3 hydrology sanity (red tests before implementation)", () => {
 			shape,
 			new Uint8Array([0]),
 			new Uint8Array([0]),
+			new Uint8Array([0]),
 			moistureHigh,
 			slopeLow,
 			params,
 		)[0];
 		const none = hydrology.classifyWaterClass(
 			shape,
+			new Uint8Array([0]),
 			new Uint8Array([0]),
 			new Uint8Array([0]),
 			moistureLow,
@@ -261,9 +272,20 @@ describe("Phase 3 hydrology sanity (red tests before implementation)", () => {
 			tieEps: 0.000001,
 			lakeFlatSlopeThreshold: 0.03,
 			lakeAccumThreshold: 0.65,
-			streamAccumThreshold: 0.55,
-			streamMinSlopeThreshold: 0.01,
+			streamThresholds: {
+				sourceAccumMin: 0.55,
+				channelAccumMin: 0.55,
+				minSlope: 0.01,
+			},
+			streamHeadwaterBoost: {
+				enabled: false,
+				minElevationPct: 0.7,
+				minSlope: 0.015,
+				minSourceSpacing: 6,
+				maxExtraSources: 24,
+			},
 			waterProxMaxDist: 6,
+			streamProxMaxDist: 5,
 			moistureAccumStart: 0.35,
 			flatnessThreshold: 0.06,
 			weights: { accum: 0.55, flat: 0.25, prox: 0.2 },
@@ -289,7 +311,13 @@ describe("Phase 3 hydrology sanity (red tests before implementation)", () => {
 			slopeMag,
 			params,
 		);
-		const distWaterA = hydrology.deriveDistWater(shape, lakeA, streamA, params);
+		const distWaterA = hydrology.deriveDistWater(
+			shape,
+			lakeA,
+			streamA,
+			undefined,
+			params,
+		);
 		const moistureA = hydrology.deriveMoisture(
 			shape,
 			faNA,
@@ -301,6 +329,7 @@ describe("Phase 3 hydrology sanity (red tests before implementation)", () => {
 			shape,
 			lakeA,
 			streamA,
+			new Uint8Array(shape.size),
 			moistureA,
 			slopeMag,
 			params,
@@ -323,7 +352,13 @@ describe("Phase 3 hydrology sanity (red tests before implementation)", () => {
 			slopeMag,
 			params,
 		);
-		const distWaterB = hydrology.deriveDistWater(shape, lakeB, streamB, params);
+		const distWaterB = hydrology.deriveDistWater(
+			shape,
+			lakeB,
+			streamB,
+			undefined,
+			params,
+		);
 		const moistureB = hydrology.deriveMoisture(
 			shape,
 			faNB,
@@ -335,6 +370,7 @@ describe("Phase 3 hydrology sanity (red tests before implementation)", () => {
 			shape,
 			lakeB,
 			streamB,
+			new Uint8Array(shape.size),
 			moistureB,
 			slopeMag,
 			params,
