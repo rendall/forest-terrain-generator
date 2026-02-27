@@ -2,6 +2,44 @@
 
 This document is a living ledger of significant technical decisions made within this project. Each entry captures the context in which a decision was made, the options considered, the decision itself, and its consequences. The purpose is not to justify past choices defensively, but to preserve intent and reasoning so future contributors can understand why the system is shaped the way it is. Over time, this file forms a chronological record of trade-offs, constraints, and design direction, providing continuity as the codebase and team evolve.
 
+## Adopt v2 Lake-Coherence Decision Slate (L-01..L-11)
+
+**Timestamp:** 2026-02-27 00:00 (UTC)
+
+### Decision
+
+Adopt the full lake-coherence slate recorded in `docs/drafts/V2-Lake-Coherence-ImplementationPlan.md` Section 14 without modification.
+
+Adopted lake contract direction:
+
+- Lake coherence runs as a deterministic post-pass over seeded/grown lake mask.
+- Micro-lake policy is parameterized with `microLakeMode=merge|remove|leave` and `microLakeMaxSize`.
+- Component bridging is enabled by default and bounded by explicit distance controls.
+- Legacy `lakeGrowSteps`/`lakeGrowHeightDelta` remain available and run upstream of lake-coherence post-pass.
+- Boundary realism is a hard invariant in v2 defaults.
+- First-wave boundary repair mode is `trim_first`; `fill_first` is deferred.
+- `boundaryEps=0.0005` is the default normalized-height tolerance.
+- Total lake-share handling is metric-only in first wave (no hard blocking guardrail).
+- Emit `hydrology.lakeSurfaceH` as per-component water-surface elevation on lake tiles.
+- Do not emit stored `lakeDepthH`; depth is derived as `lakeSurfaceH - topography.h`.
+
+### Rationale
+
+Observed lake behavior was fragmented and often violated intuitive boundary expectations. The adopted slate establishes deterministic component-level coherence and explicit local boundary realism while preserving conservative defaults and tunable controls.
+
+### Alternatives Considered
+
+- Keep `lakeGrowSteps` tuning as primary mechanism - rejected because it repeatedly traded under-coherence against overgrowth.
+- Enforce only soft boundary guidance - rejected because expectation mismatch remained high for perched lake edges.
+- Add full time-step flood simulation in this track - rejected as out of scope for first-wave repair.
+
+### References
+
+- PR: None
+- Commit: Pending
+- File(s): docs/drafts/V2-Lake-Coherence-ImplementationPlan.md, docs/drafts/V2-Simulation-Repair-ProposedSolutions.md, docs/normative/ForestTerrainGeneration.md, docs/drafts/ImplementationPlan.md
+- Related ADRs: Add Optional Component-Based Lake Growth (v1)
+
 ## Adopt v2 Stream-Coherence Decision Slate (D-01..D-12)
 
 **Timestamp:** 2026-02-27 00:00 (UTC)

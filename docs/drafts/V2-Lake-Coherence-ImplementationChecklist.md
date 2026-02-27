@@ -64,9 +64,9 @@ Checklist constraint:
 
 ## Governance and Normative Alignment
 
-- [ ] [docs] `LK-GV-01` Add/update ADR entry documenting adopted lake decisions `L-01` through `L-11` and `lakeSurfaceH` contract.
-- [ ] [docs] `LK-GV-02` Update `docs/normative/ForestTerrainGeneration.md` with lake boundary hard invariant, `lakeCoherence` params, and `lakeSurfaceH` output semantics.
-- [ ] [docs] `LK-GV-03` Update `docs/drafts/ImplementationPlan.md` active policy addenda to reference the adopted lake-coherence track.
+- [x] [docs] `LK-GV-01` Add/update ADR entry documenting adopted lake decisions `L-01` through `L-11` and `lakeSurfaceH` contract.
+- [x] [docs] `LK-GV-02` Update `docs/normative/ForestTerrainGeneration.md` with lake boundary hard invariant, `lakeCoherence` params, and `lakeSurfaceH` output semantics.
+- [x] [docs] `LK-GV-03` Update `docs/drafts/ImplementationPlan.md` active policy addenda to reference the adopted lake-coherence track.
 
 ## Behavior Slices
 
