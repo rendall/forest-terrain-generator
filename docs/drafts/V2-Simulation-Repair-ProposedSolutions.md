@@ -290,6 +290,29 @@ ADR/spec impact:
 1. Spec updates likely for any new topography calibration fields and emitted physical values.
 2. ADR recommended for physical-mapping contract and backward-compatibility policy.
 
+### 4.12 Synthetic Acceptance Fixtures (v2 Defaults Gate)
+
+Primary proposal (`likely`):
+
+1. Use deterministic synthetic terrain fixtures as acceptance tests for v2 default behavior.
+2. Keep these fixtures as explicit v2-default gates (pass required before declaring v2 defaults complete).
+3. While defaults are still in flight, keep fixture tests as expected-fail baselines so they do not block ongoing slice work.
+
+Initial fixtures:
+
+1. `phase3-lake-coherence-bowl`:
+   - Paraboloid bowl terrain.
+   - Expected v2 default behavior: coherent interior lake (center low point water, low fragmentation, no rim flooding under baseline fixture).
+2. `phase3-stream-coherence-valley`:
+   - North-descending valley floor with east/west side slopes.
+   - Expected v2 default behavior: strong stream adherence to valley floor with end-to-end coherent drainage semantics.
+
+Policy:
+
+1. Problem diagnosis and acceptance criteria should be anchored to fixture outcomes in addition to random-seed sampling.
+2. Fixture assertions should align with topology contract semantics (`stream -> stream|lake|pool`) rather than prose-level expectations.
+3. Once v2 defaults are finalized, convert these from expected-fail baselines to hard passing acceptance tests.
+
 ## Initial Prioritization Proposal
 
 Recommended first wave (`likely`):
