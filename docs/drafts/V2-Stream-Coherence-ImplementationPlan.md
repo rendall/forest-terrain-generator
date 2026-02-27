@@ -8,6 +8,7 @@ References:
 
 1. `docs/drafts/V2-Simulation-Repair-ProblemStatement.md` (Section 4.2)
 2. `docs/drafts/V2-Simulation-Repair-ProposedSolutions.md` (Section 4.2)
+3. `docs/drafts/V2-Stream-Coherence-ImplementationChecklist.md`
 
 ## 1. Goal
 
@@ -114,6 +115,10 @@ Acceptance targets (draft):
 4. Extreme densification/overgrowth avoided.
 
 ## 8. Phased Work Plan
+
+Execution artifact:
+
+1. `docs/drafts/V2-Stream-Coherence-ImplementationChecklist.md` is the implementation checklist for this plan.
 
 Phase 0: Decision framing
 
