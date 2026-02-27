@@ -12,6 +12,25 @@ Prefix each item with a short scope tag (e.g. `[description]`, `[cli]`, `[docs]`
 You MAY add one brief sub-bullet for context.
 You MUST NOT include tests or testing in this exercise, as that topic is addressed in a later step.
 
+After drafting atomic checklist items, you MUST add a final grouping pass as a dedicated section:
+
+## Behavior Slices
+
+This section defines execution bundles for implementation. It does not replace atomic checklist items.
+
+Rules:
+
+1. Add a `## Behavior Slices` section at the end of the checklist.
+2. Define slices as `S1`, `S2`, `S3`, etc.
+3. Each slice MUST contain:
+   - `Goal`: one coherent behavior change.
+   - `Items`: explicit checklist items covered by the slice.
+   - `Type`: `behavior` or `mechanical`.
+4. Every checklist item MUST be assigned to exactly one slice.
+5. A slice MAY include multiple dependent checklist items.
+6. Slices MUST remain within the approved checklist scope.
+7. Do not include tests or testing steps in this section.
+
 e.g.
 
 ```md
@@ -19,4 +38,15 @@ e.g.
 - [ ] [description] Set `basicText` on the `movement_structure` sentence object in `generateRawDescription` in `src/pipeline/description.ts` (depends on previous item)
 - [ ] [cli] Map `sentence.basicText` to `basicText` in structured sentence output inside `attachTileDescriptions` in `src/app/run-describe.ts` (depends on first item)
   - Keeps baseline text available for later transformed rendering.
+
+## Behavior Slices
+
+- `S1`
+  - Goal: add `basicText` to description data model and generation path.
+  - Items: first and second checklist items above.
+  - Type: behavior
+- `S2`
+  - Goal: wire `basicText` into CLI structured output.
+  - Items: third checklist item above.
+  - Type: behavior
 ```
