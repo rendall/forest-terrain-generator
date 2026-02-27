@@ -25,6 +25,7 @@ import {
 import {
 	deriveDownstreamIndexMap,
 	deriveHydrology,
+	deriveLakeCoherenceMetrics,
 	deriveStreamCoherenceMetrics,
 } from "../pipeline/hydrology.js";
 import {
@@ -139,6 +140,7 @@ function buildHydrologyParams(params: JsonObject): HydrologyParams {
 
 	return {
 		...hydrology,
+		lakeCoherence: hydrology.lakeCoherence,
 		streamProxMaxDist: gameTrails.streamProxMaxDist,
 	} as unknown as HydrologyParams;
 }
@@ -217,6 +219,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			envelope,
 			validated.force,
 			undefined,
+			undefined,
 		);
 		return;
 	}
@@ -252,6 +255,12 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		hydrology.isStream,
 		hydrology.lakeMask,
 		hydrology.poolMask,
+	);
+	const lakeCoherence = deriveLakeCoherenceMetrics(
+		shape,
+		hydrology.lakeMask,
+		topography.h,
+		hydrologyParams.lakeCoherence,
 	);
 	const ecologyParams = {
 		vegVarianceNoise: validated.params.vegVarianceNoise as
@@ -413,6 +422,20 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		const waterClass =
 			WATER_CLASS_NAME_BY_CODE[hydrology.waterClass[i]] ?? "unknown";
 
+		const hydrologyPayload: JsonObject = {
+			fd: hydrology.fd[i],
+			fa: hydrology.fa[i],
+			faN: hydrology.faN[i],
+			lakeMask: hydrology.lakeMask[i] === 1,
+			isStream: hydrology.isStream[i] === 1,
+			distWater: hydrology.distWater[i],
+			moisture: hydrology.moisture[i],
+			waterClass,
+		};
+		if (hydrology.lakeMask[i] === 1) {
+			hydrologyPayload.lakeSurfaceH = hydrology.lakeSurfaceH[i];
+		}
+
 		tiles.push({
 			x,
 			y,
@@ -424,16 +447,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 				aspectDeg: topography.aspectDeg[i],
 				landform,
 			},
-			hydrology: {
-				fd: hydrology.fd[i],
-				fa: hydrology.fa[i],
-				faN: hydrology.faN[i],
-				lakeMask: hydrology.lakeMask[i] === 1,
-				isStream: hydrology.isStream[i] === 1,
-				distWater: hydrology.distWater[i],
-				moisture: hydrology.moisture[i],
-				waterClass,
-			},
+			hydrology: hydrologyPayload,
 			ecology: {
 				biome: biomeCodeToName(ecology.biome[i]),
 				treeDensity: ecology.treeDensity[i],
@@ -465,5 +479,6 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		envelope,
 		validated.force,
 		streamCoherence,
+		lakeCoherence,
 	);
 }

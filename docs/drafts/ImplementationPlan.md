@@ -12,9 +12,16 @@ The v2 stream-coherence policy slate (`D-01` through `D-12`) is adopted and trac
 2. `docs/ADR.md` (stream-coherence ADR entry)
 3. `docs/normative/ForestTerrainGeneration.md` (Section 17 stream-coherence v2 addendum)
 
+The v2 lake-coherence policy slate (`L-01` through `L-11`) is adopted and tracked in:
+
+1. `docs/drafts/V2-Lake-Coherence-ImplementationPlan.md` (Section 14, locked slate)
+2. `docs/ADR.md` (lake-coherence ADR entry)
+3. `docs/normative/ForestTerrainGeneration.md` (Section 18 lake-coherence v2 addendum)
+
 Execution note:
 
 1. Stream-coherence implementation sequencing and validation for this track MUST follow the dedicated v2 stream plan document above.
+2. Lake-coherence implementation sequencing and validation for this track MUST follow the dedicated v2 lake plan document above.
 
 ## 1. Authority and Precedence
 

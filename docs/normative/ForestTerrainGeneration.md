@@ -1121,6 +1121,14 @@ The generator MUST emit a versioned envelope:
 `tiles` is the authoritative payload for downstream consumers.
 `navigation.gameTrailId` is optional and omitted when a tile has no trail id.
 
+`hydrology.lakeSurfaceH` is optional and, when present, MUST be emitted for lake tiles as the component water-surface elevation.
+
+If depth is needed by downstream consumers, it MUST be derived as:
+
+- `lakeDepthH = hydrology.lakeSurfaceH - topography.h`
+
+`lakeDepthH` is not a required stored output field in this phase.
+
 ---
 
 ## 15. Debug Outputs (Recommended)
@@ -1200,6 +1208,73 @@ v2 implementation and regression checks MUST report, at minimum:
 
 ---
 
+## 18. Lake-Coherence v2 Addendum (Adopted Policy)
+
+This section records the adopted lake-coherence policy slate (`L-01` through `L-11`) for the v2 repair track.
+
+Applicability:
+
+- Normative for v2 lake-coherence implementation work.
+- Informative for current v1 behavior until v2 implementation is released.
+
+When implementing v2 lake coherence, this section supersedes conflicting details in Sections `6.4` and `14`.
+
+### 18.1 Post-pass Model and Ordering
+
+1. Lake coherence MUST run as a deterministic post-pass after lake seed/growth derivation.
+2. Adopted first-wave ordering is:
+   - seed lake mask
+   - optional legacy growth (`lakeGrow*`)
+   - lake coherence post-pass
+   - boundary realism repair
+   - boundary realism validation
+   - `lakeSurfaceH` assignment
+3. `hydrology.lakeCoherence.enabled=false` MUST disable the full lake-coherence post-pass stage, including:
+   - micro-lake policy
+   - component bridging
+   - boundary realism repair
+   - boundary realism validation
+
+### 18.2 Micro-lake and Bridging Controls
+
+1. Micro-lakes are connected lake components with size `<= hydrology.lakeCoherence.microLakeMaxSize`.
+2. Micro-lake action is controlled by `hydrology.lakeCoherence.microLakeMode` with enum:
+   - `merge`
+   - `remove`
+   - `leave`
+3. Component bridging is controlled by:
+   - `hydrology.lakeCoherence.bridgeEnabled`
+   - `hydrology.lakeCoherence.maxBridgeDistance`
+4. Unknown keys or invalid enum/numeric values under `hydrology.lakeCoherence.*` MUST fail validation.
+
+### 18.3 Boundary Realism Hard Invariant
+
+1. Boundary realism is a hard invariant for v2 defaults.
+2. A lake-boundary tile MUST NOT have an adjacent non-lake tile with strictly lower `H` beyond `boundaryEps`.
+3. First-wave default repair mode is `trim_first`; `fill_first` is deferred.
+4. Default tolerance is `hydrology.lakeCoherence.boundaryEps = 0.0005`.
+
+### 18.4 Lake Surface Output Semantics
+
+1. `hydrology.lakeSurfaceH` MUST be assigned deterministically per connected lake component.
+2. Non-lake tiles MUST keep `lakeSurfaceH = 0` in internal hydrology maps.
+3. Tile payload emission MAY omit `lakeSurfaceH` on non-lake tiles.
+4. Stored `lakeDepthH` is not required in this phase; depth is derived as:
+   - `lakeSurfaceH - topography.h`
+
+### 18.5 Required Metrics for v2 Lake Coherence
+
+v2 implementation and regression checks MUST report, at minimum:
+
+1. `componentCount`
+2. `singletonCount`
+3. `largestComponentSize`
+4. `largestComponentShare`
+5. `totalLakeShare`
+6. `boundaryViolationCount`
+
+---
+
 ## Appendix A: Recommended Parameter Defaults (v1)
 
 ```json
@@ -1218,6 +1293,17 @@ v2 implementation and regression checks MUST report, at minimum:
     "lakeAccumThreshold": 0.65,
     "lakeGrowSteps": 0,
     "lakeGrowHeightDelta": 0.01,
+    "lakeCoherence": {
+      "enabled": true,
+      "microLakeMaxSize": 2,
+      "microLakeMode": "merge",
+      "bridgeEnabled": true,
+      "maxBridgeDistance": 1,
+      "repairSingletons": true,
+      "enforceBoundaryRealism": true,
+      "boundaryEps": 0.0005,
+      "boundaryRepairMode": "trim_first"
+    },
     "moistureAccumStart": 0.35,
     "flatnessThreshold": 0.06,
     "waterProxMaxDist": 6,
