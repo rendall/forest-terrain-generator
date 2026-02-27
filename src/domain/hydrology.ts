@@ -34,6 +34,7 @@ export interface HydrologyMapsSoA {
   lakeMask: Uint8Array;
   isStream: Uint8Array;
   poolMask: Uint8Array;
+  lakeSurfaceH: Float32Array;
   distWater: Uint32Array;
   moisture: Float32Array;
   waterClass: Uint8Array;
@@ -49,6 +50,7 @@ export function createHydrologyMaps(shape: GridShape): HydrologyMapsSoA {
     lakeMask: new Uint8Array(shape.size),
     isStream: new Uint8Array(shape.size),
     poolMask: new Uint8Array(shape.size),
+    lakeSurfaceH: new Float32Array(shape.size),
     distWater: new Uint32Array(shape.size),
     moisture: new Float32Array(shape.size),
     waterClass: new Uint8Array(shape.size).fill(WATER_CLASS_CODE.none),

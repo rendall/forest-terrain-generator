@@ -139,6 +139,7 @@ function buildHydrologyParams(params: JsonObject): HydrologyParams {
 
 	return {
 		...hydrology,
+		lakeCoherence: hydrology.lakeCoherence,
 		streamProxMaxDist: gameTrails.streamProxMaxDist,
 	} as unknown as HydrologyParams;
 }

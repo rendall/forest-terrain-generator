@@ -12,20 +12,20 @@ Checklist constraint:
 
 ## Scope Guard
 
-- [ ] [scope] `LK-SC-01` Keep this track scoped to lake coherence in hydrology, params, app wiring, debug metrics, and normative/ADR updates.
-- [ ] [scope] `LK-SC-02` Do not modify `src/pipeline/description.ts` in this track.
-- [ ] [scope] `LK-SC-03` Do not implement full time-step flood simulation in this track.
+- [x] [scope] `LK-SC-01` Keep this track scoped to lake coherence in hydrology, params, app wiring, debug metrics, and normative/ADR updates.
+- [x] [scope] `LK-SC-02` Do not modify `src/pipeline/description.ts` in this track.
+- [x] [scope] `LK-SC-03` Do not implement full time-step flood simulation in this track.
 
 ## Data Contract and Params
 
-- [ ] [types] `LK-DC-01` Add `lakeSurfaceH: Float32Array` to `HydrologyMapsSoA` in `src/domain/hydrology.ts`.
-- [ ] [types] `LK-DC-02` Initialize `lakeSurfaceH` in `createHydrologyMaps` in `src/domain/hydrology.ts` (depends on `LK-DC-01`).
-- [ ] [params] `LK-DC-03` Add `hydrology.lakeCoherence` defaults in `src/lib/default-params.ts` with explicit values: `enabled=true`, `microLakeMaxSize=2`, `microLakeMode=\"merge\"`, `bridgeEnabled=true`, `maxBridgeDistance=1`, `repairSingletons=true`, `enforceBoundaryRealism=true`, `boundaryEps=0.0005`, `boundaryRepairMode=\"trim_first\"`.
-- [ ] [params] `LK-DC-04` Keep `hydrology.lakeGrowSteps` and `hydrology.lakeGrowHeightDelta` defaults unchanged in `src/lib/default-params.ts` (`lakeGrowSteps` remains opt-in at `0`).
-- [ ] [params] `LK-DC-05` Extend `PARAMS_VALIDATION_SCHEMA` in `src/io/read-params.ts` to accept `hydrology.lakeCoherence.*` (depends on `LK-DC-03`).
-- [ ] [params] `LK-DC-06` Add strict enum/value validation for `hydrology.lakeCoherence.microLakeMode` (`merge|remove|leave`) and `hydrology.lakeCoherence.boundaryRepairMode` (`trim_first` only in first wave) in `src/io/read-params.ts` (depends on `LK-DC-05`).
-- [ ] [params] `LK-DC-07` Add numeric validation rules for `hydrology.lakeCoherence.microLakeMaxSize`, `maxBridgeDistance`, and `boundaryEps` in `src/io/read-params.ts` (depends on `LK-DC-05`).
-- [ ] [app] `LK-DC-08` Ensure `buildHydrologyParams` in `src/app/run-generator.ts` forwards `hydrology.lakeCoherence` to hydrology derive path.
+- [x] [types] `LK-DC-01` Add `lakeSurfaceH: Float32Array` to `HydrologyMapsSoA` in `src/domain/hydrology.ts`.
+- [x] [types] `LK-DC-02` Initialize `lakeSurfaceH` in `createHydrologyMaps` in `src/domain/hydrology.ts` (depends on `LK-DC-01`).
+- [x] [params] `LK-DC-03` Add `hydrology.lakeCoherence` defaults in `src/lib/default-params.ts` with explicit values: `enabled=true`, `microLakeMaxSize=2`, `microLakeMode=\"merge\"`, `bridgeEnabled=true`, `maxBridgeDistance=1`, `repairSingletons=true`, `enforceBoundaryRealism=true`, `boundaryEps=0.0005`, `boundaryRepairMode=\"trim_first\"`.
+- [x] [params] `LK-DC-04` Keep `hydrology.lakeGrowSteps` and `hydrology.lakeGrowHeightDelta` defaults unchanged in `src/lib/default-params.ts` (`lakeGrowSteps` remains opt-in at `0`).
+- [x] [params] `LK-DC-05` Extend `PARAMS_VALIDATION_SCHEMA` in `src/io/read-params.ts` to accept `hydrology.lakeCoherence.*` (depends on `LK-DC-03`).
+- [x] [params] `LK-DC-06` Add strict enum/value validation for `hydrology.lakeCoherence.microLakeMode` (`merge|remove|leave`) and `hydrology.lakeCoherence.boundaryRepairMode` (`trim_first` only in first wave) in `src/io/read-params.ts` (depends on `LK-DC-05`).
+- [x] [params] `LK-DC-07` Add numeric validation rules for `hydrology.lakeCoherence.microLakeMaxSize`, `maxBridgeDistance`, and `boundaryEps` in `src/io/read-params.ts` (depends on `LK-DC-05`).
+- [x] [app] `LK-DC-08` Ensure `buildHydrologyParams` in `src/app/run-generator.ts` forwards `hydrology.lakeCoherence` to hydrology derive path.
 
 ## Lake Coherence Core (Micro-Lakes and Bridging)
 
