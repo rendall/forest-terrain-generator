@@ -3,7 +3,10 @@ import { mkdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { FileIoError, InputValidationError } from "../domain/errors.js";
 import type { Mode, TerrainEnvelope } from "../domain/types.js";
-import type { StreamCoherenceMetrics } from "../pipeline/hydrology.js";
+import type {
+  LakeCoherenceMetrics,
+  StreamCoherenceMetrics
+} from "../pipeline/hydrology.js";
 import { serializeEnvelope } from "./serialize-envelope.js";
 
 const DEBUG_ARTIFACT_FILES = [
@@ -102,7 +105,8 @@ export async function writeStandardOutput(
 async function writeDebugArtifacts(
   targetDir: string,
   envelope: TerrainEnvelope,
-  streamCoherence: StreamCoherenceMetrics | undefined
+  streamCoherence: StreamCoherenceMetrics | undefined,
+  lakeCoherence: LakeCoherenceMetrics | undefined
 ): Promise<void> {
   const { width, height } = deriveGridDimensions(envelope);
   const debugManifest = {
@@ -112,7 +116,8 @@ async function writeDebugArtifacts(
     height,
     tileCount: envelope.tiles.length,
     artifacts: [...DEBUG_ARTIFACT_FILES],
-    ...(streamCoherence ? { streamCoherence } : {})
+    ...(streamCoherence ? { streamCoherence } : {}),
+    ...(lakeCoherence ? { lakeCoherence } : {})
   };
   await writeJsonFile(join(targetDir, "debug-manifest.json"), debugManifest, "debug manifest write");
   await writeJsonFile(
@@ -172,7 +177,8 @@ export async function writeDebugOutputs(
   envelope: TerrainEnvelope,
   debugOutputFile: string | undefined,
   force: boolean,
-  streamCoherence: StreamCoherenceMetrics | undefined
+  streamCoherence: StreamCoherenceMetrics | undefined,
+  lakeCoherence: LakeCoherenceMetrics | undefined
 ): Promise<void> {
   if (await pathExists(outputDir) && !force) {
     throw new InputValidationError(
@@ -186,7 +192,7 @@ export async function writeDebugOutputs(
   let published = false;
 
   try {
-    await writeDebugArtifacts(stagingDir, envelope, streamCoherence);
+    await writeDebugArtifacts(stagingDir, envelope, streamCoherence, lakeCoherence);
 
     if (debugOutputFile) {
       await writeStandardOutput(debugOutputFile, envelope, force);
@@ -208,13 +214,21 @@ export async function writeModeOutputs(
   debugOutputFile: string | undefined,
   envelope: TerrainEnvelope,
   force: boolean,
-  streamCoherence?: StreamCoherenceMetrics
+  streamCoherence?: StreamCoherenceMetrics,
+  lakeCoherence?: LakeCoherenceMetrics
 ): Promise<void> {
   if (mode === "debug") {
     if (!outputDir) {
       throw new InputValidationError("Missing required output argument for debug mode: --output-dir.");
     }
-    await writeDebugOutputs(outputDir, envelope, debugOutputFile, force, streamCoherence);
+    await writeDebugOutputs(
+      outputDir,
+      envelope,
+      debugOutputFile,
+      force,
+      streamCoherence,
+      lakeCoherence
+    );
     return;
   }
 

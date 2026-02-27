@@ -1667,6 +1667,58 @@ export function deriveStreamCoherenceMetrics(
 	};
 }
 
+export interface LakeCoherenceMetrics {
+	componentCount: number;
+	singletonCount: number;
+	largestComponentSize: number;
+	largestComponentShare: number;
+	totalLakeShare: number;
+	boundaryViolationCount: number;
+}
+
+export function deriveLakeCoherenceMetrics(
+	shape: GridShape,
+	lakeMask: Uint8Array,
+	h: Float32Array,
+	raw: Partial<LakeCoherenceParams> | undefined,
+): LakeCoherenceMetrics {
+	validateMapLength(shape, lakeMask, "LakeMask");
+	validateMapLength(shape, h, "H");
+	const params = normalizeLakeCoherenceParams(raw);
+	const components = deriveLakeComponents(shape, lakeMask);
+
+	let lakeCount = 0;
+	let singletonCount = 0;
+	let largestComponentSize = 0;
+	for (const component of components) {
+		const size = component.length;
+		lakeCount += size;
+		if (size === 1) {
+			singletonCount += 1;
+		}
+		if (size > largestComponentSize) {
+			largestComponentSize = size;
+		}
+	}
+
+	const boundaryViolationCount = deriveLakeBoundaryViolations(
+		shape,
+		lakeMask,
+		h,
+		params,
+	).length;
+
+	return {
+		componentCount: components.length,
+		singletonCount,
+		largestComponentSize,
+		largestComponentShare:
+			shape.size > 0 ? largestComponentSize / shape.size : 0,
+		totalLakeShare: shape.size > 0 ? lakeCount / shape.size : 0,
+		boundaryViolationCount,
+	};
+}
+
 export function deriveHydrology(
 	shape: GridShape,
 	h: Float32Array,

@@ -52,15 +52,15 @@ Checklist constraint:
 
 ## App Output and Debug Metrics
 
-- [ ] [hydrology] `LK-MT-01` Add `LakeCoherenceMetrics` interface in `src/pipeline/hydrology.ts` with fields: `componentCount`, `singletonCount`, `largestComponentSize`, `largestComponentShare`, `totalLakeShare`, `boundaryViolationCount`.
-- [ ] [hydrology] `LK-MT-02` Add `deriveLakeCoherenceMetrics` in `src/pipeline/hydrology.ts` (depends on `LK-MT-01`).
-- [ ] [app] `LK-MT-03` Compute lake coherence metrics in `runGenerator` in `src/app/run-generator.ts` after hydrology derivation (depends on `LK-MT-02`).
-- [ ] [app] `LK-MT-04` Map `lakeSurfaceH` into emitted tile hydrology payloads in `src/app/run-generator.ts` for lake tiles (depends on `LK-BR-05`).
-- [ ] [io] `LK-MT-05` Add optional `lakeCoherence` parameter to `writeModeOutputs` in `src/io/write-outputs.ts` (depends on `LK-MT-03`).
-- [ ] [io] `LK-MT-06` Add optional `lakeCoherence` parameter to `writeDebugOutputs` in `src/io/write-outputs.ts` (depends on `LK-MT-05`).
-- [ ] [io] `LK-MT-07` Add optional `lakeCoherence` parameter to `writeDebugArtifacts` in `src/io/write-outputs.ts` (depends on `LK-MT-06`).
-- [ ] [io] `LK-MT-08` Publish `lakeCoherence` metrics subset in `debug-manifest.json` from `writeDebugArtifacts` when provided (depends on `LK-MT-07`).
-- [ ] [app] `LK-MT-09` Pass lake coherence metrics from `runGenerator` to `writeModeOutputs` in `src/app/run-generator.ts` (depends on `LK-MT-05` and `LK-MT-03`).
+- [x] [hydrology] `LK-MT-01` Add `LakeCoherenceMetrics` interface in `src/pipeline/hydrology.ts` with fields: `componentCount`, `singletonCount`, `largestComponentSize`, `largestComponentShare`, `totalLakeShare`, `boundaryViolationCount`.
+- [x] [hydrology] `LK-MT-02` Add `deriveLakeCoherenceMetrics` in `src/pipeline/hydrology.ts` (depends on `LK-MT-01`).
+- [x] [app] `LK-MT-03` Compute lake coherence metrics in `runGenerator` in `src/app/run-generator.ts` after hydrology derivation (depends on `LK-MT-02`).
+- [x] [app] `LK-MT-04` Map `lakeSurfaceH` into emitted tile hydrology payloads in `src/app/run-generator.ts` for lake tiles (depends on `LK-BR-05`).
+- [x] [io] `LK-MT-05` Add optional `lakeCoherence` parameter to `writeModeOutputs` in `src/io/write-outputs.ts` (depends on `LK-MT-03`).
+- [x] [io] `LK-MT-06` Add optional `lakeCoherence` parameter to `writeDebugOutputs` in `src/io/write-outputs.ts` (depends on `LK-MT-05`).
+- [x] [io] `LK-MT-07` Add optional `lakeCoherence` parameter to `writeDebugArtifacts` in `src/io/write-outputs.ts` (depends on `LK-MT-06`).
+- [x] [io] `LK-MT-08` Publish `lakeCoherence` metrics subset in `debug-manifest.json` from `writeDebugArtifacts` when provided (depends on `LK-MT-07`).
+- [x] [app] `LK-MT-09` Pass lake coherence metrics from `runGenerator` to `writeModeOutputs` in `src/app/run-generator.ts` (depends on `LK-MT-05` and `LK-MT-03`).
 
 ## Governance and Normative Alignment
 
