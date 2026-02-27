@@ -937,6 +937,141 @@ export function applyLakeCoherence(
 	return out;
 }
 
+interface LakeBoundaryParams {
+	boundaryEps: number;
+}
+
+export function deriveLakeBoundaryViolations(
+	shape: GridShape,
+	lakeMask: Uint8Array,
+	h: Float32Array,
+	raw: Partial<LakeBoundaryParams>,
+): number[] {
+	validateMapLength(shape, lakeMask, "LakeMask");
+	validateMapLength(shape, h, "H");
+	const boundaryEps = Math.max(0, finiteOrFallback(raw.boundaryEps, 0));
+	const violations: number[] = [];
+
+	for (let i = 0; i < shape.size; i += 1) {
+		if (lakeMask[i] !== 1) {
+			continue;
+		}
+		const x = indexX(shape, i);
+		const y = indexY(shape, i);
+		let hasLowerAdjacentNonLake = false;
+		for (const neighbor of DIR8_NEIGHBORS) {
+			const nx = x + neighbor.dx;
+			const ny = y + neighbor.dy;
+			if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
+				continue;
+			}
+			const next = ny * shape.width + nx;
+			if (lakeMask[next] === 1) {
+				continue;
+			}
+			if (h[next] + boundaryEps < h[i]) {
+				hasLowerAdjacentNonLake = true;
+				break;
+			}
+		}
+		if (hasLowerAdjacentNonLake) {
+			violations.push(i);
+		}
+	}
+
+	return violations;
+}
+
+export function applyBoundaryRealismTrimFirst(
+	shape: GridShape,
+	lakeMask: Uint8Array,
+	h: Float32Array,
+	raw: Partial<LakeBoundaryParams>,
+): Uint8Array {
+	validateMapLength(shape, lakeMask, "LakeMask");
+	validateMapLength(shape, h, "H");
+
+	const out = lakeMask.slice();
+	while (true) {
+		const violations = deriveLakeBoundaryViolations(shape, out, h, raw);
+		if (violations.length === 0) {
+			break;
+		}
+		for (const tile of violations) {
+			out[tile] = 0;
+		}
+	}
+
+	return out;
+}
+
+export function applyLakeBoundaryRealism(
+	shape: GridShape,
+	lakeMask: Uint8Array,
+	h: Float32Array,
+	raw: Partial<LakeCoherenceParams> | undefined,
+): Uint8Array {
+	validateMapLength(shape, lakeMask, "LakeMask");
+	validateMapLength(shape, h, "H");
+
+	const params = normalizeLakeCoherenceParams(raw);
+	if (!params.enforceBoundaryRealism) {
+		return lakeMask.slice();
+	}
+	if (params.boundaryRepairMode === "trim_first") {
+		return applyBoundaryRealismTrimFirst(shape, lakeMask, h, params);
+	}
+
+	// fill_first is deferred in this first-wave track; trim-first remains the enforced fallback.
+	return applyBoundaryRealismTrimFirst(shape, lakeMask, h, params);
+}
+
+export function validateLakeBoundaryRealism(
+	shape: GridShape,
+	lakeMask: Uint8Array,
+	h: Float32Array,
+	raw: Partial<LakeCoherenceParams> | undefined,
+): void {
+	validateMapLength(shape, lakeMask, "LakeMask");
+	validateMapLength(shape, h, "H");
+
+	const params = normalizeLakeCoherenceParams(raw);
+	if (!params.enforceBoundaryRealism) {
+		return;
+	}
+	const violations = deriveLakeBoundaryViolations(shape, lakeMask, h, params);
+	if (violations.length > 0) {
+		hydrologyFail(
+			"lake_boundary_realism",
+			"boundary_no_lower_adjacent_non_lake",
+			"boundary_violation_remaining",
+			{ count: violations.length, firstTile: violations[0] },
+		);
+	}
+}
+
+export function deriveLakeSurfaceH(
+	shape: GridShape,
+	lakeMask: Uint8Array,
+	h: Float32Array,
+): Float32Array {
+	validateMapLength(shape, lakeMask, "LakeMask");
+	validateMapLength(shape, h, "H");
+	const out = new Float32Array(shape.size);
+	const components = deriveLakeComponents(shape, lakeMask);
+	for (const component of components) {
+		let surface = Number.NEGATIVE_INFINITY;
+		for (const tile of component) {
+			surface = Math.max(surface, h[tile]);
+		}
+		const surfaceValue = Math.fround(surface);
+		for (const tile of component) {
+			out[tile] = surfaceValue;
+		}
+	}
+	return out;
+}
+
 function normalizeGrowSteps(raw: number | undefined): number {
 	if (typeof raw !== "number" || !Number.isFinite(raw)) {
 		return 0;
@@ -1549,6 +1684,14 @@ export function deriveHydrology(
 	maps.lakeMask = deriveLakeMask(shape, landform, slopeMag, maps.faN, params);
 	maps.lakeMask = growLakeMask(shape, maps.lakeMask, h, slopeMag, params);
 	maps.lakeMask = applyLakeCoherence(shape, maps.lakeMask, params.lakeCoherence);
+	maps.lakeMask = applyLakeBoundaryRealism(
+		shape,
+		maps.lakeMask,
+		h,
+		params.lakeCoherence,
+	);
+	validateLakeBoundaryRealism(shape, maps.lakeMask, h, params.lakeCoherence);
+	maps.lakeSurfaceH = deriveLakeSurfaceH(shape, maps.lakeMask, h);
 
 	const streamThresholds = normalizeStreamThresholdParams(params);
 	const headwaterBoost = normalizeHeadwaterBoostParams(params);

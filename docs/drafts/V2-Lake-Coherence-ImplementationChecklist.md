@@ -42,13 +42,13 @@ Checklist constraint:
 
 ## Boundary Realism and Lake Surface
 
-- [ ] [hydrology] `LK-BR-01` Add `deriveLakeBoundaryViolations` in `src/pipeline/hydrology.ts` to detect lake-boundary tiles adjacent to strictly lower non-lake neighbors beyond `boundaryEps`.
-- [ ] [hydrology] `LK-BR-02` Add `applyBoundaryRealismTrimFirst` in `src/pipeline/hydrology.ts` for deterministic trim-first repair behavior (depends on `LK-BR-01`).
-- [ ] [hydrology] `LK-BR-03` Add boundary-repair dispatch in `src/pipeline/hydrology.ts` honoring `boundaryRepairMode` with adopted default `trim_first`.
-- [ ] [hydrology] `LK-BR-04` Add `validateLakeBoundaryRealism` fail-fast in `src/pipeline/hydrology.ts` for the hard boundary invariant (depends on `LK-BR-01`).
-- [ ] [hydrology] `LK-BR-05` Add `deriveLakeSurfaceH` in `src/pipeline/hydrology.ts` that assigns a deterministic component water-surface elevation to lake tiles and sets non-lake tiles to `0` in `lakeSurfaceH` (depends on `LK-DC-01` and `LK-LC-04`).
-- [ ] [hydrology] `LK-BR-06` Update `deriveHydrology` in `src/pipeline/hydrology.ts` to run lake steps in adopted order: seed mask -> optional legacy growth -> coherence post-pass -> boundary repair -> boundary validation -> lakeSurfaceH assignment (depends on `LK-LC-08`, `LK-BR-02`, `LK-BR-04`, and `LK-BR-05`).
-- [ ] [hydrology] `LK-BR-07` Keep `lakeDepthH` out of emitted hydrology contract in this phase and document derivation expectation as `lakeSurfaceH - topography.h`.
+- [x] [hydrology] `LK-BR-01` Add `deriveLakeBoundaryViolations` in `src/pipeline/hydrology.ts` to detect lake-boundary tiles adjacent to strictly lower non-lake neighbors beyond `boundaryEps`.
+- [x] [hydrology] `LK-BR-02` Add `applyBoundaryRealismTrimFirst` in `src/pipeline/hydrology.ts` for deterministic trim-first repair behavior (depends on `LK-BR-01`).
+- [x] [hydrology] `LK-BR-03` Add boundary-repair dispatch in `src/pipeline/hydrology.ts` honoring `boundaryRepairMode` with adopted default `trim_first`.
+- [x] [hydrology] `LK-BR-04` Add `validateLakeBoundaryRealism` fail-fast in `src/pipeline/hydrology.ts` for the hard boundary invariant (depends on `LK-BR-01`).
+- [x] [hydrology] `LK-BR-05` Add `deriveLakeSurfaceH` in `src/pipeline/hydrology.ts` that assigns a deterministic component water-surface elevation to lake tiles and sets non-lake tiles to `0` in `lakeSurfaceH` (depends on `LK-DC-01` and `LK-LC-04`).
+- [x] [hydrology] `LK-BR-06` Update `deriveHydrology` in `src/pipeline/hydrology.ts` to run lake steps in adopted order: seed mask -> optional legacy growth -> coherence post-pass -> boundary repair -> boundary validation -> lakeSurfaceH assignment (depends on `LK-LC-08`, `LK-BR-02`, `LK-BR-04`, and `LK-BR-05`).
+- [x] [hydrology] `LK-BR-07` Keep `lakeDepthH` out of emitted hydrology contract in this phase and document derivation expectation as `lakeSurfaceH - topography.h`.
 
 ## App Output and Debug Metrics
 
