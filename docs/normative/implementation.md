@@ -39,4 +39,4 @@ Stop with any questions, or if implementing the task requires expanding beyond t
 - Commit all behavior-slice implementation changes with an imperative message `<slice summary>` edited for clarity and length less than 50 characters. You may add a git body.
 - Continue with the loop until all items are completed.
 
-Finally, if it is accessible to you, `gh pr create --base <base branch>` and create a PR with descriptive title and body copy, targeted to the parent git branch.
+Finally, create a new PR targetting the parent branch using `gh pr create --base <target branch>`. Add a descriptive title, and use this template to write the PR body:  "Previously, (bad thing happened). This PR (fixes the bad the by doing what). We expect (describe good thing)."
