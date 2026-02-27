@@ -29,16 +29,16 @@ Checklist constraint:
 
 ## Lake Coherence Core (Micro-Lakes and Bridging)
 
-- [ ] [hydrology] `LK-LC-01` Add `LakeCoherenceParams` interface in `src/pipeline/hydrology.ts` for adopted `lakeCoherence` controls (depends on `LK-DC-03`).
-- [ ] [hydrology] `LK-LC-02` Extend `HydrologyParams` in `src/pipeline/hydrology.ts` to include `lakeCoherence` (depends on `LK-LC-01`).
-- [ ] [hydrology] `LK-LC-03` Add normalization helpers in `src/pipeline/hydrology.ts` for `lakeCoherence` values and adopted defaults (`microLakeMaxSize=2`, `bridgeEnabled=true`, `boundaryEps=0.0005`, `boundaryRepairMode=trim_first`) (depends on `LK-LC-01`).
-- [ ] [hydrology] `LK-LC-04` Add deterministic connected-component extraction helper for lake masks in `src/pipeline/hydrology.ts` that returns stable component ordering.
-- [ ] [hydrology] `LK-LC-05` Add `applyMicroLakePolicy` in `src/pipeline/hydrology.ts` that applies `microLakeMode` to components with size `<= microLakeMaxSize` (depends on `LK-LC-04`).
-- [ ] [hydrology] `LK-LC-06` In `applyMicroLakePolicy`, implement `merge` deterministically with stable tie-breaking when multiple merge targets are eligible (depends on `LK-LC-05`).
-- [ ] [hydrology] `LK-LC-07` Add `applyLakeComponentBridging` in `src/pipeline/hydrology.ts` controlled by `bridgeEnabled` and `maxBridgeDistance` (depends on `LK-LC-04`).
-- [ ] [hydrology] `LK-LC-08` Add `applyLakeCoherence` orchestrator in `src/pipeline/hydrology.ts` that runs micro-lake policy and bridging in deterministic order (depends on `LK-LC-05` and `LK-LC-07`).
-- [ ] [hydrology] `LK-LC-09` Keep total-lake-share handling metric-only (no hard blocking guardrail) in first-wave implementation.
-- [ ] [hydrology] `LK-LC-10` Ensure `hydrology.lakeCoherence.enabled=false` bypasses lake-coherence post-pass behavior and preserves legacy lake-mask path semantics.
+- [x] [hydrology] `LK-LC-01` Add `LakeCoherenceParams` interface in `src/pipeline/hydrology.ts` for adopted `lakeCoherence` controls (depends on `LK-DC-03`).
+- [x] [hydrology] `LK-LC-02` Extend `HydrologyParams` in `src/pipeline/hydrology.ts` to include `lakeCoherence` (depends on `LK-LC-01`).
+- [x] [hydrology] `LK-LC-03` Add normalization helpers in `src/pipeline/hydrology.ts` for `lakeCoherence` values and adopted defaults (`microLakeMaxSize=2`, `bridgeEnabled=true`, `boundaryEps=0.0005`, `boundaryRepairMode=trim_first`) (depends on `LK-LC-01`).
+- [x] [hydrology] `LK-LC-04` Add deterministic connected-component extraction helper for lake masks in `src/pipeline/hydrology.ts` that returns stable component ordering.
+- [x] [hydrology] `LK-LC-05` Add `applyMicroLakePolicy` in `src/pipeline/hydrology.ts` that applies `microLakeMode` to components with size `<= microLakeMaxSize` (depends on `LK-LC-04`).
+- [x] [hydrology] `LK-LC-06` In `applyMicroLakePolicy`, implement `merge` deterministically with stable tie-breaking when multiple merge targets are eligible (depends on `LK-LC-05`).
+- [x] [hydrology] `LK-LC-07` Add `applyLakeComponentBridging` in `src/pipeline/hydrology.ts` controlled by `bridgeEnabled` and `maxBridgeDistance` (depends on `LK-LC-04`).
+- [x] [hydrology] `LK-LC-08` Add `applyLakeCoherence` orchestrator in `src/pipeline/hydrology.ts` that runs micro-lake policy and bridging in deterministic order (depends on `LK-LC-05` and `LK-LC-07`).
+- [x] [hydrology] `LK-LC-09` Keep total-lake-share handling metric-only (no hard blocking guardrail) in first-wave implementation.
+- [x] [hydrology] `LK-LC-10` Ensure `hydrology.lakeCoherence.enabled=false` bypasses lake-coherence post-pass behavior and preserves legacy lake-mask path semantics.
 
 ## Boundary Realism and Lake Surface
 

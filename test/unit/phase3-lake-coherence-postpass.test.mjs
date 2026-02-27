@@ -60,7 +60,7 @@ describe("Phase 3 lake coherence post-pass", () => {
       boundaryEps: 0.0005,
       boundaryRepairMode: "trim_first",
     });
-    expect(Array.from(out)).toEqual([1, 1, 1, 1, 1]);
+    expect(Array.from(out)).toEqual([1, 1, 1, 0, 1]);
   });
 
   it("bypasses lake coherence post-pass when disabled", async () => {

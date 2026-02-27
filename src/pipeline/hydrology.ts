@@ -39,6 +39,18 @@ export interface LakeMaskParams {
 	lakeGrowHeightDelta?: number;
 }
 
+export interface LakeCoherenceParams {
+	enabled: boolean;
+	microLakeMaxSize: number;
+	microLakeMode: "merge" | "remove" | "leave";
+	bridgeEnabled: boolean;
+	maxBridgeDistance: number;
+	repairSingletons: boolean;
+	enforceBoundaryRealism: boolean;
+	boundaryEps: number;
+	boundaryRepairMode: "trim_first" | "fill_first";
+}
+
 export interface StreamThresholdParams {
 	sourceAccumMin: number;
 	channelAccumMin: number;
@@ -93,6 +105,7 @@ export interface HydrologyParams
 			MoistureParams,
 			WaterClassParams {
 	streamHeadwaterBoost?: Partial<StreamHeadwaterBoostParams>;
+	lakeCoherence?: Partial<LakeCoherenceParams>;
 }
 
 const U32_MAX = 0xffffffff;
@@ -106,6 +119,18 @@ const DEFAULT_HEADWATER_BOOST: StreamHeadwaterBoostParams = {
 	minSlope: 0.015,
 	minSourceSpacing: 6,
 	maxExtraSources: 24,
+};
+
+const DEFAULT_LAKE_COHERENCE: LakeCoherenceParams = {
+	enabled: true,
+	microLakeMaxSize: 2,
+	microLakeMode: "merge",
+	bridgeEnabled: true,
+	maxBridgeDistance: 1,
+	repairSingletons: true,
+	enforceBoundaryRealism: true,
+	boundaryEps: 0.0005,
+	boundaryRepairMode: "trim_first",
 };
 
 function u64(value: bigint): bigint {
@@ -186,6 +211,66 @@ function normalizeHeadwaterBoostParams(
 				finiteOrFallback(raw.maxExtraSources, DEFAULT_HEADWATER_BOOST.maxExtraSources),
 			),
 		),
+	};
+}
+
+function normalizeLakeCoherenceParams(
+	raw: Partial<LakeCoherenceParams> | undefined,
+): LakeCoherenceParams {
+	const input = raw ?? {};
+	const microLakeMode =
+		input.microLakeMode === "merge" ||
+		input.microLakeMode === "remove" ||
+		input.microLakeMode === "leave"
+			? input.microLakeMode
+			: DEFAULT_LAKE_COHERENCE.microLakeMode;
+	const boundaryRepairMode =
+		input.boundaryRepairMode === "trim_first" ||
+		input.boundaryRepairMode === "fill_first"
+			? input.boundaryRepairMode
+			: DEFAULT_LAKE_COHERENCE.boundaryRepairMode;
+
+	return {
+		enabled:
+			typeof input.enabled === "boolean"
+				? input.enabled
+				: DEFAULT_LAKE_COHERENCE.enabled,
+		microLakeMaxSize: Math.max(
+			0,
+			Math.floor(
+				finiteOrFallback(
+					input.microLakeMaxSize,
+					DEFAULT_LAKE_COHERENCE.microLakeMaxSize,
+				),
+			),
+		),
+		microLakeMode,
+		bridgeEnabled:
+			typeof input.bridgeEnabled === "boolean"
+				? input.bridgeEnabled
+				: DEFAULT_LAKE_COHERENCE.bridgeEnabled,
+		maxBridgeDistance: Math.max(
+			0,
+			Math.floor(
+				finiteOrFallback(
+					input.maxBridgeDistance,
+					DEFAULT_LAKE_COHERENCE.maxBridgeDistance,
+				),
+			),
+		),
+		repairSingletons:
+			typeof input.repairSingletons === "boolean"
+				? input.repairSingletons
+				: DEFAULT_LAKE_COHERENCE.repairSingletons,
+		enforceBoundaryRealism:
+			typeof input.enforceBoundaryRealism === "boolean"
+				? input.enforceBoundaryRealism
+				: DEFAULT_LAKE_COHERENCE.enforceBoundaryRealism,
+		boundaryEps: Math.max(
+			0,
+			finiteOrFallback(input.boundaryEps, DEFAULT_LAKE_COHERENCE.boundaryEps),
+		),
+		boundaryRepairMode,
 	};
 }
 
@@ -541,6 +626,315 @@ function collectConnectedComponents(
 	}
 
 	return components;
+}
+
+function sortComponentStable(component: number[]): number[] {
+	component.sort((a, b) => a - b);
+	return component;
+}
+
+export function deriveLakeComponents(
+	shape: GridShape,
+	lakeMask: Uint8Array,
+): number[][] {
+	validateMapLength(shape, lakeMask, "LakeMask");
+	const components = collectConnectedComponents(shape, lakeMask).map(
+		sortComponentStable,
+	);
+	components.sort((a, b) => a[0] - b[0]);
+	return components;
+}
+
+function indexX(shape: GridShape, index: number): number {
+	return index % shape.width;
+}
+
+function indexY(shape: GridShape, index: number): number {
+	return Math.floor(index / shape.width);
+}
+
+function chebyshevDistance(
+	shape: GridShape,
+	from: number,
+	to: number,
+): number {
+	return Math.max(
+		Math.abs(indexX(shape, from) - indexX(shape, to)),
+		Math.abs(indexY(shape, from) - indexY(shape, to)),
+	);
+}
+
+function pathBetweenIndices(
+	shape: GridShape,
+	from: number,
+	to: number,
+): number[] {
+	const path: number[] = [];
+	let x = indexX(shape, from);
+	let y = indexY(shape, from);
+	const tx = indexX(shape, to);
+	const ty = indexY(shape, to);
+
+	while (x !== tx || y !== ty) {
+		const dx = Math.sign(tx - x);
+		const dy = Math.sign(ty - y);
+		x += dx;
+		y += dy;
+		path.push(y * shape.width + x);
+	}
+
+	return path;
+}
+
+function chooseClosestTilePair(
+	shape: GridShape,
+	componentA: number[],
+	componentB: number[],
+): { from: number; to: number; distance: number } {
+	let bestFrom = componentA[0];
+	let bestTo = componentB[0];
+	let bestDistance = Number.POSITIVE_INFINITY;
+
+	for (const from of componentA) {
+		for (const to of componentB) {
+			const distance = chebyshevDistance(shape, from, to);
+			if (distance < bestDistance) {
+				bestDistance = distance;
+				bestFrom = from;
+				bestTo = to;
+				continue;
+			}
+			if (distance === bestDistance) {
+				if (from < bestFrom || (from === bestFrom && to < bestTo)) {
+					bestFrom = from;
+					bestTo = to;
+				}
+			}
+		}
+	}
+
+	return { from: bestFrom, to: bestTo, distance: bestDistance };
+}
+
+function mutateMaskWithPath(mask: Uint8Array, path: number[]): void {
+	for (const tile of path) {
+		mask[tile] = 1;
+	}
+}
+
+function applyComponentTiles(mask: Uint8Array, component: number[], value: 0 | 1): void {
+	for (const tile of component) {
+		mask[tile] = value;
+	}
+}
+
+function componentKey(component: number[]): string {
+	return component.join(",");
+}
+
+export function applyMicroLakePolicy(
+	shape: GridShape,
+	lakeMask: Uint8Array,
+	raw: Partial<LakeCoherenceParams>,
+): Uint8Array {
+	validateMapLength(shape, lakeMask, "LakeMask");
+	const params = normalizeLakeCoherenceParams(raw);
+	const out = lakeMask.slice();
+
+	if (params.microLakeMode === "leave" || params.microLakeMaxSize === 0) {
+		return out;
+	}
+
+	const initialComponents = deriveLakeComponents(shape, out);
+	const candidates = initialComponents.filter((component) => {
+		const size = component.length;
+		if (!params.repairSingletons && size === 1) {
+			return false;
+		}
+		return size <= params.microLakeMaxSize;
+	});
+
+	if (params.microLakeMode === "remove") {
+		for (const component of candidates) {
+			applyComponentTiles(out, component, 0);
+		}
+		return out;
+	}
+
+	for (const sourceCandidate of candidates) {
+		const sourceTile = sourceCandidate.find((tile) => out[tile] === 1);
+		if (sourceTile === undefined) {
+			continue;
+		}
+
+		const componentsNow = deriveLakeComponents(shape, out);
+		const sourceComponent = componentsNow.find((component) =>
+			component.includes(sourceTile),
+		);
+		if (!sourceComponent) {
+			continue;
+		}
+
+		const sourceIdentity = componentKey(sourceComponent);
+		let targetComponents = componentsNow.filter(
+			(component) =>
+				componentKey(component) !== sourceIdentity &&
+				component.length > params.microLakeMaxSize,
+		);
+		if (targetComponents.length === 0) {
+			targetComponents = componentsNow.filter(
+				(component) => componentKey(component) !== sourceIdentity,
+			);
+		}
+		if (targetComponents.length === 0) {
+			continue;
+		}
+
+		let best:
+			| {
+					gapDistance: number;
+					targetStart: number;
+					from: number;
+					to: number;
+					distance: number;
+			  }
+			| undefined;
+		for (const target of targetComponents) {
+			const pair = chooseClosestTilePair(shape, sourceComponent, target);
+			const gapDistance = Math.max(0, pair.distance - 1);
+			if (gapDistance > params.maxBridgeDistance) {
+				continue;
+			}
+			const candidate = {
+				gapDistance,
+				targetStart: target[0],
+				from: pair.from,
+				to: pair.to,
+				distance: pair.distance,
+			};
+			if (!best) {
+				best = candidate;
+				continue;
+			}
+			if (candidate.distance < best.distance) {
+				best = candidate;
+				continue;
+			}
+			if (candidate.distance === best.distance) {
+				if (
+					candidate.gapDistance < best.gapDistance ||
+					(candidate.gapDistance === best.gapDistance &&
+						(candidate.targetStart < best.targetStart ||
+							(candidate.targetStart === best.targetStart &&
+								(candidate.from < best.from ||
+									(candidate.from === best.from && candidate.to < best.to)))))
+				) {
+					best = candidate;
+				}
+			}
+		}
+
+		if (!best) {
+			continue;
+		}
+		mutateMaskWithPath(out, pathBetweenIndices(shape, best.from, best.to));
+	}
+
+	return out;
+}
+
+export function applyLakeComponentBridging(
+	shape: GridShape,
+	lakeMask: Uint8Array,
+	raw: Partial<LakeCoherenceParams>,
+): Uint8Array {
+	validateMapLength(shape, lakeMask, "LakeMask");
+	const params = normalizeLakeCoherenceParams(raw);
+	const out = lakeMask.slice();
+	if (!params.bridgeEnabled || params.maxBridgeDistance <= 0) {
+		return out;
+	}
+
+	const components = deriveLakeComponents(shape, out);
+	if (components.length < 2) {
+		return out;
+	}
+
+	const candidates: Array<{
+		gapDistance: number;
+		leftIndex: number;
+		rightIndex: number;
+		leftStart: number;
+		rightStart: number;
+		from: number;
+		to: number;
+	}> = [];
+
+	for (let left = 0; left < components.length; left += 1) {
+		for (let right = left + 1; right < components.length; right += 1) {
+			const pair = chooseClosestTilePair(shape, components[left], components[right]);
+			const gapDistance = Math.max(0, pair.distance - 1);
+			if (gapDistance > params.maxBridgeDistance) {
+				continue;
+			}
+			candidates.push({
+				gapDistance,
+				leftIndex: left,
+				rightIndex: right,
+				leftStart: components[left][0],
+				rightStart: components[right][0],
+				from: pair.from,
+				to: pair.to,
+			});
+		}
+	}
+
+	candidates.sort((a, b) => {
+		if (a.gapDistance !== b.gapDistance) {
+			return a.gapDistance - b.gapDistance;
+		}
+		if (a.leftStart !== b.leftStart) {
+			return a.leftStart - b.leftStart;
+		}
+		if (a.rightStart !== b.rightStart) {
+			return a.rightStart - b.rightStart;
+		}
+		if (a.from !== b.from) {
+			return a.from - b.from;
+		}
+		return a.to - b.to;
+	});
+
+	const used = new Uint8Array(components.length);
+	for (const candidate of candidates) {
+		if (used[candidate.leftIndex] === 1 || used[candidate.rightIndex] === 1) {
+			continue;
+		}
+		used[candidate.leftIndex] = 1;
+		used[candidate.rightIndex] = 1;
+		mutateMaskWithPath(out, pathBetweenIndices(shape, candidate.from, candidate.to));
+	}
+
+	return out;
+}
+
+export function applyLakeCoherence(
+	shape: GridShape,
+	lakeMask: Uint8Array,
+	raw: Partial<LakeCoherenceParams> | undefined,
+): Uint8Array {
+	validateMapLength(shape, lakeMask, "LakeMask");
+	const params = normalizeLakeCoherenceParams(raw);
+	if (!params.enabled) {
+		return lakeMask;
+	}
+
+	let out = lakeMask.slice();
+	out = applyMicroLakePolicy(shape, out, params);
+	out = applyLakeComponentBridging(shape, out, params);
+
+	// First-wave policy keeps total-lake-share as a reported metric, not a hard guardrail.
+	return out;
 }
 
 function normalizeGrowSteps(raw: number | undefined): number {
@@ -1154,6 +1548,7 @@ export function deriveHydrology(
 	maps.faN = normalizeFlowAccumulation(maps.fa);
 	maps.lakeMask = deriveLakeMask(shape, landform, slopeMag, maps.faN, params);
 	maps.lakeMask = growLakeMask(shape, maps.lakeMask, h, slopeMag, params);
+	maps.lakeMask = applyLakeCoherence(shape, maps.lakeMask, params.lakeCoherence);
 
 	const streamThresholds = normalizeStreamThresholdParams(params);
 	const headwaterBoost = normalizeHeadwaterBoostParams(params);
