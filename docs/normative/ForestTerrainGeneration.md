@@ -1229,6 +1229,11 @@ When implementing v2 lake coherence, this section supersedes conflicting details
    - boundary realism repair
    - boundary realism validation
    - `lakeSurfaceH` assignment
+3. `hydrology.lakeCoherence.enabled=false` MUST disable the full lake-coherence post-pass stage, including:
+   - micro-lake policy
+   - component bridging
+   - boundary realism repair
+   - boundary realism validation
 
 ### 18.2 Micro-lake and Bridging Controls
 

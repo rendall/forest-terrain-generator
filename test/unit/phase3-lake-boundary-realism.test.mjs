@@ -57,6 +57,24 @@ describe("Phase 3 lake boundary realism", () => {
     ).toThrow(/lake_boundary_realism/);
   });
 
+  it("bypasses boundary repair and validation when lake coherence is globally disabled", async () => {
+    const hydrology = await loadHydrologyModule();
+    const shape = createGridShape(2, 1);
+    const h = new Float32Array([0.6, 0.4]);
+    const lakeMask = new Uint8Array([1, 0]);
+
+    const repaired = hydrology.applyLakeBoundaryRealism(shape, lakeMask, h, {
+      enabled: false,
+    });
+    expect(Array.from(repaired)).toEqual([1, 0]);
+
+    expect(() =>
+      hydrology.validateLakeBoundaryRealism(shape, lakeMask, h, {
+        enabled: false,
+      }),
+    ).not.toThrow();
+  });
+
   it("assigns deterministic component lakeSurfaceH and sets non-lake tiles to 0", async () => {
     const hydrology = await loadHydrologyModule();
     const shape = createGridShape(3, 2);

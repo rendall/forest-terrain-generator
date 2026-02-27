@@ -1015,7 +1015,7 @@ export function applyLakeBoundaryRealism(
 	validateMapLength(shape, h, "H");
 
 	const params = normalizeLakeCoherenceParams(raw);
-	if (!params.enforceBoundaryRealism) {
+	if (!params.enabled || !params.enforceBoundaryRealism) {
 		return lakeMask.slice();
 	}
 	if (params.boundaryRepairMode === "trim_first") {
@@ -1036,7 +1036,7 @@ export function validateLakeBoundaryRealism(
 	validateMapLength(shape, h, "H");
 
 	const params = normalizeLakeCoherenceParams(raw);
-	if (!params.enforceBoundaryRealism) {
+	if (!params.enabled || !params.enforceBoundaryRealism) {
 		return;
 	}
 	const violations = deriveLakeBoundaryViolations(shape, lakeMask, h, params);

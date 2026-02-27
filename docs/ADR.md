@@ -17,6 +17,7 @@ Adopted lake contract direction:
 - Component bridging is enabled by default and bounded by explicit distance controls.
 - Legacy `lakeGrowSteps`/`lakeGrowHeightDelta` remain available and run upstream of lake-coherence post-pass.
 - Boundary realism is a hard invariant in v2 defaults.
+- `lakeCoherence.enabled=false` is a global kill switch for lake-coherence post-pass behavior (including boundary repair/validation).
 - First-wave boundary repair mode is `trim_first`; `fill_first` is deferred.
 - `boundaryEps=0.0005` is the default normalized-height tolerance.
 - Total lake-share handling is metric-only in first wave (no hard blocking guardrail).
