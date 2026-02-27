@@ -14,6 +14,10 @@ References:
 
 Define a practical, deterministic path to make lakes read as coherent water bodies (rather than many isolated fragments) while avoiding the previous failure mode where a global growth knob (`lakeGrowSteps`) over-expands lakes.
 
+Expectation addendum:
+
+1. Lake behavior should align with intuitive water expectations at local boundaries: a lake edge should not sit directly beside a strictly lower non-lake tile under adopted tolerance rules.
+
 ## 2. Scope
 
 In scope:
@@ -22,6 +26,7 @@ In scope:
 2. Deterministic lake repair/growth constraints.
 3. Parameter and validation surface required for lake coherence tuning.
 4. Metrics required to compare baseline vs post-change lake quality.
+5. Lake water-surface output contract for downstream consumers (`lakeSurfaceH`).
 
 Out of scope:
 
@@ -29,6 +34,7 @@ Out of scope:
 2. Biome rebalance work beyond direct lake-side effects.
 3. `describe` prose behavior.
 4. Macro-landform modeling.
+5. Full dynamic flood simulation (time-step volume/rise model) in this phase.
 
 ## 3. Current-State Summary
 
@@ -53,6 +59,7 @@ Proposed v2 lake-coherence invariants for discussion:
 3. Lake coherence improvements must preserve deterministic outputs for identical inputs.
 4. Lake area should remain bounded by explicit guardrails (no runaway overgrowth).
 5. Lake repair/growth decisions should be explainable by local eligibility rules and component limits.
+6. Lake boundary realism invariant (proposed): no lake-boundary tile has a strictly lower adjacent non-lake tile beyond configured epsilon.
 
 ## 5. Candidate Technical Approaches
 
@@ -89,6 +96,19 @@ Tradeoff:
 1. Can quickly reduce fragmentation.
 2. May be less explainable than local component-constrained growth unless carefully bounded.
 
+### 5.4 Option D: Boundary-Realism Enforcement Layer (`recommended as required stage`)
+
+1. After initial lake mask/coherence pass, evaluate each lake component boundary.
+2. Enforce local boundary realism via deterministic repair rules:
+   - trim invalid high-edge lake tiles, or
+   - expand/fill adjacent lower non-lake tiles where consistent with guardrails.
+3. Start with conservative repair (trim-first) before any broader fill-to-spill model.
+
+Tradeoff:
+
+1. Adds algorithm complexity and may reshape current lakes.
+2. Directly addresses the key expectation mismatch ("unexplained perched edge" behavior).
+
 ## 6. Parameterization Strategy (Draft)
 
 Baseline policy:
@@ -111,6 +131,15 @@ Likely parameter groups:
    - `hydrology.lakeCoherence.maxTotalLakeShare`
    - `hydrology.lakeCoherence.maxBridgeDistance`
    - `hydrology.lakeCoherence.repairSingletons`
+   - `hydrology.lakeCoherence.boundaryEps`
+   - `hydrology.lakeCoherence.enforceBoundaryRealism`
+   - `hydrology.lakeCoherence.boundaryRepairMode` (`trim_first` in first wave; `fill_first` deferred)
+
+Data contract stipulation:
+
+1. Emit `hydrology.lakeSurfaceH` on lake tiles as the component water-surface elevation.
+2. Do not emit `lakeDepthH` as a stored field in this phase.
+3. Consumers derive depth when needed as `lakeSurfaceH - topography.h`.
 
 Compatibility note:
 
@@ -126,12 +155,15 @@ Required baseline/post-change metrics:
 4. Total lake tile share (% of grid).
 5. Optional component-size distribution summary (p50/p90).
 6. Determinism check across repeated runs.
+7. Lake boundary realism violations (count/share):
+   - number of lake-boundary tiles adjacent to strictly lower non-lake tiles beyond epsilon.
 
 Draft acceptance direction:
 
 1. Lower fragmentation than baseline at default settings.
 2. No significant lake-area blowup versus baseline guardrail targets.
 3. Stable behavior across small and medium map sizes.
+4. Boundary realism violations approach zero under default v2 settings.
 
 ## 8. Phased Work Plan
 
@@ -140,6 +172,7 @@ Phase 0: Decision framing
 1. Finalize lake coherence invariants.
 2. Choose primary algorithm path (Option A baseline, Option C optional).
 3. Decide legacy `lakeGrow*` policy (retain, deprecate, or compatibility-only).
+4. Apply adopted boundary-realism policy defaults (`hard invariant`, `trim_first`, `boundaryEps=0.0005`).
 
 Phase 1: Baseline harness
 
@@ -150,11 +183,13 @@ Phase 2: Core lake-coherence algorithm
 
 1. Implement component-aware lake repair/growth with deterministic ordering.
 2. Add explicit caps and guardrails.
+3. Implement boundary-realism enforcement layer (trim/fill policy as decided).
 
 Phase 3: Params and validation surface
 
 1. Add/validate param schema for coherence controls.
 2. Provide effective-value visibility in debug outputs where appropriate.
+3. Add `lakeSurfaceH` to hydrology/tile outputs and document derivation semantics.
 
 Phase 4: Cross-system integration
 
@@ -174,6 +209,7 @@ Lake coherence changes are expected to interact with:
 2. Moisture and wet-biome distribution.
 3. Trail routing cost fields and shoreline followable behavior.
 4. Passability and move-cost behaviors near water.
+5. `describe` interpretation of relative elevation around lake tiles.
 
 ## 10. Risks and Mitigations
 
@@ -182,12 +218,14 @@ Risk:
 1. Over-correction (lakes become too large or too uniform).
 2. Under-correction (fragmentation remains high).
 3. Hidden coupling with stream and ecology behavior.
+4. Boundary-repair oscillation or over-trimming in noisy/small grids.
 
 Mitigation:
 
 1. Use explicit area/component guardrails.
 2. Validate against fixed metric matrix before/after each major slice.
 3. Keep defaults conservative and expose deterministic tuning controls.
+4. Use epsilon-tolerant boundary checks and deterministic one-pass repair order.
 
 ## 11. Governance and Artifacts
 
@@ -197,23 +235,54 @@ Before implementation is declared complete:
 2. Update normative spec text for any adopted hard invariants or parameter-contract changes.
 3. Keep problem statement and proposed-solutions documents synchronized with final decisions.
 
-## 12. Open Decisions to Resolve Before Checklist
+## 12. Open Decisions
 
-1. `L-01` Should micro-lake components be merged, removed, or both?
-2. `L-02` Should component bridging be enabled by default or opt-in only?
-3. `L-03` What is the default total lake share guardrail?
-4. `L-04` Keep `lakeGrowSteps` as active behavior, compatibility mode, or deprecate?
-5. `L-05` If both legacy and new controls exist, what is precedence?
-6. `L-06` Which metrics are required in debug manifest vs test-only harness?
-7. `L-07` Do we set a hard singleton-count target for default maps?
-8. `L-08` Is small-world adaptive scaling in scope now or deferred (as with stream coherence)?
+No blocking open decisions remain for checklist drafting in this track.
 
 ## 13. Initial Recommendation Slate (Proposed, Not Locked)
 
 1. `R-01` Adopt Option A as primary algorithm path.
 2. `R-02` Keep Option C as optional add-on, disabled by default.
 3. `R-03` Treat Option B as fallback only, not primary strategy.
-4. `R-04` Introduce explicit component/area guardrails in params.
-5. `R-05` Keep defaults conservative and deterministic.
-6. `R-06` Defer small-world adaptive scaling for lake coherence first wave unless metrics prove it is required.
-7. `R-07` Finalize checklist only after Section 12 decisions are resolved.
+4. `R-04` Add Option D boundary-realism enforcement in first-wave implementation.
+5. `R-05` Introduce explicit component/area/boundary guardrails in params.
+6. `R-06` Keep defaults conservative and deterministic.
+7. `R-07` Defer small-world adaptive scaling for lake coherence first wave unless metrics prove it is required.
+8. `R-08` Finalize checklist after the adopted decision slate is locked.
+
+## 14. Adopted Decision Slate (Locked)
+
+The following decisions are adopted for this lake-coherence track:
+
+1. `L-01` Micro-lake handling:
+   - Adopted: define micro-lake as connected component size `<= hydrology.lakeCoherence.microLakeMaxSize` (default `2`).
+   - Adopted: parameterized action via `hydrology.lakeCoherence.microLakeMode` with enum `merge|remove|leave`.
+2. `L-02` Component bridging:
+   - Adopted: enabled by default via `hydrology.lakeCoherence.bridgeEnabled=true`.
+   - Adopted: opt-out supported (`bridgeEnabled=false`).
+3. `L-03` Total lake-share guardrail:
+   - Adopted: no hard default guardrail in first wave.
+   - Adopted: monitor/report `totalLakeShare` and related metrics for visibility.
+4. `L-04` Legacy `lakeGrowSteps`:
+   - Adopted: keep current policy (`lakeGrowSteps=0` default, opt-in behavior preserved).
+5. `L-05` Legacy/new control precedence:
+   - Adopted: existing lake gates (`lakeFlatSlopeThreshold`, `lakeAccumThreshold`, `lakeGrow*`) run upstream.
+   - Adopted: `lakeCoherence.*` runs as post-pass coherence enforcement.
+6. `L-06` Metrics publication split:
+   - Adopted debug-manifest subset: `componentCount`, `singletonCount`, `largestComponentSize`, `largestComponentShare`, `totalLakeShare`, `boundaryViolationCount`.
+   - Adopted: deeper distributions/harness-only metrics remain test-only unless explicitly promoted later.
+7. `L-07` Singleton target policy:
+   - Adopted: singleton = one-tile lake component.
+   - Adopted: no hard singleton-count target in first wave; track and reduce by metrics.
+8. `L-08` Small-world scaling:
+   - Adopted: deferred for this first-wave lake-coherence track.
+9. `L-09` Boundary realism policy:
+   - Adopted: hard invariant for v2 defaults.
+10. `L-10` Boundary repair mode default:
+   - Adopted: `trim_first`.
+   - Adopted: `fill_first` was considered and deferred from first-wave implementation.
+11. `L-11` Boundary epsilon:
+   - Adopted: `boundaryEps = 0.0005` in normalized `h` space.
+12. Lake surface output field:
+   - Adopted: add `lakeSurfaceH` to lake tiles.
+   - Adopted: do not add `lakeDepthH` as a stored output field in this phase.

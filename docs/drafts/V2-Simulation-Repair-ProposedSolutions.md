@@ -77,6 +77,8 @@ Primary proposal (`likely`):
 1. Replace broad growth behavior with constrained component coherence rules.
 2. Add per-component growth caps and stricter slope/height eligibility gates.
 3. Add small-component repair behavior that avoids whole-system lake inflation.
+4. Add lake-boundary realism enforcement with conservative default repair mode (`trim_first`) and explicit epsilon tolerance.
+5. Add per-lake-tile `lakeSurfaceH` output for downstream reasoning; do not store depth as a separate field (derive as `lakeSurfaceH - h`).
 
 Alternatives:
 
@@ -93,6 +95,7 @@ ADR/spec impact:
 
 1. Spec text likely needed for any new coherence rules/constraints.
 2. ADR recommended if algorithm class changes from simple growth to multi-rule component repair.
+3. Spec/ADR update required for `lakeSurfaceH` output contract addition.
 
 ### 4.4 Slope/Aspect Coherence
 
