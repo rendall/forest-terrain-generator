@@ -27,14 +27,14 @@ Checklist constraint:
 
 ## Basin Pass Core
 
-- [ ] [topography] `TP-BS-01` Create `src/pipeline/derive-topographic-structure.ts` and define a canonical `Dir8` neighbor order shared by structural sweeps.
-- [ ] [topography] `TP-BS-02` Add a deterministic grouped-height ordering helper in `derive-topographic-structure.ts` with mode (`asc|desc`) that sorts by `(h, rowMajorIndex)` and groups levels by `hEps` (depends on `TP-BS-01`).
-- [ ] [topography] `TP-BS-03` Add deterministic DSU utilities in `derive-topographic-structure.ts` for activation/union/find with stable tie handling (depends on `TP-BS-01`).
-- [ ] [topography] `TP-BS-04` Implement basin sweep metadata in `derive-topographic-structure.ts` (`minH`, `minIdx`, `spillH`) with merge rule: lower minimum wins, row-major tie-break (depends on `TP-BS-02` and `TP-BS-03`).
-- [ ] [topography] `TP-BS-05` Record `spillH` for losing basin lineage at first merge level in basin sweep merge operations in `derive-topographic-structure.ts` (depends on `TP-BS-04`).
-- [ ] [topography] `TP-BS-06` Derive per-tile basin outputs in `derive-topographic-structure.ts`: `basinMinIdx`, `basinMinH`, `basinSpillH`, `basinPersistence` under `unresolvedPolicy="nan"` (depends on `TP-BS-05`).
-- [ ] [topography] `TP-BS-07` Derive `basinDepthLike = max(0, basinSpillH - h)` in `derive-topographic-structure.ts` when `basinSpillH` is resolved; keep unresolved values as `NaN` (depends on `TP-BS-06`).
-- [ ] [topography] `TP-BS-08` Derive `basinLike` boolean mask in `derive-topographic-structure.ts` from `basinPersistence >= persistenceMin` (depends on `TP-BS-06`).
+- [x] [topography] `TP-BS-01` Create `src/pipeline/derive-topographic-structure.ts` and define a canonical `Dir8` neighbor order shared by structural sweeps.
+- [x] [topography] `TP-BS-02` Add a deterministic grouped-height ordering helper in `derive-topographic-structure.ts` with mode (`asc|desc`) that sorts by `(h, rowMajorIndex)` and groups levels by `hEps` (depends on `TP-BS-01`).
+- [x] [topography] `TP-BS-03` Add deterministic DSU utilities in `derive-topographic-structure.ts` for activation/union/find with stable tie handling (depends on `TP-BS-01`).
+- [x] [topography] `TP-BS-04` Implement basin sweep metadata in `derive-topographic-structure.ts` (`minH`, `minIdx`, `spillH`) with merge rule: lower minimum wins, row-major tie-break (depends on `TP-BS-02` and `TP-BS-03`).
+- [x] [topography] `TP-BS-05` Record `spillH` for losing basin lineage at first merge level in basin sweep merge operations in `derive-topographic-structure.ts` (depends on `TP-BS-04`).
+- [x] [topography] `TP-BS-06` Derive per-tile basin outputs in `derive-topographic-structure.ts`: `basinMinIdx`, `basinMinH`, `basinSpillH`, `basinPersistence` under `unresolvedPolicy="nan"` (depends on `TP-BS-05`).
+- [x] [topography] `TP-BS-07` Derive `basinDepthLike = max(0, basinSpillH - h)` in `derive-topographic-structure.ts` when `basinSpillH` is resolved; keep unresolved values as `NaN` (depends on `TP-BS-06`).
+- [x] [topography] `TP-BS-08` Derive `basinLike` boolean mask in `derive-topographic-structure.ts` from `basinPersistence >= persistenceMin` (depends on `TP-BS-06`).
 
 ## Basin-to-Peak Gate
 
