@@ -150,8 +150,13 @@ function topographyStructurePath(key: string): string {
 }
 
 function validateTopographyStructureParams(params: JsonObject): void {
-  if (!isObject(params.topography)) {
+  if (params.topography === undefined) {
     return;
+  }
+  if (!isObject(params.topography)) {
+    throw new InputValidationError(
+      'Invalid params value "params.topography". Expected an object.'
+    );
   }
   const topography = params.topography as JsonObject;
   const structure = topography.structure;

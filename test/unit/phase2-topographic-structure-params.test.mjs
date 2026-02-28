@@ -107,4 +107,33 @@ describe("Phase 2 topographic-structure params contract", () => {
       }),
     ).rejects.toThrow(/connectivity/);
   });
+
+  it("rejects non-object topography values", async () => {
+    const cwd = await makeTempDir();
+    const paramsPath = join(cwd, "params.json");
+    await writeFile(
+      paramsPath,
+      `${JSON.stringify(
+        {
+          params: {
+            topography: 0,
+          },
+        },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+
+    await expect(
+      resolveInputs({
+        mode: "generate",
+        cwd,
+        args: {
+          force: false,
+          paramsPath,
+        },
+      }),
+    ).rejects.toThrow(/params\.topography/);
+  });
 });
