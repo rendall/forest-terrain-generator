@@ -2146,7 +2146,7 @@ export function deriveHydrology(
 	options?: HydrologyDeriveOptions,
 ): HydrologyDeriveResult {
 	const maps = createHydrologyMaps(shape);
-	const emitStructureDiagnostics = options?.emitStructureDiagnostics !== false;
+	const emitStructureDiagnostics = options?.emitStructureDiagnostics === true;
 	const structureConfig = normalizeHydrologyStructureParams(params.structure);
 	const structureEnabled =
 		structureConfig.enabled &&

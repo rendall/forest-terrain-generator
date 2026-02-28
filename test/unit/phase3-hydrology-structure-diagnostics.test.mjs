@@ -57,6 +57,7 @@ describe("Phase 3 hydrology-structure diagnostics", () => {
         },
       },
       structure,
+      { emitStructureDiagnostics: true },
     );
 
     expect(maps.moisture[0]).toBeGreaterThan(0);
@@ -121,6 +122,7 @@ describe("Phase 3 hydrology-structure diagnostics", () => {
         },
       },
       structure,
+      { emitStructureDiagnostics: true },
     );
 
     expect(maps.structureDiagnostics.params.enabled).toBe(false);
@@ -130,7 +132,7 @@ describe("Phase 3 hydrology-structure diagnostics", () => {
     expect(maps.moisture[0]).toBe(0);
   });
 
-  it("skips structure diagnostics when emission is disabled", () => {
+  it("skips structure diagnostics by default", () => {
     const shape = createGridShape(1, 1);
     const h = new Float32Array([0.4]);
     const slopeMag = new Float32Array([0.02]);
@@ -183,7 +185,6 @@ describe("Phase 3 hydrology-structure diagnostics", () => {
         },
       },
       structure,
-      { emitStructureDiagnostics: false },
     );
 
     expect(maps.structureDiagnostics).toBeUndefined();
