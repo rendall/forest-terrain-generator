@@ -273,6 +273,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		validated.seed,
 		hydrologyParams,
 		topographyStructure,
+		{ emitStructureDiagnostics: request.mode === "debug" },
 	);
 	const streamCoherence = deriveStreamCoherenceMetrics(
 		shape,

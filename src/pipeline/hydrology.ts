@@ -2088,6 +2088,10 @@ export interface HydrologyDeriveResult extends HydrologyMapsSoA {
 	structureDiagnostics?: HydrologyStructureDiagnostics;
 }
 
+export interface HydrologyDeriveOptions {
+	emitStructureDiagnostics?: boolean;
+}
+
 export function deriveLakeCoherenceMetrics(
 	shape: GridShape,
 	lakeMask: Uint8Array,
@@ -2139,8 +2143,10 @@ export function deriveHydrology(
 	seed: bigint,
 	params: HydrologyParams,
 	topographicStructure?: TopographicStructureMapsSoA,
+	options?: HydrologyDeriveOptions,
 ): HydrologyDeriveResult {
 	const maps = createHydrologyMaps(shape);
+	const emitStructureDiagnostics = options?.emitStructureDiagnostics !== false;
 	const structureConfig = normalizeHydrologyStructureParams(params.structure);
 	const structureEnabled =
 		structureConfig.enabled &&
@@ -2231,12 +2237,14 @@ export function deriveHydrology(
 				unresolved: Number.isNaN(topographicStructure.basinSpillH[i]),
 				config: structureConfig,
 			});
-			sinkCandidates[
-				decision.terminalClass === "route_through"
-					? "routeThrough"
-					: decision.terminalClass
-			] += 1;
-			if (decision.rejectionReason) {
+			if (emitStructureDiagnostics) {
+				sinkCandidates[
+					decision.terminalClass === "route_through"
+						? "routeThrough"
+						: decision.terminalClass
+				] += 1;
+			}
+			if (emitStructureDiagnostics && decision.rejectionReason) {
 				sinkRejections[decision.rejectionReason] += 1;
 			}
 			if (decision.terminalClass === "lake") {
@@ -2296,41 +2304,45 @@ export function deriveHydrology(
 		params,
 	);
 
-	for (let i = 0; i < shape.size; i += 1) {
-		if (downstream[i] >= 0) {
-			continue;
+	if (emitStructureDiagnostics) {
+		for (let i = 0; i < shape.size; i += 1) {
+			if (downstream[i] >= 0) {
+				continue;
+			}
+			if (maps.lakeMask[i] === 1) {
+				endpointReasons.lake += 1;
+				continue;
+			}
+			if (maps.poolMask[i] === 1) {
+				endpointReasons.pool += 1;
+				continue;
+			}
+			if (maps.waterClass[i] === WATER_CLASS_CODE.marsh) {
+				endpointReasons.marsh += 1;
+				continue;
+			}
+			if (routeThroughMask[i] === 1) {
+				endpointReasons.route_through += 1;
+				continue;
+			}
+			endpointReasons.blocked += 1;
 		}
-		if (maps.lakeMask[i] === 1) {
-			endpointReasons.lake += 1;
-			continue;
-		}
-		if (maps.poolMask[i] === 1) {
-			endpointReasons.pool += 1;
-			continue;
-		}
-		if (maps.waterClass[i] === WATER_CLASS_CODE.marsh) {
-			endpointReasons.marsh += 1;
-			continue;
-		}
-		if (routeThroughMask[i] === 1) {
-			endpointReasons.route_through += 1;
-			continue;
-		}
-		endpointReasons.blocked += 1;
 	}
 
 	maps.lakeSurfaceH = deriveLakeSurfaceH(shape, maps.lakeMask, h);
-	maps.structureDiagnostics = {
-		params: structureConfig,
-		sinkCandidates,
-		sinkRejections,
-		endpointReasons,
-		moistureDecomposition: {
-			baseMoisture: summarizeFloatArray(baseMoisture),
-			retentionTerm: summarizeFloatArray(retentionTerm),
-			finalMoisture: summarizeFloatArray(maps.moisture),
-		},
-	};
+	if (emitStructureDiagnostics) {
+		maps.structureDiagnostics = {
+			params: structureConfig,
+			sinkCandidates,
+			sinkRejections,
+			endpointReasons,
+			moistureDecomposition: {
+				baseMoisture: summarizeFloatArray(baseMoisture),
+				retentionTerm: summarizeFloatArray(retentionTerm),
+				finalMoisture: summarizeFloatArray(maps.moisture),
+			},
+		};
+	}
 	return maps;
 }
 
