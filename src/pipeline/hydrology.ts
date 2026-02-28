@@ -2126,6 +2126,7 @@ export function deriveHydrology(
 ): HydrologyDeriveResult {
 	const maps = createHydrologyMaps(shape);
 	const structureConfig = normalizeHydrologyStructureParams(params.structure);
+	const structureEnabled = structureConfig.enabled && !!topographicStructure;
 	const sinkCandidates: SinkCandidateCounters = {
 		routeThrough: 0,
 		pool: 0,
@@ -2196,7 +2197,7 @@ export function deriveHydrology(
 	);
 	maps.poolMask = topology.poolMask;
 	const routeThroughMask = new Uint8Array(shape.size);
-	if (structureConfig.enabled && topographicStructure) {
+	if (structureEnabled && topographicStructure) {
 		const basinTileCount = deriveBasinTileCounts(
 			shape,
 			topographicStructure.basinMinIdx,
@@ -2259,13 +2260,13 @@ export function deriveHydrology(
 	);
 	const retentionTerm = normalizeRetentionTerm(
 		shape,
-		topographicStructure,
+		structureEnabled ? topographicStructure : undefined,
 		structureConfig.retentionNormalization,
 	);
 	maps.moisture = blendMoistureWithRetention(
 		baseMoisture,
 		retentionTerm,
-		structureConfig.retentionWeight,
+		structureEnabled ? structureConfig.retentionWeight : 0,
 	);
 	maps.waterClass = classifyWaterClass(
 		shape,
