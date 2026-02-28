@@ -12,23 +12,23 @@ Checklist constraint:
 
 ## Scope Guard
 
-- [ ] [scope] `HS-SC-01` Keep this track scoped to hydrology behavior, params, diagnostics, and output wiring for structure-aware decisions.
-- [ ] [scope] `HS-SC-02` Do not implement physical time-step water balance (rainfall/evaporation/volume simulation) in this track.
-- [ ] [scope] `HS-SC-03` Do not add per-mode (`generate|derive|debug`) unresolved-lake policy branching in this track.
+- [x] [scope] `HS-SC-01` Keep this track scoped to hydrology behavior, params, diagnostics, and output wiring for structure-aware decisions.
+- [x] [scope] `HS-SC-02` Do not implement physical time-step water balance (rainfall/evaporation/volume simulation) in this track.
+- [x] [scope] `HS-SC-03` Do not add per-mode (`generate|derive|debug`) unresolved-lake policy branching in this track.
 
 ## Params and Validation
 
-- [ ] [params] `HS-DC-01` Add `hydrology.structure` defaults to `src/lib/default-params.ts` with locked first-wave keys and values from plan Section 7.1.
-- [ ] [params] `HS-DC-02` Extend params schema acceptance for `hydrology.structure.*` in `src/io/read-params.ts` (depends on `HS-DC-01`).
-- [ ] [params] `HS-DC-03` Add strict enum validation for `hydrology.structure.unresolvedLakePolicy` (`deny|allow_with_strict_gates|allow`) and `hydrology.structure.retentionNormalization` (`quantile|minmax|raw`) in `src/io/read-params.ts` (depends on `HS-DC-02`).
-- [ ] [params] `HS-DC-04` Add strict numeric and range validation for `sinkPersistenceRouteMax`, `sinkPersistenceLakeMin`, `basinTileCountMinLake`, `lakeInflowMin`, and `retentionWeight` in `src/io/read-params.ts` (depends on `HS-DC-02`).
-- [ ] [app] `HS-DC-05` Update `buildHydrologyParams` in `src/app/run-generator.ts` to forward `hydrology.structure` to hydrology derivation path (depends on `HS-DC-01`).
+- [x] [params] `HS-DC-01` Add `hydrology.structure` defaults to `src/lib/default-params.ts` with locked first-wave keys and values from plan Section 7.1.
+- [x] [params] `HS-DC-02` Extend params schema acceptance for `hydrology.structure.*` in `src/io/read-params.ts` (depends on `HS-DC-01`).
+- [x] [params] `HS-DC-03` Add strict enum validation for `hydrology.structure.unresolvedLakePolicy` (`deny|allow_with_strict_gates|allow`) and `hydrology.structure.retentionNormalization` (`quantile|minmax|raw`) in `src/io/read-params.ts` (depends on `HS-DC-02`).
+- [x] [params] `HS-DC-04` Add strict numeric and range validation for `sinkPersistenceRouteMax`, `sinkPersistenceLakeMin`, `basinTileCountMinLake`, `lakeInflowMin`, and `retentionWeight` in `src/io/read-params.ts` (depends on `HS-DC-02`).
+- [x] [app] `HS-DC-05` Update `buildHydrologyParams` in `src/app/run-generator.ts` to forward `hydrology.structure` to hydrology derivation path (depends on `HS-DC-01`).
 
 ## Hydrology Structure Config Plumbing
 
-- [ ] [hydrology] `HS-HY-01` Add `HydrologyStructureParams` interface in `src/pipeline/hydrology.ts` for first-wave structure controls.
-- [ ] [hydrology] `HS-HY-02` Extend `HydrologyParams` in `src/pipeline/hydrology.ts` to include `structure?: HydrologyStructureParams` (depends on `HS-HY-01`).
-- [ ] [hydrology] `HS-HY-03` Add normalization/resolution helper in `src/pipeline/hydrology.ts` that applies locked defaults for `hydrology.structure.*` and returns effective structure config (depends on `HS-HY-01`).
+- [x] [hydrology] `HS-HY-01` Add `HydrologyStructureParams` interface in `src/pipeline/hydrology.ts` for first-wave structure controls.
+- [x] [hydrology] `HS-HY-02` Extend `HydrologyParams` in `src/pipeline/hydrology.ts` to include `structure?: HydrologyStructureParams` (depends on `HS-HY-01`).
+- [x] [hydrology] `HS-HY-03` Add normalization/resolution helper in `src/pipeline/hydrology.ts` that applies locked defaults for `hydrology.structure.*` and returns effective structure config (depends on `HS-HY-01`).
 
 ## Sink Semantics (Persistence + Size; Optional Inflow)
 

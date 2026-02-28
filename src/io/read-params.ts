@@ -99,6 +99,22 @@ function expectOptionalNonNegativeNumber(value: unknown, path: string): void {
   }
 }
 
+function expectOptionalRangeNumber(
+  value: unknown,
+  path: string,
+  min: number,
+  max: number
+): void {
+  if (value === undefined) {
+    return;
+  }
+  if (typeof value !== "number" || !Number.isFinite(value) || value < min || value > max) {
+    throw new InputValidationError(
+      `Invalid params value "${path}". Expected a number in [${min}, ${max}].`
+    );
+  }
+}
+
 function validateLakeCoherenceParams(params: JsonObject): void {
   if (!isObject(params.hydrology)) {
     return;
@@ -142,6 +158,76 @@ function validateLakeCoherenceParams(params: JsonObject): void {
     value.boundaryRepairMode,
     lakeCoherencePath("boundaryRepairMode"),
     ["trim_first"]
+  );
+}
+
+function hydrologyStructurePath(key: string): string {
+  return `params.hydrology.structure.${key}`;
+}
+
+function validateHydrologyStructureParams(params: JsonObject): void {
+  if (!isObject(params.hydrology)) {
+    return;
+  }
+
+  const hydrology = params.hydrology as JsonObject;
+  const structure = hydrology.structure;
+  if (structure === undefined) {
+    return;
+  }
+  if (!isObject(structure)) {
+    throw new InputValidationError(
+      'Invalid params value "params.hydrology.structure". Expected an object.'
+    );
+  }
+
+  const value = structure as JsonObject;
+  expectOptionalBoolean(value.enabled, hydrologyStructurePath("enabled"));
+  expectOptionalRangeNumber(
+    value.sinkPersistenceRouteMax,
+    hydrologyStructurePath("sinkPersistenceRouteMax"),
+    0,
+    1
+  );
+  expectOptionalRangeNumber(
+    value.sinkPersistenceLakeMin,
+    hydrologyStructurePath("sinkPersistenceLakeMin"),
+    0,
+    1
+  );
+  expectOptionalNonNegativeInteger(
+    value.basinTileCountMinLake,
+    hydrologyStructurePath("basinTileCountMinLake")
+  );
+  expectOptionalBoolean(
+    value.inflowGateEnabled,
+    hydrologyStructurePath("inflowGateEnabled")
+  );
+  expectOptionalRangeNumber(
+    value.lakeInflowMin,
+    hydrologyStructurePath("lakeInflowMin"),
+    0,
+    1
+  );
+  expectOptionalEnum(
+    value.unresolvedLakePolicy,
+    hydrologyStructurePath("unresolvedLakePolicy"),
+    ["deny", "allow_with_strict_gates", "allow"]
+  );
+  expectOptionalBoolean(
+    value.spillAwareRouteThroughEnabled,
+    hydrologyStructurePath("spillAwareRouteThroughEnabled")
+  );
+  expectOptionalRangeNumber(
+    value.retentionWeight,
+    hydrologyStructurePath("retentionWeight"),
+    0,
+    1
+  );
+  expectOptionalEnum(
+    value.retentionNormalization,
+    hydrologyStructurePath("retentionNormalization"),
+    ["quantile", "minmax", "raw"]
   );
 }
 
@@ -325,6 +411,7 @@ export async function readParamsFile(
   normalizeLegacyHydrologyAliases(params);
   validateUnknownKeys(params, PARAMS_VALIDATION_SCHEMA, "params");
   validateLakeCoherenceParams(params);
+  validateHydrologyStructureParams(params);
   validateTopographyStructureParams(params);
 
   return {

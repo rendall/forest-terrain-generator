@@ -66,6 +66,19 @@ export interface StreamHeadwaterBoostParams {
 	maxExtraSources: number;
 }
 
+export interface HydrologyStructureParams {
+	enabled: boolean;
+	sinkPersistenceRouteMax: number;
+	sinkPersistenceLakeMin: number;
+	basinTileCountMinLake: number;
+	inflowGateEnabled: boolean;
+	lakeInflowMin: number;
+	unresolvedLakePolicy: "deny" | "allow_with_strict_gates" | "allow";
+	spillAwareRouteThroughEnabled: boolean;
+	retentionWeight: number;
+	retentionNormalization: "quantile" | "minmax" | "raw";
+}
+
 interface StreamThresholdCompatParams {
 	streamThresholds?: Partial<StreamThresholdParams>;
 	streamAccumThreshold?: number;
@@ -106,6 +119,7 @@ export interface HydrologyParams
 			WaterClassParams {
 	streamHeadwaterBoost?: Partial<StreamHeadwaterBoostParams>;
 	lakeCoherence?: Partial<LakeCoherenceParams>;
+	structure?: Partial<HydrologyStructureParams>;
 }
 
 const U32_MAX = 0xffffffff;
@@ -131,6 +145,19 @@ const DEFAULT_LAKE_COHERENCE: LakeCoherenceParams = {
 	enforceBoundaryRealism: true,
 	boundaryEps: 0.0005,
 	boundaryRepairMode: "trim_first",
+};
+
+const DEFAULT_HYDROLOGY_STRUCTURE: HydrologyStructureParams = {
+	enabled: true,
+	sinkPersistenceRouteMax: 0.005,
+	sinkPersistenceLakeMin: 0.02,
+	basinTileCountMinLake: 3,
+	inflowGateEnabled: false,
+	lakeInflowMin: 0.15,
+	unresolvedLakePolicy: "deny",
+	spillAwareRouteThroughEnabled: false,
+	retentionWeight: 0.2,
+	retentionNormalization: "quantile",
 };
 
 function u64(value: bigint): bigint {
@@ -271,6 +298,78 @@ function normalizeLakeCoherenceParams(
 			finiteOrFallback(input.boundaryEps, DEFAULT_LAKE_COHERENCE.boundaryEps),
 		),
 		boundaryRepairMode,
+	};
+}
+
+export function normalizeHydrologyStructureParams(
+	raw: Partial<HydrologyStructureParams> | undefined,
+): HydrologyStructureParams {
+	const input = raw ?? {};
+	const unresolvedLakePolicy =
+		input.unresolvedLakePolicy === "deny" ||
+		input.unresolvedLakePolicy === "allow_with_strict_gates" ||
+		input.unresolvedLakePolicy === "allow"
+			? input.unresolvedLakePolicy
+			: DEFAULT_HYDROLOGY_STRUCTURE.unresolvedLakePolicy;
+	const retentionNormalization =
+		input.retentionNormalization === "quantile" ||
+		input.retentionNormalization === "minmax" ||
+		input.retentionNormalization === "raw"
+			? input.retentionNormalization
+			: DEFAULT_HYDROLOGY_STRUCTURE.retentionNormalization;
+
+	return {
+		enabled:
+			typeof input.enabled === "boolean"
+				? input.enabled
+				: DEFAULT_HYDROLOGY_STRUCTURE.enabled,
+		sinkPersistenceRouteMax: Math.max(
+			0,
+			finiteOrFallback(
+				input.sinkPersistenceRouteMax,
+				DEFAULT_HYDROLOGY_STRUCTURE.sinkPersistenceRouteMax,
+			),
+		),
+		sinkPersistenceLakeMin: Math.max(
+			0,
+			finiteOrFallback(
+				input.sinkPersistenceLakeMin,
+				DEFAULT_HYDROLOGY_STRUCTURE.sinkPersistenceLakeMin,
+			),
+		),
+		basinTileCountMinLake: Math.max(
+			0,
+			Math.floor(
+				finiteOrFallback(
+					input.basinTileCountMinLake,
+					DEFAULT_HYDROLOGY_STRUCTURE.basinTileCountMinLake,
+				),
+			),
+		),
+		inflowGateEnabled:
+			typeof input.inflowGateEnabled === "boolean"
+				? input.inflowGateEnabled
+				: DEFAULT_HYDROLOGY_STRUCTURE.inflowGateEnabled,
+		lakeInflowMin: Math.max(
+			0,
+			finiteOrFallback(
+				input.lakeInflowMin,
+				DEFAULT_HYDROLOGY_STRUCTURE.lakeInflowMin,
+			),
+		),
+		unresolvedLakePolicy,
+		spillAwareRouteThroughEnabled:
+			typeof input.spillAwareRouteThroughEnabled === "boolean"
+				? input.spillAwareRouteThroughEnabled
+				: DEFAULT_HYDROLOGY_STRUCTURE.spillAwareRouteThroughEnabled,
+		retentionWeight: Math.max(
+			0,
+			finiteOrFallback(
+				input.retentionWeight,
+				DEFAULT_HYDROLOGY_STRUCTURE.retentionWeight,
+			),
+		),
+		retentionNormalization,
 	};
 }
 
