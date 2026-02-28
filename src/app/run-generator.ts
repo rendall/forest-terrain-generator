@@ -459,6 +459,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		}
 
 		tiles.push({
+			index: i,
 			x,
 			y,
 			topography: {

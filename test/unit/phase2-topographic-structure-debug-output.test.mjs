@@ -38,6 +38,8 @@ describe("Phase 2 topographic structure debug output", () => {
     const debugTopography = JSON.parse(
       await readFile(join(outputDir, "topography.json"), "utf8"),
     );
+    expect(debugTopography.tiles[0].index).toBe(0);
+    expect(debugTopography.tiles[1].index).toBe(1);
     const debugStructure = debugTopography.tiles[0].topography.structure;
 
     expect(debugStructure.basinPersistence).not.toBeUndefined();
@@ -55,6 +57,7 @@ describe("Phase 2 topographic structure debug output", () => {
     expect(debugStructure.peakRiseLike).not.toBeUndefined();
 
     const envelope = JSON.parse(await readFile(debugOutputFile, "utf8"));
+    expect(envelope.tiles[0].index).toBe(0);
     const envelopeStructure = envelope.tiles[0].topography.structure;
     expect(Object.keys(envelopeStructure)).toEqual([
       "basinPersistence",

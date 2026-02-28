@@ -58,7 +58,11 @@ function buildPhaseTiles(
   envelope: TerrainEnvelope,
   phaseKey: "topography" | "hydrology" | "ecology" | "navigation"
 ) {
-  return envelope.tiles.map((tile) => ({
+  return envelope.tiles.map((tile, fallbackIndex) => ({
+    index:
+      typeof tile.index === "number" && Number.isInteger(tile.index) && tile.index >= 0
+        ? tile.index
+        : fallbackIndex,
     x: tile.x,
     y: tile.y,
     [phaseKey]: tile[phaseKey]
@@ -78,8 +82,13 @@ function buildTopographyDebugTiles(
 ) {
   return envelope.tiles.map((tile, index) => {
     const topography = asObject(tile.topography) ?? {};
+    const tileIndex =
+      typeof tile.index === "number" && Number.isInteger(tile.index) && tile.index >= 0
+        ? tile.index
+        : index;
     if (!topographyStructureDebug) {
       return {
+        index: tileIndex,
         x: tile.x,
         y: tile.y,
         topography
@@ -103,6 +112,7 @@ function buildTopographyDebugTiles(
     };
 
     return {
+      index: tileIndex,
       x: tile.x,
       y: tile.y,
       topography: {
