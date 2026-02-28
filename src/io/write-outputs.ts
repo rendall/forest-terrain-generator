@@ -16,6 +16,21 @@ const DEBUG_ARTIFACT_FILES = [
   "navigation.json"
 ] as const;
 
+export interface TopographyStructureDebugPayload {
+  basinMinIdx: Int32Array;
+  basinMinH: Float32Array;
+  basinSpillH: Float32Array;
+  basinPersistence: Float32Array;
+  basinDepthLike: Float32Array;
+  peakMaxIdx: Int32Array;
+  peakMaxH: Float32Array;
+  peakSaddleH: Float32Array;
+  peakPersistence: Float32Array;
+  peakRiseLike: Float32Array;
+  basinLike: Uint8Array;
+  ridgeLike: Uint8Array;
+}
+
 function serializeJson(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
@@ -43,11 +58,69 @@ function buildPhaseTiles(
   envelope: TerrainEnvelope,
   phaseKey: "topography" | "hydrology" | "ecology" | "navigation"
 ) {
-  return envelope.tiles.map((tile) => ({
+  return envelope.tiles.map((tile, fallbackIndex) => ({
+    index:
+      typeof tile.index === "number" && Number.isInteger(tile.index) && tile.index >= 0
+        ? tile.index
+        : fallbackIndex,
     x: tile.x,
     y: tile.y,
     [phaseKey]: tile[phaseKey]
   }));
+}
+
+function asObject(value: unknown): Record<string, unknown> | undefined {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return undefined;
+  }
+  return value as Record<string, unknown>;
+}
+
+function buildTopographyDebugTiles(
+  envelope: TerrainEnvelope,
+  topographyStructureDebug: TopographyStructureDebugPayload | undefined
+) {
+  return envelope.tiles.map((tile, index) => {
+    const topography = asObject(tile.topography) ?? {};
+    const tileIndex =
+      typeof tile.index === "number" && Number.isInteger(tile.index) && tile.index >= 0
+        ? tile.index
+        : index;
+    if (!topographyStructureDebug) {
+      return {
+        index: tileIndex,
+        x: tile.x,
+        y: tile.y,
+        topography
+      };
+    }
+
+    const structure = {
+      ...(asObject(topography.structure) ?? {}),
+      basinMinIdx: topographyStructureDebug.basinMinIdx[index],
+      basinMinH: topographyStructureDebug.basinMinH[index],
+      basinSpillH: topographyStructureDebug.basinSpillH[index],
+      basinPersistence: topographyStructureDebug.basinPersistence[index],
+      basinDepthLike: topographyStructureDebug.basinDepthLike[index],
+      peakMaxIdx: topographyStructureDebug.peakMaxIdx[index],
+      peakMaxH: topographyStructureDebug.peakMaxH[index],
+      peakSaddleH: topographyStructureDebug.peakSaddleH[index],
+      peakPersistence: topographyStructureDebug.peakPersistence[index],
+      peakRiseLike: topographyStructureDebug.peakRiseLike[index],
+      basinLike: topographyStructureDebug.basinLike[index] === 1,
+      ridgeLike: topographyStructureDebug.ridgeLike[index] === 1
+    };
+
+    return {
+      index: tileIndex,
+      x: tile.x,
+      y: tile.y,
+      topography: {
+        ...topography,
+        structure
+      }
+    };
+  });
 }
 
 function messageFromUnknown(error: unknown): string {
@@ -106,7 +179,8 @@ async function writeDebugArtifacts(
   targetDir: string,
   envelope: TerrainEnvelope,
   streamCoherence: StreamCoherenceMetrics | undefined,
-  lakeCoherence: LakeCoherenceMetrics | undefined
+  lakeCoherence: LakeCoherenceMetrics | undefined,
+  topographyStructureDebug: TopographyStructureDebugPayload | undefined
 ): Promise<void> {
   const { width, height } = deriveGridDimensions(envelope);
   const debugManifest = {
@@ -122,7 +196,7 @@ async function writeDebugArtifacts(
   await writeJsonFile(join(targetDir, "debug-manifest.json"), debugManifest, "debug manifest write");
   await writeJsonFile(
     join(targetDir, "topography.json"),
-    { tiles: buildPhaseTiles(envelope, "topography") },
+    { tiles: buildTopographyDebugTiles(envelope, topographyStructureDebug) },
     "topography debug artifact write"
   );
   await writeJsonFile(
@@ -178,7 +252,8 @@ export async function writeDebugOutputs(
   debugOutputFile: string | undefined,
   force: boolean,
   streamCoherence: StreamCoherenceMetrics | undefined,
-  lakeCoherence: LakeCoherenceMetrics | undefined
+  lakeCoherence: LakeCoherenceMetrics | undefined,
+  topographyStructureDebug?: TopographyStructureDebugPayload
 ): Promise<void> {
   if (await pathExists(outputDir) && !force) {
     throw new InputValidationError(
@@ -192,7 +267,13 @@ export async function writeDebugOutputs(
   let published = false;
 
   try {
-    await writeDebugArtifacts(stagingDir, envelope, streamCoherence, lakeCoherence);
+    await writeDebugArtifacts(
+      stagingDir,
+      envelope,
+      streamCoherence,
+      lakeCoherence,
+      topographyStructureDebug
+    );
 
     if (debugOutputFile) {
       await writeStandardOutput(debugOutputFile, envelope, force);
@@ -215,7 +296,8 @@ export async function writeModeOutputs(
   envelope: TerrainEnvelope,
   force: boolean,
   streamCoherence?: StreamCoherenceMetrics,
-  lakeCoherence?: LakeCoherenceMetrics
+  lakeCoherence?: LakeCoherenceMetrics,
+  topographyStructureDebug?: TopographyStructureDebugPayload
 ): Promise<void> {
   if (mode === "debug") {
     if (!outputDir) {
@@ -227,7 +309,8 @@ export async function writeModeOutputs(
       debugOutputFile,
       force,
       streamCoherence,
-      lakeCoherence
+      lakeCoherence,
+      topographyStructureDebug
     );
     return;
   }

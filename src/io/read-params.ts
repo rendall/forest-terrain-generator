@@ -145,6 +145,50 @@ function validateLakeCoherenceParams(params: JsonObject): void {
   );
 }
 
+function topographyStructurePath(key: string): string {
+  return `params.topography.structure.${key}`;
+}
+
+function validateTopographyStructureParams(params: JsonObject): void {
+  if (params.topography === undefined) {
+    return;
+  }
+  if (!isObject(params.topography)) {
+    throw new InputValidationError(
+      'Invalid params value "params.topography". Expected an object.'
+    );
+  }
+  const topography = params.topography as JsonObject;
+  const structure = topography.structure;
+  if (structure === undefined) {
+    return;
+  }
+
+  if (!isObject(structure)) {
+    throw new InputValidationError(
+      'Invalid params value "params.topography.structure". Expected an object.'
+    );
+  }
+
+  const value = structure as JsonObject;
+  expectOptionalBoolean(value.enabled, topographyStructurePath("enabled"));
+  expectOptionalEnum(
+    value.connectivity,
+    topographyStructurePath("connectivity"),
+    ["dir8"]
+  );
+  expectOptionalNonNegativeNumber(value.hEps, topographyStructurePath("hEps"));
+  expectOptionalNonNegativeNumber(
+    value.persistenceMin,
+    topographyStructurePath("persistenceMin")
+  );
+  expectOptionalEnum(
+    value.unresolvedPolicy,
+    topographyStructurePath("unresolvedPolicy"),
+    ["nan"]
+  );
+}
+
 function normalizeLegacyHydrologyAliases(params: JsonObject): void {
   if (!isObject(params.hydrology)) {
     return;
@@ -281,6 +325,7 @@ export async function readParamsFile(
   normalizeLegacyHydrologyAliases(params);
   validateUnknownKeys(params, PARAMS_VALIDATION_SCHEMA, "params");
   validateLakeCoherenceParams(params);
+  validateTopographyStructureParams(params);
 
   return {
     seed,

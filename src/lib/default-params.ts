@@ -22,6 +22,15 @@ export const APPENDIX_A_DEFAULTS: JsonObject = {
 		persistence: 0.5,
 		strength: 0.12,
 	},
+	topography: {
+		structure: {
+			enabled: true,
+			connectivity: "dir8",
+			hEps: 0.000001,
+			persistenceMin: 0.01,
+			unresolvedPolicy: "nan",
+		},
+	},
 	landform: { eps: 0.005, flatSlopeThreshold: 0.03 },
 	hydrology: {
 		minDropThreshold: 0.0005,

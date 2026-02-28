@@ -17,6 +17,22 @@ export interface TopographyMapsSoA extends BaseMapsSoA {
   landform: Uint8Array;
 }
 
+export interface TopographicStructureMapsSoA {
+  shape: GridShape;
+  basinMinIdx: Int32Array;
+  basinMinH: Float32Array;
+  basinSpillH: Float32Array;
+  basinPersistence: Float32Array;
+  basinDepthLike: Float32Array;
+  peakMaxIdx: Int32Array;
+  peakMaxH: Float32Array;
+  peakSaddleH: Float32Array;
+  peakPersistence: Float32Array;
+  peakRiseLike: Float32Array;
+  basinLike: Uint8Array;
+  ridgeLike: Uint8Array;
+}
+
 export const LANDFORM_CODE = {
   flat: 0,
   slope: 1,
@@ -63,5 +79,23 @@ export function createTopographyMaps(shape: GridShape): TopographyMapsSoA {
     slopeMag: new Float32Array(shape.size),
     aspectDeg: new Float32Array(shape.size),
     landform: new Uint8Array(shape.size)
+  };
+}
+
+export function createTopographicStructureMaps(shape: GridShape): TopographicStructureMapsSoA {
+  return {
+    shape,
+    basinMinIdx: new Int32Array(shape.size).fill(-1),
+    basinMinH: new Float32Array(shape.size).fill(Number.NaN),
+    basinSpillH: new Float32Array(shape.size).fill(Number.NaN),
+    basinPersistence: new Float32Array(shape.size).fill(Number.NaN),
+    basinDepthLike: new Float32Array(shape.size).fill(Number.NaN),
+    peakMaxIdx: new Int32Array(shape.size).fill(-1),
+    peakMaxH: new Float32Array(shape.size).fill(Number.NaN),
+    peakSaddleH: new Float32Array(shape.size).fill(Number.NaN),
+    peakPersistence: new Float32Array(shape.size).fill(Number.NaN),
+    peakRiseLike: new Float32Array(shape.size).fill(Number.NaN),
+    basinLike: new Uint8Array(shape.size),
+    ridgeLike: new Uint8Array(shape.size)
   };
 }
