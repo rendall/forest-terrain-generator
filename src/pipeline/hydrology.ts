@@ -2151,25 +2151,30 @@ export function deriveHydrology(
 	const structureEnabled =
 		structureConfig.enabled &&
 		isTopographicStructureActive(shape, topographicStructure);
-	const sinkCandidates: SinkCandidateCounters = {
-		routeThrough: 0,
-		pool: 0,
-		lake: 0,
-	};
-	const sinkRejections: SinkRejectionCounters = {
-		persistence_below_route_max: 0,
-		persistence_below_lake_min: 0,
-		basin_size_below_lake_min: 0,
-		inflow_below_lake_min: 0,
-		unresolved_policy_denied: 0,
-	};
-	const endpointReasons: EndpointReasonCounters = {
-		lake: 0,
-		pool: 0,
-		marsh: 0,
-		route_through: 0,
-		blocked: 0,
-	};
+	let sinkCandidates: SinkCandidateCounters | undefined;
+	let sinkRejections: SinkRejectionCounters | undefined;
+	let endpointReasons: EndpointReasonCounters | undefined;
+	if (emitStructureDiagnostics) {
+		sinkCandidates = {
+			routeThrough: 0,
+			pool: 0,
+			lake: 0,
+		};
+		sinkRejections = {
+			persistence_below_route_max: 0,
+			persistence_below_lake_min: 0,
+			basin_size_below_lake_min: 0,
+			inflow_below_lake_min: 0,
+			unresolved_policy_denied: 0,
+		};
+		endpointReasons = {
+			lake: 0,
+			pool: 0,
+			marsh: 0,
+			route_through: 0,
+			blocked: 0,
+		};
+	}
 	maps.fd = deriveFlowDirection(shape, h, seed, params);
 	const downstream = deriveDownstreamIndexMap(shape, maps.fd);
 	maps.inDeg = deriveInDegree(shape, maps.fd);
@@ -2238,14 +2243,14 @@ export function deriveHydrology(
 				config: structureConfig,
 			});
 			if (emitStructureDiagnostics) {
-				sinkCandidates[
+				sinkCandidates![
 					decision.terminalClass === "route_through"
 						? "routeThrough"
 						: decision.terminalClass
 				] += 1;
 			}
 			if (emitStructureDiagnostics && decision.rejectionReason) {
-				sinkRejections[decision.rejectionReason] += 1;
+				sinkRejections![decision.rejectionReason] += 1;
 			}
 			if (decision.terminalClass === "lake") {
 				maps.lakeMask[i] = 1;
@@ -2310,22 +2315,22 @@ export function deriveHydrology(
 				continue;
 			}
 			if (maps.lakeMask[i] === 1) {
-				endpointReasons.lake += 1;
+				endpointReasons!.lake += 1;
 				continue;
 			}
 			if (maps.poolMask[i] === 1) {
-				endpointReasons.pool += 1;
+				endpointReasons!.pool += 1;
 				continue;
 			}
 			if (maps.waterClass[i] === WATER_CLASS_CODE.marsh) {
-				endpointReasons.marsh += 1;
+				endpointReasons!.marsh += 1;
 				continue;
 			}
 			if (routeThroughMask[i] === 1) {
-				endpointReasons.route_through += 1;
+				endpointReasons!.route_through += 1;
 				continue;
 			}
-			endpointReasons.blocked += 1;
+			endpointReasons!.blocked += 1;
 		}
 	}
 
@@ -2333,9 +2338,9 @@ export function deriveHydrology(
 	if (emitStructureDiagnostics) {
 		maps.structureDiagnostics = {
 			params: structureConfig,
-			sinkCandidates,
-			sinkRejections,
-			endpointReasons,
+			sinkCandidates: sinkCandidates!,
+			sinkRejections: sinkRejections!,
+			endpointReasons: endpointReasons!,
 			moistureDecomposition: {
 				baseMoisture: summarizeFloatArray(baseMoisture),
 				retentionTerm: summarizeFloatArray(retentionTerm),
