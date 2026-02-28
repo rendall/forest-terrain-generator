@@ -198,22 +198,31 @@ Phase 5: Checklist and execution readiness
 1. Convert this plan into checklist items per `docs/normative/checklist.md`.
 2. Execute only after final decision lock.
 
-## 14. Open Decisions (Blocking for Checklist Draft)
+## 14. Open Decisions
 
-1. `TS-01` Should first wave include basin pass only, or both basin + peak?
-2. `TS-02` Confirm connectivity (`dir8` vs `dir4`) for structural passes.
-3. `TS-03` Resolve unresolved spill/saddle policy (`nan` vs sentinel/cap).
-4. `TS-04` Decide initial output exposure:
-   - internal-only maps
-   - debug artifacts
-   - tile payload inclusion
-5. `TS-05` Decide whether hydrology consumes structure in first wave or later wave.
+No blocking open decisions remain for checklist drafting in this track.
 
-## 15. Initial Recommendation Slate (Proposed, Not Locked)
+## 15. Adopted Decision Slate (Locked)
 
-1. `R-TS-01` Adopt basin pass first as minimum structural foundation.
-2. `R-TS-02` Keep peak pass in same track if complexity remains acceptable after basin pass lock.
-3. `R-TS-03` Use `dir8`, row-major tie-breaks, and explicit `hEps`.
-4. `R-TS-04` Keep unresolved values as `NaN` in internal maps initially.
-5. `R-TS-05` Publish structural diagnostics in debug outputs before policy coupling.
-6. `R-TS-06` Defer ADR and normative updates until `TS-01` to `TS-05` are locked.
+1. `TS-01` First-wave scope:
+   - Adopted: basin pass first as minimum structural foundation.
+   - Adopted: include peak pass in this track when complexity remains acceptable after basin-pass lock.
+2. `TS-02` Connectivity:
+   - Adopted: `dir8` connectivity for structural passes.
+3. `TS-03` Unresolved spill/saddle policy:
+   - Adopted: keep unresolved values as `NaN` in internal maps initially.
+4. `TS-04` Output exposure policy:
+   - Adopted: full structural fields always available in internal maps.
+   - Adopted: full structural fields published in debug artifacts in first external surface.
+   - Adopted: tile payload receives a minimal stable subset only:
+     - `topography.structure.basinPersistence`
+     - `topography.structure.peakPersistence`
+     - `topography.structure.basinLike`
+     - `topography.structure.ridgeLike`
+   - Adopted: internal lineage/identity fields (for example `basinMinIdx`, merge lineage, unresolved markers) remain internal/debug-only in first wave.
+5. `TS-05` Hydrology consumer timing:
+   - Adopted: hydrology consumes structure in a later wave after structural outputs and diagnostics are stable.
+
+## 16. Governance Reminder
+
+1. ADR and normative updates remain deferred until implementation details are executed and validated.
