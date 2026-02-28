@@ -4,7 +4,11 @@ import {
 	type HydrologyMapsSoA,
 	WATER_CLASS_CODE,
 } from "../domain/hydrology.js";
-import { type GridShape, LANDFORM_CODE } from "../domain/topography.js";
+import {
+	type GridShape,
+	LANDFORM_CODE,
+	type TopographicStructureMapsSoA,
+} from "../domain/topography.js";
 import { mix64 } from "../lib/sub-seed.js";
 
 const U64_MASK = 0xffffffffffffffffn;
@@ -370,6 +374,135 @@ export function normalizeHydrologyStructureParams(
 			),
 		),
 		retentionNormalization,
+	};
+}
+
+export type TerminalClass = "lake" | "pool" | "route_through";
+export type TerminalRejectionReason =
+	| "persistence_below_route_max"
+	| "persistence_below_lake_min"
+	| "basin_size_below_lake_min"
+	| "inflow_below_lake_min"
+	| "unresolved_policy_denied";
+
+export interface TerminalWaterClassDecision {
+	terminalClass: TerminalClass;
+	waterClass: number;
+	rejectionReason: TerminalRejectionReason | null;
+}
+
+export interface TerminalWaterClassInput {
+	persistence: number;
+	basinTileCount: number;
+	inflow: number;
+	unresolved: boolean;
+	config: HydrologyStructureParams;
+}
+
+export function deriveBasinTileCounts(
+	shape: GridShape,
+	basinMinIdx: Int32Array,
+): Uint32Array {
+	validateMapLength(shape, basinMinIdx, "basinMinIdx");
+	const countsByMinimum = new Uint32Array(shape.size);
+	const out = new Uint32Array(shape.size);
+
+	for (let i = 0; i < shape.size; i += 1) {
+		const minimum = basinMinIdx[i];
+		if (minimum < 0 || minimum >= shape.size) {
+			continue;
+		}
+		countsByMinimum[minimum] += 1;
+	}
+
+	for (let i = 0; i < shape.size; i += 1) {
+		const minimum = basinMinIdx[i];
+		if (minimum < 0 || minimum >= shape.size) {
+			continue;
+		}
+		out[i] = countsByMinimum[minimum];
+	}
+
+	return out;
+}
+
+function unresolvedLakeAllowed(
+	input: TerminalWaterClassInput,
+): { allowed: boolean; rejectionReason: TerminalRejectionReason | null } {
+	const { unresolved, config, inflow } = input;
+	if (!unresolved) {
+		return { allowed: true, rejectionReason: null };
+	}
+	if (config.unresolvedLakePolicy === "deny") {
+		return { allowed: false, rejectionReason: "unresolved_policy_denied" };
+	}
+	if (config.unresolvedLakePolicy === "allow") {
+		return { allowed: true, rejectionReason: null };
+	}
+	if (inflow < config.lakeInflowMin) {
+		return { allowed: false, rejectionReason: "inflow_below_lake_min" };
+	}
+	return { allowed: true, rejectionReason: null };
+}
+
+export function classifyTerminalWaterClass(
+	input: TerminalWaterClassInput,
+): TerminalWaterClassDecision {
+	const {
+		persistence,
+		basinTileCount,
+		inflow,
+		unresolved,
+		config,
+	} = input;
+
+	if (Number.isFinite(persistence) && persistence < config.sinkPersistenceRouteMax) {
+		return {
+			terminalClass: "route_through",
+			waterClass: WATER_CLASS_CODE.none,
+			rejectionReason: "persistence_below_route_max",
+		};
+	}
+
+	if (!Number.isFinite(persistence) || persistence < config.sinkPersistenceLakeMin) {
+		return {
+			terminalClass: "pool",
+			waterClass: WATER_CLASS_CODE.pool,
+			rejectionReason: "persistence_below_lake_min",
+		};
+	}
+	if (basinTileCount < config.basinTileCountMinLake) {
+		return {
+			terminalClass: "pool",
+			waterClass: WATER_CLASS_CODE.pool,
+			rejectionReason: "basin_size_below_lake_min",
+		};
+	}
+	if (config.inflowGateEnabled && inflow < config.lakeInflowMin) {
+		return {
+			terminalClass: "pool",
+			waterClass: WATER_CLASS_CODE.pool,
+			rejectionReason: "inflow_below_lake_min",
+		};
+	}
+	const unresolvedCheck = unresolvedLakeAllowed({
+		persistence,
+		basinTileCount,
+		inflow,
+		unresolved,
+		config,
+	});
+	if (!unresolvedCheck.allowed) {
+		return {
+			terminalClass: "pool",
+			waterClass: WATER_CLASS_CODE.pool,
+			rejectionReason: unresolvedCheck.rejectionReason,
+		};
+	}
+	return {
+		terminalClass: "lake",
+		waterClass: WATER_CLASS_CODE.lake,
+		rejectionReason: null,
 	};
 }
 
@@ -1500,11 +1633,14 @@ export function validateStreamContinuity(
 	isStream: Uint8Array,
 	lakeMask: Uint8Array,
 	poolMask: Uint8Array,
+	routeThroughMask?: Uint8Array,
 ): void {
 	validateMapLength(shape, downstream, "DownstreamIndexMap");
 	validateMapLength(shape, isStream, "isStream");
 	validateMapLength(shape, lakeMask, "LakeMask");
 	validateMapLength(shape, poolMask, "poolMask");
+	const routeMask = routeThroughMask ?? new Uint8Array(shape.size);
+	validateMapLength(shape, routeMask, "routeThroughMask");
 
 	for (let i = 0; i < shape.size; i += 1) {
 		if (isStream[i] !== 1) {
@@ -1515,7 +1651,7 @@ export function validateStreamContinuity(
 			if (isStream[next] === 1 || lakeMask[next] === 1 || poolMask[next] === 1) {
 				continue;
 			}
-		} else if (poolMask[i] === 1) {
+		} else if (poolMask[i] === 1 || routeMask[i] === 1) {
 			continue;
 		}
 		hydrologyFail(
@@ -1825,8 +1961,10 @@ export function deriveHydrology(
 	landform: Uint8Array,
 	seed: bigint,
 	params: HydrologyParams,
+	topographicStructure?: TopographicStructureMapsSoA,
 ): HydrologyMapsSoA {
 	const maps = createHydrologyMaps(shape);
+	const structureConfig = normalizeHydrologyStructureParams(params.structure);
 	maps.fd = deriveFlowDirection(shape, h, seed, params);
 	const downstream = deriveDownstreamIndexMap(shape, maps.fd);
 	maps.inDeg = deriveInDegree(shape, maps.fd);
@@ -1842,7 +1980,6 @@ export function deriveHydrology(
 		params.lakeCoherence,
 	);
 	validateLakeBoundaryRealism(shape, maps.lakeMask, h, params.lakeCoherence);
-	maps.lakeSurfaceH = deriveLakeSurfaceH(shape, maps.lakeMask, h);
 
 	const streamThresholds = normalizeStreamThresholdParams(params);
 	const headwaterBoost = normalizeHeadwaterBoostParams(params);
@@ -1878,12 +2015,45 @@ export function deriveHydrology(
 		streamThresholds.maxGapFillSteps ?? 0,
 	);
 	maps.poolMask = topology.poolMask;
+	const routeThroughMask = new Uint8Array(shape.size);
+	if (structureConfig.enabled && topographicStructure) {
+		const basinTileCount = deriveBasinTileCounts(
+			shape,
+			topographicStructure.basinMinIdx,
+		);
+		for (let i = 0; i < shape.size; i += 1) {
+			if (maps.isStream[i] !== 1 || maps.lakeMask[i] === 1 || downstream[i] >= 0) {
+				continue;
+			}
+			const decision = classifyTerminalWaterClass({
+				persistence: topographicStructure.basinPersistence[i],
+				basinTileCount: basinTileCount[i],
+				inflow: maps.faN[i],
+				unresolved: Number.isNaN(topographicStructure.basinSpillH[i]),
+				config: structureConfig,
+			});
+			if (decision.terminalClass === "lake") {
+				maps.lakeMask[i] = 1;
+				maps.poolMask[i] = 0;
+				maps.isStream[i] = 0;
+				continue;
+			}
+			if (decision.terminalClass === "pool") {
+				maps.poolMask[i] = 1;
+				maps.isStream[i] = 0;
+				continue;
+			}
+			routeThroughMask[i] = 1;
+			maps.poolMask[i] = 0;
+		}
+	}
 	validateStreamContinuity(
 		shape,
 		downstream,
 		maps.isStream,
 		maps.lakeMask,
 		maps.poolMask,
+		routeThroughMask,
 	);
 	maps.distWater = deriveDistWater(
 		shape,
@@ -1908,6 +2078,7 @@ export function deriveHydrology(
 		slopeMag,
 		params,
 	);
+	maps.lakeSurfaceH = deriveLakeSurfaceH(shape, maps.lakeMask, h);
 	return maps;
 }
 

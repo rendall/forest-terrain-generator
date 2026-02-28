@@ -271,6 +271,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		topography.landform,
 		validated.seed,
 		hydrologyParams,
+		topographyStructure,
 	);
 	const streamCoherence = deriveStreamCoherenceMetrics(
 		shape,

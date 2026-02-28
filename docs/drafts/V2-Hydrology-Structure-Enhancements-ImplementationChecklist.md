@@ -32,11 +32,11 @@ Checklist constraint:
 
 ## Sink Semantics (Persistence + Size; Optional Inflow)
 
-- [ ] [hydrology] `HS-SK-01` Add deterministic helper `deriveBasinTileCounts(shape, basinMinIdx)` in `src/pipeline/hydrology.ts` that returns per-tile basin-size lookup keyed by `basinMinIdx` from topographic structure maps.
-- [ ] [hydrology] `HS-SK-02` Add helper `classifyTerminalWaterClass(...)` in `src/pipeline/hydrology.ts` that applies standing-water gates in adopted order: persistence gates, basin-size gate, optional inflow gate, unresolved policy gate (depends on `HS-HY-03` and `HS-SK-01`).
+- [x] [hydrology] `HS-SK-01` Add deterministic helper `deriveBasinTileCounts(shape, basinMinIdx)` in `src/pipeline/hydrology.ts` that returns per-tile basin-size lookup keyed by `basinMinIdx` from topographic structure maps.
+- [x] [hydrology] `HS-SK-02` Add helper `classifyTerminalWaterClass(...)` in `src/pipeline/hydrology.ts` that applies standing-water gates in adopted order: persistence gates, basin-size gate, optional inflow gate, unresolved policy gate (depends on `HS-HY-03` and `HS-SK-01`).
   - Ensure helper returns both selected class and rejection-reason code for diagnostics.
-- [ ] [hydrology] `HS-SK-03` Integrate `classifyTerminalWaterClass` into terminal handling path in `deriveHydrology` in `src/pipeline/hydrology.ts` for `pool|lake|route-through` outcomes while preserving deterministic traversal order (depends on `HS-SK-02`).
-- [ ] [hydrology] `HS-SK-04` Keep spill-aware route-through behavior behind `spillAwareRouteThroughEnabled` and default no-op when disabled in `deriveHydrology` (depends on `HS-SK-03`).
+- [x] [hydrology] `HS-SK-03` Integrate `classifyTerminalWaterClass` into terminal handling path in `deriveHydrology` in `src/pipeline/hydrology.ts` for `pool|lake|route-through` outcomes while preserving deterministic traversal order (depends on `HS-SK-02`).
+- [x] [hydrology] `HS-SK-04` Keep spill-aware route-through behavior behind `spillAwareRouteThroughEnabled` and default no-op when disabled in `deriveHydrology` (depends on `HS-SK-03`).
 
 ## Retention-Aware Moisture
 
