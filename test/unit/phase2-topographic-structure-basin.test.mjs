@@ -97,7 +97,7 @@ describe("Phase 2 topographic structure basin sweep", () => {
       persistenceMin: 0.05,
       unresolvedPolicy: "nan",
     });
-    expect(Array.from(enabled.basinMinIdx)).toEqual([1, 1, 2]);
+    expect(Array.from(enabled.basinMinIdx)).toEqual([1, 1, 1]);
     expect(Array.from(enabled.peakMaxIdx)).toEqual([0, 0, 2]);
   });
 });

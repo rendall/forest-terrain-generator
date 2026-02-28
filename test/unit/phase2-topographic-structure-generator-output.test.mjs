@@ -38,12 +38,13 @@ describe("Phase 2 topographic structure tile payload", () => {
     expect(envelope.tiles.length).toBe(64);
 
     const firstTile = envelope.tiles[0];
-    expect(firstTile.topography.structure).toEqual({
-      basinPersistence: expect.anything(),
-      peakPersistence: expect.anything(),
-      basinLike: expect.any(Boolean),
-      ridgeLike: expect.any(Boolean),
-    });
+    expect(firstTile.topography.structure).toBeDefined();
+    expect(firstTile.topography.structure.basinPersistence === null
+      || typeof firstTile.topography.structure.basinPersistence === "number").toBe(true);
+    expect(firstTile.topography.structure.peakPersistence === null
+      || typeof firstTile.topography.structure.peakPersistence === "number").toBe(true);
+    expect(typeof firstTile.topography.structure.basinLike).toBe("boolean");
+    expect(typeof firstTile.topography.structure.ridgeLike).toBe("boolean");
     expect(firstTile.topography.structure.basinMinIdx).toBeUndefined();
     expect(firstTile.topography.structure.peakMaxIdx).toBeUndefined();
 

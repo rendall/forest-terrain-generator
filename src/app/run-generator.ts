@@ -13,6 +13,7 @@ import { readParamsFile } from "../io/read-params.js";
 import { writeModeOutputs } from "../io/write-outputs.js";
 import { deepMerge } from "../lib/deep-merge.js";
 import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
+import { deriveTopographicStructure } from "../pipeline/derive-topographic-structure.js";
 import { deriveTopographyFromBaseMaps } from "../pipeline/derive-topography.js";
 import {
 	biomeCodeToName,
@@ -64,6 +65,9 @@ const WATER_CLASS_NAME_BY_CODE: Record<number, string> = {
 };
 
 type HydrologyParams = Parameters<typeof deriveHydrology>[5];
+type TopographicStructureParams = Parameters<
+	typeof deriveTopographicStructure
+>[2];
 type EcologyParams = Parameters<typeof deriveEcology>[2];
 type TrailCostParams = Parameters<typeof deriveTrailPreferenceCost>[2];
 type TrailPlanParams = Parameters<typeof buildTrailPlan>[2];
@@ -143,6 +147,18 @@ function buildHydrologyParams(params: JsonObject): HydrologyParams {
 		lakeCoherence: hydrology.lakeCoherence,
 		streamProxMaxDist: gameTrails.streamProxMaxDist,
 	} as unknown as HydrologyParams;
+}
+
+function buildTopographyStructureParams(
+	params: JsonObject,
+): TopographicStructureParams {
+	const topography = isJsonObject(params.topography)
+		? (params.topography as Record<string, unknown>)
+		: {};
+	const structure = isJsonObject(topography.structure)
+		? (topography.structure as Record<string, unknown>)
+		: {};
+	return structure as unknown as TopographicStructureParams;
 }
 
 export async function resolveInputs(
@@ -239,6 +255,11 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		shape,
 		baseMaps,
 		validated.params,
+	);
+	const topographyStructure = deriveTopographicStructure(
+		shape,
+		topography.h,
+		buildTopographyStructureParams(validated.params),
 	);
 	const hydrologyParams = buildHydrologyParams(validated.params);
 	const hydrology = deriveHydrology(
@@ -446,6 +467,12 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 				slopeMag: topography.slopeMag[i],
 				aspectDeg: topography.aspectDeg[i],
 				landform,
+				structure: {
+					basinPersistence: topographyStructure.basinPersistence[i],
+					peakPersistence: topographyStructure.peakPersistence[i],
+					basinLike: topographyStructure.basinLike[i] === 1,
+					ridgeLike: topographyStructure.ridgeLike[i] === 1,
+				},
 			},
 			hydrology: hydrologyPayload,
 			ecology: {

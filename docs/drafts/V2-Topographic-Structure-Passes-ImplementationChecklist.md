@@ -42,19 +42,19 @@ Checklist constraint:
 
 ## Peak Pass Core
 
-- [ ] [topography] `TP-PS-01` Implement peak sweep metadata in `derive-topographic-structure.ts` (`maxH`, `maxIdx`, `saddleH`) using the shared grouped-height helper in `desc` mode; merge rule: higher maximum wins, row-major tie-break (depends on `TP-BS-02`, `TP-BS-03`, and `TP-GT-01`).
-- [ ] [topography] `TP-PS-02` Record `saddleH` for losing peak lineage at first merge level in peak sweep merge operations in `derive-topographic-structure.ts` (depends on `TP-PS-01`).
-- [ ] [topography] `TP-PS-03` Derive per-tile peak outputs in `derive-topographic-structure.ts`: `peakMaxIdx`, `peakMaxH`, `peakSaddleH`, `peakPersistence` under `unresolvedPolicy="nan"` (depends on `TP-PS-02`).
-- [ ] [topography] `TP-PS-04` Derive `peakRiseLike = max(0, h - peakSaddleH)` in `derive-topographic-structure.ts` when `peakSaddleH` is resolved; keep unresolved values as `NaN` (depends on `TP-PS-03`).
-- [ ] [topography] `TP-PS-05` Derive `ridgeLike` boolean mask in `derive-topographic-structure.ts` from `peakPersistence >= persistenceMin` (depends on `TP-PS-03`).
-- [ ] [topography] `TP-PS-06` Add orchestrator `deriveTopographicStructure(shape, h, params)` in `derive-topographic-structure.ts` that returns `TopographicStructureMapsSoA` and respects `topography.structure.enabled` (depends on `TP-BS-08` and `TP-PS-05`).
+- [x] [topography] `TP-PS-01` Implement peak sweep metadata in `derive-topographic-structure.ts` (`maxH`, `maxIdx`, `saddleH`) using the shared grouped-height helper in `desc` mode; merge rule: higher maximum wins, row-major tie-break (depends on `TP-BS-02`, `TP-BS-03`, and `TP-GT-01`).
+- [x] [topography] `TP-PS-02` Record `saddleH` for losing peak lineage at first merge level in peak sweep merge operations in `derive-topographic-structure.ts` (depends on `TP-PS-01`).
+- [x] [topography] `TP-PS-03` Derive per-tile peak outputs in `derive-topographic-structure.ts`: `peakMaxIdx`, `peakMaxH`, `peakSaddleH`, `peakPersistence` under `unresolvedPolicy="nan"` (depends on `TP-PS-02`).
+- [x] [topography] `TP-PS-04` Derive `peakRiseLike = max(0, h - peakSaddleH)` in `derive-topographic-structure.ts` when `peakSaddleH` is resolved; keep unresolved values as `NaN` (depends on `TP-PS-03`).
+- [x] [topography] `TP-PS-05` Derive `ridgeLike` boolean mask in `derive-topographic-structure.ts` from `peakPersistence >= persistenceMin` (depends on `TP-PS-03`).
+- [x] [topography] `TP-PS-06` Add orchestrator `deriveTopographicStructure(shape, h, params)` in `derive-topographic-structure.ts` that returns `TopographicStructureMapsSoA` and respects `topography.structure.enabled` (depends on `TP-BS-08` and `TP-PS-05`).
 
 ## Orchestration and Tile Payload
 
-- [ ] [app] `TP-OR-01` Import and run `deriveTopographicStructure` in `runGenerator` in `src/app/run-generator.ts` after `deriveTopographyFromBaseMaps` and before hydrology/ecology consumers (depends on `TP-PS-06`).
-- [ ] [app] `TP-OR-02` Keep hydrology invocation unchanged in `runGenerator` (`src/app/run-generator.ts`) so structure maps are not consumed by hydrology in first wave (depends on `TP-SC-01` and `TP-OR-01`).
-- [ ] [app] `TP-OR-03` Add minimal tile payload object `topography.structure` in `runGenerator` with adopted stable subset: `basinPersistence`, `peakPersistence`, `basinLike`, `ridgeLike` (depends on `TP-OR-01`).
-- [ ] [app] `TP-OR-04` Keep internal lineage/identity fields (`basinMinIdx`, `peakMaxIdx`, spill/saddle lineage internals) out of standard tile payload in `runGenerator` (depends on `TP-OR-03`).
+- [x] [app] `TP-OR-01` Import and run `deriveTopographicStructure` in `runGenerator` in `src/app/run-generator.ts` after `deriveTopographyFromBaseMaps` and before hydrology/ecology consumers (depends on `TP-PS-06`).
+- [x] [app] `TP-OR-02` Keep hydrology invocation unchanged in `runGenerator` (`src/app/run-generator.ts`) so structure maps are not consumed by hydrology in first wave (depends on `TP-SC-01` and `TP-OR-01`).
+- [x] [app] `TP-OR-03` Add minimal tile payload object `topography.structure` in `runGenerator` with adopted stable subset: `basinPersistence`, `peakPersistence`, `basinLike`, `ridgeLike` (depends on `TP-OR-01`).
+- [x] [app] `TP-OR-04` Keep internal lineage/identity fields (`basinMinIdx`, `peakMaxIdx`, spill/saddle lineage internals) out of standard tile payload in `runGenerator` (depends on `TP-OR-03`).
 
 ## Debug Artifact Exposure
 

@@ -22,6 +22,10 @@ export interface TopographicStructureConfig {
   unresolvedPolicy: "nan";
 }
 
+export interface TopographicStructureParams extends TopographicStructureConfig {
+  enabled: boolean;
+}
+
 type HeightOrderMode = "asc" | "desc";
 
 interface HeightGroup {
@@ -32,6 +36,11 @@ interface HeightGroup {
 interface BasinRootMeta {
   minH: Float32Array;
   minIdx: Int32Array;
+}
+
+interface PeakRootMeta {
+  maxH: Float32Array;
+  maxIdx: Int32Array;
 }
 
 function assertStructureConfig(config: TopographicStructureConfig): void {
@@ -241,6 +250,168 @@ export function deriveBasinStructure(
     out.basinDepthLike[i] = Math.max(0, spillH - h[i]);
     out.basinLike[i] = persistence >= config.persistenceMin ? 1 : 0;
   }
+
+  return out;
+}
+
+function higherMaximumWins(
+  aRoot: number,
+  bRoot: number,
+  meta: PeakRootMeta,
+  hEps: number
+): boolean {
+  const aMaxH = meta.maxH[aRoot];
+  const bMaxH = meta.maxH[bRoot];
+  if (aMaxH > bMaxH + hEps) {
+    return true;
+  }
+  if (bMaxH > aMaxH + hEps) {
+    return false;
+  }
+  return meta.maxIdx[aRoot] <= meta.maxIdx[bRoot];
+}
+
+function unionPeakRoots(
+  parent: Int32Array,
+  meta: PeakRootMeta,
+  saddleByMaximum: Float32Array,
+  a: number,
+  b: number,
+  level: number,
+  hEps: number
+): number {
+  const aRoot = dsuFind(parent, a);
+  const bRoot = dsuFind(parent, b);
+  if (aRoot === bRoot) {
+    return aRoot;
+  }
+
+  const aWins = higherMaximumWins(aRoot, bRoot, meta, hEps);
+  const winner = aWins ? aRoot : bRoot;
+  const loser = aWins ? bRoot : aRoot;
+  const loserMaximum = meta.maxIdx[loser];
+
+  if (Number.isNaN(saddleByMaximum[loserMaximum])) {
+    saddleByMaximum[loserMaximum] = level;
+  }
+
+  parent[loser] = winner;
+  return winner;
+}
+
+export function derivePeakStructure(
+  shape: GridShape,
+  h: Float32Array,
+  config: TopographicStructureConfig
+) {
+  if (h.length !== shape.size) {
+    throw new Error(
+      `Topographic structure: map length mismatch for H. expected=${shape.size} actual=${h.length}.`
+    );
+  }
+  assertStructureConfig(config);
+
+  const groups = buildHeightGroups(h, config.hEps, "desc");
+  const out = createTopographicStructureMaps(shape);
+
+  const active = new Uint8Array(shape.size);
+  const parent = new Int32Array(shape.size).fill(-1);
+  const rootMeta: PeakRootMeta = {
+    maxH: new Float32Array(shape.size).fill(Number.NaN),
+    maxIdx: new Int32Array(shape.size).fill(-1)
+  };
+  const tilePeakMax = new Int32Array(shape.size).fill(-1);
+  const maxHByMaximum = new Float32Array(shape.size).fill(Number.NaN);
+  const saddleByMaximum = new Float32Array(shape.size).fill(Number.NaN);
+
+  for (const group of groups) {
+    for (const tile of group.indices) {
+      active[tile] = 1;
+      parent[tile] = tile;
+      rootMeta.maxH[tile] = h[tile];
+      rootMeta.maxIdx[tile] = tile;
+      maxHByMaximum[tile] = h[tile];
+    }
+
+    for (const tile of group.indices) {
+      const x = tile % shape.width;
+      const y = Math.floor(tile / shape.width);
+      for (const neighbor of STRUCTURE_DIR8_NEIGHBORS) {
+        const nx = x + neighbor.dx;
+        const ny = y + neighbor.dy;
+        if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
+          continue;
+        }
+        const n = indexOf(shape, nx, ny);
+        if (active[n] !== 1) {
+          continue;
+        }
+        unionPeakRoots(
+          parent,
+          rootMeta,
+          saddleByMaximum,
+          tile,
+          n,
+          group.level,
+          config.hEps
+        );
+      }
+    }
+
+    for (const tile of group.indices) {
+      const root = dsuFind(parent, tile);
+      tilePeakMax[tile] = rootMeta.maxIdx[root];
+    }
+  }
+
+  for (let i = 0; i < shape.size; i += 1) {
+    const maximum = tilePeakMax[i];
+    if (maximum < 0) {
+      continue;
+    }
+    out.peakMaxIdx[i] = maximum;
+
+    const maxH = maxHByMaximum[maximum];
+    const saddleH = saddleByMaximum[maximum];
+    out.peakMaxH[i] = maxH;
+    out.peakSaddleH[i] = saddleH;
+    if (Number.isNaN(saddleH)) {
+      continue;
+    }
+
+    const persistence = Math.max(0, maxH - saddleH);
+    out.peakPersistence[i] = persistence;
+    out.peakRiseLike[i] = Math.max(0, h[i] - saddleH);
+    out.ridgeLike[i] = persistence >= config.persistenceMin ? 1 : 0;
+  }
+
+  return out;
+}
+
+export function deriveTopographicStructure(
+  shape: GridShape,
+  h: Float32Array,
+  params: TopographicStructureParams
+) {
+  if (!params.enabled) {
+    return createTopographicStructureMaps(shape);
+  }
+
+  const config: TopographicStructureConfig = {
+    connectivity: params.connectivity,
+    hEps: params.hEps,
+    persistenceMin: params.persistenceMin,
+    unresolvedPolicy: params.unresolvedPolicy
+  };
+  const out = deriveBasinStructure(shape, h, config);
+  const peak = derivePeakStructure(shape, h, config);
+
+  out.peakMaxIdx = peak.peakMaxIdx;
+  out.peakMaxH = peak.peakMaxH;
+  out.peakSaddleH = peak.peakSaddleH;
+  out.peakPersistence = peak.peakPersistence;
+  out.peakRiseLike = peak.peakRiseLike;
+  out.ridgeLike = peak.ridgeLike;
 
   return out;
 }
