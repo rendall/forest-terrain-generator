@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { FileIoError, InputValidationError } from "../domain/errors.js";
 import type { Mode, TerrainEnvelope } from "../domain/types.js";
 import type {
+  HydrologyStructureDiagnostics,
   LakeCoherenceMetrics,
   StreamCoherenceMetrics
 } from "../pipeline/hydrology.js";
@@ -180,7 +181,8 @@ async function writeDebugArtifacts(
   envelope: TerrainEnvelope,
   streamCoherence: StreamCoherenceMetrics | undefined,
   lakeCoherence: LakeCoherenceMetrics | undefined,
-  topographyStructureDebug: TopographyStructureDebugPayload | undefined
+  topographyStructureDebug: TopographyStructureDebugPayload | undefined,
+  hydrologyStructureDiagnostics: HydrologyStructureDiagnostics | undefined
 ): Promise<void> {
   const { width, height } = deriveGridDimensions(envelope);
   const debugManifest = {
@@ -191,7 +193,8 @@ async function writeDebugArtifacts(
     tileCount: envelope.tiles.length,
     artifacts: [...DEBUG_ARTIFACT_FILES],
     ...(streamCoherence ? { streamCoherence } : {}),
-    ...(lakeCoherence ? { lakeCoherence } : {})
+    ...(lakeCoherence ? { lakeCoherence } : {}),
+    ...(hydrologyStructureDiagnostics ? { hydrologyStructureDiagnostics } : {})
   };
   await writeJsonFile(join(targetDir, "debug-manifest.json"), debugManifest, "debug manifest write");
   await writeJsonFile(
@@ -253,7 +256,8 @@ export async function writeDebugOutputs(
   force: boolean,
   streamCoherence: StreamCoherenceMetrics | undefined,
   lakeCoherence: LakeCoherenceMetrics | undefined,
-  topographyStructureDebug?: TopographyStructureDebugPayload
+  topographyStructureDebug?: TopographyStructureDebugPayload,
+  hydrologyStructureDiagnostics?: HydrologyStructureDiagnostics
 ): Promise<void> {
   if (await pathExists(outputDir) && !force) {
     throw new InputValidationError(
@@ -272,7 +276,8 @@ export async function writeDebugOutputs(
       envelope,
       streamCoherence,
       lakeCoherence,
-      topographyStructureDebug
+      topographyStructureDebug,
+      hydrologyStructureDiagnostics
     );
 
     if (debugOutputFile) {
@@ -297,7 +302,8 @@ export async function writeModeOutputs(
   force: boolean,
   streamCoherence?: StreamCoherenceMetrics,
   lakeCoherence?: LakeCoherenceMetrics,
-  topographyStructureDebug?: TopographyStructureDebugPayload
+  topographyStructureDebug?: TopographyStructureDebugPayload,
+  hydrologyStructureDiagnostics?: HydrologyStructureDiagnostics
 ): Promise<void> {
   if (mode === "debug") {
     if (!outputDir) {
@@ -310,7 +316,8 @@ export async function writeModeOutputs(
       force,
       streamCoherence,
       lakeCoherence,
-      topographyStructureDebug
+      topographyStructureDebug,
+      hydrologyStructureDiagnostics
     );
     return;
   }

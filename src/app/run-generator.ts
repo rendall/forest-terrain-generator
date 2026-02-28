@@ -238,6 +238,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			undefined,
 			undefined,
 			undefined,
+			undefined,
 		);
 		return;
 	}
@@ -512,5 +513,6 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		streamCoherence,
 		lakeCoherence,
 		topographyStructure,
+		hydrology.structureDiagnostics,
 	);
 }

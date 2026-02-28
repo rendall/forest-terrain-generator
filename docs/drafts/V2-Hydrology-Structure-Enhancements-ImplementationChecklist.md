@@ -40,25 +40,25 @@ Checklist constraint:
 
 ## Retention-Aware Moisture
 
-- [ ] [hydrology] `HS-MR-01` Add retention-term derivation helper in `src/pipeline/hydrology.ts` using basin structure signals and configured normalization mode (`quantile|minmax|raw`) (depends on `HS-HY-03`).
-- [ ] [hydrology] `HS-MR-02` Add moisture blend helper in `src/pipeline/hydrology.ts` implementing `finalMoisture = clamp01(baseMoisture + retentionWeight * retentionTerm)` (depends on `HS-MR-01`).
-- [ ] [hydrology] `HS-MR-03` Update moisture assignment in `deriveHydrology` to use the retention-aware blend output and preserve deterministic result shape (depends on `HS-MR-02`).
+- [x] [hydrology] `HS-MR-01` Add retention-term derivation helper in `src/pipeline/hydrology.ts` using basin structure signals and configured normalization mode (`quantile|minmax|raw`) (depends on `HS-HY-03`).
+- [x] [hydrology] `HS-MR-02` Add moisture blend helper in `src/pipeline/hydrology.ts` implementing `finalMoisture = clamp01(baseMoisture + retentionWeight * retentionTerm)` (depends on `HS-MR-01`).
+- [x] [hydrology] `HS-MR-03` Update moisture assignment in `deriveHydrology` to use the retention-aware blend output and preserve deterministic result shape (depends on `HS-MR-02`).
 
 ## Diagnostics Contract
 
-- [ ] [hydrology] `HS-DG-01` Add `HydrologyStructureDiagnostics` interface in `src/pipeline/hydrology.ts` with locked fields from plan Section 8.2 and add optional `structureDiagnostics?: HydrologyStructureDiagnostics` on the hydrology derive return contract (depends on `HS-HY-02`).
-- [ ] [hydrology] `HS-DG-02` Populate sink candidate counters and gate-rejection counters inside `deriveHydrology` according to Section 8.2 taxonomy (depends on `HS-SK-03` and `HS-DG-01`).
-- [ ] [hydrology] `HS-DG-03` Populate endpoint reason counters (`lake|pool|marsh|route_through|blocked`) in `deriveHydrology` (depends on `HS-SK-03` and `HS-DG-01`).
-- [ ] [hydrology] `HS-DG-04` Populate moisture decomposition summaries (`baseMoisture`, `retentionTerm`, `finalMoisture`) in `deriveHydrology` (depends on `HS-MR-03` and `HS-DG-01`).
-- [ ] [hydrology] `HS-DG-05` Include effective resolved `hydrology.structure.*` values in `structureDiagnostics.params` from `deriveHydrology` (depends on `HS-HY-03` and `HS-DG-01`).
+- [x] [hydrology] `HS-DG-01` Add `HydrologyStructureDiagnostics` interface in `src/pipeline/hydrology.ts` with locked fields from plan Section 8.2 and add optional `structureDiagnostics?: HydrologyStructureDiagnostics` on the hydrology derive return contract (depends on `HS-HY-02`).
+- [x] [hydrology] `HS-DG-02` Populate sink candidate counters and gate-rejection counters inside `deriveHydrology` according to Section 8.2 taxonomy (depends on `HS-SK-03` and `HS-DG-01`).
+- [x] [hydrology] `HS-DG-03` Populate endpoint reason counters (`lake|pool|marsh|route_through|blocked`) in `deriveHydrology` (depends on `HS-SK-03` and `HS-DG-01`).
+- [x] [hydrology] `HS-DG-04` Populate moisture decomposition summaries (`baseMoisture`, `retentionTerm`, `finalMoisture`) in `deriveHydrology` (depends on `HS-MR-03` and `HS-DG-01`).
+- [x] [hydrology] `HS-DG-05` Include effective resolved `hydrology.structure.*` values in `structureDiagnostics.params` from `deriveHydrology` (depends on `HS-HY-03` and `HS-DG-01`).
 
 ## App and Debug Output Wiring
 
-- [ ] [app] `HS-OR-01` In `runGenerator` (`src/app/run-generator.ts`), read `hydrology.structureDiagnostics` from hydrology output and store as `hydrologyStructureDiagnostics` local for output wiring.
-- [ ] [io] `HS-OR-02` Add optional `hydrologyStructureDiagnostics` argument to `writeModeOutputs` in `src/io/write-outputs.ts` (depends on `HS-OR-01`).
-- [ ] [io] `HS-OR-03` Add optional `hydrologyStructureDiagnostics` argument to `writeDebugOutputs` and `writeDebugArtifacts` in `src/io/write-outputs.ts` (depends on `HS-OR-02`).
-- [ ] [io] `HS-OR-04` Emit `hydrologyStructureDiagnostics` into `debug-manifest.json` under the same key when provided (depends on `HS-OR-03`).
-- [ ] [app] `HS-OR-05` Pass hydrology structure diagnostics from `runGenerator` to `writeModeOutputs` in debug mode path (depends on `HS-OR-02` and `HS-DG-05`).
+- [x] [app] `HS-OR-01` In `runGenerator` (`src/app/run-generator.ts`), read `hydrology.structureDiagnostics` from hydrology output and store as `hydrologyStructureDiagnostics` local for output wiring.
+- [x] [io] `HS-OR-02` Add optional `hydrologyStructureDiagnostics` argument to `writeModeOutputs` in `src/io/write-outputs.ts` (depends on `HS-OR-01`).
+- [x] [io] `HS-OR-03` Add optional `hydrologyStructureDiagnostics` argument to `writeDebugOutputs` and `writeDebugArtifacts` in `src/io/write-outputs.ts` (depends on `HS-OR-02`).
+- [x] [io] `HS-OR-04` Emit `hydrologyStructureDiagnostics` into `debug-manifest.json` under the same key when provided (depends on `HS-OR-03`).
+- [x] [app] `HS-OR-05` Pass hydrology structure diagnostics from `runGenerator` to `writeModeOutputs` in debug mode path (depends on `HS-OR-02` and `HS-DG-05`).
 
 ## Governance and Documentation Alignment
 
