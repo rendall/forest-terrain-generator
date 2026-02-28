@@ -2,7 +2,7 @@
 
 Status: draft  
 Scope: solution candidates only (no implementation commitment in this document)  
-Last updated: 2026-02-26
+Last updated: 2026-02-27
 
 Reference problem statement: `docs/drafts/V2-Simulation-Repair-ProblemStatement.md`
 
@@ -24,6 +24,19 @@ Primary proposal (`likely`):
 1. Re-center biome assignment around produced moisture distribution rather than fixed cutoffs alone.
 2. Keep deterministic ordering, but add configurable threshold controls and optional small-world scaling.
 3. Preserve hydrology precedence behavior explicitly and document its impact on biome reachability.
+4. Move biome predicate gates into an explicit Ecology Phase 4 eligibility stage:
+   - hard gates first for hydrology-locked classes (`lake`, `stream`, `pool`)
+   - per-biome configurable predicates for non-water tiles
+   - winner selection only among eligible candidates
+5. Replace overwrite cascades with configurable winner policy (deterministic default), for example:
+   - `argmax_score` (default)
+   - `priority_then_score`
+   - `weighted_deterministic`
+6. Define winner-algorithm contract explicitly:
+   - inputs: eligible biome set + per-biome scores
+   - output: exactly one biome per tile
+   - deterministic tie-break order by default (stable biome key order or seeded hash)
+   - configurable tie mode for advanced users, while preserving deterministic replay
 
 Alternatives:
 
