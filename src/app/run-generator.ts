@@ -236,6 +236,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			validated.force,
 			undefined,
 			undefined,
+			undefined,
 		);
 		return;
 	}
@@ -507,5 +508,6 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		validated.force,
 		streamCoherence,
 		lakeCoherence,
+		topographyStructure,
 	);
 }

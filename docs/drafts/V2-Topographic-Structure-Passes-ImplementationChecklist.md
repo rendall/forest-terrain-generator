@@ -58,12 +58,12 @@ Checklist constraint:
 
 ## Debug Artifact Exposure
 
-- [ ] [io] `TP-DB-01` Add interface `TopographyStructureDebugPayload` in `src/io/write-outputs.ts` for full structure arrays used only by debug artifact writers.
-- [ ] [io] `TP-DB-02` Add optional `topographyStructureDebug` argument to `writeModeOutputs` in `src/io/write-outputs.ts` (depends on `TP-DB-01`).
-- [ ] [io] `TP-DB-03` Add optional `topographyStructureDebug` argument to `writeDebugOutputs` and `writeDebugArtifacts` in `src/io/write-outputs.ts` (depends on `TP-DB-02`).
-- [ ] [io] `TP-DB-04` Add helper in `src/io/write-outputs.ts` that builds topography debug tiles by merging `envelope.tiles[i].topography` with full structure debug fields from `topographyStructureDebug` when provided (depends on `TP-DB-03`).
-- [ ] [io] `TP-DB-05` Update `writeDebugArtifacts` in `src/io/write-outputs.ts` to use the merged topography debug helper for `topography.json` while leaving standard envelope payload unchanged (depends on `TP-DB-04`).
-- [ ] [app] `TP-DB-06` Pass full structure maps from `runGenerator` into `writeModeOutputs` as `topographyStructureDebug` so debug artifacts expose full structural fields (depends on `TP-DB-02` and `TP-OR-01`).
+- [x] [io] `TP-DB-01` Add interface `TopographyStructureDebugPayload` in `src/io/write-outputs.ts` for full structure arrays used only by debug artifact writers.
+- [x] [io] `TP-DB-02` Add optional `topographyStructureDebug` argument to `writeModeOutputs` in `src/io/write-outputs.ts` (depends on `TP-DB-01`).
+- [x] [io] `TP-DB-03` Add optional `topographyStructureDebug` argument to `writeDebugOutputs` and `writeDebugArtifacts` in `src/io/write-outputs.ts` (depends on `TP-DB-02`).
+- [x] [io] `TP-DB-04` Add helper in `src/io/write-outputs.ts` that builds topography debug tiles by merging `envelope.tiles[i].topography` with full structure debug fields from `topographyStructureDebug` when provided (depends on `TP-DB-03`).
+- [x] [io] `TP-DB-05` Update `writeDebugArtifacts` in `src/io/write-outputs.ts` to use the merged topography debug helper for `topography.json` while leaving standard envelope payload unchanged (depends on `TP-DB-04`).
+- [x] [app] `TP-DB-06` Pass full structure maps from `runGenerator` into `writeModeOutputs` as `topographyStructureDebug` so debug artifacts expose full structural fields (depends on `TP-DB-02` and `TP-OR-01`).
 
 ## Behavior Slices
 
