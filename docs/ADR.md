@@ -2,6 +2,40 @@
 
 This document is a living ledger of significant technical decisions made within this project. Each entry captures the context in which a decision was made, the options considered, the decision itself, and its consequences. The purpose is not to justify past choices defensively, but to preserve intent and reasoning so future contributors can understand why the system is shaped the way it is. Over time, this file forms a chronological record of trade-offs, constraints, and design direction, providing continuity as the codebase and team evolve.
 
+## Adopt v2 Hydrology-Structure Decision Slate (HS-01..HS-06)
+
+**Timestamp:** 2026-02-28 00:00 (UTC)
+
+### Decision
+
+Adopt the hydrology-structure slate recorded in `docs/drafts/V2-Hydrology-Structure-Enhancements-ImplementationPlan.md` Section 13.
+
+Adopted hydrology-structure contract direction:
+
+- Standing-water terminal decisions use ordered structural gates (`persistence`, `basin size`) with optional inflow gate.
+- Inflow gate is available but defaults to `off` in first wave.
+- Spill-aware route-through branch exists and defaults to `off`.
+- Unresolved-spill handling is global policy under `hydrology.structure.unresolvedLakePolicy`, default `deny`.
+- Moisture receives a retention-aware blend term with explicit user weight and normalization mode.
+- Troubleshooting is first-class: `hydrologyStructureDiagnostics` is emitted in debug manifest with gate counters and moisture decomposition summaries.
+
+### Rationale
+
+Hydrology behavior needed stronger coherence and better operability without claiming physical realism. The adopted slate favors deterministic, inspectable policies that users can tune with known directional effects and concrete diagnostics.
+
+### Alternatives Considered
+
+- Hard-require inflow gate by default - rejected because inflow thresholds are the least grounded assumption in current model scope.
+- Enable spill-aware route-through by default - rejected to avoid premature divide-crossing artifacts.
+- Add time-step rainfall/evaporation simulation now - rejected as out of scope for this repair track.
+
+### References
+
+- PR: None
+- Commit: Pending
+- File(s): docs/drafts/V2-Hydrology-Structure-Enhancements-Discussion.md, docs/drafts/V2-Hydrology-Structure-Enhancements-ImplementationPlan.md, docs/drafts/V2-Hydrology-Structure-Enhancements-ImplementationChecklist.md, docs/normative/ForestTerrainGeneration.md
+- Related ADRs: Adopt v2 Stream-Coherence Decision Slate (D-01..D-12), Adopt v2 Lake-Coherence Decision Slate (L-01..L-11)
+
 ## Adopt v2 Lake-Coherence Decision Slate (L-01..L-11)
 
 **Timestamp:** 2026-02-27 00:00 (UTC)

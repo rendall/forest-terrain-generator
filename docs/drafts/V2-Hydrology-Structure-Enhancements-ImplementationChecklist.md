@@ -62,11 +62,12 @@ Checklist constraint:
 
 ## Governance and Documentation Alignment
 
-- [ ] [docs] `HS-GV-01` Add/update ADR entry documenting adopted hydrology structure decisions `HS-01` through `HS-06`.
-- [ ] [docs] `HS-GV-02` Update `docs/normative/ForestTerrainGeneration.md` with first-wave `hydrology.structure` parameter contract and sink/moisture behavior semantics.
-- [ ] [docs] `HS-GV-03` Add parameter intent/monotonic/failure-signature notes for each `hydrology.structure.*` key in user-facing docs (`README.md` or normative appendix), matching plan Section 7.3.
-- [ ] [docs] `HS-GV-04` Add explicit fixture path references for acceptance criteria to the plan/checklist docs (`bowl`, `valley`, `split-basin`, `flat-noise`) using existing test locations and planned new fixture paths as needed.
+- [x] [docs] `HS-GV-01` Add/update ADR entry documenting adopted hydrology structure decisions `HS-01` through `HS-06`.
+- [x] [docs] `HS-GV-02` Update `docs/normative/ForestTerrainGeneration.md` with first-wave `hydrology.structure` parameter contract and sink/moisture behavior semantics.
+- [x] [docs] `HS-GV-03` Add parameter intent/monotonic/failure-signature notes for each `hydrology.structure.*` key in user-facing docs (`README.md` or normative appendix), matching plan Section 7.3.
+- [x] [docs] `HS-GV-04` Add explicit fixture path references for acceptance criteria to the plan/checklist docs (`bowl`, `valley`, `split-basin`, `flat-noise`) using existing test locations and planned new fixture paths as needed.
   - Use `test/unit/phase3-lake-coherence-bowl.test.mjs` and `test/unit/phase3-stream-coherence-valley.test.mjs` as canonical anchors for first two fixtures.
+  - Planned fixture paths: `test/unit/phase3-hydrology-structure-split-basin.test.mjs` and `test/unit/phase3-hydrology-structure-flat-noise.test.mjs`.
 
 ## Behavior Slices
 

@@ -165,6 +165,17 @@ Required fixtures:
 3. split-basin
 4. flat-noise
 
+Canonical fixture/test anchors:
+
+1. bowl:
+   - `test/unit/phase3-lake-coherence-bowl.test.mjs`
+2. valley:
+   - `test/unit/phase3-stream-coherence-valley.test.mjs`
+3. split-basin (planned first-wave hydrology-structure fixture path):
+   - `test/unit/phase3-hydrology-structure-split-basin.test.mjs`
+4. flat-noise (planned first-wave hydrology-structure fixture path):
+   - `test/unit/phase3-hydrology-structure-flat-noise.test.mjs`
+
 Pass criteria:
 
 1. Bowl:
