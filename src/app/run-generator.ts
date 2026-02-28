@@ -145,6 +145,7 @@ function buildHydrologyParams(params: JsonObject): HydrologyParams {
 	return {
 		...hydrology,
 		lakeCoherence: hydrology.lakeCoherence,
+		structure: hydrology.structure,
 		streamProxMaxDist: gameTrails.streamProxMaxDist,
 	} as unknown as HydrologyParams;
 }
@@ -237,6 +238,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			undefined,
 			undefined,
 			undefined,
+			undefined,
 		);
 		return;
 	}
@@ -270,6 +272,8 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		topography.landform,
 		validated.seed,
 		hydrologyParams,
+		topographyStructure,
+		{ emitStructureDiagnostics: request.mode === "debug" },
 	);
 	const streamCoherence = deriveStreamCoherenceMetrics(
 		shape,
@@ -510,5 +514,6 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		streamCoherence,
 		lakeCoherence,
 		topographyStructure,
+		hydrology.structureDiagnostics,
 	);
 }

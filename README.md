@@ -147,6 +147,23 @@ Guidance below assumes all other parameters stay the same.
 | `hydrology.marshMoistureThreshold` | Moisture threshold for marsh classification. | Fewer marsh tiles. | More marsh tiles. |
 | `hydrology.marshSlopeThreshold` | Slope cutoff for marsh classification. | Marsh allowed on steeper lowlands. | Marsh restricted to flatter areas. |
 
+#### `hydrology.structure` (v2 tuning controls)
+
+These keys control structure-aware sink and moisture behavior. They are heuristics; tune with debug diagnostics, not as physical constants.
+
+| Parameter | Domain | Intent and monotonic effect | Typical failure signature if mis-tuned | Debug cues |
+| --- | --- | --- | --- | --- |
+| `hydrology.structure.enabled` | boolean | Master switch for structure-aware policy bundle in this track. `false` should disable structure-driven behavior changes. | Behavior appears unchanged despite other `hydrology.structure.*` edits. | Compare `hydrologyStructureDiagnostics.params` and sink/moisture summaries across runs. |
+| `hydrology.structure.sinkPersistenceRouteMax` | `[0,1]` | Higher value classifies more weak sinks as route-through (fewer standing terminals). Lower value allows more sinks to remain standing candidates. | Too high: channels over-route and skip plausible terminal water. Too low: many short dead-end sink terminals. | `sinkRejections.persistence_below_route_max`, `endpointReasons.route_through`. |
+| `hydrology.structure.sinkPersistenceLakeMin` | `[0,1]` | Higher value requires stronger basin persistence before lake eligibility; lower value permits weaker basins to become lakes. | Too high: lake underproduction in coherent basins. Too low: noisy shallow basins become lakes. | `sinkRejections.persistence_below_lake_min`, `endpointReasons.lake|pool`. |
+| `hydrology.structure.basinTileCountMinLake` | integer `>=0` | Higher value enforces larger basins for lakes; lower value allows smaller lake components. | Too high: many pool outcomes, very few lakes. Too low: micro-lake speckling. | `sinkRejections.basin_size_below_lake_min`, lake component metrics. |
+| `hydrology.structure.inflowGateEnabled` | boolean | Turns inflow gate on/off after structural gates. | If enabled at aggressive thresholds, plausible basin lakes disappear. | `sinkRejections.inflow_below_lake_min` vs `inflowGateEnabled`. |
+| `hydrology.structure.lakeInflowMin` | `[0,1]` | With inflow gate enabled, higher value requires stronger contributing flow for lake classification; lower value is more permissive. | Too high: dead-looking pool-heavy maps. Too low: weakly supported lakes persist. | `sinkRejections.inflow_below_lake_min`, `sinkCandidates.lake`. |
+| `hydrology.structure.unresolvedLakePolicy` | `deny \| allow_with_strict_gates \| allow` | Controls unresolved-spill lake candidacy strictness from conservative to permissive. | `deny`: plausible unresolved basins never lake. `allow`: unresolved-lake overproduction. | `sinkRejections.unresolved_policy_denied`, unresolved basin counts in structure debug. |
+| `hydrology.structure.spillAwareRouteThroughEnabled` | boolean | Enables optional spill-aware route-through branch. | If overused, channels appear to cross intuitive divides. | `endpointReasons.route_through` plus stream continuity/believability checks. |
+| `hydrology.structure.retentionWeight` | `[0,1]` | Higher value increases retention contribution in final moisture (`base + w * retention`); `0` disables retention term. | Too high: moisture saturation/collapse to wet biomes. Too low: retention signal has no practical effect. | `moistureDecomposition.baseMoisture` vs `finalMoisture` summaries. |
+| `hydrology.structure.retentionNormalization` | `quantile \| minmax \| raw` | Chooses how basin-depth retention is scaled before blending. | `raw`: map-size sensitivity or near-zero effect. `minmax`: outlier-driven compression. | `moistureDecomposition.retentionTerm` percentile spread (`p10/p50/p90`). |
+
 ### `ground`
 
 | Parameter | What it controls | Raise it | Lower it |

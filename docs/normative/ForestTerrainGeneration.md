@@ -1275,6 +1275,78 @@ v2 implementation and regression checks MUST report, at minimum:
 
 ---
 
+## 19. Hydrology-Structure v2 Addendum (Adopted Policy)
+
+This section records the adopted hydrology-structure policy slate (`HS-01` through `HS-06`) for the v2 repair track.
+
+Applicability:
+
+- Normative for v2 hydrology-structure implementation work.
+- Informative for current v1 behavior until v2 implementation is released.
+
+When implementing this v2 track, this section supersedes conflicting details in Sections `6.4`, `6.6`, `6.7`, and `15`.
+
+### 19.1 Parameter and Validation Contract
+
+1. Hydrology structure controls are defined under `hydrology.structure.*`.
+2. First-wave keys:
+   - `enabled`
+   - `sinkPersistenceRouteMax`
+   - `sinkPersistenceLakeMin`
+   - `basinTileCountMinLake`
+   - `inflowGateEnabled`
+   - `lakeInflowMin`
+   - `unresolvedLakePolicy` (`deny|allow_with_strict_gates|allow`)
+   - `spillAwareRouteThroughEnabled`
+   - `retentionWeight`
+   - `retentionNormalization` (`quantile|minmax|raw`)
+3. Unknown keys or invalid enum/range values under `hydrology.structure.*` MUST fail validation.
+4. Effective values MUST be deterministic for a given input set.
+
+### 19.2 Terminal Sink Decision Contract
+
+1. For stream terminals, class selection MUST be deterministic and ordered:
+   - route-through gate by persistence (`sinkPersistenceRouteMax`)
+   - lake gates by persistence (`sinkPersistenceLakeMin`) and basin size (`basinTileCountMinLake`)
+   - optional inflow gate (`inflowGateEnabled` + `lakeInflowMin`)
+   - unresolved policy gate (`unresolvedLakePolicy`)
+2. `pool` remains a valid non-lake terminal class when lake gates are not met.
+3. `spillAwareRouteThroughEnabled` MAY permit explicit route-through outcomes under configured policy; default behavior remains conservative/off.
+
+### 19.3 Retention-Aware Moisture Contract
+
+1. Base moisture remains the Section `6.6` computation.
+2. Retention term is derived from structure basin signal (`basinDepthLike`) with normalization mode from `retentionNormalization`.
+3. Final moisture blend MUST be:
+   - `MoistureOut = clamp01(BaseMoisture + retentionWeight * RetentionTerm)`
+4. `retentionWeight = 0` MUST disable retention contribution.
+
+### 19.4 Debug Diagnostics Contract
+
+In `debug` mode, `debug-manifest.json` MUST include `hydrologyStructureDiagnostics` when hydrology derivation executes, with:
+
+1. `params`: effective resolved `hydrology.structure.*` values.
+2. `sinkCandidates`: counts for `routeThrough|pool|lake`.
+3. `sinkRejections`: gate-reason counts:
+   - `persistence_below_route_max`
+   - `persistence_below_lake_min`
+   - `basin_size_below_lake_min`
+   - `inflow_below_lake_min`
+   - `unresolved_policy_denied`
+4. `endpointReasons`: counts for `lake|pool|marsh|route_through|blocked`.
+5. `moistureDecomposition`: summary stats (`min|max|avg|p10|p50|p90`) for:
+   - `baseMoisture`
+   - `retentionTerm`
+   - `finalMoisture`
+
+### 19.5 Output Compatibility
+
+1. Standard tile payload schema remains unchanged by diagnostics.
+2. Hydrology behavior changes are expressed through existing tile fields (`waterClass`, `moisture`, and derived consequences).
+3. Debug diagnostics are additive and do not alter non-debug output mode contracts.
+
+---
+
 ## Appendix A: Recommended Parameter Defaults (v1)
 
 ```json
@@ -1303,6 +1375,18 @@ v2 implementation and regression checks MUST report, at minimum:
       "enforceBoundaryRealism": true,
       "boundaryEps": 0.0005,
       "boundaryRepairMode": "trim_first"
+    },
+    "structure": {
+      "enabled": true,
+      "sinkPersistenceRouteMax": 0.005,
+      "sinkPersistenceLakeMin": 0.02,
+      "basinTileCountMinLake": 3,
+      "inflowGateEnabled": false,
+      "lakeInflowMin": 0.15,
+      "unresolvedLakePolicy": "deny",
+      "spillAwareRouteThroughEnabled": false,
+      "retentionWeight": 0.2,
+      "retentionNormalization": "quantile"
     },
     "moistureAccumStart": 0.35,
     "flatnessThreshold": 0.06,

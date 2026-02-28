@@ -35,6 +35,18 @@ export const APPENDIX_A_DEFAULTS: JsonObject = {
 	hydrology: {
 		minDropThreshold: 0.0005,
 		tieEps: 0.000001,
+		structure: {
+			enabled: true,
+			sinkPersistenceRouteMax: 0.005,
+			sinkPersistenceLakeMin: 0.02,
+			basinTileCountMinLake: 3,
+			inflowGateEnabled: false,
+			lakeInflowMin: 0.15,
+			unresolvedLakePolicy: "deny",
+			spillAwareRouteThroughEnabled: false,
+			retentionWeight: 0.2,
+			retentionNormalization: "quantile",
+		},
 		streamThresholds: {
 			sourceAccumMin: 0.55,
 			channelAccumMin: 0.55,
