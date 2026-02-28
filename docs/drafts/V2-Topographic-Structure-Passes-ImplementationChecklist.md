@@ -12,18 +12,18 @@ Checklist constraint:
 
 ## Scope Guard
 
-- [ ] [scope] `TP-SC-01` Keep first-wave scope limited to structural signal derivation and output wiring; do not change hydrology decision behavior in `src/pipeline/hydrology.ts`.
-- [ ] [scope] `TP-SC-02` Keep first-wave scope limited to existing enum compatibility (`flat|slope|ridge|valley|basin`) in `src/pipeline/classify-landform.ts`; do not replace landform semantics in this checklist.
-- [ ] [scope] `TP-SC-03` Keep ADR and normative spec edits out of this checklist; defer them until post-implementation validation.
+- [x] [scope] `TP-SC-01` Keep first-wave scope limited to structural signal derivation and output wiring; do not change hydrology decision behavior in `src/pipeline/hydrology.ts`.
+- [x] [scope] `TP-SC-02` Keep first-wave scope limited to existing enum compatibility (`flat|slope|ridge|valley|basin`) in `src/pipeline/classify-landform.ts`; do not replace landform semantics in this checklist.
+- [x] [scope] `TP-SC-03` Keep ADR and normative spec edits out of this checklist; defer them until post-implementation validation.
 
 ## Data Contract and Params
 
-- [ ] [types] `TP-DC-01` Add interface `TopographicStructureMapsSoA` to `src/domain/topography.ts` with internal structural arrays for basin and peak outputs (`basinMinIdx`, `basinMinH`, `basinSpillH`, `basinPersistence`, `basinDepthLike`, `peakMaxIdx`, `peakMaxH`, `peakSaddleH`, `peakPersistence`, `peakRiseLike`, `basinLike`, `ridgeLike`).
-- [ ] [types] `TP-DC-02` Add factory `createTopographicStructureMaps(shape)` in `src/domain/topography.ts` initializing all `TopographicStructureMapsSoA` arrays (depends on `TP-DC-01`).
-- [ ] [params] `TP-DC-03` Add `topography.structure` defaults in `src/lib/default-params.ts` with adopted keys: `enabled`, `connectivity`, `hEps`, `persistenceMin`, `unresolvedPolicy`.
-- [ ] [params] `TP-DC-04` Add `validateTopographyStructureParams` in `src/io/read-params.ts` for strict type/enum checks of `topography.structure.*` (depends on `TP-DC-03`).
-- [ ] [params] `TP-DC-05` Call `validateTopographyStructureParams(params)` from `readParamsFile` in `src/io/read-params.ts` after unknown-key validation (depends on `TP-DC-04`).
-- [ ] [params] `TP-DC-06` Restrict first-wave accepted values in `validateTopographyStructureParams` to adopted policy (`connectivity: "dir8"`, `unresolvedPolicy: "nan"`) and reject others.
+- [x] [types] `TP-DC-01` Add interface `TopographicStructureMapsSoA` to `src/domain/topography.ts` with internal structural arrays for basin and peak outputs (`basinMinIdx`, `basinMinH`, `basinSpillH`, `basinPersistence`, `basinDepthLike`, `peakMaxIdx`, `peakMaxH`, `peakSaddleH`, `peakPersistence`, `peakRiseLike`, `basinLike`, `ridgeLike`).
+- [x] [types] `TP-DC-02` Add factory `createTopographicStructureMaps(shape)` in `src/domain/topography.ts` initializing all `TopographicStructureMapsSoA` arrays (depends on `TP-DC-01`).
+- [x] [params] `TP-DC-03` Add `topography.structure` defaults in `src/lib/default-params.ts` with adopted keys: `enabled`, `connectivity`, `hEps`, `persistenceMin`, `unresolvedPolicy`.
+- [x] [params] `TP-DC-04` Add `validateTopographyStructureParams` in `src/io/read-params.ts` for strict type/enum checks of `topography.structure.*` (depends on `TP-DC-03`).
+- [x] [params] `TP-DC-05` Call `validateTopographyStructureParams(params)` from `readParamsFile` in `src/io/read-params.ts` after unknown-key validation (depends on `TP-DC-04`).
+- [x] [params] `TP-DC-06` Restrict first-wave accepted values in `validateTopographyStructureParams` to adopted policy (`connectivity: "dir8"`, `unresolvedPolicy: "nan"`) and reject others.
 
 ## Basin Pass Core
 
@@ -51,7 +51,7 @@ Checklist constraint:
 
 ## Orchestration and Tile Payload
 
-- [ ] [app] `TP-OR-01` Import and run `deriveTopographicStructure` in `runGenerator` in `src/app/run-generator.ts` after `deriveTopographyFromBaseMaps` and before hydrology/ecology consumers (depends on `TP-PS-07`).
+- [ ] [app] `TP-OR-01` Import and run `deriveTopographicStructure` in `runGenerator` in `src/app/run-generator.ts` after `deriveTopographyFromBaseMaps` and before hydrology/ecology consumers (depends on `TP-PS-06`).
 - [ ] [app] `TP-OR-02` Keep hydrology invocation unchanged in `runGenerator` (`src/app/run-generator.ts`) so structure maps are not consumed by hydrology in first wave (depends on `TP-SC-01` and `TP-OR-01`).
 - [ ] [app] `TP-OR-03` Add minimal tile payload object `topography.structure` in `runGenerator` with adopted stable subset: `basinPersistence`, `peakPersistence`, `basinLike`, `ridgeLike` (depends on `TP-OR-01`).
 - [ ] [app] `TP-OR-04` Keep internal lineage/identity fields (`basinMinIdx`, `peakMaxIdx`, spill/saddle lineage internals) out of standard tile payload in `runGenerator` (depends on `TP-OR-03`).
