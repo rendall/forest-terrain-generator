@@ -38,7 +38,7 @@ Checklist constraint:
 
 ## Basin-to-Peak Gate
 
-- [ ] [scope] `TP-GT-01` Lock explicit go/no-go decision for peak-pass implementation after basin-pass outputs are wired and reviewed against `TS-01`; if no-go, stop after basin-only scope (depends on `TP-BS-08` and `TP-DB-06`).
+- [x] [scope] `TP-GT-01` Lock explicit go/no-go decision for peak-pass implementation after basin-pass outputs are reviewed against `TS-01`; if no-go, stop after basin-only scope (depends on `TP-BS-08`).
 
 ## Peak Pass Core
 
