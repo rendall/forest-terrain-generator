@@ -426,6 +426,22 @@ export function deriveBasinTileCounts(
 	return out;
 }
 
+export function isTopographicStructureActive(
+	shape: GridShape,
+	topographicStructure: TopographicStructureMapsSoA | undefined,
+): boolean {
+	if (!topographicStructure) {
+		return false;
+	}
+	validateMapLength(shape, topographicStructure.basinMinIdx, "basinMinIdx");
+	for (let i = 0; i < shape.size; i += 1) {
+		if (topographicStructure.basinMinIdx[i] >= 0) {
+			return true;
+		}
+	}
+	return false;
+}
+
 function unresolvedLakeAllowed(
 	input: TerminalWaterClassInput,
 ): { allowed: boolean; rejectionReason: TerminalRejectionReason | null } {
@@ -2126,7 +2142,9 @@ export function deriveHydrology(
 ): HydrologyDeriveResult {
 	const maps = createHydrologyMaps(shape);
 	const structureConfig = normalizeHydrologyStructureParams(params.structure);
-	const structureEnabled = structureConfig.enabled && !!topographicStructure;
+	const structureEnabled =
+		structureConfig.enabled &&
+		isTopographicStructureActive(shape, topographicStructure);
 	const sinkCandidates: SinkCandidateCounters = {
 		routeThrough: 0,
 		pool: 0,

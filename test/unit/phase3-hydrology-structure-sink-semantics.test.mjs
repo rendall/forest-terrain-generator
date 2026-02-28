@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createGridShape } from "../../src/domain/topography.js";
+import { createGridShape, createTopographicStructureMaps } from "../../src/domain/topography.js";
 import { WATER_CLASS_CODE } from "../../src/domain/hydrology.js";
 
 describe("Phase 3 hydrology-structure sink semantics", () => {
@@ -84,5 +84,17 @@ describe("Phase 3 hydrology-structure sink semantics", () => {
     expect(out.terminalClass).toBe("pool");
     expect(out.waterClass).toBe(WATER_CLASS_CODE.pool);
     expect(out.rejectionReason).toBe("unresolved_policy_denied");
+  });
+
+  it("treats sentinel topographic structure maps as inactive", async () => {
+    const { isTopographicStructureActive } = await import("../../src/pipeline/hydrology.js");
+    const shape = createGridShape(2, 1);
+    const sentinel = createTopographicStructureMaps(shape);
+
+    expect(isTopographicStructureActive(shape, sentinel)).toBe(false);
+
+    sentinel.basinMinIdx[0] = 0;
+    sentinel.basinMinIdx[1] = 0;
+    expect(isTopographicStructureActive(shape, sentinel)).toBe(true);
   });
 });
