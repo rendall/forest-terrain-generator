@@ -1576,17 +1576,33 @@ export function deriveLakeMask(
 	slopeMag: Float32Array,
 	faN: Float32Array,
 	params: LakeMaskParams,
+	topographicStructure?: TopographicStructureMapsSoA,
 ): Uint8Array {
 	validateMapLength(shape, landform, "Landform");
 	validateMapLength(shape, slopeMag, "SlopeMag");
 	validateMapLength(shape, faN, "FA_N");
+	const topographicStructureActive = isTopographicStructureActive(
+		shape,
+		topographicStructure,
+	);
+	if (topographicStructureActive) {
+		validateMapLength(shape, topographicStructure!.basinMinIdx, "basinMinIdx");
+		validateMapLength(shape, topographicStructure!.basinLike, "basinLike");
+	}
 	const flatSlopeThreshold = Math.fround(params.lakeFlatSlopeThreshold);
 	const accumThreshold = Math.fround(params.lakeAccumThreshold);
 
 	const candidate = new Uint8Array(shape.size);
 	for (let i = 0; i < shape.size; i += 1) {
+		let isBasinCandidate = landform[i] === LANDFORM_CODE.basin;
+		if (topographicStructureActive) {
+			const basinLike = topographicStructure!.basinLike[i] === 1;
+			// Unresolved global basins can have NaN persistence; allow minima lineage as basin seed fallback.
+			const unresolvedMinimum = topographicStructure!.basinMinIdx[i] === i;
+			isBasinCandidate = basinLike || unresolvedMinimum;
+		}
 		if (
-			landform[i] === LANDFORM_CODE.basin &&
+			isBasinCandidate &&
 			slopeMag[i] < flatSlopeThreshold &&
 			faN[i] >= accumThreshold
 		) {
@@ -2180,7 +2196,14 @@ export function deriveHydrology(
 	maps.inDeg = deriveInDegree(shape, maps.fd);
 	maps.fa = deriveFlowAccumulation(shape, maps.fd);
 	maps.faN = normalizeFlowAccumulation(maps.fa);
-	maps.lakeMask = deriveLakeMask(shape, landform, slopeMag, maps.faN, params);
+	maps.lakeMask = deriveLakeMask(
+		shape,
+		landform,
+		slopeMag,
+		maps.faN,
+		params,
+		topographicStructure,
+	);
 	maps.lakeMask = growLakeMask(shape, maps.lakeMask, h, slopeMag, params);
 	maps.lakeMask = applyLakeCoherence(shape, maps.lakeMask, params.lakeCoherence);
 	maps.lakeMask = applyLakeBoundaryRealism(
