@@ -1,6 +1,10 @@
 import type { JsonObject } from "../domain/types.js";
 
 export const APPENDIX_A_DEFAULTS: JsonObject = {
+	elevation: {
+		h0: 0,
+		h1: 300,
+	},
 	heightNoise: {
 		octaves: 5,
 		baseFrequency: 0.035,

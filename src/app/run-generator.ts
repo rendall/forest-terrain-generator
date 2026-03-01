@@ -95,6 +95,24 @@ function buildTopographyStructureParams(
 	return structure as unknown as TopographicStructureParams;
 }
 
+interface ElevationParams {
+	h0: number;
+	h1: number;
+}
+
+function buildElevationParams(params: JsonObject): ElevationParams {
+	const elevation = isJsonObject(params.elevation)
+		? (params.elevation as Record<string, unknown>)
+		: {};
+	const h0 = typeof elevation.h0 === "number" && Number.isFinite(elevation.h0)
+		? elevation.h0
+		: 0;
+	const h1 = typeof elevation.h1 === "number" && Number.isFinite(elevation.h1)
+		? elevation.h1
+		: 300;
+	return { h0, h1 };
+}
+
 export async function resolveInputs(
 	request: RunRequest,
 ): Promise<ResolvedInputs> {
@@ -196,6 +214,8 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		topography.h,
 		buildTopographyStructureParams(validated.params),
 	);
+	const elevation = buildElevationParams(validated.params);
+	const elevationSpan = elevation.h1 - elevation.h0;
 
 	const envelope: TerrainEnvelope = buildEnvelopeSkeleton();
 	envelope.features = {
@@ -215,6 +235,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			activeFeatureIds: topographyStructure.tileActiveFeatureIds[i],
 			topography: {
 				h: topography.h[i],
+				elevationMeters: elevation.h0 + topography.h[i] * elevationSpan,
 				r: topography.r[i],
 				v: topography.v[i],
 				structure: {

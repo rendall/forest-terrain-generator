@@ -331,6 +331,42 @@ function validateTopographyStructureParams(params: JsonObject): void {
   );
 }
 
+function validateElevationParams(params: JsonObject): void {
+  if (params.elevation === undefined) {
+    return;
+  }
+  if (!isObject(params.elevation)) {
+    throw new InputValidationError(
+      'Invalid params value "params.elevation". Expected an object.'
+    );
+  }
+
+  const elevation = params.elevation as JsonObject;
+  const h0 = elevation.h0;
+  const h1 = elevation.h1;
+  if (h0 !== undefined && !(typeof h0 === "number" && Number.isFinite(h0))) {
+    throw new InputValidationError(
+      'Invalid params value "params.elevation.h0". Expected a finite number.'
+    );
+  }
+  if (h1 !== undefined && !(typeof h1 === "number" && Number.isFinite(h1))) {
+    throw new InputValidationError(
+      'Invalid params value "params.elevation.h1". Expected a finite number.'
+    );
+  }
+  if (
+    typeof h0 === "number" &&
+    typeof h1 === "number" &&
+    Number.isFinite(h0) &&
+    Number.isFinite(h1) &&
+    h1 <= h0
+  ) {
+    throw new InputValidationError(
+      'Invalid params value "params.elevation.h0/h1". Expected h1 > h0.'
+    );
+  }
+}
+
 function normalizeLegacyHydrologyAliases(params: JsonObject): void {
   if (!isObject(params.hydrology)) {
     return;
@@ -472,6 +508,7 @@ export async function readParamsFile(
   validateLakeCoherenceParams(params);
   validateHydrologyStructureParams(params);
   validateTopographyStructureParams(params);
+  validateElevationParams(params);
 
   return {
     seed,
