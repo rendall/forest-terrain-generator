@@ -41,7 +41,7 @@ function floorColumnsForRow(shape, h, y) {
 
 describe("Phase 3 stream coherence valley fixture", () => {
 	// V2 acceptance baseline: expected to fail until v2 defaults target stronger valley-floor adherence.
-	it.fails.each([
+	it.each([
 		{ width: 33, height: 33, label: "odd width" },
 		{ width: 32, height: 32, label: "even width" },
 	])(

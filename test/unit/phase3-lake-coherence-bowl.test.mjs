@@ -69,7 +69,7 @@ function countLakeComponents(shape, lakeMask) {
 
 describe("Phase 3 lake coherence bowl fixture", () => {
 	// V2 acceptance baseline: expected to fail until lake-coherence defaults are adopted.
-	it.fails("forms a coherent interior lake in a synthetic paraboloid bowl", () => {
+	it("forms a coherent interior lake in a synthetic paraboloid bowl", () => {
 		const shape = createGridShape(33, 33);
 		const h = createParaboloidBowlH(shape);
 		const baseMaps = {
