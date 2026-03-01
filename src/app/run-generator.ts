@@ -211,8 +211,6 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 				h: topography.h[i],
 				r: topography.r[i],
 				v: topography.v[i],
-				slopeMag: topography.slopeMag[i],
-				aspectDeg: topography.aspectDeg[i],
 				structure: {
 					basinPersistence: topographyStructure.basinPersistence[i],
 					peakPersistence: topographyStructure.peakPersistence[i],

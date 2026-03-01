@@ -11,10 +11,7 @@ export interface BaseMapsSoA {
   v: Float32Array;
 }
 
-export interface TopographyMapsSoA extends BaseMapsSoA {
-  slopeMag: Float32Array;
-  aspectDeg: Float32Array;
-}
+export type TopographyMapsSoA = BaseMapsSoA;
 
 export interface TopographicStructureMapsSoA {
   shape: GridShape;
@@ -63,11 +60,7 @@ export function createBaseMaps(shape: GridShape): BaseMapsSoA {
 }
 
 export function createTopographyMaps(shape: GridShape): TopographyMapsSoA {
-  return {
-    ...createBaseMaps(shape),
-    slopeMag: new Float32Array(shape.size),
-    aspectDeg: new Float32Array(shape.size)
-  };
+  return createBaseMaps(shape);
 }
 
 export function createTopographicStructureMaps(shape: GridShape): TopographicStructureMapsSoA {
