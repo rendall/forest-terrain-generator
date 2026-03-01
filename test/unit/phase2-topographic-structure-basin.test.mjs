@@ -13,7 +13,7 @@ describe("Phase 2 topographic structure basin sweep", () => {
     ]);
   });
 
-  it("records first merge spill for losing minimum and preserves unresolved winners", async () => {
+  it("tracks final basin minima and unresolved winner semantics in per-tile maps", async () => {
     const { deriveBasinStructure } = await import(
       "../../src/pipeline/derive-topographic-structure.js"
     );
@@ -27,20 +27,20 @@ describe("Phase 2 topographic structure basin sweep", () => {
       unresolvedPolicy: "nan",
     });
 
-    expect(Array.from(out.basinMinIdx)).toEqual([0, 0, 2]);
+    expect(Array.from(out.basinMinIdx)).toEqual([0, 0, 0]);
     expect(out.basinMinH[0]).toBeCloseTo(0.0, 6);
-    expect(out.basinMinH[2]).toBeCloseTo(0.1, 6);
+    expect(out.basinMinH[2]).toBeCloseTo(0.0, 6);
 
     expect(Number.isNaN(out.basinSpillH[0])).toBe(true);
-    expect(out.basinSpillH[2]).toBeCloseTo(0.2, 6);
+    expect(Number.isNaN(out.basinSpillH[2])).toBe(true);
 
     expect(Number.isNaN(out.basinPersistence[0])).toBe(true);
-    expect(out.basinPersistence[2]).toBeCloseTo(0.1, 6);
+    expect(Number.isNaN(out.basinPersistence[2])).toBe(true);
 
     expect(Number.isNaN(out.basinDepthLike[0])).toBe(true);
-    expect(out.basinDepthLike[2]).toBeCloseTo(0.1, 6);
+    expect(Number.isNaN(out.basinDepthLike[2])).toBe(true);
 
-    expect(Array.from(out.basinLike)).toEqual([0, 0, 1]);
+    expect(Array.from(out.basinLike)).toEqual([0, 0, 0]);
   });
 
   it("records first merge saddle for losing maximum and preserves unresolved winners", async () => {
@@ -121,9 +121,9 @@ describe("Phase 2 topographic structure basin sweep", () => {
     expect(out.basinDepthLike[0]).toBeCloseTo(0.2, 6);
     expect(out.basinLike[0]).toBe(1);
 
-    // Losing minima still keep first-merge spill behavior.
+    // Per-tile maps are keyed by final basin lineage, so every tile reflects the unresolved winner.
     expect(out.basinSpillH[2]).toBeCloseTo(0.2, 6);
-    expect(out.basinPersistence[2]).toBeCloseTo(0.1, 6);
+    expect(out.basinPersistence[2]).toBeCloseTo(0.2, 6);
     expect(out.basinLike[2]).toBe(1);
   });
 
@@ -148,7 +148,8 @@ describe("Phase 2 topographic structure basin sweep", () => {
     expect(basinLeaf).toBeDefined();
     expect(Array.isArray(basinLeaf?.tileIds)).toBe(true);
     if (basinComposite) {
-      expect(basinComposite.tileIds).toBeUndefined();
+      expect(Array.isArray(basinComposite.tileIds)).toBe(true);
+      expect(basinComposite.tileIds?.length ?? 0).toBeGreaterThan(0);
     }
     expect(out.basinFeatures.every((node) => node.size < shape.size)).toBe(true);
     expect(out.peakFeatures.every((node) => node.size < shape.size)).toBe(true);

@@ -745,6 +745,10 @@ export function deriveBasinStructure(
     minH: new Float32Array(shape.size).fill(Number.NaN),
     minIdx: new Int32Array(shape.size).fill(-1)
   };
+  const ownerByRoot = new Array<string>(shape.size).fill("");
+  const nodeById = new Map<string, TopographicFeatureNode>();
+  const tileOwnerFeatureIds = new Array<string>(shape.size).fill("");
+  let nextOrdinal = 0;
   const tileBasinMin = new Int32Array(shape.size).fill(-1);
   const minHByMinimum = new Float32Array(shape.size).fill(Number.NaN);
   const spillByMinimum = new Float32Array(shape.size).fill(Number.NaN);
@@ -763,11 +767,10 @@ export function deriveBasinStructure(
       rootMeta.minH[tile] = h[tile];
       rootMeta.minIdx[tile] = tile;
       minHByMinimum[tile] = h[tile];
-    }
 
-    for (const tile of group.indices) {
       const x = tile % shape.width;
       const y = Math.floor(tile / shape.width);
+      const adjacentRoots = new Set<number>();
       for (const neighbor of STRUCTURE_DIR8_NEIGHBORS) {
         const nx = x + neighbor.dx;
         const ny = y + neighbor.dy;
@@ -778,23 +781,99 @@ export function deriveBasinStructure(
         if (active[n] !== 1) {
           continue;
         }
-        unionBasinRoots(
+        adjacentRoots.add(dsuFind(parent, n));
+      }
+
+      const adjacentOwnerIds = sortFeatureIds(
+        Array.from(
+          new Set(
+            Array.from(adjacentRoots)
+              .map((root) => ownerByRoot[root])
+              .filter((ownerId): ownerId is string => ownerId.length > 0)
+          )
+        )
+      );
+
+      let ownerId = "";
+      if (adjacentOwnerIds.length === 0) {
+        ownerId = makeFeatureId("b", nextOrdinal);
+        nextOrdinal += 1;
+        nodeById.set(ownerId, {
+          id: ownerId,
+          kind: "leaf",
+          parentId: null,
+          childIds: [],
+          birthH: h[tile],
+          mergeH: null,
+          persistence: null,
+          minH: Number.POSITIVE_INFINITY,
+          maxH: Number.NEGATIVE_INFINITY,
+          size: 0,
+          bbox: createEmptyBbox(),
+          tileIds: []
+        });
+      } else if (adjacentOwnerIds.length === 1) {
+        ownerId = adjacentOwnerIds[0];
+      } else {
+        ownerId = makeFeatureId("b", nextOrdinal);
+        nextOrdinal += 1;
+        const childIds = sortFeatureIds(adjacentOwnerIds);
+        const composite: TopographicFeatureNode = {
+          id: ownerId,
+          kind: "composite",
+          parentId: null,
+          childIds,
+          birthH: group.level,
+          mergeH: null,
+          persistence: null,
+          minH: Number.POSITIVE_INFINITY,
+          maxH: Number.NEGATIVE_INFINITY,
+          size: 0,
+          bbox: createEmptyBbox(),
+          tileIds: []
+        };
+        for (const childId of childIds) {
+          const child = nodeById.get(childId);
+          if (!child) {
+            continue;
+          }
+          assignMergeToChild(child, group.level);
+          child.parentId = ownerId;
+        }
+        nodeById.set(ownerId, composite);
+      }
+
+      const ownerNode = nodeById.get(ownerId);
+      if (ownerNode) {
+        updateNodeTileStats(ownerNode, shape, tile, h[tile]);
+      }
+      tileOwnerFeatureIds[tile] = ownerId;
+      ownerByRoot[tile] = ownerId;
+
+      let mergedRoot = tile;
+      for (const adjacentRoot of adjacentRoots) {
+        const nextRoot = unionBasinRoots(
           parent,
           rootMeta,
           spillByMinimum,
           mergeEvents,
-          tile,
-          n,
+          mergedRoot,
+          adjacentRoot,
           group.level,
           config.hEps
         );
+        ownerByRoot[nextRoot] = ownerId;
+        mergedRoot = nextRoot;
       }
     }
+  }
 
-    for (const tile of group.indices) {
-      const root = dsuFind(parent, tile);
-      tileBasinMin[tile] = rootMeta.minIdx[root];
+  for (let tile = 0; tile < shape.size; tile += 1) {
+    if (active[tile] !== 1) {
+      continue;
     }
+    const root = dsuFind(parent, tile);
+    tileBasinMin[tile] = rootMeta.minIdx[root];
   }
 
   for (let i = 0; i < shape.size; i += 1) {
@@ -831,13 +910,22 @@ export function deriveBasinStructure(
     }
   }
 
-  const basinFeatures = buildBasinFeatureTree(
+  if (config.unresolvedPolicy === "max_h") {
+    for (const node of nodeById.values()) {
+      if (node.parentId === null && node.mergeH === null) {
+        node.mergeH = maxH;
+        node.persistence = Math.max(0, maxH - node.birthH);
+      }
+    }
+  }
+
+  const basinFeatureNodes = sortFeatureNodes(
+    Array.from(nodeById.values()).map((node) => finalizeNode(cloneNode(node)))
+  );
+  const basinFeatures = removeMapWideFeatures(
     shape,
-    h,
-    tileBasinMin,
-    minHByMinimum,
-    mergeEvents,
-    config
+    basinFeatureNodes,
+    tileOwnerFeatureIds
   );
   out.basinFeatures = basinFeatures.nodes;
   out.tileFeatureIds = basinFeatures.tileLeafFeatureIds.map((id) =>
