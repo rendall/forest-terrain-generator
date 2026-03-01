@@ -19,7 +19,7 @@ export interface TopographicStructureConfig {
   connectivity: "dir8";
   hEps: number;
   persistenceMin: number;
-  unresolvedPolicy: "nan";
+  unresolvedPolicy: "nan" | "max_h";
 }
 
 export interface TopographicStructureParams extends TopographicStructureConfig {
@@ -59,7 +59,10 @@ function assertStructureConfig(config: TopographicStructureConfig): void {
       `Topographic structure: invalid persistenceMin "${String(config.persistenceMin)}".`
     );
   }
-  if (config.unresolvedPolicy !== "nan") {
+  if (
+    config.unresolvedPolicy !== "nan" &&
+    config.unresolvedPolicy !== "max_h"
+  ) {
     throw new Error(
       `Topographic structure: unsupported unresolvedPolicy "${String(config.unresolvedPolicy)}".`
     );
@@ -189,6 +192,12 @@ export function deriveBasinStructure(
   const tileBasinMin = new Int32Array(shape.size).fill(-1);
   const minHByMinimum = new Float32Array(shape.size).fill(Number.NaN);
   const spillByMinimum = new Float32Array(shape.size).fill(Number.NaN);
+  let maxH = Number.NEGATIVE_INFINITY;
+  for (let i = 0; i < h.length; i += 1) {
+    if (h[i] > maxH) {
+      maxH = h[i];
+    }
+  }
 
   for (const group of groups) {
     for (const tile of group.indices) {
@@ -238,7 +247,11 @@ export function deriveBasinStructure(
     out.basinMinIdx[i] = minimum;
 
     const minH = minHByMinimum[minimum];
-    const spillH = spillByMinimum[minimum];
+    const unresolved = Number.isNaN(spillByMinimum[minimum]);
+    const spillH =
+      unresolved && config.unresolvedPolicy === "max_h"
+        ? maxH
+        : spillByMinimum[minimum];
     out.basinMinH[i] = minH;
     out.basinSpillH[i] = spillH;
     if (Number.isNaN(spillH)) {

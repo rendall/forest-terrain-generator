@@ -100,4 +100,30 @@ describe("Phase 2 topographic structure basin sweep", () => {
     expect(Array.from(enabled.basinMinIdx)).toEqual([1, 1, 1]);
     expect(Array.from(enabled.peakMaxIdx)).toEqual([0, 0, 2]);
   });
+
+  it("resolves unresolved basin spill/persistence to max_h when policy is max_h", async () => {
+    const { deriveBasinStructure } = await import(
+      "../../src/pipeline/derive-topographic-structure.js"
+    );
+    const shape = createGridShape(3, 1);
+    const h = new Float32Array([0.0, 0.2, 0.1]);
+
+    const out = deriveBasinStructure(shape, h, {
+      connectivity: "dir8",
+      hEps: 0.000001,
+      persistenceMin: 0.05,
+      unresolvedPolicy: "max_h",
+    });
+
+    // The global-minimum lineage (index 0) never merges in-map; under max_h it resolves to max(h)=0.2.
+    expect(out.basinSpillH[0]).toBeCloseTo(0.2, 6);
+    expect(out.basinPersistence[0]).toBeCloseTo(0.2, 6);
+    expect(out.basinDepthLike[0]).toBeCloseTo(0.2, 6);
+    expect(out.basinLike[0]).toBe(1);
+
+    // Losing minima still keep first-merge spill behavior.
+    expect(out.basinSpillH[2]).toBeCloseTo(0.2, 6);
+    expect(out.basinPersistence[2]).toBeCloseTo(0.1, 6);
+    expect(out.basinLike[2]).toBe(1);
+  });
 });

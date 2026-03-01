@@ -271,7 +271,7 @@ function validateTopographyStructureParams(params: JsonObject): void {
   expectOptionalEnum(
     value.unresolvedPolicy,
     topographyStructurePath("unresolvedPolicy"),
-    ["nan"]
+    ["nan", "max_h"]
   );
 }
 

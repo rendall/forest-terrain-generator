@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createGridShape, indexOf } from "../../src/domain/topography.js";
 import { APPENDIX_A_DEFAULTS } from "../../src/lib/default-params.js";
 import { deriveTopographyFromBaseMaps } from "../../src/pipeline/derive-topography.js";
+import { deriveTopographicStructure } from "../../src/pipeline/derive-topographic-structure.js";
 import { deriveHydrology } from "../../src/pipeline/hydrology.js";
 
 function createParaboloidBowlH(shape) {
@@ -82,6 +83,14 @@ describe("Phase 3 lake coherence bowl fixture", () => {
 			baseMaps,
 			APPENDIX_A_DEFAULTS,
 		);
+		const topographicStructure = deriveTopographicStructure(
+			shape,
+			topography.h,
+			{
+				...APPENDIX_A_DEFAULTS.topography.structure,
+				unresolvedPolicy: "max_h",
+			},
+		);
 		const hydrology = deriveHydrology(
 			shape,
 			topography.h,
@@ -92,6 +101,7 @@ describe("Phase 3 lake coherence bowl fixture", () => {
 				...APPENDIX_A_DEFAULTS.hydrology,
 				streamProxMaxDist: APPENDIX_A_DEFAULTS.gameTrails.streamProxMaxDist,
 			},
+			topographicStructure,
 		);
 
 		const lakeMask = hydrology.lakeMask;

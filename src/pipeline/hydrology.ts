@@ -2158,9 +2158,16 @@ export function deriveHydrology(
 	landform: Uint8Array,
 	seed: bigint,
 	params: HydrologyParams,
-	topographicStructure?: TopographicStructureMapsSoA,
+	topographicStructure: TopographicStructureMapsSoA,
 	options?: HydrologyDeriveOptions,
 ): HydrologyDeriveResult {
+	if (!topographicStructure) {
+		hydrologyFail(
+			"derive_hydrology",
+			"topographic_structure_required",
+			"missing_topographic_structure",
+		);
+	}
 	const maps = createHydrologyMaps(shape);
 	const emitStructureDiagnostics = options?.emitStructureDiagnostics === true;
 	const structureConfig = normalizeHydrologyStructureParams(params.structure);

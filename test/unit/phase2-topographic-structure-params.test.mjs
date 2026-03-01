@@ -44,7 +44,7 @@ describe("Phase 2 topographic-structure params contract", () => {
                 connectivity: "dir8",
                 hEps: 0.0005,
                 persistenceMin: 0.25,
-                unresolvedPolicy: "nan",
+                unresolvedPolicy: "max_h",
               },
             },
           },
@@ -70,7 +70,7 @@ describe("Phase 2 topographic-structure params contract", () => {
         connectivity: "dir8",
         hEps: 0.0005,
         persistenceMin: 0.25,
-        unresolvedPolicy: "nan",
+        unresolvedPolicy: "max_h",
       },
     });
   });
