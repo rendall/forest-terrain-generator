@@ -2,111 +2,102 @@
 
 Scope: entire repository
 
-This file defines collaboration and implementation expectations for contributors and agents.
+This file defines how contributors and agents collaborate.
 
-## Project deliverable
+## Project Deliverable
 
-This repository's deliverable is a CLI that implements the forest terrain generation spec; the CLI outputs either a single file path or an output directory for multi-artifact modes (for example, debug).
+The deliverable is a CLI that implements the forest terrain generation system and emits either a single file or a structured output directory (for multi-artifact modes such as debug).
 
-## Work Collaboratively
+---
 
-The agent MUST treat all discussion as exploratory unless explicitly authorized to implement.
+## Collaboration Model
 
-### 1. No Implicit Directives
+### 1. Discussion ≠ Implementation
 
-* Do not interpret brainstorming, questions, hypotheticals, or partial thoughts as implementation instructions.
-* Do not modify code, files, or structure unless the user explicitly states approval using clear execution language such as:
+All discussion is exploratory unless explicit authorization is given.
 
-  * “Implement this.”
-  * “Proceed.”
-  * “Create the PR.”
-  * “Apply the change.”
+Implementation requires clear approval language such as:
 
-If explicit approval is absent, remain in analysis mode.
+* “Implement this.”
+* “Proceed.”
+* “Apply the change.”
+* “Create the PR.”
 
-If uncertain whether something is a directive, assume it is not.
+Absent explicit approval, remain in analysis mode.
 
-### 2. Require Explicit Approval Before Changes
+---
 
-Before making any change that alters behavior, structure, dependencies, or spec interpretation:
+### 2. No Silent Behavior Changes
+
+Before making any change that alters:
+
+* observable behavior
+* architectural structure
+* public contracts
+* dependencies
+* determinism guarantees
+
+The agent must:
 
 * Summarize the proposed change.
-* Identify affected files or systems.
+* Identify affected areas.
 * Wait for confirmation.
 
-No changes without approval.
+No implicit execution.
 
-### 3. Push Back on Questionable Decisions
+---
 
-The agent MUST actively evaluate proposals against:
-
-* `docs/normative`
-* Existing ADRs
-* The declared spec
-* Previously established constraints
+### 3. Call Out Conflicts
 
 If a proposal:
 
-* Contradicts normative documentation
-* Violates stated invariants
-* Introduces architectural drift
-* Conflicts with determinism or declared non-goals
-* Appears underspecified or incoherent
+* Contradicts existing ADRs,
+* Violates declared invariants,
+* Breaks determinism guarantees,
+* Or introduces architectural drift,
 
-The agent MUST:
+The agent must:
 
-* Explicitly identify the conflict.
-* Quote or reference the relevant constraint.
+* Identify the conflict clearly.
 * Explain the consequences.
-* Request clarification or confirmation before proceeding.
+* Request clarification before proceeding.
 
-Silently complying with a flawed or contradictory directive is a failure.
+Blind compliance is a failure.
 
-### 4. Separate Discussion from Commitment
+---
 
-Use this mental model:
+### 4. Keep Phases Separate
 
-* Discussion phase: explore, critique, model alternatives.
-* Decision phase: explicit approval.
-* Implementation phase: execute only after approval.
+There are three phases:
 
-The agent must not collapse these phases.
+* Exploration
+* Decision
+* Implementation
 
-### 5. Escalation Rule
+Do not collapse them.
 
-If a proposal meaningfully alters architecture, policy, or long-term constraints:
+---
 
-* Recommend creating or updating an ADR before implementation.
-* Do not proceed until that record exists or approval is given to proceed without it.
+### 5. Record Major Decisions
 
-## Policy decision completion
+Significant architectural or long-term policy changes should be captured in an ADR.
 
-A planning checkbox for a policy decision is complete only when:
+ADRs document intent. They do not require ceremony.
 
-1. At least one artifact below is updated.
-2. Every artifact whose applicability predicate is true is updated.
-3. If applicability is unclear for any artifact, stop and ask for instructions before marking the checkbox complete.
+---
 
-Applicability predicates:
+## Source of Truth
 
-1. Update `docs/drafts/ImplementationPlan.md` if the decision affects execution plan, sequencing, or scope.
-2. Update `AGENTS.md` if the decision changes contributor or agent operating policy.
-3. Update `docs/ADR.md` if the decision affects architecture, invariants, or long-term constraints.
-4. Update a spec in `docs/drafts/` or `docs/normative/` if behavior or requirements are added or changed.
+* Code and tests in `main` are authoritative.
+* ADRs document architectural intent.
+* Specs describe intended behavior but do not override merged code.
 
-## Implementation style
+---
+
+## Implementation Style
 
 * TypeScript-first
-* Modern ESM imports/exports
-* Functional-first design over class-heavy OOP
-
-## Repository structure guidance
-
-Follow the scaffold policy in `docs/drafts/ImplementationPlan.md` for module boundaries and naming.
-
-## Normative source of truth
-
-* Use `docs/normative/ForestTerrainGeneration.md` for terrain-generation behavior requirements.
-* Treat informative appendix guidance as optional unless explicitly adopted in normative policy.
-* Use `docs/normative/checklist.md` for checklist authoring requirements.
-* Use `docs/normative/implementation.md` for checklist execution workflow requirements.
+* Modern ESM
+* Arrow notation
+* array methods over loops
+* Prefer functional design over heavy OOP

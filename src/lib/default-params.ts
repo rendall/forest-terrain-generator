@@ -1,6 +1,5 @@
 import type { JsonObject } from "../domain/types.js";
 
-// Appendix A recommended defaults from docs/normative/ForestTerrainGeneration.md.
 export const APPENDIX_A_DEFAULTS: JsonObject = {
 	grid: { playableInset: 1 },
 	heightNoise: {

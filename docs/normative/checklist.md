@@ -1,52 +1,38 @@
-# Checklist writing instructions
+# Checklist Conventions
 
-You have been tasked with creating a checklist for a task. These are the instructions for doing that properly.
+Use this guide when writing implementation checklists.
 
-There have been discussions about how to implement the task. This exercise is to write a step-by-step implementation checklist according to those instructions such that an engineer could implement your vision of the plan simply by following the checklist. The intent is to review and discuss specifics so there is no drift between understanding.
+Goal: make checklists clear enough that another engineer can execute them without hidden assumptions.
 
-Each checklist item MUST be a minimal, imperative, and checkable implementation step.
-Use one behavior change per item.
-If code is modified, name the exact function/file and the concrete change.
+## Item Quality
+
+Each checklist item should be:
+
+- Atomic (one behavior change per item).
+- Imperative (clear action verb).
+- Checkable (easy to tell when done).
+- Scoped (prefix with a tag like `[hydrology]`, `[docs]`, `[cli]`).
+
+If code changes are involved, name exact files/functions.
+
 If an item depends on another, state that dependency explicitly.
-Prefix each item with a short scope tag (e.g. `[description]`, `[cli]`, `[docs]`).
-You MAY add one brief sub-bullet for context.
-You MUST NOT include tests or testing in this exercise, as that topic is addressed in a later step.
 
-After drafting atomic checklist items, you MUST add a final grouping pass as a dedicated section:
+## Exclusions
+
+Unless a task explicitly requests testing steps, do not include test-writing/execution steps in the checklist itself.
 
 ## Behavior Slices
 
-This section defines execution bundles for implementation. It does not replace atomic checklist items.
+After atomic items, add a `## Behavior Slices` section to group execution bundles.
+
+For each slice include:
+
+- `Goal`: one coherent behavior outcome.
+- `Items`: exact checklist items covered by that slice.
+- `Type`: `behavior` or `mechanical`.
 
 Rules:
 
-1. Add a `## Behavior Slices` section at the end of the checklist.
-2. Define slices as `S1`, `S2`, `S3`, etc.
-3. Each slice MUST contain:
-   - `Goal`: one coherent behavior change.
-   - `Items`: explicit checklist items covered by the slice.
-   - `Type`: `behavior` or `mechanical`.
-4. Every checklist item MUST be assigned to exactly one slice.
-5. A slice MAY include multiple dependent checklist items.
-6. Slices MUST remain within the approved checklist scope.
-7. Do not include tests or testing steps in this section.
-
-e.g.
-
-```md
-- [ ] [description] Add optional field `basicText?: string` to interface `DescriptionSentence` in `src/pipeline/description.ts`
-- [ ] [description] Set `basicText` on the `movement_structure` sentence object in `generateRawDescription` in `src/pipeline/description.ts` (depends on previous item)
-- [ ] [cli] Map `sentence.basicText` to `basicText` in structured sentence output inside `attachTileDescriptions` in `src/app/run-describe.ts` (depends on first item)
-  - Keeps baseline text available for later transformed rendering.
-
-## Behavior Slices
-
-- `S1`
-  - Goal: add `basicText` to description data model and generation path.
-  - Items: first and second checklist items above.
-  - Type: behavior
-- `S2`
-  - Goal: wire `basicText` into CLI structured output.
-  - Items: third checklist item above.
-  - Type: behavior
-```
+- Every checklist item belongs to exactly one slice.
+- Slices must remain within approved scope.
+- Slices do not replace atomic items; they organize them.

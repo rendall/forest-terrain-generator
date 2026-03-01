@@ -1,71 +1,54 @@
-# ADR Instructions
+# ADR Conventions
 
-This document defines how to add a new entry to `/docs/ADR.md`.
+This file describes lightweight conventions for adding entries to [`docs/ADR.md`](/mnt/c/workspace/projects/forest-terrain-generator/docs/ADR.md).
 
-## Ordering
+Use these conventions to keep decisions readable and easy to audit. They are not intended to be heavy process gates.
 
-* New entries MUST be added at the top of `ADR.md`, directly below the main `# Architecture Decision Record` header and explanatory paragraph.
-* Entries are ordered newest first.
-* Do not reorder or edit historical entries except to correct factual errors.
+## When To Add An ADR
 
-## When to Create an Entry
+Add an entry when a change does one or more of the following:
 
-Create an ADR entry when a decision:
+- Changes architecture or pipeline shape.
+- Introduces/removes major constraints.
+- Alters long-lived contracts used across multiple modules.
+- Replaces prior policy with a new direction.
 
-* Changes architecture, structure, or core conventions
-* Introduces or removes major dependencies
-* Establishes new patterns, constraints, or policies
-* Has long-term impact on maintainability or behavior
+Do not add ADRs for small refactors, typo fixes, or local implementation details.
 
-Do not create ADRs for trivial refactors, cosmetic changes, or obvious fixes.
+## Placement And Ordering
 
-## Entry Template
+- Add new entries near the top of `ADR.md` (newest first).
+- Keep older entries intact as historical context.
+- If a decision is superseded, add a new entry that says so instead of deleting history.
 
-Each entry MUST follow this structure exactly:
+## Suggested Entry Shape
+
+Use this template when practical:
 
 ```md
-## <Short Decision Title>
+## <Decision Title>
 
 **Timestamp:** YYYY-MM-DD HH:MM (UTC)
 
 ### Decision
-A concise description of the decision that was taken.
+What was decided.
 
 ### Rationale
-Why this decision was made. Include constraints, tradeoffs, and context.
+Why this direction was chosen.
 
 ### Alternatives Considered
-- Option A – why it was rejected
-- Option B – why it was rejected
-- If none, explicitly state: None.
+- Option A
+- Option B
 
 ### References
-- PR: #123
-- Commit: abcdef1
-- File(s): path/to/file.ts
-- Related ADRs: link or title
+- PR:
+- Commit:
+- File(s):
+- Related ADRs:
 ```
 
-## Title Guidelines
+## Writing Style
 
-* The title must be brief and declarative.
-* It should describe what was decided, not what was discussed.
-* Example: `Adopt Deterministic Forest Generation v1`
-* Avoid vague titles such as “Update” or “Refactor”.
-
-## Style Rules
-
-* Be factual and precise.
-* Avoid narrative storytelling.
-* Do not justify emotionally.
-* Capture reasoning clearly enough that someone new to the project can understand the constraints.
-
-## Immutability
-
-ADR entries are historical records.
-
-If a decision is later reversed:
-
-* Do not delete the original entry.
-* Add a new entry describing the superseding decision.
-* Reference the prior ADR in the new entry.
+- Prefer short, factual language.
+- Capture tradeoffs directly.
+- Focus on forward guidance and consequences.

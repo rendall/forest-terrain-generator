@@ -29,65 +29,6 @@
 		}
 	},
 	"landform": { "eps": 0.005, "flatSlopeThreshold": 0.03 },
-	"hydrology": {
-		"minDropThreshold": 0.0005,
-		"tieEps": 0.000001,
-		"structure": {
-			"enabled": true,
-			"sinkPersistenceRouteMax": 0.005,
-			"sinkPersistenceLakeMin": 0.02,
-			"basinTileCountMinLake": 3,
-			"inflowGateEnabled": false,
-			"lakeInflowMin": 0.15,
-			"unresolvedLakePolicy": "deny",
-			"spillAwareRouteThroughEnabled": false,
-			"retentionWeight": 0.2,
-			"retentionNormalization": "quantile"
-		},
-		"streamThresholds": {
-			"sourceAccumMin": 0.55,
-			"channelAccumMin": 0.55,
-			"minSlope": 0.01,
-			"maxGapFillSteps": 0
-		},
-		"streamHeadwaterBoost": {
-			"enabled": false,
-			"minElevationPct": 0.7,
-			"minSlope": 0.015,
-			"minSourceSpacing": 6,
-			"maxExtraSources": 24
-		},
-		"lakeFlatSlopeThreshold": 0.03,
-		"lakeAccumThreshold": 0.65,
-		"lakeGrowSteps": 0,
-		"lakeGrowHeightDelta": 0.01,
-		"lakeCoherence": {
-			"enabled": true,
-			"microLakeMaxSize": 2,
-			"microLakeMode": "merge",
-			"bridgeEnabled": true,
-			"maxBridgeDistance": 1,
-			"repairSingletons": true,
-			"enforceBoundaryRealism": true,
-			"boundaryEps": 0.0005,
-			"boundaryRepairMode": "trim_first",
-		},
-		"moistureAccumStart": 0.35,
-		"flatnessThreshold": 0.06,
-		"waterProxMaxDist": 6,
-		"weights": { "accum": 0.55, "flat": 0.25, "prox": 0.2 },
-		"marshMoistureThreshold": 0.78,
-		"marshSlopeThreshold": 0.04
-	},
-	"ground": {
-		"peatMoistureThreshold": 0.7,
-		"standingWaterMoistureThreshold": 0.78,
-		"standingWaterSlopeMax": 0.04,
-		"lichenMoistureMax": 0.35,
-		"exposedSandMoistureMax": 0.4,
-		"bedrockHeightMin": 0.75,
-		"bedrockRoughnessMin": 0.55
-	},
 	"roughnessFeatures": {
 		"obstructionMoistureMix": 0.15,
 		"windthrowThreshold": 0.7,
