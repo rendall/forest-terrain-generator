@@ -279,10 +279,7 @@ function buildBasinFeatureTree(
   const nodes = sortFeatureNodes(
     Array.from(nodeById.values()).map((node) => finalizeNode(cloneNode(node)))
   );
-  return {
-    nodes,
-    tileLeafFeatureIds
-  };
+  return removeMapWideFeatures(shape, nodes, tileLeafFeatureIds);
 }
 
 function buildPeakFeatureTree(
@@ -393,10 +390,7 @@ function buildPeakFeatureTree(
   const nodes = sortFeatureNodes(
     Array.from(nodeById.values()).map((node) => finalizeNode(cloneNode(node)))
   );
-  return {
-    nodes,
-    tileLeafFeatureIds
-  };
+  return removeMapWideFeatures(shape, nodes, tileLeafFeatureIds);
 }
 
 function collectActiveCompositeIdsByTile(
@@ -427,6 +421,47 @@ function collectActiveCompositeIdsByTile(
     }
     return sortFeatureIds(active);
   });
+}
+
+function removeMapWideFeatures(
+  shape: GridShape,
+  nodes: readonly TopographicFeatureNode[],
+  tileLeafFeatureIds: readonly string[]
+): FeatureBuildResult {
+  const removedIds = new Set(
+    nodes.filter((node) => node.size === shape.size).map((node) => node.id)
+  );
+  if (removedIds.size === 0) {
+    return {
+      nodes: sortFeatureNodes(nodes),
+      tileLeafFeatureIds: [...tileLeafFeatureIds]
+    };
+  }
+
+  const filteredNodes = sortFeatureNodes(
+    nodes
+      .filter((node) => !removedIds.has(node.id))
+      .map((node) => ({
+        ...node,
+        parentId:
+          node.parentId && !removedIds.has(node.parentId)
+            ? node.parentId
+            : null,
+        childIds: sortFeatureIds(
+          node.childIds.filter((id) => !removedIds.has(id))
+        ),
+        ...(node.tileIds ? { tileIds: [...node.tileIds] } : {})
+      }))
+  );
+
+  const filteredTileLeafIds = tileLeafFeatureIds.map((id) =>
+    removedIds.has(id) ? "" : id
+  );
+
+  return {
+    nodes: filteredNodes,
+    tileLeafFeatureIds: filteredTileLeafIds
+  };
 }
 
 function assertStructureConfig(config: TopographicStructureConfig): void {

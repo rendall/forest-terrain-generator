@@ -143,16 +143,19 @@ describe("Phase 2 topographic structure basin sweep", () => {
     });
 
     expect(out.basinFeatures.length).toBeGreaterThan(0);
-    expect(out.peakFeatures.length).toBeGreaterThan(0);
     const basinLeaf = out.basinFeatures.find((node) => node.kind === "leaf");
     const basinComposite = out.basinFeatures.find((node) => node.kind === "composite");
     expect(basinLeaf).toBeDefined();
-    expect(basinComposite).toBeDefined();
     expect(Array.isArray(basinLeaf?.tileIds)).toBe(true);
-    expect(basinComposite?.tileIds).toBeUndefined();
+    if (basinComposite) {
+      expect(basinComposite.tileIds).toBeUndefined();
+    }
+    expect(out.basinFeatures.every((node) => node.size < shape.size)).toBe(true);
+    expect(out.peakFeatures.every((node) => node.size < shape.size)).toBe(true);
 
     for (const tileIds of out.tileFeatureIds) {
-      expect(tileIds.length).toBe(2);
+      expect(tileIds.length).toBeGreaterThanOrEqual(1);
+      expect(tileIds.length).toBeLessThanOrEqual(2);
     }
     for (const activeIds of out.tileActiveFeatureIds) {
       expect(Array.isArray(activeIds)).toBe(true);
