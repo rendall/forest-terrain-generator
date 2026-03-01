@@ -180,7 +180,6 @@ function buildBasinFeatureTree(
   const nodeById = new Map<string, TopographicFeatureNode>();
   const leafIdByLabel = new Map<number, string>();
   const currentNodeIdByLabel = new Map<number, string>();
-  const tileLeafFeatureIds = new Array<string>(shape.size).fill("");
   let nextOrdinal = 0;
 
   for (const label of leafLabels) {
@@ -211,7 +210,6 @@ function buildBasinFeatureTree(
     if (!leafId) {
       continue;
     }
-    tileLeafFeatureIds[tile] = leafId;
     const node = nodeById.get(leafId);
     if (!node) {
       continue;
@@ -279,7 +277,10 @@ function buildBasinFeatureTree(
   const nodes = sortFeatureNodes(
     Array.from(nodeById.values()).map((node) => finalizeNode(cloneNode(node)))
   );
-  return removeMapWideFeatures(shape, nodes, tileLeafFeatureIds);
+  const trimmed = trimLeafNodesAtFirstMerge(shape, h, nodes, true, config.hEps);
+  const recomputed = recomputeCompositeStats(trimmed);
+  const remappedTileLeafIds = tileLeafMembershipByNode(shape, recomputed);
+  return removeMapWideFeatures(shape, recomputed, remappedTileLeafIds);
 }
 
 function buildPeakFeatureTree(
@@ -287,7 +288,8 @@ function buildPeakFeatureTree(
   h: Float32Array,
   tilePeakMax: Int32Array,
   maxHByMaximum: Float32Array,
-  mergeEvents: PeakMergeEvent[]
+  mergeEvents: PeakMergeEvent[],
+  hEps: number
 ): FeatureBuildResult {
   const leafLabels = Array.from(
     new Set(Array.from(tilePeakMax).filter((label) => label >= 0))
@@ -306,7 +308,6 @@ function buildPeakFeatureTree(
   const nodeById = new Map<string, TopographicFeatureNode>();
   const leafIdByLabel = new Map<number, string>();
   const currentNodeIdByLabel = new Map<number, string>();
-  const tileLeafFeatureIds = new Array<string>(shape.size).fill("");
   let nextOrdinal = 0;
 
   for (const label of leafLabels) {
@@ -337,7 +338,6 @@ function buildPeakFeatureTree(
     if (!leafId) {
       continue;
     }
-    tileLeafFeatureIds[tile] = leafId;
     const node = nodeById.get(leafId);
     if (!node) {
       continue;
@@ -390,7 +390,10 @@ function buildPeakFeatureTree(
   const nodes = sortFeatureNodes(
     Array.from(nodeById.values()).map((node) => finalizeNode(cloneNode(node)))
   );
-  return removeMapWideFeatures(shape, nodes, tileLeafFeatureIds);
+  const trimmed = trimLeafNodesAtFirstMerge(shape, h, nodes, false, hEps);
+  const recomputed = recomputeCompositeStats(trimmed);
+  const remappedTileLeafIds = tileLeafMembershipByNode(shape, recomputed);
+  return removeMapWideFeatures(shape, recomputed, remappedTileLeafIds);
 }
 
 function collectActiveCompositeIdsByTile(
@@ -421,6 +424,132 @@ function collectActiveCompositeIdsByTile(
     }
     return sortFeatureIds(active);
   });
+}
+
+function recomputeNodeStatsFromTiles(
+  shape: GridShape,
+  h: Float32Array,
+  tileIds: readonly number[]
+): Pick<TopographicFeatureNode, "size" | "bbox" | "minH" | "maxH"> {
+  if (tileIds.length === 0) {
+    return {
+      size: 0,
+      bbox: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
+      minH: Number.NaN,
+      maxH: Number.NaN
+    };
+  }
+
+  const bbox = createEmptyBbox();
+  let minH = Number.POSITIVE_INFINITY;
+  let maxH = Number.NEGATIVE_INFINITY;
+  for (const tileIndex of tileIds) {
+    const x = tileIndex % shape.width;
+    const y = Math.floor(tileIndex / shape.width);
+    bbox.minX = Math.min(bbox.minX, x);
+    bbox.minY = Math.min(bbox.minY, y);
+    bbox.maxX = Math.max(bbox.maxX, x);
+    bbox.maxY = Math.max(bbox.maxY, y);
+    minH = Math.min(minH, h[tileIndex]);
+    maxH = Math.max(maxH, h[tileIndex]);
+  }
+  return {
+    size: tileIds.length,
+    bbox,
+    minH,
+    maxH
+  };
+}
+
+function trimLeafNodesAtFirstMerge(
+  shape: GridShape,
+  h: Float32Array,
+  nodes: readonly TopographicFeatureNode[],
+  isBasin: boolean,
+  hEps: number
+): TopographicFeatureNode[] {
+  return nodes.map((node) => {
+    if (node.kind !== "leaf" || !node.tileIds || node.mergeH === null) {
+      return cloneNode(node);
+    }
+
+    const filteredTileIds = node.tileIds.filter((tileIndex) => {
+      const tileH = h[tileIndex];
+      if (isBasin) {
+        return tileH + hEps < node.mergeH!;
+      }
+      return tileH > node.mergeH! + hEps;
+    });
+    const stats = recomputeNodeStatsFromTiles(shape, h, filteredTileIds);
+    return {
+      ...cloneNode(node),
+      tileIds: filteredTileIds,
+      size: stats.size,
+      bbox: stats.bbox,
+      minH: stats.minH,
+      maxH: stats.maxH
+    };
+  });
+}
+
+function recomputeCompositeStats(nodes: readonly TopographicFeatureNode[]): TopographicFeatureNode[] {
+  const nodeById = new Map(nodes.map((node) => [node.id, cloneNode(node)]));
+
+  const visit = (id: string): TopographicFeatureNode | undefined => {
+    const node = nodeById.get(id);
+    if (!node) {
+      return undefined;
+    }
+    if (node.kind === "leaf") {
+      return node;
+    }
+
+    const children = node.childIds
+      .map((childId) => visit(childId))
+      .filter((child): child is TopographicFeatureNode => child !== undefined);
+    if (children.length === 0) {
+      node.size = 0;
+      node.bbox = { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+      node.minH = Number.NaN;
+      node.maxH = Number.NaN;
+      return node;
+    }
+
+    node.size = children.reduce((sum, child) => sum + child.size, 0);
+    node.bbox = {
+      minX: children.reduce((min, child) => Math.min(min, child.bbox.minX), Number.POSITIVE_INFINITY),
+      minY: children.reduce((min, child) => Math.min(min, child.bbox.minY), Number.POSITIVE_INFINITY),
+      maxX: children.reduce((max, child) => Math.max(max, child.bbox.maxX), Number.NEGATIVE_INFINITY),
+      maxY: children.reduce((max, child) => Math.max(max, child.bbox.maxY), Number.NEGATIVE_INFINITY)
+    };
+    node.minH = children.reduce((min, child) => Math.min(min, child.minH), Number.POSITIVE_INFINITY);
+    node.maxH = children.reduce((max, child) => Math.max(max, child.maxH), Number.NEGATIVE_INFINITY);
+    return node;
+  };
+
+  for (const node of nodeById.values()) {
+    if (node.parentId === null) {
+      visit(node.id);
+    }
+  }
+
+  return sortFeatureNodes(Array.from(nodeById.values()));
+}
+
+function tileLeafMembershipByNode(
+  shape: GridShape,
+  nodes: readonly TopographicFeatureNode[]
+): string[] {
+  const membership = new Array<string>(shape.size).fill("");
+  for (const node of nodes) {
+    if (node.kind !== "leaf" || !node.tileIds) {
+      continue;
+    }
+    for (const tileIndex of node.tileIds) {
+      membership[tileIndex] = node.id;
+    }
+  }
+  return membership;
 }
 
 function removeMapWideFeatures(
@@ -876,7 +1005,8 @@ export function derivePeakStructure(
     h,
     tilePeakMax,
     maxHByMaximum,
-    mergeEvents
+    mergeEvents,
+    config.hEps
   );
   out.peakFeatures = peakFeatures.nodes;
   out.tileFeatureIds = peakFeatures.tileLeafFeatureIds.map((id) =>

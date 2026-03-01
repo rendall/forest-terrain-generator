@@ -154,7 +154,7 @@ describe("Phase 2 topographic structure basin sweep", () => {
     expect(out.peakFeatures.every((node) => node.size < shape.size)).toBe(true);
 
     for (const tileIds of out.tileFeatureIds) {
-      expect(tileIds.length).toBeGreaterThanOrEqual(1);
+      expect(tileIds.length).toBeGreaterThanOrEqual(0);
       expect(tileIds.length).toBeLessThanOrEqual(2);
     }
     for (const activeIds of out.tileActiveFeatureIds) {

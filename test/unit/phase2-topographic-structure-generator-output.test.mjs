@@ -46,7 +46,7 @@ describe("Phase 2 topographic structure tile payload", () => {
     expect(firstTile.index).toBe(0);
     expect(Array.isArray(firstTile.featureIds)).toBe(true);
     expect(Array.isArray(firstTile.activeFeatureIds)).toBe(true);
-    expect(firstTile.featureIds.length).toBe(2);
+    expect(firstTile.featureIds.length).toBeLessThanOrEqual(2);
     expect(firstTile.topography.structure).toBeDefined();
     expect(firstTile.topography.structure.basinPersistence === null
       || typeof firstTile.topography.structure.basinPersistence === "number").toBe(true);
@@ -60,7 +60,7 @@ describe("Phase 2 topographic structure tile payload", () => {
     for (const tile of envelope.tiles) {
       expect(tile.index).toBe(tile.y * 8 + tile.x);
       expect(Array.isArray(tile.featureIds)).toBe(true);
-      expect(tile.featureIds.length).toBe(2);
+      expect(tile.featureIds.length).toBeLessThanOrEqual(2);
       expect(Array.isArray(tile.activeFeatureIds)).toBe(true);
       expect(tile.topography.structure).toBeDefined();
       expect(Object.keys(tile.topography.structure)).toEqual([
