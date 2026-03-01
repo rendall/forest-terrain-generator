@@ -38,8 +38,14 @@ describe("Phase 2 topographic structure debug output", () => {
     const debugTopography = JSON.parse(
       await readFile(join(outputDir, "topography.json"), "utf8"),
     );
+    expect(Array.isArray(debugTopography.features.basins)).toBe(true);
+    expect(Array.isArray(debugTopography.features.peaks)).toBe(true);
+    expect(debugTopography.features.basins.length).toBeGreaterThan(0);
+    expect(debugTopography.features.peaks.length).toBeGreaterThan(0);
     expect(debugTopography.tiles[0].index).toBe(0);
     expect(debugTopography.tiles[1].index).toBe(1);
+    expect(Array.isArray(debugTopography.tiles[0].featureIds)).toBe(true);
+    expect(Array.isArray(debugTopography.tiles[0].activeFeatureIds)).toBe(true);
     const debugStructure = debugTopography.tiles[0].topography.structure;
 
     expect(debugStructure.basinPersistence).not.toBeUndefined();
@@ -58,6 +64,10 @@ describe("Phase 2 topographic structure debug output", () => {
 
     const envelope = JSON.parse(await readFile(debugOutputFile, "utf8"));
     expect(envelope.tiles[0].index).toBe(0);
+    expect(Array.isArray(envelope.features.basins)).toBe(true);
+    expect(Array.isArray(envelope.features.peaks)).toBe(true);
+    expect(Array.isArray(envelope.tiles[0].featureIds)).toBe(true);
+    expect(Array.isArray(envelope.tiles[0].activeFeatureIds)).toBe(true);
     const envelopeStructure = envelope.tiles[0].topography.structure;
     expect(Object.keys(envelopeStructure)).toEqual([
       "basinPersistence",

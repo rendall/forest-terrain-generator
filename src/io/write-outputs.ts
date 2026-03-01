@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { FileIoError, InputValidationError } from "../domain/errors.js";
+import type { TerrainFeatureCollection } from "../domain/topographic-features.js";
 import type { Mode, TerrainEnvelope } from "../domain/types.js";
 import type {
   HydrologyStructureDiagnostics,
@@ -30,6 +31,10 @@ export interface TopographyStructureDebugPayload {
   peakRiseLike: Float32Array;
   basinLike: Uint8Array;
   ridgeLike: Uint8Array;
+  basinFeatures: TerrainFeatureCollection["basins"];
+  peakFeatures: TerrainFeatureCollection["peaks"];
+  tileFeatureIds: string[][];
+  tileActiveFeatureIds: string[][];
 }
 
 function serializeJson(value: unknown): string {
@@ -87,11 +92,19 @@ function buildTopographyDebugTiles(
       typeof tile.index === "number" && Number.isInteger(tile.index) && tile.index >= 0
         ? tile.index
         : index;
+    const featureIds = Array.isArray(tile.featureIds)
+      ? tile.featureIds
+      : topographyStructureDebug?.tileFeatureIds[index] ?? [];
+    const activeFeatureIds = Array.isArray(tile.activeFeatureIds)
+      ? tile.activeFeatureIds
+      : topographyStructureDebug?.tileActiveFeatureIds[index] ?? [];
     if (!topographyStructureDebug) {
       return {
         index: tileIndex,
         x: tile.x,
         y: tile.y,
+        featureIds,
+        activeFeatureIds,
         topography
       };
     }
@@ -116,12 +129,39 @@ function buildTopographyDebugTiles(
       index: tileIndex,
       x: tile.x,
       y: tile.y,
+      featureIds,
+      activeFeatureIds,
       topography: {
         ...topography,
         structure
       }
     };
   });
+}
+
+function resolveTopographyFeatures(
+  envelope: TerrainEnvelope,
+  topographyStructureDebug: TopographyStructureDebugPayload | undefined
+): TerrainFeatureCollection {
+  if (
+    envelope.features &&
+    Array.isArray(envelope.features.basins) &&
+    Array.isArray(envelope.features.peaks)
+  ) {
+    return envelope.features;
+  }
+
+  if (topographyStructureDebug) {
+    return {
+      basins: topographyStructureDebug.basinFeatures,
+      peaks: topographyStructureDebug.peakFeatures
+    };
+  }
+
+  return {
+    basins: [],
+    peaks: []
+  };
 }
 
 function messageFromUnknown(error: unknown): string {
@@ -199,7 +239,10 @@ async function writeDebugArtifacts(
   await writeJsonFile(join(targetDir, "debug-manifest.json"), debugManifest, "debug manifest write");
   await writeJsonFile(
     join(targetDir, "topography.json"),
-    { tiles: buildTopographyDebugTiles(envelope, topographyStructureDebug) },
+    {
+      features: resolveTopographyFeatures(envelope, topographyStructureDebug),
+      tiles: buildTopographyDebugTiles(envelope, topographyStructureDebug)
+    },
     "topography debug artifact write"
   );
   await writeJsonFile(

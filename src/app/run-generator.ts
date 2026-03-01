@@ -198,6 +198,10 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 	);
 
 	const envelope: TerrainEnvelope = buildEnvelopeSkeleton();
+	envelope.features = {
+		basins: topographyStructure.basinFeatures,
+		peaks: topographyStructure.peakFeatures,
+	};
 
 	const tiles: JsonObject[] = [];
 	for (let i = 0; i < shape.size; i += 1) {
@@ -207,6 +211,8 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			index: i,
 			x,
 			y,
+			featureIds: topographyStructure.tileFeatureIds[i],
+			activeFeatureIds: topographyStructure.tileActiveFeatureIds[i],
 			topography: {
 				h: topography.h[i],
 				r: topography.r[i],
