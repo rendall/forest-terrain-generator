@@ -19,6 +19,7 @@ export interface TopographicStructureConfig {
   connectivity: "dir8";
   hEps: number;
   persistenceMin: number;
+  grab: number;
   unresolvedPolicy: "nan" | "max_h";
 }
 
@@ -57,6 +58,11 @@ function assertStructureConfig(config: TopographicStructureConfig): void {
   if (!Number.isFinite(config.persistenceMin) || config.persistenceMin < 0) {
     throw new Error(
       `Topographic structure: invalid persistenceMin "${String(config.persistenceMin)}".`
+    );
+  }
+  if (!Number.isFinite(config.grab) || config.grab < 0 || config.grab > 1) {
+    throw new Error(
+      `Topographic structure: invalid grab "${String(config.grab)}".`
     );
   }
   if (
@@ -414,6 +420,7 @@ export function deriveTopographicStructure(
     connectivity: params.connectivity,
     hEps: params.hEps,
     persistenceMin: params.persistenceMin,
+    grab: params.grab,
     unresolvedPolicy: params.unresolvedPolicy
   };
   const out = deriveBasinStructure(shape, h, config);

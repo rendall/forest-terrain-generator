@@ -324,6 +324,12 @@ function validateTopographyStructureParams(params: JsonObject): void {
     value.persistenceMin,
     topographyStructurePath("persistenceMin")
   );
+  expectOptionalRangeNumber(
+    value.grab,
+    topographyStructurePath("grab"),
+    0,
+    1
+  );
   expectOptionalEnum(
     value.unresolvedPolicy,
     topographyStructurePath("unresolvedPolicy"),

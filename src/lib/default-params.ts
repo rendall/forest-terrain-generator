@@ -44,6 +44,7 @@ export const APPENDIX_A_DEFAULTS: JsonObject = {
 			connectivity: "dir8",
 			hEps: 0.000001,
 			persistenceMin: 0.01,
+			grab: 0.35,
 			unresolvedPolicy: "nan",
 		},
 	},

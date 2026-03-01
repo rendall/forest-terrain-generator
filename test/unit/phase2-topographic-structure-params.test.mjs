@@ -26,6 +26,7 @@ describe("Phase 2 topographic-structure params contract", () => {
       connectivity: "dir8",
       hEps: 0.000001,
       persistenceMin: 0.01,
+      grab: 0.35,
       unresolvedPolicy: "nan",
     });
   });
@@ -44,6 +45,7 @@ describe("Phase 2 topographic-structure params contract", () => {
                 connectivity: "dir8",
                 hEps: 0.0005,
                 persistenceMin: 0.25,
+                grab: 0.4,
                 unresolvedPolicy: "max_h",
               },
             },
@@ -70,6 +72,7 @@ describe("Phase 2 topographic-structure params contract", () => {
         connectivity: "dir8",
         hEps: 0.0005,
         persistenceMin: 0.25,
+        grab: 0.4,
         unresolvedPolicy: "max_h",
       },
     });
@@ -106,6 +109,39 @@ describe("Phase 2 topographic-structure params contract", () => {
         },
       }),
     ).rejects.toThrow(/connectivity/);
+  });
+
+  it("rejects out-of-range topography.structure.grab", async () => {
+    const cwd = await makeTempDir();
+    const paramsPath = join(cwd, "params.json");
+    await writeFile(
+      paramsPath,
+      `${JSON.stringify(
+        {
+          params: {
+            topography: {
+              structure: {
+                grab: 1.5,
+              },
+            },
+          },
+        },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+
+    await expect(
+      resolveInputs({
+        mode: "generate",
+        cwd,
+        args: {
+          force: false,
+          paramsPath,
+        },
+      }),
+    ).rejects.toThrow(/grab/);
   });
 
   it("rejects non-object topography values", async () => {

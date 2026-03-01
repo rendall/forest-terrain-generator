@@ -24,6 +24,7 @@ describe("Phase 2 topographic structure basin sweep", () => {
       connectivity: "dir8",
       hEps: 0.000001,
       persistenceMin: 0.05,
+      grab: 0.35,
       unresolvedPolicy: "nan",
     });
 
@@ -54,6 +55,7 @@ describe("Phase 2 topographic structure basin sweep", () => {
       connectivity: "dir8",
       hEps: 0.000001,
       persistenceMin: 0.05,
+      grab: 0.35,
       unresolvedPolicy: "nan",
     });
 
@@ -85,6 +87,7 @@ describe("Phase 2 topographic structure basin sweep", () => {
       connectivity: "dir8",
       hEps: 0.000001,
       persistenceMin: 0.05,
+      grab: 0.35,
       unresolvedPolicy: "nan",
     });
     expect(Array.from(disabled.basinMinIdx)).toEqual([-1, -1, -1]);
@@ -95,6 +98,7 @@ describe("Phase 2 topographic structure basin sweep", () => {
       connectivity: "dir8",
       hEps: 0.000001,
       persistenceMin: 0.05,
+      grab: 0.35,
       unresolvedPolicy: "nan",
     });
     expect(Array.from(enabled.basinMinIdx)).toEqual([1, 1, 1]);
@@ -112,6 +116,7 @@ describe("Phase 2 topographic structure basin sweep", () => {
       connectivity: "dir8",
       hEps: 0.000001,
       persistenceMin: 0.05,
+      grab: 0.35,
       unresolvedPolicy: "max_h",
     });
 
