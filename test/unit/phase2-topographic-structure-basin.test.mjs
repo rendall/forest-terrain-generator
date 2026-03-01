@@ -127,4 +127,36 @@ describe("Phase 2 topographic structure basin sweep", () => {
     expect(out.basinLike[2]).toBe(1);
   });
 
+  it("builds non-collapsing basin/peak feature trees with leaf tileIds and composite parents", async () => {
+    const { deriveTopographicStructure } = await import(
+      "../../src/pipeline/derive-topographic-structure.js"
+    );
+    const shape = createGridShape(3, 1);
+    const h = new Float32Array([0.0, 0.2, 0.1]);
+
+    const out = deriveTopographicStructure(shape, h, {
+      enabled: true,
+      connectivity: "dir8",
+      hEps: 0.000001,
+      persistenceMin: 0.05,
+      unresolvedPolicy: "nan",
+    });
+
+    expect(out.basinFeatures.length).toBeGreaterThan(0);
+    expect(out.peakFeatures.length).toBeGreaterThan(0);
+    const basinLeaf = out.basinFeatures.find((node) => node.kind === "leaf");
+    const basinComposite = out.basinFeatures.find((node) => node.kind === "composite");
+    expect(basinLeaf).toBeDefined();
+    expect(basinComposite).toBeDefined();
+    expect(Array.isArray(basinLeaf?.tileIds)).toBe(true);
+    expect(basinComposite?.tileIds).toBeUndefined();
+
+    for (const tileIds of out.tileFeatureIds) {
+      expect(tileIds.length).toBe(2);
+    }
+    for (const activeIds of out.tileActiveFeatureIds) {
+      expect(Array.isArray(activeIds)).toBe(true);
+    }
+  });
+
 });

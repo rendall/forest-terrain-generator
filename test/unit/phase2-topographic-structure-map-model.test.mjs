@@ -22,6 +22,10 @@ describe("Phase 2 topographic structure map model", () => {
     expect(maps.peakRiseLike).toBeInstanceOf(Float32Array);
     expect(maps.basinLike).toBeInstanceOf(Uint8Array);
     expect(maps.ridgeLike).toBeInstanceOf(Uint8Array);
+    expect(Array.isArray(maps.basinFeatures)).toBe(true);
+    expect(Array.isArray(maps.peakFeatures)).toBe(true);
+    expect(Array.isArray(maps.tileFeatureIds)).toBe(true);
+    expect(Array.isArray(maps.tileActiveFeatureIds)).toBe(true);
 
     expect(maps.basinMinIdx.length).toBe(shape.size);
     expect(maps.basinMinH.length).toBe(shape.size);
@@ -35,5 +39,7 @@ describe("Phase 2 topographic structure map model", () => {
     expect(maps.peakRiseLike.length).toBe(shape.size);
     expect(maps.basinLike.length).toBe(shape.size);
     expect(maps.ridgeLike.length).toBe(shape.size);
+    expect(maps.tileFeatureIds).toHaveLength(shape.size);
+    expect(maps.tileActiveFeatureIds).toHaveLength(shape.size);
   });
 });
