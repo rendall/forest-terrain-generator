@@ -1,100 +1,145 @@
 {
-  "grid": { "playableInset": 1 },
-  "heightNoise": {
-    "octaves": 5,
-    "baseFrequency": 0.035,
-    "lacunarity": 2.0,
-    "persistence": 0.5
-  },
-  "roughnessNoise": {
-    "octaves": 3,
-    "baseFrequency": 0.06,
-    "lacunarity": 2.0,
-    "persistence": 0.55
-  },
-  "vegVarianceNoise": {
-    "octaves": 4,
-    "baseFrequency": 0.045,
-    "lacunarity": 2.0,
-    "persistence": 0.5,
-    "strength": 0.12
-  },
-  "landform": { "eps": 0.005, "flatSlopeThreshold": 0.03 },
-  "hydrology": {
-    "minDropThreshold": 0.0005,
-    "tieEps": 0.000001,
-    "streamAccumThreshold": 0.55,
-    "streamMinSlopeThreshold": 0.01,
-    "lakeFlatSlopeThreshold": 0.03,
-    "lakeAccumThreshold": 0.65,
-    "moistureAccumStart": 0.35,
-    "flatnessThreshold": 0.06,
-    "waterProxMaxDist": 6,
-    "weights": { "accum": 0.55, "flat": 0.25, "prox": 0.2 },
-    "marshMoistureThreshold": 0.78,
-    "marshSlopeThreshold": 0.04
-  },
-  "ground": {
-    "peatMoistureThreshold": 0.7,
-    "standingWaterMoistureThreshold": 0.78,
-    "standingWaterSlopeMax": 0.04,
-    "lichenMoistureMax": 0.35,
-    "exposedSandMoistureMax": 0.4,
-    "bedrockHeightMin": 0.75,
-    "bedrockRoughnessMin": 0.55
-  },
-  "roughnessFeatures": {
-    "obstructionMoistureMix": 0.15,
-    "windthrowThreshold": 0.7,
-    "fallenLogThreshold": 0.45,
-    "rootTangleMoistureThreshold": 0.6,
-    "boulderHeightMin": 0.7,
-    "boulderRoughnessMin": 0.6
-  },
-  "movement": {
-    "steepBlockDelta": 0.22,
-    "steepDifficultDelta": 0.12,
-    "cliffSlopeMin": 0.18,
-    "moveCostObstructionMax": 1.35,
-    "moveCostMoistureMax": 1.25,
-    "marshMoveCostMultiplier": 1.15,
-    "openBogMoveCostMultiplier": 1.2
-  },
-  "visibility": {
-    "base": 40,
-    "densityPenalty": 28,
-    "obstructionPenalty": 10,
-    "elevationBonus": 6,
-    "minMeters": 8,
-    "maxMeters": 60
-  },
-  "orientation": {
-    "min": 0.25,
-    "max": 0.95,
-    "densityWeight": 0.45,
-    "obstructionWeight": 0.2,
-    "wetnessWeight": 0.15,
-    "wetnessStart": 0.6,
-    "wetnessRange": 0.4,
-    "ridgeBonus": 0.1
-  },
-  "gameTrails": {
-    "diagWeight": 1.41421356237,
-    "inf": 1000000000,
-    "wSlope": 4.0,
-    "slopeScale": 0.18,
-    "wMoist": 3.0,
-    "moistStart": 0.55,
-    "wObs": 2.0,
-    "wRidge": 0.35,
-    "wStreamProx": 0.25,
-    "streamProxMaxDist": 5,
-    "wCross": 0.65,
-    "wMarsh": 1.25,
-    "waterSeedMaxDist": 6,
-    "seedTilesPerTrail": 450,
-    "streamEndpointAccumThreshold": 0.7,
-    "ridgeEndpointMaxSlope": 0.12,
-    "gameTrailMoveCostMultiplier": 0.85
-  }
+	"grid": { "playableInset": 1 },
+	"heightNoise": {
+		"octaves": 5,
+		"baseFrequency": 0.035,
+		"lacunarity": 2.0,
+		"persistence": 0.5
+	},
+	"roughnessNoise": {
+		"octaves": 3,
+		"baseFrequency": 0.06,
+		"lacunarity": 2.0,
+		"persistence": 0.55
+	},
+	"vegVarianceNoise": {
+		"octaves": 4,
+		"baseFrequency": 0.045,
+		"lacunarity": 2.0,
+		"persistence": 0.5,
+		"strength": 0.12
+	},
+	"topography": {
+		"structure": {
+			"enabled": true,
+			"connectivity": "dir8",
+			"hEps": 0.000001,
+			"persistenceMin": 0.01,
+			"unresolvedPolicy": "nan"
+		}
+	},
+	"landform": { "eps": 0.005, "flatSlopeThreshold": 0.03 },
+	"hydrology": {
+		"minDropThreshold": 0.0005,
+		"tieEps": 0.000001,
+		"structure": {
+			"enabled": true,
+			"sinkPersistenceRouteMax": 0.005,
+			"sinkPersistenceLakeMin": 0.02,
+			"basinTileCountMinLake": 3,
+			"inflowGateEnabled": false,
+			"lakeInflowMin": 0.15,
+			"unresolvedLakePolicy": "deny",
+			"spillAwareRouteThroughEnabled": false,
+			"retentionWeight": 0.2,
+			"retentionNormalization": "quantile"
+		},
+		"streamThresholds": {
+			"sourceAccumMin": 0.55,
+			"channelAccumMin": 0.55,
+			"minSlope": 0.01,
+			"maxGapFillSteps": 0
+		},
+		"streamHeadwaterBoost": {
+			"enabled": false,
+			"minElevationPct": 0.7,
+			"minSlope": 0.015,
+			"minSourceSpacing": 6,
+			"maxExtraSources": 24
+		},
+		"lakeFlatSlopeThreshold": 0.03,
+		"lakeAccumThreshold": 0.65,
+		"lakeGrowSteps": 0,
+		"lakeGrowHeightDelta": 0.01,
+		"lakeCoherence": {
+			"enabled": true,
+			"microLakeMaxSize": 2,
+			"microLakeMode": "merge",
+			"bridgeEnabled": true,
+			"maxBridgeDistance": 1,
+			"repairSingletons": true,
+			"enforceBoundaryRealism": true,
+			"boundaryEps": 0.0005,
+			"boundaryRepairMode": "trim_first",
+		},
+		"moistureAccumStart": 0.35,
+		"flatnessThreshold": 0.06,
+		"waterProxMaxDist": 6,
+		"weights": { "accum": 0.55, "flat": 0.25, "prox": 0.2 },
+		"marshMoistureThreshold": 0.78,
+		"marshSlopeThreshold": 0.04
+	},
+	"ground": {
+		"peatMoistureThreshold": 0.7,
+		"standingWaterMoistureThreshold": 0.78,
+		"standingWaterSlopeMax": 0.04,
+		"lichenMoistureMax": 0.35,
+		"exposedSandMoistureMax": 0.4,
+		"bedrockHeightMin": 0.75,
+		"bedrockRoughnessMin": 0.55
+	},
+	"roughnessFeatures": {
+		"obstructionMoistureMix": 0.15,
+		"windthrowThreshold": 0.7,
+		"fallenLogThreshold": 0.45,
+		"rootTangleMoistureThreshold": 0.6,
+		"boulderHeightMin": 0.7,
+		"boulderRoughnessMin": 0.6
+	},
+	"movement": {
+		"steepBlockDelta": 0.22,
+		"steepDifficultDelta": 0.12,
+		"cliffSlopeMin": 0.18,
+		"moveCostObstructionMax": 1.35,
+		"moveCostMoistureMax": 1.25,
+		"marshMoveCostMultiplier": 1.15,
+		"openBogMoveCostMultiplier": 1.2
+	},
+	"visibility": {
+		"base": 40,
+		"densityPenalty": 28,
+		"obstructionPenalty": 10,
+		"elevationBonus": 6,
+		"minMeters": 8,
+		"maxMeters": 60
+	},
+	"orientation": {
+		"min": 0.25,
+		"max": 0.95,
+		"densityWeight": 0.45,
+		"obstructionWeight": 0.2,
+		"wetnessWeight": 0.15,
+		"wetnessStart": 0.6,
+		"wetnessRange": 0.4,
+		"ridgeBonus": 0.1
+	},
+	"gameTrails": {
+		"diagWeight": 1.41421356237,
+		"inf": 1000000000,
+		"wSlope": 4.0,
+		"slopeScale": 0.18,
+		"wMoist": 3.0,
+		"moistStart": 0.55,
+		"wObs": 2.0,
+		"wRidge": 0.35,
+		"wStreamProx": 0.25,
+		"streamProxMaxDist": 5,
+		"wCross": 0.65,
+		"wMarsh": 1.25,
+		"waterSeedMaxDist": 6,
+		"seedTilesPerTrail": 450,
+		"streamEndpointAccumThreshold": 0.7,
+		"ridgeEndpointMaxSlope": 0.12,
+		"gameTrailMoveCostMultiplier": 0.85
+	}
 }
