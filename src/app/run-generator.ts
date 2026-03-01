@@ -190,7 +190,6 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 	const topography = deriveTopographyFromBaseMaps(
 		shape,
 		baseMaps,
-		validated.params,
 	);
 	const topographyStructure = deriveTopographicStructure(
 		shape,

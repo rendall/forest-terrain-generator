@@ -123,7 +123,7 @@ describe("CLI diagnostics quality bar", () => {
     const paramsPath = join(dir, "params.json");
     await writeFile(
       paramsPath,
-      `${JSON.stringify({ landform: 0 }, null, 2)}\n`,
+      `${JSON.stringify({ heightNoise: 0 }, null, 2)}\n`,
       "utf8"
     );
 
@@ -143,7 +143,7 @@ describe("CLI diagnostics quality bar", () => {
 
     expect(result.code).toBe(5);
     expect(result.stderr).toContain("[internal]");
-    expect(result.stderr).toContain("landform");
+    expect(result.stderr).toContain("heightNoise");
     expect(result.stderr).not.toContain("\n    at ");
   });
 });

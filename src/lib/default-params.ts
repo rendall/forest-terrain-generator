@@ -30,7 +30,6 @@ export const APPENDIX_A_DEFAULTS: JsonObject = {
 			unresolvedPolicy: "nan",
 		},
 	},
-	landform: { eps: 0.005, flatSlopeThreshold: 0.03 },
 	hydrology: {
 		minDropThreshold: 0.0005,
 		tieEps: 0.000001,

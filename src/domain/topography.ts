@@ -14,7 +14,6 @@ export interface BaseMapsSoA {
 export interface TopographyMapsSoA extends BaseMapsSoA {
   slopeMag: Float32Array;
   aspectDeg: Float32Array;
-  landform: Uint8Array;
 }
 
 export interface TopographicStructureMapsSoA {
@@ -32,16 +31,6 @@ export interface TopographicStructureMapsSoA {
   basinLike: Uint8Array;
   ridgeLike: Uint8Array;
 }
-
-export const LANDFORM_CODE = {
-  flat: 0,
-  slope: 1,
-  ridge: 2,
-  valley: 3,
-  basin: 4
-} as const;
-
-export type LandformCode = (typeof LANDFORM_CODE)[keyof typeof LANDFORM_CODE];
 
 export function createGridShape(width: number, height: number): GridShape {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
@@ -77,8 +66,7 @@ export function createTopographyMaps(shape: GridShape): TopographyMapsSoA {
   return {
     ...createBaseMaps(shape),
     slopeMag: new Float32Array(shape.size),
-    aspectDeg: new Float32Array(shape.size),
-    landform: new Uint8Array(shape.size)
+    aspectDeg: new Float32Array(shape.size)
   };
 }
 
