@@ -115,6 +115,59 @@ function expectOptionalRangeNumber(
   }
 }
 
+function heightNoisePath(key: string): string {
+  return `params.heightNoise.${key}`;
+}
+
+function validateHeightNoiseParams(params: JsonObject): void {
+  if (!isObject(params.heightNoise)) {
+    return;
+  }
+
+  const heightNoise = params.heightNoise as JsonObject;
+  const normalize = heightNoise.normalize;
+  if (normalize === undefined) {
+    return;
+  }
+
+  if (!isObject(normalize)) {
+    throw new InputValidationError(
+      'Invalid params value "params.heightNoise.normalize". Expected an object.'
+    );
+  }
+
+  const value = normalize as JsonObject;
+  expectOptionalBoolean(value.enabled, heightNoisePath("normalize.enabled"));
+  expectOptionalEnum(
+    value.mode,
+    heightNoisePath("normalize.mode"),
+    ["minmax", "quantile"]
+  );
+  expectOptionalRangeNumber(
+    value.lowerQ,
+    heightNoisePath("normalize.lowerQ"),
+    0,
+    1
+  );
+  expectOptionalRangeNumber(
+    value.upperQ,
+    heightNoisePath("normalize.upperQ"),
+    0,
+    1
+  );
+  const lowerQ = finiteNumberOrUndefined(value.lowerQ);
+  const upperQ = finiteNumberOrUndefined(value.upperQ);
+  if (
+    lowerQ !== undefined &&
+    upperQ !== undefined &&
+    lowerQ >= upperQ
+  ) {
+    throw new InputValidationError(
+      `Invalid params value "${heightNoisePath("normalize.lowerQ")}/${heightNoisePath("normalize.upperQ")}". Expected lowerQ < upperQ.`
+    );
+  }
+}
+
 function validateLakeCoherenceParams(params: JsonObject): void {
   if (!isObject(params.hydrology)) {
     return;
@@ -410,6 +463,7 @@ export async function readParamsFile(
   const params = isObject(parsed.params) ? parsed.params : parsed;
   normalizeLegacyHydrologyAliases(params);
   validateUnknownKeys(params, PARAMS_VALIDATION_SCHEMA, "params");
+  validateHeightNoiseParams(params);
   validateLakeCoherenceParams(params);
   validateHydrologyStructureParams(params);
   validateTopographyStructureParams(params);

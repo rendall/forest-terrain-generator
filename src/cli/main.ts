@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command, CommanderError } from "commander";
 import { runGenerator } from "../app/run-generator.js";
+import { runSee } from "../app/run-see.js";
 import { exitCodeForCategory, normalizeCliError } from "../domain/errors.js";
 import type { CliArgs, Mode } from "../domain/types.js";
 import { validateArgv } from "./argv-validation.js";
@@ -72,6 +73,13 @@ async function runMode(mode: Mode, options: CliArgs): Promise<void> {
 	});
 }
 
+interface SeeOptions {
+	inputFile?: string;
+	outputFile?: string;
+	layer?: "h" | "r" | "v";
+	force?: boolean;
+}
+
 const program = new Command();
 program
 	.name("forest-terrain-generator")
@@ -92,6 +100,27 @@ addCommonInputOptions(
 addCommonInputOptions(
 	program.command("debug").description("Emit debug artifacts"),
 ).action(async (options) => runMode("debug", toArgs(options)));
+
+program
+	.command("see")
+	.description(
+		"Render a grayscale topography image from terrain envelope JSON (PGM output)",
+	)
+	.requiredOption("--input-file <path>", "Path to source terrain envelope JSON")
+	.requiredOption("--output-file <path>", "Path to output image file (.pgm)")
+	.option("--layer <layer>", "Topography layer to render (h|r|v)", "h")
+	.option("--force", "Allow replacing existing output file", false)
+	.action(async (options: SeeOptions) =>
+		runSee({
+			cwd: process.cwd(),
+			args: {
+				inputFilePath: options.inputFile,
+				outputFile: options.outputFile,
+				layer: options.layer ?? "h",
+				force: options.force ?? false,
+			},
+		}),
+	);
 
 try {
 	const argv = process.argv.slice(2);

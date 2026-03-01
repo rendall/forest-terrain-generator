@@ -6,6 +6,12 @@ export const APPENDIX_A_DEFAULTS: JsonObject = {
 		baseFrequency: 0.035,
 		lacunarity: 2.0,
 		persistence: 0.5,
+		normalize: {
+			enabled: true,
+			mode: "minmax",
+			lowerQ: 0.02,
+			upperQ: 0.98,
+		},
 	},
 	roughnessNoise: {
 		octaves: 3,

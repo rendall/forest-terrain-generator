@@ -13,6 +13,7 @@ const VALUE_FLAGS = new Set<string>([
 	"--output-file",
 	"--output-dir",
 	"--debug-output-file",
+	"--layer",
 ]);
 
 const BOOLEAN_FLAGS = new Set<string>([

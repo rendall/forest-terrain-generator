@@ -54,6 +54,45 @@ afterEach(async () => {
 });
 
 describe("CLI command wiring and contract failures", () => {
+	it("wires see to write grayscale PGM from topography.h", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source.json");
+		const imageFile = join(dir, "height.pgm");
+
+		const generateResult = await runCli([
+			"generate",
+			"--seed",
+			"42",
+			"--width",
+			"4",
+			"--height",
+			"4",
+			"--output-file",
+			sourceFile,
+		]);
+		expect(generateResult.code).toBe(0);
+
+		const seeResult = await runCli([
+			"see",
+			"--input-file",
+			sourceFile,
+			"--output-file",
+			imageFile,
+		]);
+		expect(seeResult.code).toBe(0);
+
+		const pgm = await readFile(imageFile);
+		expect(pgm.subarray(0, 3).toString("ascii")).toBe("P5\n");
+
+		const headerEnd = pgm.indexOf("\n255\n");
+		expect(headerEnd).toBeGreaterThan(0);
+		const header = pgm.subarray(0, headerEnd + 5).toString("ascii");
+		expect(header).toContain("4 4");
+
+		const pixelBytes = pgm.length - (headerEnd + 5);
+		expect(pixelBytes).toBe(16);
+	});
+
 	it("wires generate to write terrain output", async () => {
 		const dir = await makeTempDir();
 		const outputFile = join(dir, "generated.json");

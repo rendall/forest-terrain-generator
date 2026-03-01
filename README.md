@@ -19,6 +19,7 @@ Commands:
 - `derive`: Derive terrain from authored maps (requires `--map-h`) and write envelope JSON to `--output-file`.
 - `debug`: Emit debug artifacts to `--output-dir` from either generation inputs or an existing envelope `--input-file`; optionally also write envelope JSON to `--debug-output-file`.
 - `describe`: Read an existing envelope from `--input-file`, write a copied envelope to `--output-file`, and attach a `description` field to each tile.
+- `see`: Render a grayscale topography image from an existing envelope (`topography.h` by default) to `--output-file` (PGM).
 
 Canonical flags:
 
@@ -31,6 +32,7 @@ Canonical flags:
 - `--force`
 - `--include-structured` (describe only; adds `descriptionStructured` with `text` and sentence slots)
 - `--strict` (describe only; disables phrase fallbacks and fails per-tile when any selected phrase slot has no candidates)
+- `--layer <h|r|v>` (see only; defaults to `h`)
 
 Path resolution:
 
@@ -45,6 +47,12 @@ Mode/output validation highlights:
 
 ```bash
 node --import tsx src/cli/main.ts debug --input-file forest.json --output-dir outdir
+```
+
+Render topography as grayscale image (`h:0` black, `h:1` white):
+
+```bash
+node --import tsx src/cli/main.ts see --input-file out.json --output-file h.pgm
 ```
 
 ## Authored Map From PNG

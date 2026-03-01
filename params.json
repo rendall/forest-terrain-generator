@@ -1,9 +1,15 @@
 {
 	"heightNoise": {
-		"octaves": 5,
-		"baseFrequency": 0.035,
+		"octaves": 4,
+		"baseFrequency": 0.06,
 		"lacunarity": 2.0,
-		"persistence": 0.5
+		"persistence": 0.4,
+		"normalize": {
+			"enabled": true,
+			"mode": "quantile",
+			"lowerQ": 0.02,
+			"upperQ": 1
+		}
 	},
 	"roughnessNoise": {
 		"octaves": 3,
