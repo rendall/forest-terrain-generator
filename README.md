@@ -111,3 +111,34 @@ All three noise maps (`heightNoise`, `roughnessNoise`, `vegVarianceNoise`) also 
 - `hEps` groups near-equal heights in sweep passes.
 - `persistenceMin` is the minimum persistence to mark `basinLike`/`ridgeLike`.
 - `unresolvedPolicy` controls unresolved spill handling (`nan` or `max_h`).
+
+## Feature Trees
+
+Generated envelopes now include top-level structural feature trees:
+
+- `features.basins`
+- `features.peaks`
+
+Each feature node includes:
+
+- `id` (`b_#####` or `p_#####`)
+- `kind` (`leaf` or `composite`)
+- `parentId`
+- `childIds`
+- `birthH`
+- `mergeH` (`null` when unresolved in-map)
+- `persistence`
+- `minH`
+- `maxH`
+- `size`
+- `bbox`
+
+Tile membership:
+
+- each tile includes `featureIds` (leaf basin + leaf peak IDs)
+- each tile includes `activeFeatureIds` (composite IDs selected by persistence cut)
+
+Storage rules:
+
+- leaf nodes include `tileIds`
+- composite nodes do not include `tileIds`

@@ -4,20 +4,20 @@
 - [x] [domain] `NCSI-02` Add envelope-facing feature container types for `features.basins` and `features.peaks`, plus tile-level `featureIds: string[]` and optional `activeFeatureIds: string[]` contract notes used by generator serialization.
 - [x] [topography] `NCSI-03` Add deterministic feature ID helpers in `src/pipeline/derive-topographic-structure.ts` (or a sibling helper) for basin IDs (`b_#####`) and peak IDs (`p_#####`) from stable sweep order with row-major tie-breaks.
 - [x] [topography] `NCSI-04` Add deterministic ordering helpers for feature output arrays and `childIds` sorting; ensure ordering does not depend on object/map insertion order.
-- [ ] [topography] `NCSI-05` Refactor basin derivation to preserve loser identity as leaf nodes and create composite parent nodes at each merge event, rather than collapsing lineage to a single winner (depends on `NCSI-01`, `NCSI-03`).
-- [ ] [topography] `NCSI-06` Record basin unresolved-root semantics in node fields (`mergeH` absent/NaN and persistence handling per existing unresolved policy) without fabricating extra merge events (depends on `NCSI-05`).
-- [ ] [topography] `NCSI-07` Compute and store basin aggregates per node (`size`, `bbox`, `minH`, `maxH`) and include `tileIds` only for basin leaf nodes (depends on `NCSI-05`).
-- [ ] [topography] `NCSI-08` Refactor peak derivation to preserve loser identity as leaf nodes and create composite parent nodes at each saddle merge, mirroring basin non-collapsing behavior (depends on `NCSI-01`, `NCSI-03`).
-- [ ] [topography] `NCSI-09` Record peak unresolved-root semantics in node fields (`mergeH` absent/NaN and persistence handling aligned to adopted policy) without synthetic merge fabrication (depends on `NCSI-08`).
-- [ ] [topography] `NCSI-10` Compute and store peak aggregates per node (`size`, `bbox`, `minH`, `maxH`) and include `tileIds` only for peak leaf nodes (depends on `NCSI-08`).
-- [ ] [topography] `NCSI-11` Derive per-tile `featureIds` as the combined basin+peak membership IDs for each tile; keep IDs deterministic and de-duplicated (depends on `NCSI-07`, `NCSI-10`).
-- [ ] [topography] `NCSI-12` Derive optional per-tile `activeFeatureIds` from persistence-cut composite selection only (leaf inclusion is not cut-driven), using the existing persistence-cut semantics (depends on `NCSI-11`).
-- [ ] [topography] `NCSI-13` Keep existing boolean compatibility outputs (`basinLike`, `ridgeLike`) derived from persistence cut while feature-tree outputs are introduced, to avoid downstream breakage in current consumers (depends on `NCSI-12`).
-- [ ] [app] `NCSI-14` Update `src/app/run-generator.ts` to write tile-level `featureIds` (and adopted optional `activeFeatureIds`) into standard `out.json` tiles (depends on `NCSI-11`).
-- [ ] [app] `NCSI-15` Add top-level `features` object population in generated envelope output with both basin and peak trees and deterministic ordering (depends on `NCSI-04`, `NCSI-07`, `NCSI-10`).
-- [ ] [io] `NCSI-16` Update debug artifact assembly in `src/io/write-outputs.ts` so debug `topography.json` includes full feature trees and per-tile feature ID arrays in a stable serialized order (depends on `NCSI-15`).
-- [ ] [docs] `NCSI-17` Update `README.md` output-schema section to document `features` tree shape, leaf-only `tileIds`, tile `featureIds`, and unresolved `mergeH` semantics.
-- [ ] [docs] `NCSI-18` Update `docs/drafts/NonCollapsing-Structure-Identity-Discussion.md` to mark implementation status and confirm locked decisions are reflected in code-facing schema names.
+- [x] [topography] `NCSI-05` Refactor basin derivation to preserve loser identity as leaf nodes and create composite parent nodes at each merge event, rather than collapsing lineage to a single winner (depends on `NCSI-01`, `NCSI-03`).
+- [x] [topography] `NCSI-06` Record basin unresolved-root semantics in node fields (`mergeH` absent/NaN and persistence handling per existing unresolved policy) without fabricating extra merge events (depends on `NCSI-05`).
+- [x] [topography] `NCSI-07` Compute and store basin aggregates per node (`size`, `bbox`, `minH`, `maxH`) and include `tileIds` only for basin leaf nodes (depends on `NCSI-05`).
+- [x] [topography] `NCSI-08` Refactor peak derivation to preserve loser identity as leaf nodes and create composite parent nodes at each saddle merge, mirroring basin non-collapsing behavior (depends on `NCSI-01`, `NCSI-03`).
+- [x] [topography] `NCSI-09` Record peak unresolved-root semantics in node fields (`mergeH` absent/NaN and persistence handling aligned to adopted policy) without synthetic merge fabrication (depends on `NCSI-08`).
+- [x] [topography] `NCSI-10` Compute and store peak aggregates per node (`size`, `bbox`, `minH`, `maxH`) and include `tileIds` only for peak leaf nodes (depends on `NCSI-08`).
+- [x] [topography] `NCSI-11` Derive per-tile `featureIds` as the combined basin+peak membership IDs for each tile; keep IDs deterministic and de-duplicated (depends on `NCSI-07`, `NCSI-10`).
+- [x] [topography] `NCSI-12` Derive optional per-tile `activeFeatureIds` from persistence-cut composite selection only (leaf inclusion is not cut-driven), using the existing persistence-cut semantics (depends on `NCSI-11`).
+- [x] [topography] `NCSI-13` Keep existing boolean compatibility outputs (`basinLike`, `ridgeLike`) derived from persistence cut while feature-tree outputs are introduced, to avoid downstream breakage in current consumers (depends on `NCSI-12`).
+- [x] [app] `NCSI-14` Update `src/app/run-generator.ts` to write tile-level `featureIds` (and adopted optional `activeFeatureIds`) into standard `out.json` tiles (depends on `NCSI-11`).
+- [x] [app] `NCSI-15` Add top-level `features` object population in generated envelope output with both basin and peak trees and deterministic ordering (depends on `NCSI-04`, `NCSI-07`, `NCSI-10`).
+- [x] [io] `NCSI-16` Update debug artifact assembly in `src/io/write-outputs.ts` so debug `topography.json` includes full feature trees and per-tile feature ID arrays in a stable serialized order (depends on `NCSI-15`).
+- [x] [docs] `NCSI-17` Update `README.md` output-schema section to document `features` tree shape, leaf-only `tileIds`, tile `featureIds`, and unresolved `mergeH` semantics.
+- [x] [docs] `NCSI-18` Update `docs/drafts/NonCollapsing-Structure-Identity-Discussion.md` to mark implementation status and confirm locked decisions are reflected in code-facing schema names.
 
 ## Behavior Slices
 

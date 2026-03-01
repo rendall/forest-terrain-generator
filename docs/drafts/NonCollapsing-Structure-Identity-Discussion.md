@@ -37,7 +37,7 @@ This keeps both:
 For basins and peaks separately, represent features as a tree (or DAG if needed later):
 
 - `node.id`
-- `node.kind` (`basin` or `peak`)
+- `node.kind` (`leaf` or `composite`)
 - `node.birthH` (minimum/maximum level where node appears)
 - `node.mergeH` (spill/saddle level where node merges upward)
 - `node.persistence` (`mergeH - birthH`, with unresolved policy handling)
@@ -179,3 +179,15 @@ Collapsing lineage removes one of those scales. Non-collapsing identity keeps bo
 2. Leaf/local nodes keep `tileIds`; composite/trunk nodes do not.
 3. Persistence cut selects composite nodes only; leaf inclusion is not cut-driven.
 4. Phase 1 includes both basin and peak feature trees.
+
+---
+
+## Implementation Status
+
+Implemented in current codebase:
+
+- non-collapsing basin and peak feature trees are generated
+- tiles include `featureIds` and `activeFeatureIds`
+- leaf nodes include `tileIds`; composite nodes do not
+- standard output includes top-level `features.basins` and `features.peaks`
+- debug `topography.json` includes full feature trees and tile feature arrays
