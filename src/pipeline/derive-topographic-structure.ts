@@ -19,7 +19,6 @@ export interface TopographicStructureConfig {
   connectivity: "dir8";
   hEps: number;
   persistenceMin: number;
-  grab: number;
   unresolvedPolicy: "nan" | "max_h";
 }
 
@@ -44,39 +43,6 @@ interface PeakRootMeta {
   maxIdx: Int32Array;
 }
 
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
-
-function quantile(sortedValues: readonly number[], q: number): number {
-  const size = sortedValues.length;
-  const index = Math.floor((size - 1) * q);
-  return sortedValues[index];
-}
-
-export function computePersistenceCutoff(
-  persistenceByTile: Float32Array,
-  grab: number,
-  fallback: number
-): number {
-  const finite = Array.from(persistenceByTile).filter(
-    (value) => Number.isFinite(value)
-  );
-  if (finite.length === 0) {
-    return Math.max(0, fallback);
-  }
-
-  const sorted = finite.sort((a, b) => a - b);
-  const p20 = quantile(sorted, 0.2);
-  const p80 = quantile(sorted, 0.8);
-  const spread = p80 - p20;
-  if (!Number.isFinite(spread) || spread <= 1e-9) {
-    return Math.max(0, p20);
-  }
-
-  return Math.max(0, lerp(p20, p80, grab));
-}
-
 function assertStructureConfig(config: TopographicStructureConfig): void {
   if (config.connectivity !== "dir8") {
     throw new Error(
@@ -91,11 +57,6 @@ function assertStructureConfig(config: TopographicStructureConfig): void {
   if (!Number.isFinite(config.persistenceMin) || config.persistenceMin < 0) {
     throw new Error(
       `Topographic structure: invalid persistenceMin "${String(config.persistenceMin)}".`
-    );
-  }
-  if (!Number.isFinite(config.grab) || config.grab < 0 || config.grab > 1) {
-    throw new Error(
-      `Topographic structure: invalid grab "${String(config.grab)}".`
     );
   }
   if (
@@ -302,14 +263,12 @@ export function deriveBasinStructure(
     out.basinDepthLike[i] = Math.max(0, spillH - h[i]);
   }
 
-  const basinCutoff = computePersistenceCutoff(
-    out.basinPersistence,
-    config.grab,
-    config.persistenceMin
-  );
   for (let i = 0; i < shape.size; i += 1) {
     const persistence = out.basinPersistence[i];
-    if (Number.isFinite(persistence) && persistence >= basinCutoff) {
+    if (
+      Number.isFinite(persistence) &&
+      persistence >= config.persistenceMin
+    ) {
       out.basinLike[i] = 1;
     }
   }
@@ -447,14 +406,12 @@ export function derivePeakStructure(
     out.peakRiseLike[i] = Math.max(0, h[i] - saddleH);
   }
 
-  const peakCutoff = computePersistenceCutoff(
-    out.peakPersistence,
-    config.grab,
-    config.persistenceMin
-  );
   for (let i = 0; i < shape.size; i += 1) {
     const persistence = out.peakPersistence[i];
-    if (Number.isFinite(persistence) && persistence >= peakCutoff) {
+    if (
+      Number.isFinite(persistence) &&
+      persistence >= config.persistenceMin
+    ) {
       out.ridgeLike[i] = 1;
     }
   }
@@ -475,7 +432,6 @@ export function deriveTopographicStructure(
     connectivity: params.connectivity,
     hEps: params.hEps,
     persistenceMin: params.persistenceMin,
-    grab: params.grab,
     unresolvedPolicy: params.unresolvedPolicy
   };
   const out = deriveBasinStructure(shape, h, config);

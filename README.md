@@ -104,9 +104,10 @@ All three noise maps (`heightNoise`, `roughnessNoise`, `vegVarianceNoise`) also 
 
 ## Topography Structure
 
-`topography.structure.grab` controls how aggressively basin/peak classes are merged:
+`topography.structure` controls structural basin/peak labeling:
 
-- `0` = less grabby (more distinct basins/hills)
-- `1` = more grabby (fewer, broader merged structures)
-
-Default: `0.35`.
+- `enabled` turns structure derivation on/off.
+- `connectivity` chooses neighborhood mode (currently `dir8`).
+- `hEps` groups near-equal heights in sweep passes.
+- `persistenceMin` is the minimum persistence to mark `basinLike`/`ridgeLike`.
+- `unresolvedPolicy` controls unresolved spill handling (`nan` or `max_h`).
