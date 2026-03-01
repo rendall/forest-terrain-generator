@@ -148,10 +148,17 @@ function finalizeNode(node: TopographicFeatureNode): TopographicFeatureNode {
   return node;
 }
 
-function assignMergeToChild(node: TopographicFeatureNode, mergeH: number): void {
+function assignMergeToChild(
+  node: TopographicFeatureNode,
+  mergeH: number,
+  spillOutTileId?: number
+): void {
   if (node.mergeH === null) {
     node.mergeH = mergeH;
     node.persistence = Math.max(0, mergeH - node.birthH);
+    if (Number.isInteger(spillOutTileId)) {
+      node.spillOutTileId = spillOutTileId!;
+    }
   }
 }
 
@@ -193,6 +200,7 @@ function buildBasinFeatureTree(
       birthH: minHByMinimum[label],
       mergeH: null,
       persistence: null,
+      spillOutTileId: null,
       minH: Number.POSITIVE_INFINITY,
       maxH: Number.NEGATIVE_INFINITY,
       size: 0,
@@ -242,6 +250,7 @@ function buildBasinFeatureTree(
       birthH: event.level,
       mergeH: null,
       persistence: null,
+      spillOutTileId: null,
       minH: Math.min(winnerNode.minH, loserNode.minH),
       maxH: Math.max(winnerNode.maxH, loserNode.maxH),
       size: winnerNode.size + loserNode.size,
@@ -321,6 +330,7 @@ function buildPeakFeatureTree(
       birthH: maxHByMaximum[label],
       mergeH: null,
       persistence: null,
+      spillOutTileId: null,
       minH: Number.POSITIVE_INFINITY,
       maxH: Number.NEGATIVE_INFINITY,
       size: 0,
@@ -370,6 +380,7 @@ function buildPeakFeatureTree(
       birthH: event.level,
       mergeH: null,
       persistence: null,
+      spillOutTileId: null,
       minH: Math.min(winnerNode.minH, loserNode.minH),
       maxH: Math.max(winnerNode.maxH, loserNode.maxH),
       size: winnerNode.size + loserNode.size,
@@ -865,6 +876,7 @@ export function deriveBasinStructure(
           birthH: group.level,
           mergeH: null,
           persistence: null,
+          spillOutTileId: null,
           minH: Number.POSITIVE_INFINITY,
           maxH: Number.NEGATIVE_INFINITY,
           size: 0,
@@ -885,18 +897,48 @@ export function deriveBasinStructure(
           birthH: group.level,
           mergeH: null,
           persistence: null,
+          spillOutTileId: null,
           minH: Number.POSITIVE_INFINITY,
           maxH: Number.NEGATIVE_INFINITY,
           size: 0,
           bbox: createEmptyBbox(),
           tileIds: []
         };
+        const childIdSet = new Set(childIds);
+        const spillOutByChildId = new Map<string, number>();
+        for (const tile of component) {
+          const x = tile % shape.width;
+          const y = Math.floor(tile / shape.width);
+          for (const neighbor of STRUCTURE_DIR8_NEIGHBORS) {
+            const nx = x + neighbor.dx;
+            const ny = y + neighbor.dy;
+            if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
+              continue;
+            }
+            const n = indexOf(shape, nx, ny);
+            if (inGroup[n] === 1 || active[n] !== 1) {
+              continue;
+            }
+            const adjacentOwnerId = ownerByRoot[dsuFind(parent, n)];
+            if (!adjacentOwnerId || !childIdSet.has(adjacentOwnerId)) {
+              continue;
+            }
+            const previous = spillOutByChildId.get(adjacentOwnerId);
+            if (previous === undefined || tile < previous) {
+              spillOutByChildId.set(adjacentOwnerId, tile);
+            }
+          }
+        }
         for (const childId of childIds) {
           const child = nodeById.get(childId);
           if (!child) {
             continue;
           }
-          assignMergeToChild(child, group.level);
+          assignMergeToChild(
+            child,
+            group.level,
+            spillOutByChildId.get(childId)
+          );
           child.parentId = ownerId;
         }
         nodeById.set(ownerId, composite);

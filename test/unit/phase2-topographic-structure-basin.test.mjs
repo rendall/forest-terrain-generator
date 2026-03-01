@@ -163,4 +163,27 @@ describe("Phase 2 topographic structure basin sweep", () => {
     }
   });
 
+  it("records first spill-out tile on basin leaves at their first merge", async () => {
+    const { deriveTopographicStructure } = await import(
+      "../../src/pipeline/derive-topographic-structure.js"
+    );
+    const shape = createGridShape(3, 1);
+    const h = new Float32Array([0.0, 0.2, 0.1]);
+
+    const out = deriveTopographicStructure(shape, h, {
+      enabled: true,
+      connectivity: "dir8",
+      hEps: 0.000001,
+      persistenceMin: 0.05,
+      unresolvedPolicy: "nan",
+    });
+
+    const basinLeaves = out.basinFeatures.filter((node) => node.kind === "leaf");
+    expect(basinLeaves.length).toBe(2);
+    for (const leaf of basinLeaves) {
+      expect(leaf.mergeH).toBeCloseTo(0.2, 6);
+      expect(leaf.spillOutTileId).toBe(1);
+    }
+  });
+
 });
