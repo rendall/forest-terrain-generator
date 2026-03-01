@@ -25,24 +25,28 @@ function assertTileShape(
 		);
 	}
 
-	if (!isJsonObject(tile.topography)) {
+	const maybeTopography = tile.topography;
+	if (maybeTopography !== undefined && !isJsonObject(maybeTopography)) {
 		throw new InputValidationError(
-			`Invalid tile at index ${index} in "${inputFilePath}". Missing object "topography".`,
+			`Invalid tile at index ${index} in "${inputFilePath}". Expected object "topography" when present.`,
 		);
 	}
-	if (!isJsonObject(tile.hydrology)) {
+	const maybeHydrology = tile.hydrology;
+	if (maybeHydrology !== undefined && !isJsonObject(maybeHydrology)) {
 		throw new InputValidationError(
-			`Invalid tile at index ${index} in "${inputFilePath}". Missing object "hydrology".`,
+			`Invalid tile at index ${index} in "${inputFilePath}". Expected object "hydrology" when present.`,
 		);
 	}
-	if (!isJsonObject(tile.ecology)) {
+	const maybeEcology = tile.ecology;
+	if (maybeEcology !== undefined && !isJsonObject(maybeEcology)) {
 		throw new InputValidationError(
-			`Invalid tile at index ${index} in "${inputFilePath}". Missing object "ecology".`,
+			`Invalid tile at index ${index} in "${inputFilePath}". Expected object "ecology" when present.`,
 		);
 	}
-	if (!isJsonObject(tile.navigation)) {
+	const maybeNavigation = tile.navigation;
+	if (maybeNavigation !== undefined && !isJsonObject(maybeNavigation)) {
 		throw new InputValidationError(
-			`Invalid tile at index ${index} in "${inputFilePath}". Missing object "navigation".`,
+			`Invalid tile at index ${index} in "${inputFilePath}". Expected object "navigation" when present.`,
 		);
 	}
 }

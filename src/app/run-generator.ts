@@ -232,6 +232,8 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		validated.debugOutputFile,
 		envelope,
 		validated.force,
+		undefined,
+		undefined,
 		topographyStructure,
 	);
 }
