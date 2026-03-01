@@ -1,3 +1,8 @@
+import type {
+  TerrainFeatureCollection,
+  TopographicFeatureNode
+} from "./topographic-features.js";
+
 export interface GridShape {
   width: number;
   height: number;
@@ -27,6 +32,16 @@ export interface TopographicStructureMapsSoA {
   peakRiseLike: Float32Array;
   basinLike: Uint8Array;
   ridgeLike: Uint8Array;
+  basinFeatures: TopographicFeatureNode[];
+  peakFeatures: TopographicFeatureNode[];
+  tileFeatureIds: string[][];
+  tileActiveFeatureIds: string[][];
+}
+
+export interface TopographicFeatureOutputMaps {
+  features: TerrainFeatureCollection;
+  tileFeatureIds: string[][];
+  tileActiveFeatureIds: string[][];
 }
 
 export function createGridShape(width: number, height: number): GridShape {
@@ -77,6 +92,10 @@ export function createTopographicStructureMaps(shape: GridShape): TopographicStr
     peakPersistence: new Float32Array(shape.size).fill(Number.NaN),
     peakRiseLike: new Float32Array(shape.size).fill(Number.NaN),
     basinLike: new Uint8Array(shape.size),
-    ridgeLike: new Uint8Array(shape.size)
+    ridgeLike: new Uint8Array(shape.size),
+    basinFeatures: [],
+    peakFeatures: [],
+    tileFeatureIds: Array.from({ length: shape.size }, () => [] as string[]),
+    tileActiveFeatureIds: Array.from({ length: shape.size }, () => [] as string[])
   };
 }

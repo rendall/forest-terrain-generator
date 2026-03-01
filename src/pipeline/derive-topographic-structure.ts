@@ -3,6 +3,7 @@ import {
   type GridShape,
   indexOf
 } from "../domain/topography.js";
+import type { TopographicFeatureNode } from "../domain/topographic-features.js";
 
 export const STRUCTURE_DIR8_NEIGHBORS = [
   { dir: 0, dx: 1, dy: 0 }, // E
@@ -41,6 +42,43 @@ interface BasinRootMeta {
 interface PeakRootMeta {
   maxH: Float32Array;
   maxIdx: Int32Array;
+}
+
+const FEATURE_ID_WIDTH = 5;
+
+export function makeFeatureId(prefix: "b" | "p", ordinal: number): string {
+  if (!Number.isInteger(ordinal) || ordinal < 0) {
+    throw new Error(`Topographic structure: invalid feature ordinal "${String(ordinal)}".`);
+  }
+  return `${prefix}_${String(ordinal).padStart(FEATURE_ID_WIDTH, "0")}`;
+}
+
+export function featureIdToOrdinal(featureId: string): number {
+  const [, suffix] = featureId.split("_");
+  const parsed = Number.parseInt(suffix ?? "", 10);
+  return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
+}
+
+export function sortFeatureIds(ids: readonly string[]): string[] {
+  return [...ids].sort((a, b) => {
+    const ao = featureIdToOrdinal(a);
+    const bo = featureIdToOrdinal(b);
+    if (ao !== bo) {
+      return ao - bo;
+    }
+    return a.localeCompare(b);
+  });
+}
+
+export function sortFeatureNodes(nodes: readonly TopographicFeatureNode[]): TopographicFeatureNode[] {
+  return [...nodes].sort((a, b) => {
+    const ao = featureIdToOrdinal(a.id);
+    const bo = featureIdToOrdinal(b.id);
+    if (ao !== bo) {
+      return ao - bo;
+    }
+    return a.id.localeCompare(b.id);
+  });
 }
 
 function assertStructureConfig(config: TopographicStructureConfig): void {

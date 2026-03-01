@@ -46,8 +46,75 @@ For basins and peaks separately, represent features as a tree (or DAG if needed 
 
 Per tile, store assignment to at least one node:
 
-- local identity (`localBasinId` / `localPeakId`)
-- optional active/composite identity at selected cut level
+- `featureIds: string[]` (basin + peak IDs that include this tile)
+- optional `activeFeatureIds: string[]` for selected persistence-cut composites
+
+---
+
+## Draft Output Shape (Adopted for Discussion)
+
+Use a `features` section with explicit arrays (not dynamic object keys like `basin0`):
+
+```json
+{
+  "features": {
+    "basins": [
+      {
+        "id": "b_00012",
+        "parentId": "b_00004",
+        "childIds": ["b_00019", "b_00020"],
+        "birthH": 0.03,
+        "mergeH": 0.22,
+        "persistence": 0.19,
+        "minH": 0.03,
+        "maxH": 0.21,
+        "kind": "composite",
+        "size": 47,
+        "bbox": { "minX": 10, "minY": 4, "maxX": 18, "maxY": 11 }
+      },
+      {
+        "id": "b_00019",
+        "parentId": "b_00012",
+        "childIds": [],
+        "birthH": 0.05,
+        "mergeH": 0.11,
+        "persistence": 0.06,
+        "minH": 0.05,
+        "maxH": 0.11,
+        "kind": "leaf",
+        "size": 6,
+        "bbox": { "minX": 12, "minY": 6, "maxX": 14, "maxY": 8 },
+        "tileIds": [401, 402, 433, 434, 465, 466]
+      }
+    ],
+    "peaks": []
+  }
+}
+```
+
+Adopted storage rule:
+
+- leaf/local nodes include `tileIds`
+- composite nodes do not include `tileIds`
+- all nodes include `size`, `bbox`, `minH`, and `maxH`
+- tiles include `featureIds` arrays in standard `out.json`
+
+Why:
+
+- avoids repeating huge tile lists across parent composites
+- keeps local features inspectable and traceable
+- keeps output size manageable
+
+---
+
+## Determinism Rules For Features
+
+To keep outputs stable across runs:
+
+- Assign IDs by deterministic sweep order with row-major tie-breaks.
+- Sort `childIds` lexicographically (or by node numeric ID).
+- Emit `basins` and `peaks` arrays sorted by numeric ID ascending.
+- Compute `bbox` from node membership with inclusive bounds.
 
 ---
 
@@ -86,7 +153,7 @@ Collapsing lineage removes one of those scales. Non-collapsing identity keeps bo
 2. Replace “loser discarded” lineage logic with node creation + parent linkage.
 3. Add per-tile local node assignment arrays.
 4. Add active-node selection helper for a chosen cut level.
-5. Keep current compact `out.json` unchanged initially; expose richer tree/IDs in debug output first.
+5. Add feature IDs to tiles in `out.json`; expose full trees first in debug outputs, then promote to standard output when stable.
 
 ---
 
@@ -106,8 +173,9 @@ Collapsing lineage removes one of those scales. Non-collapsing identity keeps bo
 
 ---
 
-## Open Questions
+## Decisions (Locked)
 
-1. Should standard `out.json` include local IDs now, or only debug artifacts first?
-2. Should the persistence cut select active composite nodes only, or also influence local-node inclusion?
-3. Do we need both basin and peak local IDs in phase one, or basin first then peak?
+1. Standard `out.json` includes feature IDs on tiles (`featureIds` array).
+2. Leaf/local nodes keep `tileIds`; composite/trunk nodes do not.
+3. Persistence cut selects composite nodes only; leaf inclusion is not cut-driven.
+4. Phase 1 includes both basin and peak feature trees.

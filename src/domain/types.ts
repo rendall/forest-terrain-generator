@@ -1,3 +1,5 @@
+import type { TerrainFeatureCollection } from "./topographic-features.js";
+
 export type Mode = "generate" | "derive" | "debug";
 
 export type JsonValue =
@@ -88,5 +90,6 @@ export interface RegionTileAttachment {
 export interface TerrainEnvelope {
 	meta: TerrainEnvelopeMeta;
 	regions?: RegionSummary[];
+	features?: TerrainFeatureCollection;
 	tiles: JsonObject[];
 }
