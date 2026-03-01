@@ -151,13 +151,21 @@ function finalizeNode(node: TopographicFeatureNode): TopographicFeatureNode {
 function assignMergeToChild(
   node: TopographicFeatureNode,
   mergeH: number,
-  spillOutTileId?: number
+  spillOutTileId?: number,
+  childSpillFromTileId?: number,
+  parentContactTileId?: number
 ): void {
   if (node.mergeH === null) {
     node.mergeH = mergeH;
     node.persistence = Math.max(0, mergeH - node.birthH);
     if (Number.isInteger(spillOutTileId)) {
       node.spillOutTileId = spillOutTileId!;
+    }
+    if (Number.isInteger(childSpillFromTileId)) {
+      node.childSpillFromTileId = childSpillFromTileId!;
+    }
+    if (Number.isInteger(parentContactTileId)) {
+      node.parentContactTileId = parentContactTileId!;
     }
   }
 }
@@ -905,7 +913,10 @@ export function deriveBasinStructure(
           tileIds: []
         };
         const childIdSet = new Set(childIds);
-        const spillOutByChildId = new Map<string, number>();
+        const spillEdgeByChildId = new Map<
+          string,
+          { parentContactTileId: number; childSpillFromTileId: number }
+        >();
         for (const tile of component) {
           const x = tile % shape.width;
           const y = Math.floor(tile / shape.width);
@@ -923,9 +934,17 @@ export function deriveBasinStructure(
             if (!adjacentOwnerId || !childIdSet.has(adjacentOwnerId)) {
               continue;
             }
-            const previous = spillOutByChildId.get(adjacentOwnerId);
-            if (previous === undefined || tile < previous) {
-              spillOutByChildId.set(adjacentOwnerId, tile);
+            const previous = spillEdgeByChildId.get(adjacentOwnerId);
+            if (
+              previous === undefined ||
+              tile < previous.parentContactTileId ||
+              (tile === previous.parentContactTileId &&
+                n < previous.childSpillFromTileId)
+            ) {
+              spillEdgeByChildId.set(adjacentOwnerId, {
+                parentContactTileId: tile,
+                childSpillFromTileId: n
+              });
             }
           }
         }
@@ -934,10 +953,13 @@ export function deriveBasinStructure(
           if (!child) {
             continue;
           }
+          const spillEdge = spillEdgeByChildId.get(childId);
           assignMergeToChild(
             child,
             group.level,
-            spillOutByChildId.get(childId)
+            spillEdge?.parentContactTileId,
+            spillEdge?.childSpillFromTileId,
+            spillEdge?.parentContactTileId
           );
           child.parentId = ownerId;
         }

@@ -16,6 +16,8 @@ export interface TopographicFeatureNode {
   mergeH: number | null;
   persistence: number | null;
   spillOutTileId: number | null;
+  childSpillFromTileId?: number | null;
+  parentContactTileId?: number | null;
   minH: number;
   maxH: number;
   size: number;
