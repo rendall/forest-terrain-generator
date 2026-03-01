@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -91,6 +91,83 @@ describe("CLI command wiring and contract failures", () => {
 
 		const pixelBytes = pgm.length - (headerEnd + 5);
 		expect(pixelBytes).toBe(16);
+	});
+
+	it("wires see --landforms to render structure classes", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-landforms.json");
+		const imageFile = join(dir, "landforms.pgm");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(
+				{
+					meta: { specVersion: "forest-terrain-v1" },
+					tiles: [
+						{
+							x: 0,
+							y: 0,
+							topography: {
+								h: 0.1,
+								r: 0.2,
+								v: 0.3,
+								structure: { basinLike: true, ridgeLike: false },
+							},
+						},
+						{
+							x: 1,
+							y: 0,
+							topography: {
+								h: 0.2,
+								r: 0.3,
+								v: 0.4,
+								structure: { basinLike: false, ridgeLike: true },
+							},
+						},
+						{
+							x: 0,
+							y: 1,
+							topography: {
+								h: 0.3,
+								r: 0.4,
+								v: 0.5,
+								structure: { basinLike: false, ridgeLike: false },
+							},
+						},
+						{
+							x: 1,
+							y: 1,
+							topography: {
+								h: 0.4,
+								r: 0.5,
+								v: 0.6,
+								structure: { basinLike: true, ridgeLike: true },
+							},
+						},
+					],
+				},
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		const seeResult = await runCli([
+			"see",
+			"--input-file",
+			sourceFile,
+			"--output-file",
+			imageFile,
+			"--landforms",
+		]);
+		expect(seeResult.code).toBe(0);
+
+		const pgm = await readFile(imageFile);
+		const headerEnd = pgm.indexOf("\n255\n");
+		expect(headerEnd).toBeGreaterThan(0);
+
+		const dataStart = headerEnd + 5;
+		const pixels = Array.from(pgm.subarray(dataStart));
+		expect(pixels).toEqual([64, 224, 128, 160]);
 	});
 
 	it("wires generate to write terrain output", async () => {

@@ -76,7 +76,9 @@ async function runMode(mode: Mode, options: CliArgs): Promise<void> {
 interface SeeOptions {
 	inputFile?: string;
 	outputFile?: string;
-	layer?: "h" | "r" | "v";
+	layer?: "h" | "r" | "v" | "landforms" | "landscape";
+	landforms?: boolean;
+	landscape?: boolean;
 	force?: boolean;
 }
 
@@ -108,7 +110,21 @@ program
 	)
 	.requiredOption("--input-file <path>", "Path to source terrain envelope JSON")
 	.requiredOption("--output-file <path>", "Path to output image file (.pgm)")
-	.option("--layer <layer>", "Topography layer to render (h|r|v)", "h")
+	.option(
+		"--layer <layer>",
+		"Topography layer to render (h|r|v|landforms)",
+		"h",
+	)
+	.option(
+		"--landforms",
+		"Render topography structure classes as uniform grayscale values",
+		false,
+	)
+	.option(
+		"--landscape",
+		"Alias for --landforms",
+		false,
+	)
 	.option("--force", "Allow replacing existing output file", false)
 	.action(async (options: SeeOptions) =>
 		runSee({
@@ -116,7 +132,10 @@ program
 			args: {
 				inputFilePath: options.inputFile,
 				outputFile: options.outputFile,
-				layer: options.layer ?? "h",
+				layer:
+					options.landforms === true || options.landscape === true
+						? "landforms"
+						: (options.layer ?? "h"),
 				force: options.force ?? false,
 			},
 		}),

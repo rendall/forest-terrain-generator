@@ -32,7 +32,8 @@ Canonical flags:
 - `--force`
 - `--include-structured` (describe only; adds `descriptionStructured` with `text` and sentence slots)
 - `--strict` (describe only; disables phrase fallbacks and fails per-tile when any selected phrase slot has no candidates)
-- `--layer <h|r|v>` (see only; defaults to `h`)
+- `--layer <h|r|v|landforms>` (see only; defaults to `h`)
+- `--landforms` / `--landscape` (see only; shortcut to render landform classes)
 
 Path resolution:
 
@@ -54,6 +55,19 @@ Render topography as grayscale image (`h:0` black, `h:1` white):
 ```bash
 node --import tsx src/cli/main.ts see --input-file out.json --output-file h.pgm
 ```
+
+Render structure classes as uniform grayscale:
+
+```bash
+node --import tsx src/cli/main.ts see --input-file out.json --output-file landforms.pgm --landforms
+```
+
+Landform grayscale mapping:
+
+- `basinLike=true`, `ridgeLike=false` -> `64`
+- `basinLike=false`, `ridgeLike=true` -> `224`
+- `basinLike=false`, `ridgeLike=false` -> `128`
+- `basinLike=true`, `ridgeLike=true` -> `160`
 
 ## Authored Map From PNG
 

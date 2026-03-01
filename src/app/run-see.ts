@@ -7,7 +7,7 @@ import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
 export interface SeeCliArgs {
 	inputFilePath?: string;
 	outputFile?: string;
-	layer: "h" | "r" | "v";
+	layer: "h" | "r" | "v" | "landforms" | "landscape";
 	force: boolean;
 }
 
@@ -60,10 +60,18 @@ async function prepareOutputFile(path: string, force: boolean): Promise<void> {
 	await mkdir(dirname(path), { recursive: true });
 }
 
-function assertLayer(layer: string): asserts layer is "h" | "r" | "v" {
-	if (layer !== "h" && layer !== "r" && layer !== "v") {
+function assertLayer(
+	layer: string,
+): asserts layer is "h" | "r" | "v" | "landforms" | "landscape" {
+	if (
+		layer !== "h" &&
+		layer !== "r" &&
+		layer !== "v" &&
+		layer !== "landforms" &&
+		layer !== "landscape"
+	) {
 		throw new InputValidationError(
-			`Invalid --layer value "${layer}". Expected one of: h, r, v.`,
+			`Invalid --layer value "${layer}". Expected one of: h, r, v, landforms, landscape.`,
 		);
 	}
 }
@@ -90,6 +98,7 @@ export async function runSee(request: SeeRequest): Promise<void> {
 	}
 
 	assertLayer(request.args.layer);
+	const layer = request.args.layer === "landscape" ? "landforms" : request.args.layer;
 
 	const envelope = await readTerrainEnvelopeFile(inputFilePath);
 	if (envelope.tiles.length === 0) {
@@ -161,13 +170,35 @@ export async function runSee(request: SeeRequest): Promise<void> {
 			);
 		}
 
-		const raw = topography[request.args.layer];
-		if (typeof raw !== "number" || !Number.isFinite(raw)) {
-			throw new InputValidationError(
-				`Tile (${x},${y}) is missing finite topography.${request.args.layer}.`,
-			);
+		if (layer === "landforms") {
+			const structure = isJsonObject(topography.structure)
+				? topography.structure
+				: null;
+			if (!structure) {
+				throw new InputValidationError(
+					`Tile (${x},${y}) is missing required object "topography.structure" for --layer landforms.`,
+				);
+			}
+			const basinLike = structure.basinLike === true;
+			const ridgeLike = structure.ridgeLike === true;
+			if (basinLike && ridgeLike) {
+				pixels[index] = 160;
+			} else if (basinLike) {
+				pixels[index] = 64;
+			} else if (ridgeLike) {
+				pixels[index] = 224;
+			} else {
+				pixels[index] = 128;
+			}
+			continue;
 		}
 
+		const raw = topography[layer];
+		if (typeof raw !== "number" || !Number.isFinite(raw)) {
+			throw new InputValidationError(
+				`Tile (${x},${y}) is missing finite topography.${layer}.`,
+			);
+		}
 		pixels[index] = Math.round(clamp01(raw) * 255);
 	}
 

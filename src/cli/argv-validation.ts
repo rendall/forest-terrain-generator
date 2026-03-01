@@ -18,6 +18,8 @@ const VALUE_FLAGS = new Set<string>([
 
 const BOOLEAN_FLAGS = new Set<string>([
 	"--force",
+	"--landforms",
+	"--landscape",
 	"--help",
 	"-h",
 	"--version",
