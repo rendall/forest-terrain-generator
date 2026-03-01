@@ -7,7 +7,7 @@
 		"normalize": {
 			"enabled": true,
 			"mode": "quantile",
-			"lowerQ": 0.02,
+			"lowerQ": 0.01,
 			"upperQ": 1
 		}
 	},

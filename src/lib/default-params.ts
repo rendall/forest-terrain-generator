@@ -18,6 +18,12 @@ export const APPENDIX_A_DEFAULTS: JsonObject = {
 		baseFrequency: 0.06,
 		lacunarity: 2.0,
 		persistence: 0.55,
+		normalize: {
+			enabled: true,
+			mode: "minmax",
+			lowerQ: 0.02,
+			upperQ: 0.98,
+		},
 	},
 	vegVarianceNoise: {
 		octaves: 4,
@@ -25,6 +31,12 @@ export const APPENDIX_A_DEFAULTS: JsonObject = {
 		lacunarity: 2.0,
 		persistence: 0.5,
 		strength: 0.12,
+		normalize: {
+			enabled: true,
+			mode: "minmax",
+			lowerQ: 0.02,
+			upperQ: 0.98,
+		},
 	},
 	topography: {
 		structure: {

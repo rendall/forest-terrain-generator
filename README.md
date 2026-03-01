@@ -66,3 +66,24 @@ bash scripts/png-to-authored-map.sh --input input.png --output map-h.json --expe
 The script writes JSON with the required schema:
 `{ "width": number, "height": number, "data": number[] }`
 where `data` is row-major and normalized to `[0,1]`.
+
+## Noise
+
+- `octaves` is how many layers of noise are stacked. Low values create broad, simple terrain; higher values add smaller details on top.
+- `baseFrequency` is an indication of how much detail or variety the output has. Low values for 1 or 2 major features, higher values for many features.
+- `lacunarity` is a measure of "smoothness" or blurriness. Low values for smooth hills, high values for a more pixelated, "stepped" look.
+- `persistence` controls how strongly each smaller octave contributes. Low values keep terrain smoother and dominated by large shapes; high values make fine detail more prominent.
+
+All three noise maps (`heightNoise`, `roughnessNoise`, `vegVarianceNoise`) also support *normalization*, which is a post-processing remap that stretches map values into a fuller, more useful range (usually `[0,1]`) after noise is generated:
+
+- `normalize.enabled` turns post-generation remapping on/off.
+  - `normalize.mode` chooses remap strategy (`minmax` or `quantile`).
+    - `minmax` stretches current map min/max to `[0,1]`.
+    - `quantile` stretches between `lowerQ` and `upperQ` (more robust against outliers).
+      - `normalize.lowerQ` and `normalize.upperQ` set quantile bounds when mode is `quantile` (for example `0.02` and `0.98`).
+
+## Noise Maps
+
+- `heightNoise` controls `topography.h` (elevation). `0` is lowest (black in grayscale), `1` is highest (white).
+- `roughnessNoise` controls `topography.r` (terrain roughness signal). Low values are smoother ground; high values are rougher, more broken ground.
+- `vegVarianceNoise` controls `topography.v` (vegetation variance signal). It is a stable variation map used to create patchiness instead of uniform vegetation everywhere.

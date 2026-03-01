@@ -10,7 +10,7 @@ interface NoiseParams {
   persistence: number;
 }
 
-interface HeightNormalizeParams {
+interface NormalizeParams {
   enabled: boolean;
   mode: "minmax" | "quantile";
   lowerQ: number;
@@ -61,9 +61,10 @@ function readNoiseParams(params: JsonObject, mapId: BaseMapId): NoiseParams {
   };
 }
 
-function readHeightNormalizeParams(params: JsonObject): HeightNormalizeParams {
-  const heightNoise = expectObject(params.heightNoise, "heightNoise");
-  const normalizeNode = heightNoise.normalize;
+function readNormalizeParams(params: JsonObject, mapId: BaseMapId): NormalizeParams {
+  const key = NOISE_PARAM_KEYS[mapId];
+  const noiseParams = expectObject(params[key], key);
+  const normalizeNode = noiseParams.normalize;
   if (normalizeNode === undefined) {
     return {
       enabled: false,
@@ -73,26 +74,26 @@ function readHeightNormalizeParams(params: JsonObject): HeightNormalizeParams {
     };
   }
 
-  const normalize = expectObject(normalizeNode, "heightNoise.normalize");
+  const normalize = expectObject(normalizeNode, `${key}.normalize`);
   const enabledRaw = normalize.enabled;
   const modeRaw = normalize.mode;
   const lowerQRaw = normalize.lowerQ;
   const upperQRaw = normalize.upperQ;
 
   if (typeof enabledRaw !== "boolean") {
-    throw new Error("Missing or invalid boolean params value \"heightNoise.normalize.enabled\".");
+    throw new Error(`Missing or invalid boolean params value "${key}.normalize.enabled".`);
   }
   if (modeRaw !== "minmax" && modeRaw !== "quantile") {
     throw new Error(
-      "Missing or invalid params value \"heightNoise.normalize.mode\". Expected \"minmax\" or \"quantile\"."
+      `Missing or invalid params value "${key}.normalize.mode". Expected "minmax" or "quantile".`
     );
   }
 
-  const lowerQ = lowerQRaw === undefined ? 0.02 : expectNumber(lowerQRaw, "heightNoise.normalize.lowerQ");
-  const upperQ = upperQRaw === undefined ? 0.98 : expectNumber(upperQRaw, "heightNoise.normalize.upperQ");
+  const lowerQ = lowerQRaw === undefined ? 0.02 : expectNumber(lowerQRaw, `${key}.normalize.lowerQ`);
+  const upperQ = upperQRaw === undefined ? 0.98 : expectNumber(upperQRaw, `${key}.normalize.upperQ`);
   if (lowerQ < 0 || lowerQ > 1 || upperQ < 0 || upperQ > 1 || lowerQ >= upperQ) {
     throw new Error(
-      "Invalid quantile bounds for \"heightNoise.normalize.lowerQ/upperQ\". Require 0 <= lowerQ < upperQ <= 1."
+      `Invalid quantile bounds for "${key}.normalize.lowerQ/upperQ". Require 0 <= lowerQ < upperQ <= 1.`
     );
   }
 
@@ -110,7 +111,7 @@ function quantile(sortedValues: readonly number[], q: number): number {
   return sortedValues[index];
 }
 
-function normalizeMapInPlace(map: Float32Array, normalizeParams: HeightNormalizeParams): void {
+function normalizeMapInPlace(map: Float32Array, normalizeParams: NormalizeParams): void {
   if (!normalizeParams.enabled || map.length === 0) {
     return;
   }
@@ -172,8 +173,10 @@ function generateSingleBaseMap(
 export function generateBaseMaps(shape: GridShape, seed: bigint, params: JsonObject): BaseMapsSoA {
   const out = createBaseMaps(shape);
   out.h = generateSingleBaseMap("H", seed, shape, readNoiseParams(params, "H"));
-  normalizeMapInPlace(out.h, readHeightNormalizeParams(params));
+  normalizeMapInPlace(out.h, readNormalizeParams(params, "H"));
   out.r = generateSingleBaseMap("R", seed, shape, readNoiseParams(params, "R"));
+  normalizeMapInPlace(out.r, readNormalizeParams(params, "R"));
   out.v = generateSingleBaseMap("V", seed, shape, readNoiseParams(params, "V"));
+  normalizeMapInPlace(out.v, readNormalizeParams(params, "V"));
   return out;
 }
