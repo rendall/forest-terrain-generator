@@ -7,6 +7,7 @@ describe("Phase 2 topographic structure basin sweep", () => {
     expect(typeof structure.deriveBasinStructure).toBe("function");
     expect(typeof structure.derivePeakStructure).toBe("function");
     expect(typeof structure.deriveTopographicStructure).toBe("function");
+    expect(typeof structure.computePersistenceCutoff).toBe("function");
     expect(Array.isArray(structure.STRUCTURE_DIR8_NEIGHBORS)).toBe(true);
     expect(structure.STRUCTURE_DIR8_NEIGHBORS.map((n) => n.dir)).toEqual([
       0, 1, 2, 3, 4, 5, 6, 7,
@@ -24,7 +25,7 @@ describe("Phase 2 topographic structure basin sweep", () => {
       connectivity: "dir8",
       hEps: 0.000001,
       persistenceMin: 0.05,
-      grab: 0.35,
+      grab: 0.0,
       unresolvedPolicy: "nan",
     });
 
@@ -55,7 +56,7 @@ describe("Phase 2 topographic structure basin sweep", () => {
       connectivity: "dir8",
       hEps: 0.000001,
       persistenceMin: 0.05,
-      grab: 0.35,
+      grab: 0.0,
       unresolvedPolicy: "nan",
     });
 
@@ -87,7 +88,7 @@ describe("Phase 2 topographic structure basin sweep", () => {
       connectivity: "dir8",
       hEps: 0.000001,
       persistenceMin: 0.05,
-      grab: 0.35,
+      grab: 0.0,
       unresolvedPolicy: "nan",
     });
     expect(Array.from(disabled.basinMinIdx)).toEqual([-1, -1, -1]);
@@ -98,7 +99,7 @@ describe("Phase 2 topographic structure basin sweep", () => {
       connectivity: "dir8",
       hEps: 0.000001,
       persistenceMin: 0.05,
-      grab: 0.35,
+      grab: 0.0,
       unresolvedPolicy: "nan",
     });
     expect(Array.from(enabled.basinMinIdx)).toEqual([1, 1, 1]);
@@ -116,7 +117,7 @@ describe("Phase 2 topographic structure basin sweep", () => {
       connectivity: "dir8",
       hEps: 0.000001,
       persistenceMin: 0.05,
-      grab: 0.35,
+      grab: 0.0,
       unresolvedPolicy: "max_h",
     });
 
@@ -130,5 +131,18 @@ describe("Phase 2 topographic structure basin sweep", () => {
     expect(out.basinSpillH[2]).toBeCloseTo(0.2, 6);
     expect(out.basinPersistence[2]).toBeCloseTo(0.1, 6);
     expect(out.basinLike[2]).toBe(1);
+  });
+
+  it("computes grab-based persistence cutoff with narrow-spread fallback", async () => {
+    const { computePersistenceCutoff } = await import(
+      "../../src/pipeline/derive-topographic-structure.js"
+    );
+
+    const varied = new Float32Array([Number.NaN, 0.1, 0.2, 0.4]);
+    expect(computePersistenceCutoff(varied, 0.0, 0.05)).toBeCloseTo(0.1, 6);
+    expect(computePersistenceCutoff(varied, 1.0, 0.05)).toBeCloseTo(0.2, 6);
+
+    const narrow = new Float32Array([Number.NaN, 0.2, 0.2, 0.2]);
+    expect(computePersistenceCutoff(narrow, 0.8, 0.05)).toBeCloseTo(0.2, 6);
   });
 });

@@ -44,6 +44,39 @@ interface PeakRootMeta {
   maxIdx: Int32Array;
 }
 
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+function quantile(sortedValues: readonly number[], q: number): number {
+  const size = sortedValues.length;
+  const index = Math.floor((size - 1) * q);
+  return sortedValues[index];
+}
+
+export function computePersistenceCutoff(
+  persistenceByTile: Float32Array,
+  grab: number,
+  fallback: number
+): number {
+  const finite = Array.from(persistenceByTile).filter(
+    (value) => Number.isFinite(value)
+  );
+  if (finite.length === 0) {
+    return Math.max(0, fallback);
+  }
+
+  const sorted = finite.sort((a, b) => a - b);
+  const p20 = quantile(sorted, 0.2);
+  const p80 = quantile(sorted, 0.8);
+  const spread = p80 - p20;
+  if (!Number.isFinite(spread) || spread <= 1e-9) {
+    return Math.max(0, p20);
+  }
+
+  return Math.max(0, lerp(p20, p80, grab));
+}
+
 function assertStructureConfig(config: TopographicStructureConfig): void {
   if (config.connectivity !== "dir8") {
     throw new Error(
@@ -267,7 +300,18 @@ export function deriveBasinStructure(
     const persistence = Math.max(0, spillH - minH);
     out.basinPersistence[i] = persistence;
     out.basinDepthLike[i] = Math.max(0, spillH - h[i]);
-    out.basinLike[i] = persistence >= config.persistenceMin ? 1 : 0;
+  }
+
+  const basinCutoff = computePersistenceCutoff(
+    out.basinPersistence,
+    config.grab,
+    config.persistenceMin
+  );
+  for (let i = 0; i < shape.size; i += 1) {
+    const persistence = out.basinPersistence[i];
+    if (Number.isFinite(persistence) && persistence >= basinCutoff) {
+      out.basinLike[i] = 1;
+    }
   }
 
   return out;
@@ -401,7 +445,18 @@ export function derivePeakStructure(
     const persistence = Math.max(0, maxH - saddleH);
     out.peakPersistence[i] = persistence;
     out.peakRiseLike[i] = Math.max(0, h[i] - saddleH);
-    out.ridgeLike[i] = persistence >= config.persistenceMin ? 1 : 0;
+  }
+
+  const peakCutoff = computePersistenceCutoff(
+    out.peakPersistence,
+    config.grab,
+    config.persistenceMin
+  );
+  for (let i = 0; i < shape.size; i += 1) {
+    const persistence = out.peakPersistence[i];
+    if (Number.isFinite(persistence) && persistence >= peakCutoff) {
+      out.ridgeLike[i] = 1;
+    }
   }
 
   return out;
