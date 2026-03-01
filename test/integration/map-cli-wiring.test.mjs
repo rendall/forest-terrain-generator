@@ -165,7 +165,7 @@ describe("map CLI wiring", () => {
 		expect(pixels).toEqual([0, 128, 255]);
 	});
 
-	it("renders structure-leaves as black basins and white peaks", async () => {
+	it("renders basin and peak leaves for structure-leaves", async () => {
 		const dir = await makeTempDir();
 		const sourceFile = join(dir, "source-structure-leaves.json");
 		const imageFile = join(dir, "structure-leaves.pgm");
@@ -177,8 +177,8 @@ describe("map CLI wiring", () => {
 					meta: { specVersion: "forest-terrain-v1" },
 					features: {
 						basins: [
-							{ id: "b_00000", childIds: [] },
-							{ id: "b_00001", childIds: ["b_00000"] },
+							{ id: "b_00000", parentId: "b_00001", childIds: [], tileIds: [0] },
+							{ id: "b_00001", childIds: ["b_00000"], tileIds: [1] },
 						],
 						peaks: [{ id: "p_00000", childIds: [] }],
 					},

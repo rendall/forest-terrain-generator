@@ -85,28 +85,39 @@ export async function runMap(request: MapRequest): Promise<void> {
 			);
 		}
 
-		const basinLeafIds = new Set(
-			features.basins
-				.filter(
-					(feature) =>
-						feature &&
-						Array.isArray(feature.childIds) &&
-						feature.childIds.length === 0 &&
-						typeof feature.id === "string",
-				)
-				.map((feature) => feature.id),
-		);
-		const peakLeafIds = new Set(
-			features.peaks
-				.filter(
-					(feature) =>
-						feature &&
-						Array.isArray(feature.childIds) &&
-						feature.childIds.length === 0 &&
-						typeof feature.id === "string",
-				)
-				.map((feature) => feature.id),
-		);
+		type StructureNode = {
+			id: string;
+			parentId?: string;
+			childIds?: unknown[];
+			tileIds?: unknown[];
+		};
+		const collectLeafTiles = (
+			nodesIn: unknown[],
+		): { leafIds: Set<string>; leafTileIds: Set<number> } => {
+			const nodes = nodesIn.filter(
+				(feature): feature is StructureNode =>
+					Boolean(feature && typeof (feature as StructureNode).id === "string"),
+			);
+			const leaves = nodes.filter(
+				(node) => Array.isArray(node.childIds) && node.childIds.length === 0,
+			);
+			const leafIds = new Set(leaves.map((node) => node.id));
+			const leafTileIds = new Set<number>();
+			for (const leaf of leaves) {
+				if (!Array.isArray(leaf.tileIds)) {
+					continue;
+				}
+				for (const tileId of leaf.tileIds) {
+					if (typeof tileId === "number" && Number.isInteger(tileId) && tileId >= 0) {
+						leafTileIds.add(tileId);
+					}
+				}
+			}
+			return { leafIds, leafTileIds };
+		};
+
+		const basinInfo = collectLeafTiles(features.basins);
+		const peakInfo = collectLeafTiles(features.peaks);
 
 		let maxX = -1;
 		let maxY = -1;
@@ -168,11 +179,12 @@ export async function runMap(request: MapRequest): Promise<void> {
 			const featureIds = Array.isArray(tile.featureIds)
 				? tile.featureIds.filter((value): value is string => typeof value === "string")
 				: [];
-			const hasBasinLeaf = featureIds.some((id) => basinLeafIds.has(id));
-			const hasPeakLeaf = featureIds.some((id) => peakLeafIds.has(id));
+			const hasBasinLeaf =
+				basinInfo.leafTileIds.has(index) || featureIds.some((id) => basinInfo.leafIds.has(id));
+			const hasPeakLeaf =
+				peakInfo.leafTileIds.has(index) || featureIds.some((id) => peakInfo.leafIds.has(id));
 
-			// Requested policy: basin leaf -> black, peak leaf -> white.
-			// If both are present, peak (white) wins.
+			pixels[index] = 128;
 			if (hasBasinLeaf) {
 				pixels[index] = 0;
 			}

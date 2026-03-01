@@ -673,6 +673,49 @@ function dsuFind(parent: Int32Array, index: number): number {
   return root;
 }
 
+function collectConnectedComponents(
+  shape: GridShape,
+  groupIndices: readonly number[]
+): { inGroup: Uint8Array; components: number[][] } {
+  const inGroup = new Uint8Array(shape.size);
+  for (const tile of groupIndices) {
+    inGroup[tile] = 1;
+  }
+  const visited = new Uint8Array(shape.size);
+  const components: number[][] = [];
+  for (const start of groupIndices) {
+    if (visited[start] === 1) {
+      continue;
+    }
+    const queue = [start];
+    visited[start] = 1;
+    const component: number[] = [];
+    while (queue.length > 0) {
+      const tile = queue.pop()!;
+      component.push(tile);
+      const x = tile % shape.width;
+      const y = Math.floor(tile / shape.width);
+      for (const neighbor of STRUCTURE_DIR8_NEIGHBORS) {
+        const nx = x + neighbor.dx;
+        const ny = y + neighbor.dy;
+        if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
+          continue;
+        }
+        const n = indexOf(shape, nx, ny);
+        if (inGroup[n] !== 1 || visited[n] === 1) {
+          continue;
+        }
+        visited[n] = 1;
+        queue.push(n);
+      }
+    }
+    component.sort((a, b) => a - b);
+    components.push(component);
+  }
+  components.sort((a, b) => a[0] - b[0]);
+  return { inGroup, components };
+}
+
 function lowerMinimumWins(
   aRoot: number,
   bRoot: number,
@@ -688,6 +731,25 @@ function lowerMinimumWins(
     return false;
   }
   return meta.minIdx[aRoot] <= meta.minIdx[bRoot];
+}
+
+function unionBasinRootsNoSpill(
+  parent: Int32Array,
+  meta: BasinRootMeta,
+  a: number,
+  b: number,
+  hEps: number
+): number {
+  const aRoot = dsuFind(parent, a);
+  const bRoot = dsuFind(parent, b);
+  if (aRoot === bRoot) {
+    return aRoot;
+  }
+  const aWins = lowerMinimumWins(aRoot, bRoot, meta, hEps);
+  const winner = aWins ? aRoot : bRoot;
+  const loser = aWins ? bRoot : aRoot;
+  parent[loser] = winner;
+  return winner;
 }
 
 function unionBasinRoots(
@@ -761,34 +823,31 @@ export function deriveBasinStructure(
   }
 
   for (const group of groups) {
-    for (const tile of group.indices) {
-      active[tile] = 1;
-      parent[tile] = tile;
-      rootMeta.minH[tile] = h[tile];
-      rootMeta.minIdx[tile] = tile;
-      minHByMinimum[tile] = h[tile];
-
-      const x = tile % shape.width;
-      const y = Math.floor(tile / shape.width);
+    const { inGroup, components } = collectConnectedComponents(shape, group.indices);
+    for (const component of components) {
       const adjacentRoots = new Set<number>();
-      for (const neighbor of STRUCTURE_DIR8_NEIGHBORS) {
-        const nx = x + neighbor.dx;
-        const ny = y + neighbor.dy;
-        if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
-          continue;
+      for (const tile of component) {
+        const x = tile % shape.width;
+        const y = Math.floor(tile / shape.width);
+        for (const neighbor of STRUCTURE_DIR8_NEIGHBORS) {
+          const nx = x + neighbor.dx;
+          const ny = y + neighbor.dy;
+          if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
+            continue;
+          }
+          const n = indexOf(shape, nx, ny);
+          if (inGroup[n] === 1 || active[n] !== 1) {
+            continue;
+          }
+          adjacentRoots.add(dsuFind(parent, n));
         }
-        const n = indexOf(shape, nx, ny);
-        if (active[n] !== 1) {
-          continue;
-        }
-        adjacentRoots.add(dsuFind(parent, n));
       }
 
       const adjacentOwnerIds = sortFeatureIds(
         Array.from(
           new Set(
             Array.from(adjacentRoots)
-              .map((root) => ownerByRoot[root])
+              .map((root) => ownerByRoot[dsuFind(parent, root)])
               .filter((ownerId): ownerId is string => ownerId.length > 0)
           )
         )
@@ -803,7 +862,7 @@ export function deriveBasinStructure(
           kind: "leaf",
           parentId: null,
           childIds: [],
-          birthH: h[tile],
+          birthH: group.level,
           mergeH: null,
           persistence: null,
           minH: Number.POSITIVE_INFINITY,
@@ -843,27 +902,45 @@ export function deriveBasinStructure(
         nodeById.set(ownerId, composite);
       }
 
-      const ownerNode = nodeById.get(ownerId);
-      if (ownerNode) {
-        updateNodeTileStats(ownerNode, shape, tile, h[tile]);
+      for (const tile of component) {
+        active[tile] = 1;
+        parent[tile] = tile;
+        rootMeta.minH[tile] = h[tile];
+        rootMeta.minIdx[tile] = tile;
+        minHByMinimum[tile] = h[tile];
+        ownerByRoot[tile] = ownerId;
+        tileOwnerFeatureIds[tile] = ownerId;
+        const ownerNode = nodeById.get(ownerId);
+        if (ownerNode) {
+          updateNodeTileStats(ownerNode, shape, tile, h[tile]);
+        }
       }
-      tileOwnerFeatureIds[tile] = ownerId;
-      ownerByRoot[tile] = ownerId;
 
-      let mergedRoot = tile;
+      let componentRoot = component[0]!;
+      for (let i = 1; i < component.length; i += 1) {
+        componentRoot = unionBasinRootsNoSpill(
+          parent,
+          rootMeta,
+          componentRoot,
+          component[i]!,
+          config.hEps
+        );
+        ownerByRoot[componentRoot] = ownerId;
+      }
+
       for (const adjacentRoot of adjacentRoots) {
         const nextRoot = unionBasinRoots(
           parent,
           rootMeta,
           spillByMinimum,
           mergeEvents,
-          mergedRoot,
+          componentRoot,
           adjacentRoot,
           group.level,
           config.hEps
         );
         ownerByRoot[nextRoot] = ownerId;
-        mergedRoot = nextRoot;
+        componentRoot = nextRoot;
       }
     }
   }
