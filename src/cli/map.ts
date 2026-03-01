@@ -6,7 +6,7 @@ import { exitCodeForCategory, normalizeCliError } from "../domain/errors.js";
 interface MapOptions {
 	inputJson?: string;
 	outputPgm?: string;
-	layer?: "h" | "r" | "v" | "landforms" | "landscape";
+	layer?: "h" | "r" | "v" | "landforms" | "landscape" | "structure-leaves";
 	threshold?: number;
 	force?: boolean;
 }
@@ -22,7 +22,7 @@ program
 	.requiredOption("--output-pgm <path>", "Path to output PGM image")
 	.option(
 		"--layer <layer>",
-		"Layer to render (h|r|v|landforms)",
+		"Layer to render (h|r|v|landforms|structure-leaves)",
 		"h",
 	)
 	.option(

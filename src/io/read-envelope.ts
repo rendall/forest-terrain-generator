@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { extname } from "node:path";
 import { InputValidationError } from "../domain/errors.js";
+import type { TerrainFeatureCollection } from "../domain/topographic-features.js";
 import type { JsonObject, RegionSummary, TerrainEnvelope } from "../domain/types.js";
 
 function isJsonObject(value: unknown): value is JsonObject {
@@ -119,6 +120,54 @@ function assertRegionsShape(
 	}
 }
 
+function assertFeatureNodesShape(
+	nodes: unknown,
+	inputFilePath: string,
+	kind: "basins" | "peaks",
+): void {
+	if (!Array.isArray(nodes)) {
+		throw new InputValidationError(
+			`Invalid envelope "features.${kind}" in "${inputFilePath}". Expected an array.`,
+		);
+	}
+	for (let i = 0; i < nodes.length; i += 1) {
+		const node = nodes[i];
+		if (!isJsonObject(node)) {
+			throw new InputValidationError(
+				`Invalid feature node at index ${i} in "${inputFilePath}" under "features.${kind}". Expected a JSON object.`,
+			);
+		}
+		if (typeof node.id !== "string") {
+			throw new InputValidationError(
+				`Invalid feature node at index ${i} in "${inputFilePath}" under "features.${kind}". Expected string "id".`,
+			);
+		}
+		if (!Array.isArray(node.childIds)) {
+			throw new InputValidationError(
+				`Invalid feature node at index ${i} in "${inputFilePath}" under "features.${kind}". Expected array "childIds".`,
+			);
+		}
+		if (!node.childIds.every((value) => typeof value === "string")) {
+			throw new InputValidationError(
+				`Invalid feature node at index ${i} in "${inputFilePath}" under "features.${kind}". Expected string values in "childIds".`,
+			);
+		}
+	}
+}
+
+function assertFeaturesShape(
+	features: unknown,
+	inputFilePath: string,
+): asserts features is TerrainFeatureCollection {
+	if (!isJsonObject(features)) {
+		throw new InputValidationError(
+			`Invalid envelope "features" in "${inputFilePath}". Expected an object when present.`,
+		);
+	}
+	assertFeatureNodesShape(features.basins, inputFilePath, "basins");
+	assertFeatureNodesShape(features.peaks, inputFilePath, "peaks");
+}
+
 export async function readTerrainEnvelopeFile(
 	inputFilePath: string,
 ): Promise<TerrainEnvelope> {
@@ -163,6 +212,11 @@ export async function readTerrainEnvelopeFile(
 	if (hasRegions) {
 		assertRegionsShape(parsedRegions, inputFilePath);
 	}
+	const hasFeatures = Object.prototype.hasOwnProperty.call(parsed, "features");
+	const parsedFeatures = hasFeatures ? parsed.features : undefined;
+	if (hasFeatures) {
+		assertFeaturesShape(parsedFeatures, inputFilePath);
+	}
 
 	for (let i = 0; i < parsed.tiles.length; i += 1) {
 		const tile = parsed.tiles[i];
@@ -180,6 +234,9 @@ export async function readTerrainEnvelopeFile(
 		},
 		...(hasRegions
 			? { regions: parsedRegions as unknown as RegionSummary[] }
+			: {}),
+		...(hasFeatures
+			? { features: parsedFeatures as unknown as TerrainFeatureCollection }
 			: {}),
 		tiles: parsed.tiles as JsonObject[],
 	};

@@ -164,4 +164,61 @@ describe("map CLI wiring", () => {
 		const pixels = Array.from(pgm.subarray(dataStart));
 		expect(pixels).toEqual([0, 128, 255]);
 	});
+
+	it("renders structure-leaves as black basins and white peaks", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-structure-leaves.json");
+		const imageFile = join(dir, "structure-leaves.pgm");
+
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(
+				{
+					meta: { specVersion: "forest-terrain-v1" },
+					features: {
+						basins: [
+							{ id: "b_00000", childIds: [] },
+							{ id: "b_00001", childIds: ["b_00000"] },
+						],
+						peaks: [{ id: "p_00000", childIds: [] }],
+					},
+					tiles: [
+						{
+							x: 0,
+							y: 0,
+							featureIds: ["b_00000"],
+							topography: { h: 0.1, r: 0.0, v: 0.0 },
+						},
+						{ x: 1, y: 0, featureIds: [], topography: { h: 0.1, r: 0.0, v: 0.0 } },
+						{
+							x: 2,
+							y: 0,
+							featureIds: ["p_00000"],
+							topography: { h: 0.1, r: 0.0, v: 0.0 },
+						},
+					],
+				},
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		const mapResult = await runCli(MAP_CLI_ENTRY, [
+			"--input-json",
+			sourceFile,
+			"--output-pgm",
+			imageFile,
+			"--layer",
+			"structure-leaves",
+		]);
+		expect(mapResult.code).toBe(0);
+
+		const pgm = await readFile(imageFile);
+		const headerEnd = pgm.indexOf("\n255\n");
+		expect(headerEnd).toBeGreaterThan(0);
+		const dataStart = headerEnd + 5;
+		const pixels = Array.from(pgm.subarray(dataStart));
+		expect(pixels).toEqual([0, 128, 255]);
+	});
 });

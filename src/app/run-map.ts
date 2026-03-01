@@ -8,7 +8,7 @@ import { runSee } from "./run-see.js";
 export interface MapCliArgs {
 	inputJsonPath?: string;
 	outputPgmPath?: string;
-	layer?: "h" | "r" | "v" | "landforms" | "landscape";
+	layer?: "h" | "r" | "v" | "landforms" | "landscape" | "structure-leaves";
 	threshold?: number;
 	force: boolean;
 }
@@ -61,6 +61,139 @@ async function prepareOutputFile(path: string, force: boolean): Promise<void> {
 
 export async function runMap(request: MapRequest): Promise<void> {
 	const layer = request.args.layer ?? "h";
+	if (layer === "structure-leaves") {
+		const inputFilePath = resolveFromCwd(request.cwd, request.args.inputJsonPath);
+		const outputFile = resolveFromCwd(request.cwd, request.args.outputPgmPath);
+		if (!inputFilePath) {
+			throw new InputValidationError("Missing required input: --input-json.");
+		}
+		if (!outputFile) {
+			throw new InputValidationError("Missing required output: --output-pgm.");
+		}
+
+		const envelope = await readTerrainEnvelopeFile(inputFilePath);
+		if (envelope.tiles.length === 0) {
+			throw new InputValidationError(
+				`Input terrain file "${inputFilePath}" has no tiles.`,
+			);
+		}
+
+		const features = envelope.features;
+		if (!features || !Array.isArray(features.basins) || !Array.isArray(features.peaks)) {
+			throw new InputValidationError(
+				`Input terrain file "${inputFilePath}" is missing required top-level "features.basins"/"features.peaks" arrays for layer "structure-leaves".`,
+			);
+		}
+
+		const basinLeafIds = new Set(
+			features.basins
+				.filter(
+					(feature) =>
+						feature &&
+						Array.isArray(feature.childIds) &&
+						feature.childIds.length === 0 &&
+						typeof feature.id === "string",
+				)
+				.map((feature) => feature.id),
+		);
+		const peakLeafIds = new Set(
+			features.peaks
+				.filter(
+					(feature) =>
+						feature &&
+						Array.isArray(feature.childIds) &&
+						feature.childIds.length === 0 &&
+						typeof feature.id === "string",
+				)
+				.map((feature) => feature.id),
+		);
+
+		let maxX = -1;
+		let maxY = -1;
+		for (const tile of envelope.tiles) {
+			const x = tile.x;
+			const y = tile.y;
+			if (
+				typeof x !== "number" ||
+				!Number.isInteger(x) ||
+				x < 0 ||
+				typeof y !== "number" ||
+				!Number.isInteger(y) ||
+				y < 0
+			) {
+				throw new InputValidationError(
+					`Input terrain file "${inputFilePath}" contains invalid tile coordinates.`,
+				);
+			}
+			maxX = Math.max(maxX, x);
+			maxY = Math.max(maxY, y);
+		}
+
+		const width = maxX + 1;
+		const height = maxY + 1;
+		const expectedSize = width * height;
+		if (expectedSize !== envelope.tiles.length) {
+			throw new InputValidationError(
+				`Input terrain file "${inputFilePath}" is not a dense ${width}x${height} grid (tileCount=${envelope.tiles.length}).`,
+			);
+		}
+
+		const seen = new Uint8Array(expectedSize);
+		const pixels = new Uint8Array(expectedSize);
+		pixels.fill(128);
+		for (const tile of envelope.tiles) {
+			const x = tile.x;
+			const y = tile.y;
+			if (
+				typeof x !== "number" ||
+				!Number.isInteger(x) ||
+				x < 0 ||
+				typeof y !== "number" ||
+				!Number.isInteger(y) ||
+				y < 0
+			) {
+				throw new InputValidationError(
+					`Input terrain file "${inputFilePath}" contains invalid tile coordinates.`,
+				);
+			}
+
+			const index = y * width + x;
+			if (seen[index] === 1) {
+				throw new InputValidationError(
+					`Input terrain file "${inputFilePath}" has duplicate tile coordinates at (${x},${y}).`,
+				);
+			}
+			seen[index] = 1;
+
+			const featureIds = Array.isArray(tile.featureIds)
+				? tile.featureIds.filter((value): value is string => typeof value === "string")
+				: [];
+			const hasBasinLeaf = featureIds.some((id) => basinLeafIds.has(id));
+			const hasPeakLeaf = featureIds.some((id) => peakLeafIds.has(id));
+
+			// Requested policy: basin leaf -> black, peak leaf -> white.
+			// If both are present, peak (white) wins.
+			if (hasBasinLeaf) {
+				pixels[index] = 0;
+			}
+			if (hasPeakLeaf) {
+				pixels[index] = 255;
+			}
+		}
+
+		await prepareOutputFile(outputFile, request.args.force);
+		const header = Buffer.from(`P5\n${width} ${height}\n255\n`, "ascii");
+		const payload = Buffer.concat([header, Buffer.from(pixels)]);
+		try {
+			await writeFile(outputFile, payload);
+		} catch (error) {
+			throw new FileIoError(
+				`I/O error during image output write at "${outputFile}": ${messageFromUnknown(error)}`,
+			);
+		}
+		return;
+	}
+
 	const useThresholdMode = request.args.threshold !== undefined || layer === "h";
 	if (useThresholdMode) {
 		const threshold = request.args.threshold ?? 0.1;
