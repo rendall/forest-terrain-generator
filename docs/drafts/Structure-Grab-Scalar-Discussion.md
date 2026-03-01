@@ -26,7 +26,7 @@ This can feel "grabby" because the effective grouping level is fixed. You can se
 
 ## Single Scalar Proposal
 
-Add one parameter (working name):
+Add one parameter:
 
 `topography.structure.grab`
 
@@ -38,6 +38,11 @@ Range:
 Suggested default:
 
 - `0.35` (biased toward preserving distinct features)
+
+Adopted:
+
+- Name: `grab`
+- Default: `0.35`
 
 ---
 
@@ -117,7 +122,4 @@ This directly targets "too grabby" behavior with a single control.
 
 ## Discussion Questions
 
-1. Is `grab` the right user-facing name, or should it be `mergeAggressiveness`?
-2. Default value preference: `0.35` vs `0.5`?
-3. Should this scalar affect only view/classification, or also downstream hydrology/ecology consumers?
-
+1. Should `grab` remain classification-only, or be consumed by downstream hydrology/ecology stages in a later phase?

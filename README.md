@@ -101,3 +101,12 @@ All three noise maps (`heightNoise`, `roughnessNoise`, `vegVarianceNoise`) also 
 - `heightNoise` controls `topography.h` (elevation). `0` is lowest (black in grayscale), `1` is highest (white).
 - `roughnessNoise` controls `topography.r` (terrain roughness signal). Low values are smoother ground; high values are rougher, more broken ground.
 - `vegVarianceNoise` controls `topography.v` (vegetation variance signal). It is a stable variation map used to create patchiness instead of uniform vegetation everywhere.
+
+## Topography Structure
+
+`topography.structure.grab` controls how aggressively basin/peak classes are merged:
+
+- `0` = less grabby (more distinct basins/hills)
+- `1` = more grabby (fewer, broader merged structures)
+
+Default: `0.35`.
