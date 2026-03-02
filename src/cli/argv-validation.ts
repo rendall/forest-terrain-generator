@@ -13,11 +13,14 @@ const VALUE_FLAGS = new Set<string>([
 	"--output-file",
 	"--output-dir",
 	"--debug-output-file",
+	"--hydrology-viz",
+	"--hydrology-inspector-stats-file",
 	"--layer",
 ]);
 
 const BOOLEAN_FLAGS = new Set<string>([
 	"--force",
+	"--hydrology-inspector-stats",
 	"--landforms",
 	"--landscape",
 	"--help",

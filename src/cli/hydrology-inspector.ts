@@ -19,8 +19,14 @@
  *   - `overflow_guided`: includes overflow continuation metadata/events.
  * - `--max-steps <number>`: hard cap for tracing steps.
  * - `--debug`: emit full diagnostics (step-by-step neighbors, segments, events, warnings).
+ * - `--viz <mode>`: write one or more hydrology visualization files into `--debug-dir`.
+ *   - modes: `fa|fd|fa-normalized|hydrology|all`
+ * - `--debug-dir <path>`: debug artifact dir and viz output target.
+ * - `--stats`: compute and emit hydrology stats JSON.
+ * - `--stats-file <path>`: optional stats output path override.
  * - `--output-ppm <path>`: write grayscale height map with traced stream overlays.
  * - `--force`: allow replacing existing `--output-ppm` target.
+ *   - also required to overwrite viz output files and stats file targets.
  *
  * Accepted-but-ignored (current behavior):
  * - `--water-level <number>`
@@ -32,22 +38,30 @@
  * - Non-debug:
  *   - `{ path: [...] }`
  *   - plus `{ overflow: {...} }` when `--sink-mode overflow_guided`.
+ *   - plus `{ viz: { writtenFiles: [...] } }` when `--viz` is used.
+ *   - plus `{ stats: {...}, statsFilePath: \"...\" }` when `--stats` is used.
  * - Debug (`--debug`):
  *   - Includes `path`, `hydrologyMapsSource`, `hydrologyAtSource`, `debugSteps`,
- *     `segments`, `overflowEvents`, tile-id sets, and warnings.
+ *     `segments`, `overflowEvents`, tile-id sets, warnings, and viz/stats summaries when requested.
  *
  * Notes:
  * - `hydrologyMapsSource` indicates whether inspector used envelope hydrology maps
- *   (`"envelope"`) or recomputed them (`"recomputed"`).
+ *   (`"envelope"`), recomputed them (`"recomputed"`), or loaded split debug artifacts (`"debug_artifacts"`).
  * - In overflow-guided mode, event count can be large on complex terrain because each
  *   overflow hop emits connector/crossing/parent events.
  */
 import { Command, CommanderError } from "commander";
 import {
+	type HydrologyVizMode,
 	runHydrologyInspectorTrace,
+	runHydrologyInspectorVisualization,
 	writeHydrologyInspectorOverlayPpm,
 } from "../app/run-hydrology-inspector.js";
-import { exitCodeForCategory, normalizeCliError } from "../domain/errors.js";
+import {
+	exitCodeForCategory,
+	InputValidationError,
+	normalizeCliError,
+} from "../domain/errors.js";
 
 interface HydrologyInspectorOptions {
 	inputJson?: string;
@@ -58,6 +72,10 @@ interface HydrologyInspectorOptions {
 	waterLevel?: number;
 	volume?: number;
 	debug?: boolean;
+	viz?: string;
+	debugDir?: string;
+	stats?: boolean;
+	statsFile?: string;
 	outputPpm?: string;
 	force?: boolean;
 }
@@ -67,6 +85,26 @@ const printJson = (value: unknown): void => {
 };
 
 const program = new Command();
+const assertVizMode = (
+	raw: string | undefined,
+): HydrologyVizMode | undefined => {
+	if (typeof raw === "undefined") {
+		return undefined;
+	}
+	if (
+		raw !== "fa" &&
+		raw !== "fd" &&
+		raw !== "fa-normalized" &&
+		raw !== "hydrology" &&
+		raw !== "all"
+	) {
+		throw new InputValidationError(
+			`Invalid --viz mode "${raw}". Expected one of: fa|fd|fa-normalized|hydrology|all.`,
+		);
+	}
+	return raw;
+};
+
 program
 	.name("forest-terrain-hydrology-inspector")
 	.description("Inspect hydrology routing from a source tile")
@@ -96,6 +134,16 @@ program
 	)
 	.option("--debug", "Include per-step routing diagnostics", false)
 	.option(
+		"--viz <mode>",
+		"Write hydrology visualization(s) to --debug-dir (fa|fd|fa-normalized|hydrology|all)",
+	)
+	.option(
+		"--debug-dir <path>",
+		"Directory containing debug artifacts and output target for --viz files",
+	)
+	.option("--stats", "Emit hydrology stats JSON output", false)
+	.option("--stats-file <path>", "Optional stats output path override")
+	.option(
 		"--output-ppm <path>",
 		"Optional stream overlay image output (PPM, grayscale height + blue stream)",
 	)
@@ -104,6 +152,7 @@ program
 try {
 	await program.parseAsync(process.argv);
 	const options = program.opts<HydrologyInspectorOptions>();
+	const vizMode = assertVizMode(options.viz);
 	const trace = await runHydrologyInspectorTrace({
 		cwd: process.cwd(),
 		args: {
@@ -115,6 +164,23 @@ try {
 			waterLevel: options.waterLevel,
 			volume: options.volume,
 			debug: options.debug ?? false,
+			viz: vizMode,
+			debugDirPath: options.debugDir,
+			stats: options.stats ?? false,
+			statsFilePath: options.statsFile,
+			force: options.force ?? false,
+		},
+	});
+	const vizResult = await runHydrologyInspectorVisualization({
+		cwd: process.cwd(),
+		args: {
+			inputJsonPath: options.inputJson,
+			sinkMode: options.sinkMode,
+			viz: vizMode,
+			debugDirPath: options.debugDir,
+			stats: options.stats ?? false,
+			statsFilePath: options.statsFile,
+			force: options.force ?? false,
 		},
 	});
 	if (options.debug) {
@@ -131,6 +197,14 @@ try {
 			overflowCrossingEdges: trace.overflowCrossingEdges,
 			overflowEvents: trace.overflowEvents,
 			warnings: trace.debugWarnings,
+			viz:
+				vizResult && vizResult.writtenFiles.length > 0
+					? {
+							writtenFiles: vizResult.writtenFiles,
+						}
+					: undefined,
+			stats: vizResult?.stats ?? undefined,
+			statsFilePath: vizResult?.statsFilePath ?? undefined,
 		});
 	} else {
 		const payload: Record<string, unknown> = {
@@ -189,6 +263,15 @@ try {
 				eventCount: overflowEvents.length,
 				events: overflowEvents,
 			};
+		}
+		if (vizResult && vizResult.writtenFiles.length > 0) {
+			payload.viz = {
+				writtenFiles: vizResult.writtenFiles,
+			};
+		}
+		if (vizResult?.stats) {
+			payload.stats = vizResult.stats;
+			payload.statsFilePath = vizResult.statsFilePath;
 		}
 		printJson(payload);
 	}

@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -211,5 +211,180 @@ describe("hydrology-inspector CLI", () => {
 			faN: expect.any(Number),
 			isStream: expect.any(Boolean),
 		});
+	});
+
+	it("writes all viz outputs and stats to debug dir", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source.json");
+		const debugDir = join(dir, "debug");
+		await mkdir(debugDir, { recursive: true });
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				tiles: [
+					{ x: 0, y: 0, topography: { h: 0.8, r: 0, v: 0 } },
+					{ x: 1, y: 0, topography: { h: 0.4, r: 0, v: 0 } },
+					{ x: 0, y: 1, topography: { h: 0.2, r: 0, v: 0 } },
+					{ x: 1, y: 1, topography: { h: 0, r: 0, v: 0 } },
+				],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+		await writeFile(
+			join(debugDir, "topography.json"),
+			`${JSON.stringify({
+				tiles: [
+					{ index: 0, x: 0, y: 0, topography: { h: 0.8 } },
+					{ index: 1, x: 1, y: 0, topography: { h: 0.4 } },
+					{ index: 2, x: 0, y: 1, topography: { h: 0.2 } },
+					{ index: 3, x: 1, y: 1, topography: { h: 0.0 } },
+				],
+			})}\n`,
+			"utf8",
+		);
+		await writeFile(
+			join(debugDir, "fd.json"),
+			`${JSON.stringify({
+				tiles: [
+					{ index: 0, x: 0, y: 0, fd: 1 },
+					{ index: 1, x: 1, y: 0, fd: 2 },
+					{ index: 2, x: 0, y: 1, fd: 0 },
+					{ index: 3, x: 1, y: 1, fd: 255 },
+				],
+			})}\n`,
+			"utf8",
+		);
+		await writeFile(
+			join(debugDir, "fa.json"),
+			`${JSON.stringify({
+				tiles: [
+					{ index: 0, x: 0, y: 0, fa: 1 },
+					{ index: 1, x: 1, y: 0, fa: 3 },
+					{ index: 2, x: 0, y: 1, fa: 8 },
+					{ index: 3, x: 1, y: 1, fa: 12 },
+				],
+			})}\n`,
+			"utf8",
+		);
+		await writeFile(
+			join(debugDir, "fa-normalized.json"),
+			`${JSON.stringify({
+				tiles: [
+					{ index: 0, x: 0, y: 0, faN: 0.08 },
+					{ index: 1, x: 1, y: 0, faN: 0.25 },
+					{ index: 2, x: 0, y: 1, faN: 0.66 },
+					{ index: 3, x: 1, y: 1, faN: 1.0 },
+				],
+			})}\n`,
+			"utf8",
+		);
+		await writeFile(
+			join(debugDir, "hydrology.json"),
+			`${JSON.stringify({
+				tiles: [
+					{
+						index: 0,
+						x: 0,
+						y: 0,
+						hydrology: { fd: 1, fa: 1, faN: 0.08, isStream: false },
+					},
+					{
+						index: 1,
+						x: 1,
+						y: 0,
+						hydrology: { fd: 2, fa: 3, faN: 0.25, isStream: false },
+					},
+					{
+						index: 2,
+						x: 0,
+						y: 1,
+						hydrology: { fd: 0, fa: 8, faN: 0.66, isStream: true },
+					},
+					{
+						index: 3,
+						x: 1,
+						y: 1,
+						hydrology: { fd: 255, fa: 12, faN: 1, isStream: true },
+					},
+				],
+			})}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--x",
+			"0",
+			"--y",
+			"0",
+			"--viz",
+			"all",
+			"--debug-dir",
+			debugDir,
+			"--stats",
+			"--force",
+		]);
+		expect(result.code).toBe(0);
+		const payload = JSON.parse(result.stdout.trim());
+		expect(payload.viz.writtenFiles).toHaveLength(4);
+		expect(payload.stats).toBeDefined();
+		await expect(stat(join(debugDir, "fa.ppm"))).resolves.toBeDefined();
+		await expect(stat(join(debugDir, "fd.ppm"))).resolves.toBeDefined();
+		await expect(
+			stat(join(debugDir, "fa-normalized.ppm")),
+		).resolves.toBeDefined();
+		await expect(stat(join(debugDir, "hydrology.ppm"))).resolves.toBeDefined();
+		await expect(
+			stat(join(debugDir, "hydrology-inspector-stats.json")),
+		).resolves.toBeDefined();
+	});
+
+	it("requires --force when viz target file already exists", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source.json");
+		const debugDir = join(dir, "debug");
+		await mkdir(debugDir, { recursive: true });
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				tiles: [{ x: 0, y: 0, topography: { h: 0.8, r: 0, v: 0 } }],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+		await writeFile(
+			join(debugDir, "topography.json"),
+			`${JSON.stringify({
+				tiles: [{ index: 0, x: 0, y: 0, topography: { h: 0.8 } }],
+			})}\n`,
+			"utf8",
+		);
+		await writeFile(
+			join(debugDir, "fa.json"),
+			`${JSON.stringify({
+				tiles: [{ index: 0, x: 0, y: 0, fa: 1 }],
+			})}\n`,
+			"utf8",
+		);
+		await writeFile(join(debugDir, "fa.ppm"), "existing", "utf8");
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--x",
+			"0",
+			"--y",
+			"0",
+			"--viz",
+			"fa",
+			"--debug-dir",
+			debugDir,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain("Output file already exists");
 	});
 });

@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -310,6 +310,38 @@ describe("CLI command wiring and contract failures", () => {
 		expect(envelope.endsWith("\n")).toBe(true);
 		expect(Array.isArray(parsed.tiles)).toBe(true);
 		expect(parsed.tiles.length).toBeGreaterThan(0);
+	});
+
+	it("wires debug hydrology viz+stats and writes artifacts after debug output", async () => {
+		const dir = await makeTempDir();
+		const outputDir = join(dir, "debug");
+
+		const result = await runCli([
+			"debug",
+			"--seed",
+			"42",
+			"--width",
+			"4",
+			"--height",
+			"4",
+			"--output-dir",
+			outputDir,
+			"--hydrology-viz",
+			"all",
+			"--hydrology-inspector-stats",
+			"--force",
+		]);
+
+		expect(result.code).toBe(0);
+		await expect(stat(join(outputDir, "fa.ppm"))).resolves.toBeDefined();
+		await expect(stat(join(outputDir, "fd.ppm"))).resolves.toBeDefined();
+		await expect(
+			stat(join(outputDir, "fa-normalized.ppm")),
+		).resolves.toBeDefined();
+		await expect(stat(join(outputDir, "hydrology.ppm"))).resolves.toBeDefined();
+		await expect(
+			stat(join(outputDir, "hydrology-inspector-stats.json")),
+		).resolves.toBeDefined();
 	});
 
 	it("wires debug --input-file to output directory", async () => {
