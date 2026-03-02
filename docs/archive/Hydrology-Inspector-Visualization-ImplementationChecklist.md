@@ -1,7 +1,7 @@
 # Hydrology Inspector Visualization Implementation Checklist
 
-Status: v1-draft  
-Source plan: `docs/drafts/Hydrology-Inspector-Visualization-ImplementationPlan.md`
+Status: v1-implemented (archived baseline)  
+Source plan: `docs/archive/Hydrology-Inspector-Visualization-ImplementationPlan.md`
 
 - [x] [cli] `HIV-CLI-01` Add `--viz <mode>` to `src/cli/hydrology-inspector.ts` with modes `fa|fd|fa-normalized|hydrology|all`.
 - [x] [cli] `HIV-CLI-02` Add `--debug-dir <path>` to `src/cli/hydrology-inspector.ts` and enforce it as required when `--viz` is set.

@@ -1,0 +1,30 @@
+{
+  "mode": "debug",
+  "specVersion": "forest-terrain-v1",
+  "width": 32,
+  "height": 32,
+  "tileCount": 1024,
+  "artifacts": [
+    "topography.json",
+    "hydrology.json",
+    "fd.json",
+    "fa.json",
+    "fa-normalized.json",
+    "stream-mask.json",
+    "ecology.json",
+    "navigation.json"
+  ],
+  "streamCoherence": {
+    "enabled": true,
+    "streamTiles": 111
+  },
+  "lakeCoherence": {
+    "enabled": false,
+    "lakeTiles": 0
+  },
+  "hydrologyStructureDiagnostics": {
+    "sinkCount": 23,
+    "overflowFallbackCount": 0,
+    "overflowAppliedCount": 0
+  }
+}

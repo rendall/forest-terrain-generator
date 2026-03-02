@@ -1,6 +1,6 @@
-# Hydrology Inspector Visualization Implementation Plan (draft)
+# Hydrology Inspector Visualization Implementation Plan (archived)
 
-Status: draft  
+Status: implemented (archived baseline)  
 Owner: local team  
 Scope: `src/cli/hydrology-inspector.ts`, `src/app/run-hydrology-inspector.ts`, and debug-command integration points in `src/cli/main.ts`, `src/cli/argv-validation.ts`, `src/app/run-generator.ts`
 
@@ -10,7 +10,13 @@ Scope: `src/cli/hydrology-inspector.ts`, `src/app/run-hydrology-inspector.ts`, a
 
 Upgrade `hydrology-inspector` so it can generate map visualizations from existing debug artifacts and provide compact statistical summaries for troubleshooting.
 
-This is a planning document only.
+This document is retained as the implementation record and baseline reference.
+
+Baseline fixture:
+- `test/fixtures/hydrology-baseline`
+
+Baseline regression:
+- `test/integration/hydrology-baseline-regression.test.mjs`
 
 ---
 
