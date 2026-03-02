@@ -1,6 +1,6 @@
-# Streamflow Pipeline Integration Plan (Discussion Draft)
+# Streamflow Pipeline Integration Plan (v1-draft)
 
-Status: Draft for review
+Status: v1-draft
 Owner: Terrain generation team
 Purpose: Convert the currently refined stream CLI algorithm into a production pipeline stage while preserving determinism and existing contracts.
 
@@ -207,22 +207,22 @@ Implementation note: document all ordering rules explicitly and lock with tests.
 
 ---
 
-## 11) Open Questions for Review
+## 11) Resolved Decisions (v1)
 
-1. Should v1 default to `strict_local` or `overflow_guided` accumulation?
-2. Do we want thresholding by absolute `fa` or by quantile `faN` as default?
-3. For a future `hydrology-inspector`, should it become a subcommand of main CLI, or remain separate?
-4. At what phase should hydrology values become part of public envelope tile schema?
-5. Do we want a dedicated ADR before Phase A or only before Phase D?
+The following decisions are now locked for this v1 draft:
+
+1. **Sink handling default**: default to `strict_local`; allow `overflow_guided` via parameter setting.
+2. **Stream extraction default**: use absolute `fa` thresholding by default.
+3. **Inspector placement**: `hydrology-inspector` remains separate from the main CLI for initial rollout.
+4. **Public envelope timing**: expose hydrology values in public tile schema after Phase C validation and just before Phase D.
+5. **ADR timing**: write a dedicated ADR before entering Phase D (not before Phase A).
+
+### Inspector flag planning note
+
+When implemented, `hydrology-inspector` should include a sink-mode flag (for example `--sink-mode strict_local|overflow_guided`) so output can be compared across both routing modes from the same source input.
 
 ---
 
 ## 12) Suggested Immediate Next Step
 
-If this plan looks right, next step is to approve **Phase A only** for implementation:
-
-- internal FD/FA computation,
-- tests,
-- no public contract changes.
-
-That lets us validate correctness and determinism before deciding schema exposure.
+If this v1 draft looks right, the next step is to execute a checklist-driven Phase A/Phase B implementation while keeping public envelope schema unchanged until the Phase C gate is complete.
