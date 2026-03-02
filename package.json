@@ -27,7 +27,8 @@
   },
   "bin": {
     "forest-terrain-generator": "dist/cli/main.js",
-    "forest-terrain-assign-regions": "dist/cli/assign-regions.js"
+    "forest-terrain-assign-regions": "dist/cli/assign-regions.js",
+    "forest-terrain-hydrology-inspector": "dist/cli/hydrology-inspector.js"
   },
   "dependencies": {
     "commander": "14.0.3"

@@ -133,10 +133,12 @@ To avoid breaking current envelope consumers:
   - `stream-mask.json`
 - Add optional visualization helper output (PPM/PGM overlays).
 
-### Phase C: Stream CLI re-alignment
+### Phase C: Hydrology inspector rollout (without changing `stream` toy behavior)
 
-- Make stream CLI read pipeline hydrology maps when present.
-- Preserve current single-source tracing mode for route introspection.
+- Keep `stream` unchanged as the existing toy/experimental tracer.
+- Introduce `hydrology-inspector` as a copied/evolved CLI for production-facing inspection workflows.
+- Make `hydrology-inspector` read pipeline hydrology maps when present.
+- Preserve single-source trace mode for route introspection.
 - Add command mode for reporting local accumulation at `(x,y)`.
 
 ### Phase D: Contract decision
@@ -188,7 +190,7 @@ Implementation note: document all ordering rules explicitly and lock with tests.
 
 1. Should v1 default to `strict_local` or `overflow_guided` accumulation?
 2. Do we want thresholding by absolute `fa` or by quantile `faN` as default?
-3. Should stream CLI become a subcommand of main CLI long-term, or remain separate?
+3. Should `hydrology-inspector` eventually become a subcommand of main CLI, or remain separate?
 4. At what phase should hydrology values become part of public envelope tile schema?
 5. Do we want a dedicated ADR before Phase A or only before Phase D?
 

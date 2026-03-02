@@ -21,6 +21,8 @@ Commands:
 - `describe`: Read an existing envelope from `--input-file`, write a copied envelope to `--output-file`, and attach a `description` field to each tile.
 - `see`: Render a grayscale topography image from an existing envelope (`topography.h` by default) to `--output-file` (PGM).
 
+- `hydrology-inspector`: Inspect downhill routing from a source tile (standalone inspector CLI preserving the existing `stream` toy workflow).
+
 Canonical flags:
 
 - `--params <path>`
@@ -60,6 +62,12 @@ Render structure classes as uniform grayscale:
 
 ```bash
 node --import tsx src/cli/main.ts see --input-file out.json --output-file landforms.pgm --landforms
+```
+
+Inspect hydrology routing from a source tile:
+
+```bash
+node --import tsx src/cli/hydrology-inspector.ts --input-json out.json --x 10 --y 12 --debug
 ```
 
 Landform grayscale mapping:
