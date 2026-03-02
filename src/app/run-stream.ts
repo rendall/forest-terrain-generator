@@ -773,8 +773,8 @@ export async function runStreamTrace(
 	for (let i = 0; i < expectedSize; i += 1) {
 		topographyH[i] = hByIndex[i] ?? 0;
 	}
-	const sinkMode =
-		request.args.overflow === true ? "overflow_guided" : "strict_local";
+	// Base stream tracing is always strict-local; overflow continuation is a separate pass.
+	const sinkMode = "strict_local";
 	const hydrology = deriveHydrology(
 		shape,
 		topographyH,
