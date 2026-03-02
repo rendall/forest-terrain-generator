@@ -10,12 +10,6 @@ import {
 import { createGridShape, type GridShape } from "../domain/topography.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
 import { deriveHydrology } from "../pipeline/derive-hydrology.js";
-import {
-	runStreamTrace,
-	type StreamCliArgs,
-	type StreamRequest,
-	writeStreamOverlayPpm,
-} from "./run-stream.js";
 
 export type HydrologyVizMode =
 	| "fa"
@@ -24,7 +18,8 @@ export type HydrologyVizMode =
 	| "hydrology"
 	| "all";
 
-export interface HydrologyInspectorCliArgs extends StreamCliArgs {
+export interface HydrologyInspectorCliArgs {
+	inputJsonPath?: string;
 	sinkMode?: "strict_local" | "overflow_guided";
 	viz?: HydrologyVizMode;
 	debugDirPath?: string;
@@ -261,14 +256,6 @@ const buildNeeds = (
 		needHydrology: vizMode === "hydrology" || statsEnabled,
 		needStats: statsEnabled,
 	};
-};
-
-const TRACE_NEEDS: VisualizationNeeds = {
-	needFa: true,
-	needFd: true,
-	needFaN: true,
-	needHydrology: true,
-	needStats: false,
 };
 
 const loadContextFromDebugArtifacts = async (
@@ -854,36 +841,3 @@ export const runHydrologyInspectorVisualization = async (
 		statsFilePath,
 	};
 };
-
-export const runHydrologyInspectorTrace = async (
-	request: HydrologyInspectorRequest,
-) => {
-	const context = await resolveHydrologyContext(request, TRACE_NEEDS);
-	const sinkMode = request.args.sinkMode ?? "strict_local";
-	const streamRequest: StreamRequest = {
-		cwd: request.cwd,
-		args: {
-			...request.args,
-			overflow: sinkMode === "overflow_guided",
-		},
-	};
-	const trace = await runStreamTrace(streamRequest);
-	const sourceX = request.args.x ?? 0;
-	const sourceY = request.args.y ?? 0;
-	const sourceIndex = sourceY * context.maps.shape.width + sourceX;
-	return {
-		...trace,
-		hydrologyMapsSource: context.source,
-		hydrologyAtSource:
-			sourceIndex >= 0 && sourceIndex < context.maps.shape.size
-				? {
-						fd: context.maps.fd[sourceIndex],
-						fa: context.maps.fa[sourceIndex],
-						faN: context.maps.faN[sourceIndex],
-						isStream: context.maps.isStream[sourceIndex] === 1,
-					}
-				: null,
-	};
-};
-
-export const writeHydrologyInspectorOverlayPpm = writeStreamOverlayPpm;

@@ -1,8 +1,11 @@
 import { mkdir, stat, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { FileIoError, InputValidationError } from "../domain/errors.js";
+import { DIR8_CODE, DIR8_NONE } from "../domain/hydrology.js";
+import { createGridShape } from "../domain/topography.js";
 import type { JsonObject } from "../domain/types.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
+import { deriveHydrology } from "../pipeline/derive-hydrology.js";
 import { STRUCTURE_DIR8_NEIGHBORS } from "../pipeline/derive-topographic-structure.js";
 
 export interface StreamCliArgs {
@@ -58,11 +61,7 @@ export interface StreamDebugStep {
 	current: [number, number, number];
 	neighbors: StreamDebugNeighbor[];
 	chosen: [number, number, number] | null;
-	event:
-		| "move"
-		| "stop_sea_level"
-		| "stop_local_minimum"
-		| "max_steps";
+	event: "move" | "stop_sea_level" | "stop_local_minimum" | "max_steps";
 	basinId: string | null;
 }
 
@@ -162,7 +161,9 @@ function isJsonObject(value: unknown): value is JsonObject {
 
 function assertInt(name: string, value: number | undefined): number {
 	if (typeof value !== "number" || !Number.isInteger(value)) {
-		throw new InputValidationError(`Missing or invalid required integer --${name}.`);
+		throw new InputValidationError(
+			`Missing or invalid required integer --${name}.`,
+		);
 	}
 	return value;
 }
@@ -248,8 +249,10 @@ async function prepareOutputFile(path: string, force: boolean): Promise<void> {
 function compareLexPath(a: number[], b: number[]): number {
 	const n = Math.min(a.length, b.length);
 	for (let i = 0; i < n; i += 1) {
-		if (a[i] !== b[i]) {
-			return a[i]! - b[i]!;
+		const av = a[i];
+		const bv = b[i];
+		if (av !== bv) {
+			return (av ?? 0) - (bv ?? 0);
 		}
 	}
 	return a.length - b.length;
@@ -479,7 +482,6 @@ export async function writeStreamOverlayPpm(
 		if (Array.isArray(step) && step.length === 2) {
 			const [sx, sy] = step;
 			maybeAddPoint(sx, sy);
-			continue;
 		}
 	}
 	if (Array.isArray(request.additionalPathTileIds)) {
@@ -668,6 +670,10 @@ export async function runStreamTrace(
 	const seen = new Uint8Array(expectedSize);
 	const hByIndex = new Float64Array(expectedSize);
 	const basinIdByIndex = new Array<string>(expectedSize).fill("");
+	const tileFeatureIdsByIndex = Array.from(
+		{ length: expectedSize },
+		() => [] as string[],
+	);
 	for (const tile of envelope.tiles) {
 		const index = tile.y * width + tile.x;
 		if (seen[index] === 1) {
@@ -690,10 +696,13 @@ export async function runStreamTrace(
 		}
 		hByIndex[index] = h;
 		const featureIds = Array.isArray(tile.featureIds)
-			? tile.featureIds.filter((value): value is string => typeof value === "string")
+			? tile.featureIds.filter(
+					(value): value is string => typeof value === "string",
+				)
 			: [];
+		tileFeatureIdsByIndex[index] = featureIds;
 		basinIdByIndex[index] = featureIds.find((id) => id.startsWith("b_")) ?? "";
-	};
+	}
 
 	const basinNodeById = new Map<string, JsonObject>();
 	const basinOwnTileIdsById = new Map<string, number[]>();
@@ -729,9 +738,9 @@ export async function runStreamTrace(
 			return cached;
 		}
 		if (visiting.has(basinId)) {
-			const ownOnly = [
-				...(basinOwnTileIdsById.get(basinId) ?? []),
-			].sort((a, b) => a - b);
+			const ownOnly = [...(basinOwnTileIdsById.get(basinId) ?? [])].sort(
+				(a, b) => a - b,
+			);
 			basinTileIdsCache.set(basinId, ownOnly);
 			return ownOnly;
 		}
@@ -759,6 +768,68 @@ export async function runStreamTrace(
 			resolveBasinTileIds(basinId, new Set<string>()),
 		);
 	}
+	const shape = createGridShape(width, height);
+	const topographyH = new Float32Array(expectedSize);
+	for (let i = 0; i < expectedSize; i += 1) {
+		topographyH[i] = hByIndex[i] ?? 0;
+	}
+	const sinkMode =
+		request.args.overflow === true ? "overflow_guided" : "strict_local";
+	const hydrology = deriveHydrology(
+		shape,
+		topographyH,
+		{
+			basinFeatures: envelope.features?.basins ?? [],
+			tileFeatureIds: tileFeatureIdsByIndex,
+		},
+		{ hydrology: { sinkMode } },
+	);
+	const flowToByIndex = new Int32Array(expectedSize).fill(-1);
+	for (let index = 0; index < expectedSize; index += 1) {
+		const fd = hydrology.maps.fd[index] ?? DIR8_NONE;
+		let dx = 0;
+		let dy = 0;
+		switch (fd) {
+			case DIR8_CODE.e:
+				dx = 1;
+				break;
+			case DIR8_CODE.se:
+				dx = 1;
+				dy = 1;
+				break;
+			case DIR8_CODE.s:
+				dy = 1;
+				break;
+			case DIR8_CODE.sw:
+				dx = -1;
+				dy = 1;
+				break;
+			case DIR8_CODE.w:
+				dx = -1;
+				break;
+			case DIR8_CODE.nw:
+				dx = -1;
+				dy = -1;
+				break;
+			case DIR8_CODE.n:
+				dy = -1;
+				break;
+			case DIR8_CODE.ne:
+				dx = 1;
+				dy = -1;
+				break;
+			default:
+				continue;
+		}
+		const x0 = index % width;
+		const y0 = Math.floor(index / width);
+		const nx = x0 + dx;
+		const ny = y0 + dy;
+		if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+			continue;
+		}
+		flowToByIndex[index] = ny * width + nx;
+	}
 	const asPair = (index: number): [number, number] => {
 		const tx = index % width;
 		const ty = Math.floor(index / width);
@@ -784,29 +855,18 @@ export async function runStreamTrace(
 		excluded: ReadonlySet<number>,
 		blockedBasinIds: ReadonlySet<string>,
 	): number | null => {
-		const neighbors = neighborsOf(index);
-		if (neighbors.length === 0) {
+		const next = flowToByIndex[index] ?? -1;
+		if (next < 0 || next >= expectedSize) {
 			return null;
 		}
-		const currentH = hByIndex[index];
-		let best: number | null = null;
-		for (const n of neighbors) {
-			if (excluded.has(n)) {
-				continue;
-			}
-			const neighborBasinId = basinIdByIndex[n] || "";
-			if (neighborBasinId.length > 0 && blockedBasinIds.has(neighborBasinId)) {
-				continue;
-			}
-			const nH = hByIndex[n];
-			if (nH >= currentH) {
-				continue;
-			}
-			if (best === null || nH < hByIndex[best] || (nH === hByIndex[best] && n < best)) {
-				best = n;
-			}
+		if (excluded.has(next)) {
+			return null;
 		}
-		return best;
+		const neighborBasinId = basinIdByIndex[next] || "";
+		if (neighborBasinId.length > 0 && blockedBasinIds.has(neighborBasinId)) {
+			return null;
+		}
+		return next;
 	};
 	const debugEnabled = request.args.debug === true;
 	const debugSteps: StreamDebugStep[] = [];
@@ -956,8 +1016,8 @@ export async function runStreamTrace(
 	const originIndex = y * width + x;
 	const maxSteps = requestedMaxSteps ?? expectedSize * 2;
 	const firstTrace = traceDownhillSegment(originIndex, new Set<number>(), true);
-	let current = firstTrace.endIndex;
-	let terminationReason: BasinStopSummary["reason"] = firstTrace.reason;
+	const current = firstTrace.endIndex;
+	const terminationReason: BasinStopSummary["reason"] = firstTrace.reason;
 	const routingExcludedTileIndices = firstTrace.excluded;
 	const pathTileIds = new Set<number>(firstTrace.tileIds);
 	const continuePathTileIds: number[] = [];
@@ -992,12 +1052,10 @@ export async function runStreamTrace(
 		}
 		const maxOverflowHops = expectedSize;
 		let overflowHops = 0;
-		let continuationTrace:
-			| {
-					endIndex: number;
-					reason: BasinStopSummary["reason"];
-			  }
-			| null = { endIndex: current, reason: terminationReason };
+		let continuationTrace: {
+			endIndex: number;
+			reason: BasinStopSummary["reason"];
+		} | null = { endIndex: current, reason: terminationReason };
 		const seenBasinIds = new Set<string>();
 
 		while (
@@ -1146,7 +1204,9 @@ export async function runStreamTrace(
 	}
 
 	const stoppedBasinId = basinIdByIndex[current] || null;
-	const stoppedBasinNode = stoppedBasinId ? basinNodeById.get(stoppedBasinId) : undefined;
+	const stoppedBasinNode = stoppedBasinId
+		? basinNodeById.get(stoppedBasinId)
+		: undefined;
 	const basinType =
 		stoppedBasinNode && typeof stoppedBasinNode.kind === "string"
 			? stoppedBasinNode.kind
@@ -1184,9 +1244,7 @@ export async function runStreamTrace(
 	};
 }
 
-export async function runStream(
-	request: StreamRequest,
-): Promise<StreamStep[]> {
+export async function runStream(request: StreamRequest): Promise<StreamStep[]> {
 	const result = await runStreamTrace(request);
 	return result.path;
 }

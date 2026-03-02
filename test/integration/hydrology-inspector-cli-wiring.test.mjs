@@ -41,99 +41,30 @@ afterEach(async () => {
 });
 
 describe("hydrology-inspector CLI", () => {
-	it("accepts sink-mode and toggles overflow behavior", async () => {
+	it("requires at least one requested action (--viz and/or --stats)", async () => {
 		const dir = await makeTempDir();
 		const sourceFile = join(dir, "source.json");
 		await writeFile(
 			sourceFile,
 			`${JSON.stringify({
 				meta: { specVersion: "forest-terrain-v1" },
-				tiles: [
-					{ x: 0, y: 0, topography: { h: 0.2, r: 0, v: 0 } },
-					{
-						x: 1,
-						y: 0,
-						topography: { h: 0.1, r: 0, v: 0 },
-						featureIds: ["b_00000"],
-					},
-					{
-						x: 2,
-						y: 0,
-						topography: { h: 0.3, r: 0, v: 0 },
-						featureIds: ["b_00000"],
-					},
-				],
-				features: {
-					basins: [
-						{
-							id: "b_00000",
-							kind: "leaf",
-							parentId: null,
-							childIds: [],
-							birthH: 0.1,
-							mergeH: null,
-							persistence: null,
-							spillOutTileId: 2,
-							childSpillFromTileId: 2,
-							parentContactTileId: 2,
-							minH: 0.1,
-							maxH: 0.3,
-							size: 2,
-							bbox: { minX: 1, minY: 0, maxX: 2, maxY: 0 },
-							tileIds: [1, 2],
-						},
-					],
-					peaks: [],
-				},
+				tiles: [{ x: 0, y: 0, topography: { h: 0.8, r: 0, v: 0 } }],
+				features: { basins: [], peaks: [] },
 			})}\n`,
 			"utf8",
 		);
 
-		const strict = await runCli([
-			"--input-json",
-			sourceFile,
-			"--x",
-			"0",
-			"--y",
-			"0",
-		]);
-		expect(strict.code).toBe(0);
-		const strictPayload = JSON.parse(strict.stdout.trim());
-		expect(Array.isArray(strictPayload.path)).toBe(true);
-		expect(Object.hasOwn(strictPayload, "overflow")).toBe(false);
-
-		const guided = await runCli([
-			"--input-json",
-			sourceFile,
-			"--x",
-			"0",
-			"--y",
-			"0",
-			"--sink-mode",
-			"overflow_guided",
-		]);
-		expect(guided.code).toBe(0);
-		const guidedPayload = JSON.parse(guided.stdout.trim());
-		expect(Array.isArray(guidedPayload.path)).toBe(true);
-		expect(guidedPayload.overflow.ran).toBe(true);
-		expect(guidedPayload.overflow.eventCount).toBeGreaterThan(0);
-		expect(Array.isArray(guidedPayload.overflow.events)).toBe(true);
-		expect(guidedPayload.overflow.events[0]).toMatchObject({
-			type: expect.any(String),
-		});
-		const eventHasTileRef = guidedPayload.overflow.events.some(
-			(event) =>
-				typeof event.fromTileId === "number" ||
-				typeof event.toTileId === "number" ||
-				typeof event.atTileId === "number" ||
-				typeof event.sinkTileId === "number",
+		const result = await runCli(["--input-json", sourceFile]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain(
+			"Nothing to do. Provide --viz and/or --stats.",
 		);
-		expect(eventHasTileRef).toBe(true);
 	});
 
-	it("prefers envelope hydrology maps when present", async () => {
+	it("prefers envelope hydrology maps when present (stats mode)", async () => {
 		const dir = await makeTempDir();
 		const sourceFile = join(dir, "source-with-hydrology.json");
+		const statsFile = join(dir, "stats.json");
 		await writeFile(
 			sourceFile,
 			`${JSON.stringify({
@@ -160,26 +91,21 @@ describe("hydrology-inspector CLI", () => {
 		const result = await runCli([
 			"--input-json",
 			sourceFile,
-			"--x",
-			"0",
-			"--y",
-			"0",
-			"--debug",
+			"--stats",
+			"--stats-file",
+			statsFile,
 		]);
 		expect(result.code).toBe(0);
 		const payload = JSON.parse(result.stdout.trim());
 		expect(payload.hydrologyMapsSource).toBe("envelope");
-		expect(payload.hydrologyAtSource).toEqual({
-			fd: 3,
-			fa: 11,
-			faN: 0.25,
-			isStream: true,
-		});
+		expect(payload.stats).toBeDefined();
+		expect(payload.statsFilePath).toBe(statsFile);
 	});
 
-	it("recomputes hydrology maps when envelope hydrology is absent", async () => {
+	it("recomputes hydrology maps when envelope hydrology is absent (stats mode)", async () => {
 		const dir = await makeTempDir();
 		const sourceFile = join(dir, "source-no-hydrology.json");
+		const statsFile = join(dir, "stats.json");
 		await writeFile(
 			sourceFile,
 			`${JSON.stringify({
@@ -196,24 +122,20 @@ describe("hydrology-inspector CLI", () => {
 		const result = await runCli([
 			"--input-json",
 			sourceFile,
-			"--x",
-			"0",
-			"--y",
-			"0",
-			"--debug",
+			"--stats",
+			"--stats-file",
+			statsFile,
 		]);
 		expect(result.code).toBe(0);
 		const payload = JSON.parse(result.stdout.trim());
 		expect(payload.hydrologyMapsSource).toBe("recomputed");
-		expect(payload.hydrologyAtSource).toMatchObject({
-			fd: expect.any(Number),
-			fa: expect.any(Number),
-			faN: expect.any(Number),
-			isStream: expect.any(Boolean),
+		expect(payload.stats).toMatchObject({
+			sinkCount: expect.any(Number),
+			streamTileCount: expect.any(Number),
 		});
 	});
 
-	it("writes all viz outputs and stats to debug dir", async () => {
+	it("writes all viz outputs and stats to debug dir without stream trace args", async () => {
 		const dir = await makeTempDir();
 		const sourceFile = join(dir, "source.json");
 		const debugDir = join(dir, "debug");
@@ -316,10 +238,6 @@ describe("hydrology-inspector CLI", () => {
 		const result = await runCli([
 			"--input-json",
 			sourceFile,
-			"--x",
-			"0",
-			"--y",
-			"0",
 			"--viz",
 			"all",
 			"--debug-dir",
@@ -375,10 +293,6 @@ describe("hydrology-inspector CLI", () => {
 		const result = await runCli([
 			"--input-json",
 			sourceFile,
-			"--x",
-			"0",
-			"--y",
-			"0",
 			"--viz",
 			"fa",
 			"--debug-dir",
