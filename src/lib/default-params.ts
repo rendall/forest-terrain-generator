@@ -42,6 +42,11 @@ export const APPENDIX_A_DEFAULTS: JsonObject = {
 			upperQ: 0.98,
 		},
 	},
+	hydrology: {
+		sinkMode: "strict_local",
+		faThreshold: 16,
+		faQuantileThreshold: 0.9,
+	},
 	topography: {
 		structure: {
 			enabled: true,

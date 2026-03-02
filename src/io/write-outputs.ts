@@ -4,11 +4,12 @@ import { dirname, join } from "node:path";
 import { FileIoError, InputValidationError } from "../domain/errors.js";
 import type { TerrainFeatureCollection } from "../domain/topographic-features.js";
 import type { Mode, TerrainEnvelope } from "../domain/types.js";
+import type { HydrologyMapsSoA } from "../domain/hydrology.js";
 import type {
   HydrologyStructureDiagnostics,
   LakeCoherenceMetrics,
   StreamCoherenceMetrics
-} from "../pipeline/hydrology.js";
+} from "../pipeline/derive-hydrology.js";
 import { serializeEnvelope } from "./serialize-envelope.js";
 
 const DEBUG_ARTIFACT_FILES = [
@@ -73,6 +74,35 @@ function buildPhaseTiles(
     y: tile.y,
     [phaseKey]: tile[phaseKey]
   }));
+}
+
+
+function buildHydrologyDebugTiles(
+  envelope: TerrainEnvelope,
+  hydrologyMaps: HydrologyMapsSoA | undefined
+) {
+  if (!hydrologyMaps) {
+    return buildPhaseTiles(envelope, "hydrology");
+  }
+  const shape = hydrologyMaps.shape;
+  return envelope.tiles.map((tile, fallbackIndex) => {
+    const index =
+      typeof tile.index === "number" && Number.isInteger(tile.index) && tile.index >= 0
+        ? tile.index
+        : fallbackIndex;
+    const inRange = index >= 0 && index < shape.size;
+    return {
+      index,
+      x: tile.x,
+      y: tile.y,
+      hydrology: {
+        fd: inRange ? hydrologyMaps.fd[index] : null,
+        fa: inRange ? hydrologyMaps.fa[index] : null,
+        faN: inRange ? hydrologyMaps.faN[index] : null,
+        isStream: inRange ? hydrologyMaps.isStream[index] === 1 : false,
+      }
+    };
+  });
 }
 
 function asObject(value: unknown): Record<string, unknown> | undefined {
@@ -222,7 +252,8 @@ async function writeDebugArtifacts(
   streamCoherence: StreamCoherenceMetrics | undefined,
   lakeCoherence: LakeCoherenceMetrics | undefined,
   topographyStructureDebug: TopographyStructureDebugPayload | undefined,
-  hydrologyStructureDiagnostics: HydrologyStructureDiagnostics | undefined
+  hydrologyStructureDiagnostics: HydrologyStructureDiagnostics | undefined,
+  hydrologyMaps?: HydrologyMapsSoA
 ): Promise<void> {
   const { width, height } = deriveGridDimensions(envelope);
   const debugManifest = {
@@ -247,7 +278,7 @@ async function writeDebugArtifacts(
   );
   await writeJsonFile(
     join(targetDir, "hydrology.json"),
-    { tiles: buildPhaseTiles(envelope, "hydrology") },
+    { tiles: buildHydrologyDebugTiles(envelope, hydrologyMaps) },
     "hydrology debug artifact write"
   );
   await writeJsonFile(
@@ -300,7 +331,8 @@ export async function writeDebugOutputs(
   streamCoherence: StreamCoherenceMetrics | undefined,
   lakeCoherence: LakeCoherenceMetrics | undefined,
   topographyStructureDebug?: TopographyStructureDebugPayload,
-  hydrologyStructureDiagnostics?: HydrologyStructureDiagnostics
+  hydrologyStructureDiagnostics?: HydrologyStructureDiagnostics,
+  hydrologyMaps?: HydrologyMapsSoA
 ): Promise<void> {
   if (await pathExists(outputDir) && !force) {
     throw new InputValidationError(
@@ -320,7 +352,8 @@ export async function writeDebugOutputs(
       streamCoherence,
       lakeCoherence,
       topographyStructureDebug,
-      hydrologyStructureDiagnostics
+      hydrologyStructureDiagnostics,
+      hydrologyMaps
     );
 
     if (debugOutputFile) {
@@ -346,7 +379,8 @@ export async function writeModeOutputs(
   streamCoherence?: StreamCoherenceMetrics,
   lakeCoherence?: LakeCoherenceMetrics,
   topographyStructureDebug?: TopographyStructureDebugPayload,
-  hydrologyStructureDiagnostics?: HydrologyStructureDiagnostics
+  hydrologyStructureDiagnostics?: HydrologyStructureDiagnostics,
+  hydrologyMaps?: HydrologyMapsSoA
 ): Promise<void> {
   if (mode === "debug") {
     if (!outputDir) {
@@ -360,7 +394,8 @@ export async function writeModeOutputs(
       streamCoherence,
       lakeCoherence,
       topographyStructureDebug,
-      hydrologyStructureDiagnostics
+      hydrologyStructureDiagnostics,
+      hydrologyMaps
     );
     return;
   }

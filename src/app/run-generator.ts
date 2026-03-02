@@ -15,6 +15,7 @@ import { deepMerge } from "../lib/deep-merge.js";
 import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
 import { deriveTopographicStructure } from "../pipeline/derive-topographic-structure.js";
 import { deriveTopographyFromBaseMaps } from "../pipeline/derive-topography.js";
+import { deriveHydrology } from "../pipeline/derive-hydrology.js";
 import { resolveBaseMaps } from "../pipeline/resolve-base-maps.js";
 import { buildEnvelopeSkeleton } from "./build-envelope.js";
 import {
@@ -173,12 +174,55 @@ function assertDebugInputFileArgs(args: CliArgs): void {
 	}
 }
 
+
+function gridFromEnvelope(envelope: TerrainEnvelope): { shape: ReturnType<typeof createGridShape>; h: Float32Array } {
+	let maxX = -1;
+	let maxY = -1;
+	for (const tile of envelope.tiles) {
+		if (typeof tile.x === "number" && Number.isInteger(tile.x) && tile.x >= 0) {
+			maxX = Math.max(maxX, tile.x);
+		}
+		if (typeof tile.y === "number" && Number.isInteger(tile.y) && tile.y >= 0) {
+			maxY = Math.max(maxY, tile.y);
+		}
+	}
+	const shape = createGridShape(maxX + 1, maxY + 1);
+	const h = new Float32Array(shape.size);
+	for (const tile of envelope.tiles) {
+		if (
+			typeof tile.x !== "number" ||
+			typeof tile.y !== "number" ||
+			!Number.isInteger(tile.x) ||
+			!Number.isInteger(tile.y)
+		) {
+			continue;
+		}
+		const idx = tile.y * shape.width + tile.x;
+		const topo = isJsonObject(tile.topography) ? tile.topography : null;
+		const hv = topo && typeof topo.h === "number" && Number.isFinite(topo.h) ? topo.h : 0;
+		h[idx] = hv;
+	}
+	return { shape, h };
+}
+
 export async function runGenerator(request: RunRequest): Promise<void> {
 	const resolved = await resolveInputs(request);
 	if (request.mode === "debug" && resolved.inputFilePath) {
 		assertDebugInputFileArgs(request.args);
 		const validated = validateDebugInputFileInputs(resolved);
 		const envelope = await readTerrainEnvelopeFile(validated.inputFilePath);
+		const { shape, h } = gridFromEnvelope(envelope);
+		const tileFeatureIds = envelope.tiles.map((tile) =>
+			Array.isArray(tile.featureIds)
+				? tile.featureIds.filter((id): id is string => typeof id === "string")
+				: [],
+		);
+		const hydrology = deriveHydrology(
+			shape,
+			h,
+			{ basinFeatures: envelope.features?.basins ?? [], tileFeatureIds },
+			validated.params,
+		);
 		await writeModeOutputs(
 			request.mode,
 			validated.outputFile,
@@ -186,10 +230,11 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			validated.debugOutputFile,
 			envelope,
 			validated.force,
+			hydrology.streamCoherence,
+			hydrology.lakeCoherence,
 			undefined,
-			undefined,
-			undefined,
-			undefined,
+			hydrology.diagnostics,
+			hydrology.maps,
 		);
 		return;
 	}
@@ -213,6 +258,15 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		shape,
 		topography.h,
 		buildTopographyStructureParams(validated.params),
+	);
+	const hydrology = deriveHydrology(
+		shape,
+		topography.h,
+		{
+			basinFeatures: topographyStructure.basinFeatures,
+			tileFeatureIds: topographyStructure.tileFeatureIds,
+		},
+		validated.params,
 	);
 	const elevation = buildElevationParams(validated.params);
 	const elevationSpan = elevation.h1 - elevation.h0;
@@ -256,8 +310,10 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		validated.debugOutputFile,
 		envelope,
 		validated.force,
-		undefined,
-		undefined,
+		hydrology.streamCoherence,
+		hydrology.lakeCoherence,
 		topographyStructure,
+		hydrology.diagnostics,
+		hydrology.maps,
 	);
 }

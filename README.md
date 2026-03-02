@@ -20,6 +20,7 @@ Commands:
 - `debug`: Emit debug artifacts to `--output-dir` from either generation inputs or an existing envelope `--input-file`; optionally also write envelope JSON to `--debug-output-file`.
 - `describe`: Read an existing envelope from `--input-file`, write a copied envelope to `--output-file`, and attach a `description` field to each tile.
 - `see`: Render a grayscale topography image from an existing envelope (`topography.h` by default) to `--output-file` (PGM).
+- `hydrology-inspector`: Inspect downhill routing from a source tile and compare sink modes (`strict_local`/`overflow_guided`).
 
 Canonical flags:
 

@@ -1,0 +1,61 @@
+import { spawn } from "node:child_process";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+
+const CLI_ENTRY = resolve(process.cwd(), "src/cli/main.ts");
+const tempDirs = [];
+
+function runCli(args = []) {
+	return new Promise((resolveResult, rejectResult) => {
+		const child = spawn(process.execPath, ["--import", "tsx", CLI_ENTRY, ...args], {
+			cwd: process.cwd(),
+			env: { ...process.env, FORCE_COLOR: "0" },
+		});
+		let stdout = "";
+		let stderr = "";
+		child.stdout.setEncoding("utf8");
+		child.stderr.setEncoding("utf8");
+		child.stdout.on("data", (chunk) => (stdout += chunk));
+		child.stderr.on("data", (chunk) => (stderr += chunk));
+		child.once("error", rejectResult);
+		child.once("close", (code) => resolveResult({ code: code ?? 0, stdout, stderr }));
+	});
+}
+
+async function makeTempDir() {
+	const dir = await mkdtemp(join(tmpdir(), "forest-terrain-generator-hydrology-debug-"));
+	tempDirs.push(dir);
+	return dir;
+}
+
+afterEach(async () => {
+	await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
+});
+
+describe("hydrology debug artifacts", () => {
+	it("emits hydrology fd/fa/faN/isStream in debug output for generated terrain", async () => {
+		const dir = await makeTempDir();
+		const outDir = join(dir, "debug");
+		const result = await runCli([
+			"debug",
+			"--seed",
+			"42",
+			"--width",
+			"4",
+			"--height",
+			"4",
+			"--output-dir",
+			outDir,
+		]);
+		expect(result.code).toBe(0);
+		const hydrologyRaw = await readFile(join(outDir, "hydrology.json"), "utf8");
+		const hydrology = JSON.parse(hydrologyRaw);
+		expect(Array.isArray(hydrology.tiles)).toBe(true);
+		expect(hydrology.tiles[0].hydrology).toHaveProperty("fd");
+		expect(hydrology.tiles[0].hydrology).toHaveProperty("fa");
+		expect(hydrology.tiles[0].hydrology).toHaveProperty("faN");
+		expect(hydrology.tiles[0].hydrology).toHaveProperty("isStream");
+	});
+});
