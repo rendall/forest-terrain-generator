@@ -415,6 +415,20 @@ function normalizeLegacyHydrologyAliases(params: JsonObject): void {
   delete hydrology.streamMinSlopeThreshold;
 }
 
+
+function hydrologyPath(key: string): string {
+  return `params.hydrology.${key}`;
+}
+
+function validateHydrologyPipelineParams(params: JsonObject): void {
+  if (!isObject(params.hydrology)) {
+    return;
+  }
+  const hydrology = params.hydrology as JsonObject;
+  expectOptionalEnum(hydrology.sinkMode, hydrologyPath("sinkMode"), ["strict_local", "overflow_guided"]);
+  expectOptionalNonNegativeInteger(hydrology.faThreshold, hydrologyPath("faThreshold"));
+  expectOptionalRangeNumber(hydrology.faQuantileThreshold, hydrologyPath("faQuantileThreshold"), 0, 1);
+}
 export async function readParamsFile(
   paramsPath: string | undefined,
   cwd: string
@@ -507,6 +521,7 @@ export async function readParamsFile(
   validateNoiseNormalizeParams(params, "vegVarianceNoise");
   validateLakeCoherenceParams(params);
   validateHydrologyStructureParams(params);
+  validateHydrologyPipelineParams(params);
   validateTopographyStructureParams(params);
   validateElevationParams(params);
 
