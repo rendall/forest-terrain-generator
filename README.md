@@ -25,6 +25,12 @@ Commands:
 
 - `hydrology-inspector`: Inspect hydrology maps via stats and visualization outputs (`fa`, `fd`, `fa-normalized`, `hydrology`) from an envelope/debug dir.
 
+Example:
+
+```bash
+node --import tsx src/cli/hydrology-inspector.ts --input-json forest.json --debug-dir out --viz all --stats --force
+```
+
 Canonical flags:
 
 - `--params <path>`
@@ -115,6 +121,33 @@ All three noise maps (`heightNoise`, `roughnessNoise`, `vegVarianceNoise`) also 
 - `hEps` groups near-equal heights in sweep passes.
 - `persistenceMin` is the minimum persistence to mark `basinLike`/`ridgeLike`.
 - `unresolvedPolicy` controls unresolved spill handling (`nan` or `max_h`).
+
+## Hydrology Lake Fill
+
+`hydrology.lakeFill` controls basin fill classification before overflow-guided routing:
+
+- `wetnessScale` is the global fill calibration factor (default `1.0`).
+  - higher values fill/overflow more basins
+  - lower values leave more basins as sinks
+
+Inflow accounting uses strict-local `FD/FA` as a fixed basis, then applies basin accounting:
+
+- `externalInflow`: sum of boundary FD crossings into basin tile set
+- `totalInflow`: `externalInflow + child overflowExcess`
+- `spillCapacity`: `sum(max(0, mergeH - h(tile)))`
+- `fillRatio`: `(wetnessScale * totalInflow) / spillCapacity`
+- basin role:
+  - `sink`
+  - `overflow_carrier` (routes via `childSpillFromTileId -> parentContactTileId`)
+  - `terminal_lake` (filled root/no parent spill edge)
+
+Debug hydrology outputs (`debug/hydrology.json`) include:
+
+- `lakeAccounting.basins` (per-basin accounting + role)
+- per-tile hydrology fields:
+  - `fd`, `fa`, `faN`, `isStream`
+  - `lakeMask`, `lakeSurfaceH`, `waterClass`
+  - `lakeDepth`, `lakeBasinId`
 
 ## Feature Trees
 

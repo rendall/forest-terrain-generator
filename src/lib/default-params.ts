@@ -46,6 +46,9 @@ export const APPENDIX_A_DEFAULTS: JsonObject = {
 		sinkMode: "strict_local",
 		faThreshold: 16,
 		faQuantileThreshold: 0.9,
+		lakeFill: {
+			wetnessScale: 1.0,
+		},
 	},
 	topography: {
 		structure: {

@@ -10,6 +10,7 @@ import type {
 	LakeCoherenceMetrics,
 	StreamCoherenceMetrics,
 } from "../pipeline/derive-hydrology.js";
+import type { LakeAccountingResult } from "../pipeline/derive-lake-accounting.js";
 import { serializeEnvelope } from "./serialize-envelope.js";
 
 const DEBUG_ARTIFACT_FILES = [
@@ -88,6 +89,7 @@ function buildPhaseTiles(
 function buildHydrologyDebugTiles(
 	envelope: TerrainEnvelope,
 	hydrologyMaps: HydrologyMapsSoA | undefined,
+	lakeAccounting: LakeAccountingResult | undefined,
 ) {
 	if (!hydrologyMaps) {
 		return buildPhaseTiles(envelope, "hydrology");
@@ -105,14 +107,25 @@ function buildHydrologyDebugTiles(
 			index,
 			x: tile.x,
 			y: tile.y,
-			hydrology: {
-				fd: inRange ? hydrologyMaps.fd[index] : null,
-				fa: inRange ? hydrologyMaps.fa[index] : null,
-				faN: inRange ? hydrologyMaps.faN[index] : null,
-				isStream: inRange ? hydrologyMaps.isStream[index] === 1 : false,
-			},
-		};
-	});
+				hydrology: {
+					fd: inRange ? hydrologyMaps.fd[index] : null,
+					fa: inRange ? hydrologyMaps.fa[index] : null,
+					faN: inRange ? hydrologyMaps.faN[index] : null,
+					isStream: inRange ? hydrologyMaps.isStream[index] === 1 : false,
+					lakeMask: inRange ? hydrologyMaps.lakeMask[index] === 1 : false,
+					lakeSurfaceH: inRange ? hydrologyMaps.lakeSurfaceH[index] : null,
+					waterClass: inRange ? hydrologyMaps.waterClass[index] : null,
+					lakeDepth:
+						inRange && lakeAccounting
+							? lakeAccounting.tileLakeDepth[index] ?? 0
+							: null,
+					lakeBasinId:
+						inRange && lakeAccounting
+							? (lakeAccounting.tileLakeBasinId[index] || null)
+							: null,
+				},
+			};
+		});
 }
 
 type HydrologyDebugField = "fd" | "fa" | "faN" | "streamMask";
@@ -349,6 +362,7 @@ async function writeDebugArtifacts(
 	topographyStructureDebug: TopographyStructureDebugPayload | undefined,
 	hydrologyStructureDiagnostics: HydrologyStructureDiagnostics | undefined,
 	hydrologyMaps?: HydrologyMapsSoA,
+	lakeAccounting?: LakeAccountingResult,
 ): Promise<void> {
 	const { width, height } = deriveGridDimensions(envelope);
 	const debugManifest = {
@@ -377,7 +391,16 @@ async function writeDebugArtifacts(
 	);
 	await writeJsonFile(
 		join(targetDir, "hydrology.json"),
-		{ tiles: buildHydrologyDebugTiles(envelope, hydrologyMaps) },
+		{
+			...(lakeAccounting
+				? {
+						lakeAccounting: {
+							basins: lakeAccounting.basins,
+						},
+					}
+				: {}),
+			tiles: buildHydrologyDebugTiles(envelope, hydrologyMaps, lakeAccounting),
+		},
 		"hydrology debug artifact write",
 	);
 	await writeJsonFile(
@@ -452,6 +475,7 @@ export async function writeDebugOutputs(
 	topographyStructureDebug?: TopographyStructureDebugPayload,
 	hydrologyStructureDiagnostics?: HydrologyStructureDiagnostics,
 	hydrologyMaps?: HydrologyMapsSoA,
+	lakeAccounting?: LakeAccountingResult,
 ): Promise<void> {
 	if ((await pathExists(outputDir)) && !force) {
 		throw new InputValidationError(
@@ -476,6 +500,7 @@ export async function writeDebugOutputs(
 			topographyStructureDebug,
 			hydrologyStructureDiagnostics,
 			hydrologyMaps,
+			lakeAccounting,
 		);
 
 		if (debugOutputFile) {
@@ -503,6 +528,7 @@ export async function writeModeOutputs(
 	topographyStructureDebug?: TopographyStructureDebugPayload,
 	hydrologyStructureDiagnostics?: HydrologyStructureDiagnostics,
 	hydrologyMaps?: HydrologyMapsSoA,
+	lakeAccounting?: LakeAccountingResult,
 ): Promise<void> {
 	if (mode === "debug") {
 		if (!outputDir) {
@@ -517,10 +543,11 @@ export async function writeModeOutputs(
 			force,
 			streamCoherence,
 			lakeCoherence,
-			topographyStructureDebug,
-			hydrologyStructureDiagnostics,
-			hydrologyMaps,
-		);
+				topographyStructureDebug,
+				hydrologyStructureDiagnostics,
+				hydrologyMaps,
+				lakeAccounting,
+			);
 		return;
 	}
 

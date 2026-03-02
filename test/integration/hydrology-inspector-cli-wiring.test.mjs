@@ -127,13 +127,24 @@ describe("hydrology-inspector CLI", () => {
 			statsFile,
 		]);
 		expect(result.code).toBe(0);
-		const payload = JSON.parse(result.stdout.trim());
-		expect(payload.hydrologyMapsSource).toBe("recomputed");
-		expect(payload.stats).toMatchObject({
-			sinkCount: expect.any(Number),
-			streamTileCount: expect.any(Number),
+			const payload = JSON.parse(result.stdout.trim());
+			expect(payload.hydrologyMapsSource).toBe("recomputed");
+			expect(payload.stats).toMatchObject({
+				sinkCount: expect.any(Number),
+				streamTileCount: expect.any(Number),
+				lakeTileCount: expect.any(Number),
+				lakeDepth: {
+					max: expect.any(Number),
+					mean: expect.any(Number),
+				},
+				basins: {
+					total: expect.any(Number),
+					sink: expect.any(Number),
+					overflowCarrier: expect.any(Number),
+					terminalLake: expect.any(Number),
+				},
+			});
 		});
-	});
 
 	it("writes all viz outputs and stats to debug dir without stream trace args", async () => {
 		const dir = await makeTempDir();

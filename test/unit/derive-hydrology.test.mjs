@@ -19,34 +19,65 @@ describe("derive-hydrology", () => {
 	});
 
 	it("supports overflow_guided when configured", () => {
-		const shape = createGridShape(2, 1);
-		const h = new Float32Array([0.5, 0.6]);
+		const shape = createGridShape(3, 2);
+		const h = new Float32Array([
+			0.1, 0.3, 0.05, // y=0
+			0.15, 0.35, 0.4, // y=1
+		]);
 		const result = deriveHydrology(
 			shape,
 			h,
 			{
 				basinFeatures: [
 					{
-						id: "b_00000",
+						id: "b_child",
 						kind: "leaf",
-						parentId: null,
+						parentId: "b_parent",
 						childIds: [],
-						birthH: 0,
-						mergeH: null,
-						persistence: null,
+						birthH: 0.1,
+						mergeH: 0.3,
+						persistence: 0.2,
 						spillOutTileId: 1,
 						childSpillFromTileId: 0,
 						parentContactTileId: 1,
-						minH: 0.5,
-						maxH: 0.5,
+						minH: 0.1,
+						maxH: 0.1,
 						size: 1,
 						bbox: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
 						tileIds: [0],
 					},
+					{
+						id: "b_parent",
+						kind: "composite",
+						parentId: null,
+						childIds: ["b_child"],
+						birthH: 0.3,
+						mergeH: null,
+						persistence: null,
+						spillOutTileId: null,
+						minH: 0.05,
+						maxH: 0.4,
+						size: 6,
+						bbox: { minX: 0, minY: 0, maxX: 2, maxY: 1 },
+						tileIds: [1, 2, 3, 4, 5],
+					},
 				],
-				tileFeatureIds: [["b_00000"], []],
+				tileFeatureIds: [
+					["b_child", "b_parent"],
+					["b_parent"],
+					["b_parent"],
+					["b_parent"],
+					["b_parent"],
+					["b_parent"],
+				],
 			},
-			{ hydrology: { sinkMode: "overflow_guided", faThreshold: 1 } },
+			{
+				hydrology: {
+					sinkMode: "overflow_guided",
+					faThreshold: 1,
+					lakeFill: { wetnessScale: 1 },
+				},
+			},
 		);
 		expect(result.diagnostics.overflowAppliedCount).toBe(1);
 	});
@@ -69,34 +100,65 @@ describe("derive-hydrology", () => {
 	});
 
 	it("falls back per-tile to strict_local when spill edge metadata is invalid", () => {
-		const shape = createGridShape(2, 1);
-		const h = new Float32Array([0.5, 0.6]);
+		const shape = createGridShape(3, 2);
+		const h = new Float32Array([
+			0.1, 0.3, 0.05, // y=0
+			0.15, 0.35, 0.4, // y=1
+		]);
 		const result = deriveHydrology(
 			shape,
 			h,
 			{
 				basinFeatures: [
 					{
-						id: "b_00000",
+						id: "b_child",
 						kind: "leaf",
-						parentId: null,
+						parentId: "b_parent",
 						childIds: [],
-						birthH: 0,
-						mergeH: null,
-						persistence: null,
+						birthH: 0.1,
+						mergeH: 0.3,
+						persistence: 0.2,
 						spillOutTileId: 1,
 						childSpillFromTileId: 1, // invalid: spillFrom not in basin tileIds
 						parentContactTileId: 1,
-						minH: 0.5,
-						maxH: 0.5,
+						minH: 0.1,
+						maxH: 0.1,
 						size: 1,
 						bbox: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
 						tileIds: [0],
 					},
+					{
+						id: "b_parent",
+						kind: "composite",
+						parentId: null,
+						childIds: ["b_child"],
+						birthH: 0.3,
+						mergeH: null,
+						persistence: null,
+						spillOutTileId: null,
+						minH: 0.05,
+						maxH: 0.4,
+						size: 6,
+						bbox: { minX: 0, minY: 0, maxX: 2, maxY: 1 },
+						tileIds: [1, 2, 3, 4, 5],
+					},
 				],
-				tileFeatureIds: [["b_00000"], []],
+				tileFeatureIds: [
+					["b_child", "b_parent"],
+					["b_parent"],
+					["b_parent"],
+					["b_parent"],
+					["b_parent"],
+					["b_parent"],
+				],
 			},
-			{ hydrology: { sinkMode: "overflow_guided", faThreshold: 1 } },
+			{
+				hydrology: {
+					sinkMode: "overflow_guided",
+					faThreshold: 1,
+					lakeFill: { wetnessScale: 1 },
+				},
+			},
 		);
 		expect(result.diagnostics.overflowAppliedCount).toBe(0);
 		expect(result.diagnostics.overflowFallbackCount).toBe(1);

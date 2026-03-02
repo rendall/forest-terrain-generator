@@ -420,6 +420,31 @@ function hydrologyPath(key: string): string {
   return `params.hydrology.${key}`;
 }
 
+function hydrologyLakeFillPath(key: string): string {
+  return `params.hydrology.lakeFill.${key}`;
+}
+
+function validateHydrologyLakeFillParams(params: JsonObject): void {
+  if (!isObject(params.hydrology)) {
+    return;
+  }
+  const hydrology = params.hydrology as JsonObject;
+  const lakeFill = hydrology.lakeFill;
+  if (lakeFill === undefined) {
+    return;
+  }
+  if (!isObject(lakeFill)) {
+    throw new InputValidationError(
+      'Invalid params value "params.hydrology.lakeFill". Expected an object.'
+    );
+  }
+  const value = lakeFill as JsonObject;
+  expectOptionalNonNegativeNumber(
+    value.wetnessScale,
+    hydrologyLakeFillPath("wetnessScale")
+  );
+}
+
 function validateHydrologyPipelineParams(params: JsonObject): void {
   if (!isObject(params.hydrology)) {
     return;
@@ -521,6 +546,7 @@ export async function readParamsFile(
   validateNoiseNormalizeParams(params, "vegVarianceNoise");
   validateLakeCoherenceParams(params);
   validateHydrologyStructureParams(params);
+  validateHydrologyLakeFillParams(params);
   validateHydrologyPipelineParams(params);
   validateTopographyStructureParams(params);
   validateElevationParams(params);

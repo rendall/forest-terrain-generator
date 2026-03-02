@@ -1,106 +1,109 @@
 import { describe, expect, it } from "vitest";
-import { computeBasinAccounting } from "./helpers/lake-fixtures.mjs";
+import { createGridShape } from "../../src/domain/topography.js";
+import { deriveHydrology } from "../../src/pipeline/derive-hydrology.js";
+import { makeBasinNode } from "./helpers/lake-fixtures.mjs";
 
-describe("lake accounting synthetic fixtures", () => {
-	it("LA-01 closed_bowl_dry_sink", () => {
-		const accounting = computeBasinAccounting([
+const buildSyntheticLakeCase = () => {
+	const shape = createGridShape(3, 2);
+	const h = new Float32Array([
+		0.1, 0.3, 0.05, // y=0
+		0.15, 0.35, 0.4, // y=1
+	]);
+	const basinFeatures = [
+		makeBasinNode({
+			id: "b_child",
+			kind: "leaf",
+			parentId: "b_parent",
+			childIds: [],
+			birthH: 0.1,
+			mergeH: 0.3,
+			persistence: 0.2,
+			spillOutTileId: 4,
+			childSpillFromTileId: 0,
+			parentContactTileId: 1,
+			minH: 0.1,
+			maxH: 0.1,
+			size: 1,
+			bbox: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
+			tileIds: [0],
+		}),
+		makeBasinNode({
+			id: "b_parent",
+			kind: "composite",
+			parentId: null,
+			childIds: ["b_child"],
+			birthH: 0.3,
+			mergeH: null,
+			persistence: null,
+			spillOutTileId: null,
+			minH: 0.05,
+			maxH: 0.4,
+			size: 6,
+			bbox: { minX: 0, minY: 0, maxX: 2, maxY: 1 },
+			tileIds: [1, 2, 3, 4, 5],
+		}),
+	];
+	const tileFeatureIds = [
+		["b_child", "b_parent"],
+		["b_parent"],
+		["b_parent"],
+		["b_parent"],
+		["b_parent"],
+		["b_parent"],
+	];
+	return { shape, h, basinFeatures, tileFeatureIds };
+};
+
+describe("lake accounting from production hydrology pipeline", () => {
+	it("classifies a supplied leaf basin as overflow carrier and computes accounting", () => {
+		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
+		const result = deriveHydrology(
+			shape,
+			h,
+			{ basinFeatures, tileFeatureIds },
 			{
-				id: "b0",
-				parentId: null,
-				externalInflow: 0,
-				spillCapacity: 1.5,
+				hydrology: {
+					sinkMode: "strict_local",
+					lakeFill: { wetnessScale: 1.0 },
+				},
 			},
-		]);
-		const b0 = accounting.get("b0");
-		expect(b0.totalInflow).toBe(0);
-		expect(b0.fillRatio).toBe(0);
-		expect(b0.isFilled).toBe(false);
-		expect(b0.overflowExcess).toBe(0);
+		);
+
+		expect(result.lakeAccounting).toBeDefined();
+		expect(result.lakeCoherence.enabled).toBe(true);
+		const byId = result.lakeAccounting.byId;
+		const child = byId.get("b_child");
+		const parent = byId.get("b_parent");
+		expect(child).toBeDefined();
+		expect(parent).toBeDefined();
+		expect(child.externalInflow).toBe(1);
+		expect(child.totalInflow).toBe(1);
+		expect(child.spillCapacity).toBeCloseTo(0.2, 6);
+		expect(child.isFilled).toBe(true);
+		expect(child.role).toBe("overflow_carrier");
+		expect(child.overflowExcess).toBeCloseTo(0.8, 6);
+		expect(parent.externalInflow).toBe(0);
+		expect(parent.totalInflow).toBeCloseTo(child.overflowExcess, 6);
 	});
 
-	it("LA-02 closed_bowl_wet_terminal_root", () => {
-		const accounting = computeBasinAccounting([
+	it("keeps the same basin as a sink when wetnessScale is zero", () => {
+		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
+		const result = deriveHydrology(
+			shape,
+			h,
+			{ basinFeatures, tileFeatureIds },
 			{
-				id: "b0",
-				parentId: null,
-				externalInflow: 2.0,
-				spillCapacity: 1.7,
+				hydrology: {
+					sinkMode: "strict_local",
+					lakeFill: { wetnessScale: 0 },
+				},
 			},
-		]);
-		const b0 = accounting.get("b0");
-		expect(b0.totalInflow).toBeCloseTo(2.0, 6);
-		expect(b0.isFilled).toBe(true);
-		expect(b0.overflowExcess).toBeCloseTo(0.3, 6);
-		expect(b0.parentId).toBeNull();
-	});
-
-	it("LA-03 leaf_fills_and_overflows_to_parent", () => {
-		const accounting = computeBasinAccounting([
-			{
-				id: "b_parent",
-				parentId: null,
-				externalInflow: 0.1,
-				spillCapacity: 1.2,
-			},
-			{
-				id: "b_leaf",
-				parentId: "b_parent",
-				externalInflow: 1.2,
-				spillCapacity: 1.0,
-			},
-		]);
-		const leaf = accounting.get("b_leaf");
-		const parent = accounting.get("b_parent");
-		expect(leaf.overflowExcess).toBeCloseTo(0.2, 6);
-		expect(parent.totalInflow).toBeCloseTo(0.3, 6);
-		expect(parent.isFilled).toBe(false);
-	});
-
-	it("LA-04 leaf_not_filled_stays_sink", () => {
-		const accounting = computeBasinAccounting([
-			{
-				id: "b_parent",
-				parentId: null,
-				externalInflow: 0.1,
-				spillCapacity: 1.2,
-			},
-			{
-				id: "b_leaf",
-				parentId: "b_parent",
-				externalInflow: 0.7,
-				spillCapacity: 1.0,
-			},
-		]);
-		const leaf = accounting.get("b_leaf");
-		const parent = accounting.get("b_parent");
-		expect(leaf.isFilled).toBe(false);
-		expect(leaf.overflowExcess).toBe(0);
-		expect(parent.totalInflow).toBeCloseTo(parent.externalInflow, 6);
-	});
-
-	it("LA-05 parent_double_count_guard", () => {
-		const accounting = computeBasinAccounting([
-			{
-				id: "b_parent",
-				parentId: null,
-				externalInflow: 0.5,
-				spillCapacity: 2.0,
-			},
-			{
-				id: "b_a",
-				parentId: "b_parent",
-				externalInflow: 1.7,
-				spillCapacity: 1.0, // overflowExcess=0.7
-			},
-			{
-				id: "b_b",
-				parentId: "b_parent",
-				externalInflow: 1.2,
-				spillCapacity: 1.0, // overflowExcess=0.2
-			},
-		]);
-		const parent = accounting.get("b_parent");
-		expect(parent.totalInflow).toBeCloseTo(1.4, 6);
-		expect(parent.totalInflow).not.toBeCloseTo(2.3, 6);
+		);
+		const child = result.lakeAccounting.byId.get("b_child");
+		expect(child).toBeDefined();
+		expect(child.fillRatio).toBe(0);
+		expect(child.isFilled).toBe(false);
+		expect(child.role).toBe("sink");
+		expect(child.overflowExcess).toBe(0);
 	});
 });

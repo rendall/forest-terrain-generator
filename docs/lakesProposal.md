@@ -29,6 +29,33 @@ Design constraints (v1)
 - Use one fixed FD basis for accounting (recommended: `strict_local`) so inflow math is stable.
 - Avoid parent double-counting when child overflow is added upward.
 
+Checklist review notes (2026-03-02)
+
+Pass 1 (quality control):
+
+- Issue: checklist output items were ambiguous about where lake-accounting data lands.
+- Decision: target existing debug channels explicitly:
+  - per-basin accounting in `debug/hydrology.json` diagnostics section (or equivalent debug hydrology payload),
+  - per-tile depth/lake id in debug tile payload where hydrology maps are emitted.
+- Issue: checklist stage wording could imply a second FD/FA computation path.
+- Decision: lake-accounting stage consumes strict-local FD/FA basis from one production derivation path; no duplicate independent FD builder.
+- Issue: acceptance-test wording was too loose and allowed helper-self-fulfilling tests.
+- Decision: acceptance tests must assert production outputs from `deriveHydrology`/pipeline surfaces and must fail before lake implementation changes are applied.
+
+Pass 2 (integration):
+
+- Issue: acceptance-pass item appeared in an earlier slice while depending on later invariants/calibration items.
+- Decision: reorder slice wiring so final acceptance pass remains last and explicitly depends on determinism/routing-guard/calibration doc items.
+- Issue: stream routing update item did not explicitly state pipeline order dependency.
+- Decision: keep explicit order: topology -> lake accounting -> stream routing decisions.
+- Issue: stream-route overflow must not regress to `spillOutTileId` routing.
+- Decision: enforce `childSpillFromTileId -> parentContactTileId` routing contract in tests and implementation.
+
+Pass 3 (sanity):
+
+- Result: no remaining blockers after clarifying output targets, single FD/FA basis usage, execution ordering, and acceptance-test discipline.
+- Decision: proceed to implementation against the updated checklist.
+
 ---
 
 ## Definitions
@@ -291,6 +318,17 @@ Recommended v1 approach:
    - large basins rarely fill unless strongly supplied
 4) Keep k as a single config parameter in params.json for tuning.
 
+Calibration pass snapshot (64x64, seeds `42`, `1187`, `2026`):
+
+- `k=1.0` -> nearly all basins filled on all three seeds (`filled` ~= total basins).
+- `k=0.001` -> filled basins around 30% (`52-55` of `175-185`).
+- `k=0.0005` -> filled basins around 20% (`34-43` of `175-185`).
+
+v1 selection:
+
+- Keep default `k=1.0` for now (explicit compatibility/default contract).
+- Treat `0.0005..0.002` as a practical tuning range for authored/runtime balancing work.
+
 Alternative to k (if you want "no knob"):
 
 - Normalize `totalInflow` and `spillCapacity` by map-level statistics:
@@ -298,6 +336,11 @@ Alternative to k (if you want "no knob"):
   - `C' = spillCapacity / median(spillCapacity)`
   - `isFilled if I'/C' >= 1`
 This removes explicit k but replaces it with implicit normalization. k is usually cleaner.
+
+Deferred/non-goal for v1:
+
+- The normalization alternative (`I'/C'`) is explicitly deferred.
+- v1 ships only with `params.hydrology.lakeFill.wetnessScale` as the calibration mechanism.
 
 ---
 

@@ -11,6 +11,10 @@ import type {
 	TopographicStructureMapsSoA,
 } from "../domain/topography.js";
 import type { JsonObject } from "../domain/types.js";
+import {
+	deriveLakeAccounting,
+	type LakeAccountingResult,
+} from "./derive-lake-accounting.js";
 
 export interface StreamCoherenceMetrics {
 	enabled: boolean;
@@ -33,12 +37,19 @@ export interface HydrologyDeriveResult {
 	diagnostics: HydrologyStructureDiagnostics;
 	streamCoherence: StreamCoherenceMetrics;
 	lakeCoherence: LakeCoherenceMetrics;
+	lakeAccounting: LakeAccountingResult;
 }
 
 interface HydrologyParams {
 	sinkMode: "strict_local" | "overflow_guided";
 	faThreshold: number;
 	quantileThreshold?: number;
+	wetnessScale: number;
+}
+
+interface FlowAccumulationResult {
+	fa: Uint32Array;
+	inDeg: Uint8Array;
 }
 
 const DIR_BY_DELTA = new Map<string, number>([
@@ -50,6 +61,17 @@ const DIR_BY_DELTA = new Map<string, number>([
 	["-1,-1", DIR8_CODE.nw],
 	["0,-1", DIR8_CODE.n],
 	["1,-1", DIR8_CODE.ne],
+]);
+
+const DIR_TO_DELTA = new Map<number, readonly [number, number]>([
+	[DIR8_CODE.e, [1, 0]],
+	[DIR8_CODE.se, [1, 1]],
+	[DIR8_CODE.s, [0, 1]],
+	[DIR8_CODE.sw, [-1, 1]],
+	[DIR8_CODE.w, [-1, 0]],
+	[DIR8_CODE.nw, [-1, -1]],
+	[DIR8_CODE.n, [0, -1]],
+	[DIR8_CODE.ne, [1, -1]],
 ]);
 
 const NEIGHBORS = [
@@ -85,7 +107,17 @@ const readHydrologyParams = (params: JsonObject): HydrologyParams => {
 		typeof quantileRaw === "number" && Number.isFinite(quantileRaw)
 			? Math.max(0, Math.min(1, quantileRaw))
 			: undefined;
-	return { sinkMode, faThreshold, quantileThreshold };
+	const lakeFill = isObject(hydrology.lakeFill)
+		? (hydrology.lakeFill as JsonObject)
+		: {};
+	const wetnessScaleRaw = lakeFill.wetnessScale;
+	const wetnessScale =
+		typeof wetnessScaleRaw === "number" &&
+		Number.isFinite(wetnessScaleRaw) &&
+		wetnessScaleRaw >= 0
+			? wetnessScaleRaw
+			: 1;
+	return { sinkMode, faThreshold, quantileThreshold, wetnessScale };
 };
 
 const indexToXY = (shape: GridShape, index: number): [number, number] => [
@@ -203,55 +235,64 @@ const isAdjacentDir8 = (shape: GridShape, a: number, b: number): boolean => {
 	return (dx > 0 || dy > 0) && dx <= 1 && dy <= 1;
 };
 
+const buildTileBasinCandidates = (tileFeatureIds: string[][]): string[][] =>
+	tileFeatureIds.map((featureIds) =>
+		featureIds.filter((id): id is string => id.startsWith("b_")),
+	);
+
 const resolveOverflowTarget = (
 	shape: GridShape,
-	basinsById: Map<string, TopographicFeatureNode>,
+	lakeAccountingById: Map<string, LakeAccountingResult["basins"][number]>,
 	basinTileSets: Map<string, Set<number>>,
-	basinIdByTile: string[],
+	basinCandidatesByTile: string[][],
 	current: number,
 	size: number,
 ): number | null => {
-	const basinId = basinIdByTile[current];
-	if (!basinId) {
-		return null;
+	const candidates = basinCandidatesByTile[current] ?? [];
+	for (const basinId of candidates) {
+		const accounting = lakeAccountingById.get(basinId);
+		if (!accounting || accounting.role !== "overflow_carrier") {
+			continue;
+		}
+		const spillFrom = accounting.childSpillFromTileId;
+		const spillTo = accounting.parentContactTileId;
+		if (spillFrom === null || spillTo === null) {
+			continue;
+		}
+		if (
+			spillFrom < 0 ||
+			spillFrom >= size ||
+			spillTo < 0 ||
+			spillTo >= size ||
+			spillTo === current
+		) {
+			continue;
+		}
+		const basinTiles = basinTileSets.get(basinId);
+		if (!basinTiles || !basinTiles.has(spillFrom) || basinTiles.has(spillTo)) {
+			continue;
+		}
+		if (!isAdjacentDir8(shape, spillFrom, spillTo)) {
+			continue;
+		}
+		if (current !== spillFrom) {
+			continue;
+		}
+		return spillTo;
 	}
-	const basin = basinsById.get(basinId);
-	if (!basin) {
-		return null;
-	}
-	const spillFrom =
-		typeof basin.childSpillFromTileId === "number" &&
-		Number.isInteger(basin.childSpillFromTileId)
-			? basin.childSpillFromTileId
-			: null;
-	const spillTo =
-		typeof basin.parentContactTileId === "number" &&
-		Number.isInteger(basin.parentContactTileId)
-			? basin.parentContactTileId
-			: null;
-	if (spillFrom === null || spillTo === null) {
-		return null;
-	}
-	if (
-		spillFrom < 0 ||
-		spillFrom >= size ||
-		spillTo < 0 ||
-		spillTo >= size ||
-		spillTo === current
-	) {
-		return null;
-	}
-	const basinTiles = basinTileSets.get(basinId);
-	if (!basinTiles || !basinTiles.has(spillFrom) || basinTiles.has(spillTo)) {
-		return null;
-	}
-	if (!isAdjacentDir8(shape, spillFrom, spillTo)) {
-		return null;
-	}
-	if (current !== spillFrom) {
-		return null;
-	}
-	return spillTo;
+	return null;
+};
+
+const hasOverflowCarrierCandidate = (
+	lakeAccountingById: Map<string, LakeAccountingResult["basins"][number]>,
+	basinCandidatesByTile: string[][],
+	current: number,
+): boolean => {
+	const candidates = basinCandidatesByTile[current] ?? [];
+	return candidates.some((basinId) => {
+		const accounting = lakeAccountingById.get(basinId);
+		return accounting?.role === "overflow_carrier";
+	});
 };
 
 const setFlowDirCode = (shape: GridShape, from: number, to: number): number => {
@@ -259,6 +300,78 @@ const setFlowDirCode = (shape: GridShape, from: number, to: number): number => {
 	const [tx, ty] = indexToXY(shape, to);
 	const key = `${Math.sign(tx - fx)},${Math.sign(ty - fy)}`;
 	return DIR_BY_DELTA.get(key) ?? DIR8_NONE;
+};
+
+const resolveFdTarget = (
+	shape: GridShape,
+	index: number,
+	code: number,
+): number | null => {
+	if (code === DIR8_NONE) {
+		return null;
+	}
+	const delta = DIR_TO_DELTA.get(code);
+	if (!delta) {
+		return null;
+	}
+	const x = index % shape.width;
+	const y = Math.floor(index / shape.width);
+	const nx = x + delta[0];
+	const ny = y + delta[1];
+	if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
+		return null;
+	}
+	return toIndex(shape, nx, ny);
+};
+
+const insertSorted = (queue: number[], value: number, start: number): void => {
+	let inserted = false;
+	for (let i = start; i < queue.length; i += 1) {
+		if (value < queue[i]) {
+			queue.splice(i, 0, value);
+			inserted = true;
+			break;
+		}
+	}
+	if (!inserted) {
+		queue.push(value);
+	}
+};
+
+const computeFlowAccumulation = (
+	shape: GridShape,
+	fd: Uint8Array,
+): FlowAccumulationResult => {
+	const inDeg = new Uint8Array(shape.size);
+	for (let i = 0; i < shape.size; i += 1) {
+		const target = resolveFdTarget(shape, i, fd[i] ?? DIR8_NONE);
+		if (target !== null) {
+			inDeg[target] += 1;
+		}
+	}
+	const workInDeg = new Uint8Array(inDeg);
+	const fa = new Uint32Array(shape.size).fill(1);
+	const queue: number[] = [];
+	for (let i = 0; i < shape.size; i += 1) {
+		if (workInDeg[i] === 0) {
+			queue.push(i);
+		}
+	}
+	queue.sort((a, b) => a - b);
+
+	for (let q = 0; q < queue.length; q += 1) {
+		const i = queue[q];
+		const target = resolveFdTarget(shape, i, fd[i] ?? DIR8_NONE);
+		if (target === null) {
+			continue;
+		}
+		fa[target] += fa[i];
+		workInDeg[target] -= 1;
+		if (workInDeg[target] === 0) {
+			insertSorted(queue, target, q + 1);
+		}
+	}
+	return { fa, inDeg };
 };
 
 export const deriveHydrology = (
@@ -271,93 +384,79 @@ export const deriveHydrology = (
 	params: JsonObject,
 ): HydrologyDeriveResult => {
 	const cfg = readHydrologyParams(params);
-	const maps = createHydrologyMaps(shape);
 	const basinsById = new Map<string, TopographicFeatureNode>();
 	for (const basin of topographicStructure.basinFeatures) {
 		basinsById.set(basin.id, basin);
 	}
 	const basinTileSets = collectBasinTileSets(basinsById);
-	const basinIdByTile = Array.from(
-		{ length: shape.size },
-		(_, i) =>
-			topographicStructure.tileFeatureIds[i]?.find((id) =>
-				id.startsWith("b_"),
-			) ?? "",
+	const basinCandidatesByTile = buildTileBasinCandidates(
+		topographicStructure.tileFeatureIds,
 	);
-	let overflowFallbackCount = 0;
-	let overflowAppliedCount = 0;
 
+	const baseFd = new Uint8Array(shape.size).fill(DIR8_NONE);
 	for (let i = 0; i < shape.size; i += 1) {
 		const downhill = chooseDownhill(shape, topographyH, i);
 		if (downhill !== null) {
-			maps.fd[i] = setFlowDirCode(shape, i, downhill);
-			maps.inDeg[downhill] += 1;
-			continue;
+			baseFd[i] = setFlowDirCode(shape, i, downhill);
 		}
-		if (cfg.sinkMode === "overflow_guided") {
+	}
+	const baseAccumulation = computeFlowAccumulation(shape, baseFd);
+
+	const lakeAccounting = deriveLakeAccounting(
+		shape,
+		topographyH,
+		baseFd,
+		baseAccumulation.fa,
+		topographicStructure.basinFeatures,
+		{ wetnessScale: cfg.wetnessScale },
+	);
+	const lakeAccountingById = lakeAccounting.byId;
+
+	const finalFd = new Uint8Array(baseFd);
+	let overflowFallbackCount = 0;
+	let overflowAppliedCount = 0;
+	if (cfg.sinkMode === "overflow_guided") {
+		for (let i = 0; i < shape.size; i += 1) {
+			if (finalFd[i] !== DIR8_NONE) {
+				continue;
+			}
 			const target = resolveOverflowTarget(
 				shape,
-				basinsById,
+				lakeAccountingById,
 				basinTileSets,
-				basinIdByTile,
+				basinCandidatesByTile,
 				i,
 				shape.size,
 			);
 			if (target !== null) {
-				maps.fd[i] = setFlowDirCode(shape, i, target);
-				maps.inDeg[target] += 1;
+				finalFd[i] = setFlowDirCode(shape, i, target);
 				overflowAppliedCount += 1;
 				continue;
 			}
-			overflowFallbackCount += 1;
+			if (
+				hasOverflowCarrierCandidate(
+					lakeAccountingById,
+					basinCandidatesByTile,
+					i,
+				)
+			) {
+				overflowFallbackCount += 1;
+			}
 		}
-		maps.fd[i] = DIR8_NONE;
 	}
 
+	const finalAccumulation = computeFlowAccumulation(shape, finalFd);
+	const maps = createHydrologyMaps(shape);
+	maps.fd.set(finalFd);
+	maps.fa.set(finalAccumulation.fa);
+	maps.inDeg.set(finalAccumulation.inDeg);
+
 	for (let i = 0; i < shape.size; i += 1) {
-		maps.fa[i] = 1;
-	}
-	const queue: number[] = [];
-	for (let i = 0; i < shape.size; i += 1) {
-		if (maps.inDeg[i] === 0) {
-			queue.push(i);
-		}
-	}
-	queue.sort((a, b) => a - b);
-	for (let q = 0; q < queue.length; q += 1) {
-		const i = queue[q];
-		const code = maps.fd[i];
-		if (code === DIR8_NONE) {
-			continue;
-		}
-		const [x, y] = indexToXY(shape, i);
-		const neighbor = NEIGHBORS.find(
-			({ dx, dy }) => (DIR_BY_DELTA.get(`${dx},${dy}`) ?? -1) === code,
-		);
-		if (!neighbor) {
-			continue;
-		}
-		const nx = x + neighbor.dx;
-		const ny = y + neighbor.dy;
-		if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
-			continue;
-		}
-		const to = toIndex(shape, nx, ny);
-		maps.fa[to] += maps.fa[i];
-		maps.inDeg[to] -= 1;
-		if (maps.inDeg[to] === 0) {
-			// stable ordering for equal-priority nodes
-			let inserted = false;
-			for (let k = q + 1; k < queue.length; k += 1) {
-				if (to < queue[k]) {
-					queue.splice(k, 0, to);
-					inserted = true;
-					break;
-				}
-			}
-			if (!inserted) {
-				queue.push(to);
-			}
+		const depth = lakeAccounting.tileLakeDepth[i] ?? 0;
+		if (depth > 0) {
+			maps.lakeMask[i] = 1;
+			maps.lakeSurfaceH[i] = (topographyH[i] ?? 0) + depth;
+			maps.waterClass[i] = WATER_CLASS_CODE.lake;
 		}
 	}
 
@@ -404,8 +503,9 @@ export const deriveHydrology = (
 			streamTiles,
 		},
 		lakeCoherence: {
-			enabled: false,
-			lakeTiles: 0,
+			enabled: true,
+			lakeTiles: lakeAccounting.lakeTileCount,
 		},
+		lakeAccounting,
 	};
 };
