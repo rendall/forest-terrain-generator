@@ -226,3 +226,39 @@ When implemented, `hydrology-inspector` should include a sink-mode flag (for exa
 ## 12) Suggested Immediate Next Step
 
 If this v1 draft looks right, the next step is to execute a checklist-driven Phase A/Phase B implementation while keeping public envelope schema unchanged until the Phase C gate is complete.
+
+
+## 13) Checklist Review Pass Log
+
+### Pass 1 — Basic quality-control findings and decisions
+
+- **Finding A:** The checklist did not include explicit hydrology parameter plumbing, which would make locked defaults (`strict_local`, absolute `fa`) underspecified in implementation.
+  - **Decision:** Add a dedicated checklist item for config parsing/validation with explicit defaults (`SPI-02`).
+- **Finding B:** The checklist did not define deterministic behavior when overflow metadata is missing/incomplete.
+  - **Decision:** Add explicit fallback behavior to `strict_local` for affected paths to preserve determinism and completion (`SPI-08`).
+- **Finding C:** The checklist covered debug artifacts for generated flows but not debug `--input-file` flows in `run-generator`.
+  - **Decision:** Add a dedicated item to derive and emit hydrology artifacts for debug input-file mode too (`SPI-11`).
+- **Finding D:** The checklist mentioned topological FA but did not require stable queue ordering under ties.
+  - **Decision:** Require stable in-degree queue ordering in FA propagation (`SPI-06`).
+
+### Pass 2 — Integration consistency findings and decisions
+
+- **Finding E:** Dependencies across sink-mode/thresholding items were implicit, creating sequencing ambiguity.
+  - **Decision:** Add explicit dependency notes in checklist items where sequencing matters (for example `SPI-04` depends on `SPI-02`/`SPI-03`; `SPI-07` depends on `SPI-02`/`SPI-06`).
+- **Finding F:** Phase C gate language in decisions needed clearer alignment with checklist contract-preservation item.
+  - **Decision:** Clarify checklist contract item wording to hold schema unchanged until Phase C gate completion (`SPI-12`).
+- **Finding G:** Slice coverage needed to reflect newly added items without overlap.
+  - **Decision:** Re-partition slices so each item belongs to exactly one slice (`SPI-01`..`SPI-15`).
+
+### Pass 3 — Final sanity confirmation
+
+After the above updates, the checklist now covers:
+
+- deterministic routing + FA internals,
+- explicit parameter/default plumbing,
+- overflow fallback semantics,
+- generator + debug-input integration topology,
+- contract gating through Phase C,
+- separate-inspector and governance gates.
+
+This is considered sufficient to reach the v1 goals when executed in order.
