@@ -76,7 +76,9 @@ The Stream CLI remains a targeted inspection tool that can query/visualize these
 - Keep existing basin-aware overflow logic as a controlled post-pass capability.
 - For accumulation v1, support two modes (configurable):
   - **strict_local**: sinks terminate flow.
-  - **overflow_guided**: if basin spill links exist, continue through spill/parent contact.
+  - **overflow_guided**: resolve sink outflow as part of FD construction using a per-basin spill edge (`spillFromTileId`, `spillToTileId`) rather than as a single-source post-pass.
+
+> Overflow routing uses a per-basin spill edge with a guaranteed in-basin `spillFromTileId` and an adjacent `spillToTileId` outside the basin; do not rely on `spillTileId` membership.
 
 ### 5.3 Accumulation computation
 
@@ -100,7 +102,7 @@ This yields deterministic `fa` in O(N) time after FD construction.
 
 Use/complete existing hydrology SoA maps in the domain model:
 
-- `fd`: flow direction code (DIR8/NONE)
+- `fd`: out-neighbor tile index (preferred) or direction code with explicit adjacent spill-edge encoding; if code-based representation is retained, adjacency of `spillToTileId` is a hard invariant
 - `fa`: accumulation count (uint32)
 - `faN`: normalized accumulation (float)
 - `isStream`: extracted stream mask
@@ -160,7 +162,7 @@ The reason for this placement is that hydrology depends on finalized height/topo
 
 - Keep `stream` unchanged as the existing toy/experimental tracer.
 - Plan a future `hydrology-inspector` CLI as a separate inspector surface, but do not implement it until approved.
-- Design expectation for that future inspector: read pipeline hydrology maps when present, preserve single-source trace mode, and optionally report local accumulation at `(x,y)`.
+- Design expectation for that future inspector: read pipeline hydrology maps when present, and recompute maps for older envelopes that do not contain them; preserve single-source trace mode and optionally report local accumulation at `(x,y)`.
 
 ### Phase D: Contract decision
 
@@ -174,7 +176,7 @@ The reason for this placement is that hydrology depends on finalized height/topo
 Determinism must hold for:
 
 - Neighbor ordering and tie-breaks.
-- Queue ordering when processing same in-degree tier.
+- Queue ordering when processing same in-degree tier (use a stable min-heap/priority queue keyed by tile index).
 - Floating-point normalization procedure.
 - Overflow traversal ordering through basin metadata.
 
@@ -262,3 +264,17 @@ After the above updates, the checklist now covers:
 - separate-inspector and governance gates.
 
 This is considered sufficient to reach the v1 goals when executed in order.
+
+
+## 14) Review Feedback Response
+
+Applied reviewer feedback directly to both this plan and the implementation checklist.
+
+- Clarified overflow primitive as a spill **edge** `(spillFromTileId, spillToTileId)` and elevated adjacency/in-basin membership to an invariant.
+- Required strict-local and overflow-guided to share one FD builder, with sink policy only resolving sink outflow behavior.
+- Replaced ambiguous tie-break wording ("in direction of flow") with invariant full-map criteria suitable for FD graph construction.
+- Specified per-tile fallback semantics for missing overflow metadata (`NONE` on affected tiles).
+- Clarified queue determinism with explicit stable priority behavior.
+- Clarified inspector behavior for old envelopes: recompute when maps are absent, read/prefer when present.
+
+These changes are intended to prevent semantic drift between tracer behavior and pipeline FD/FA behavior and to avoid regressions tied to spill-tile membership assumptions.
