@@ -277,6 +277,10 @@ describe("CLI command wiring and contract failures", () => {
 		expect(manifest.artifacts).toEqual([
 			"topography.json",
 			"hydrology.json",
+			"fd.json",
+			"fa.json",
+			"fa-normalized.json",
+			"stream-mask.json",
 			"ecology.json",
 			"navigation.json",
 		]);

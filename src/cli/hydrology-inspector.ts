@@ -74,6 +74,8 @@ try {
 		console.log(
 			JSON.stringify({
 				path: trace.path,
+				hydrologyMapsSource: trace.hydrologyMapsSource,
+				hydrologyAtSource: trace.hydrologyAtSource,
 				debugSteps: trace.debugSteps,
 				pathTileIds: trace.pathTileIds,
 				continuePathTileIds: trace.continuePathTileIds,
@@ -113,7 +115,9 @@ try {
 					? trace.overflowConnectorTileIds
 					: [],
 			overflowCrossingEdges:
-				options.sinkMode === "overflow_guided" ? trace.overflowCrossingEdges : [],
+				options.sinkMode === "overflow_guided"
+					? trace.overflowCrossingEdges
+					: [],
 		});
 	}
 } catch (error: unknown) {

@@ -20,18 +20,24 @@ function runCli(args = []) {
 		child.stdout.on("data", (chunk) => (stdout += chunk));
 		child.stderr.on("data", (chunk) => (stderr += chunk));
 		child.once("error", rejectResult);
-		child.once("close", (code) => resolveResult({ code: code ?? 0, stdout, stderr }));
+		child.once("close", (code) =>
+			resolveResult({ code: code ?? 0, stdout, stderr }),
+		);
 	});
 }
 
 async function makeTempDir() {
-	const dir = await mkdtemp(join(tmpdir(), "forest-terrain-generator-hydrology-inspector-"));
+	const dir = await mkdtemp(
+		join(tmpdir(), "forest-terrain-generator-hydrology-inspector-"),
+	);
 	tempDirs.push(dir);
 	return dir;
 }
 
 afterEach(async () => {
-	await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
+	await Promise.all(
+		tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })),
+	);
 });
 
 describe("hydrology-inspector CLI", () => {
@@ -44,8 +50,18 @@ describe("hydrology-inspector CLI", () => {
 				meta: { specVersion: "forest-terrain-v1" },
 				tiles: [
 					{ x: 0, y: 0, topography: { h: 0.2, r: 0, v: 0 } },
-					{ x: 1, y: 0, topography: { h: 0.1, r: 0, v: 0 }, featureIds: ["b_00000"] },
-					{ x: 2, y: 0, topography: { h: 0.3, r: 0, v: 0 }, featureIds: ["b_00000"] },
+					{
+						x: 1,
+						y: 0,
+						topography: { h: 0.1, r: 0, v: 0 },
+						featureIds: ["b_00000"],
+					},
+					{
+						x: 2,
+						y: 0,
+						topography: { h: 0.3, r: 0, v: 0 },
+						featureIds: ["b_00000"],
+					},
 				],
 				features: {
 					basins: [
@@ -73,7 +89,14 @@ describe("hydrology-inspector CLI", () => {
 			"utf8",
 		);
 
-		const strict = await runCli(["--input-json", sourceFile, "--x", "0", "--y", "0"]);
+		const strict = await runCli([
+			"--input-json",
+			sourceFile,
+			"--x",
+			"0",
+			"--y",
+			"0",
+		]);
 		expect(strict.code).toBe(0);
 		expect(strict.stdout.trim().split("\n").length).toBe(1);
 
@@ -89,5 +112,87 @@ describe("hydrology-inspector CLI", () => {
 		]);
 		expect(guided.code).toBe(0);
 		expect(guided.stdout.trim().split("\n").length).toBe(2);
+	});
+
+	it("prefers envelope hydrology maps when present", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-with-hydrology.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				tiles: [
+					{
+						x: 0,
+						y: 0,
+						topography: { h: 0.8, r: 0, v: 0 },
+						hydrology: { fd: 3, fa: 11, faN: 0.25, isStream: true },
+					},
+					{
+						x: 1,
+						y: 0,
+						topography: { h: 0.5, r: 0, v: 0 },
+						hydrology: { fd: 255, fa: 2, faN: 0.05, isStream: false },
+					},
+				],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--x",
+			"0",
+			"--y",
+			"0",
+			"--debug",
+		]);
+		expect(result.code).toBe(0);
+		const payload = JSON.parse(result.stdout.trim());
+		expect(payload.hydrologyMapsSource).toBe("envelope");
+		expect(payload.hydrologyAtSource).toEqual({
+			fd: 3,
+			fa: 11,
+			faN: 0.25,
+			isStream: true,
+		});
+	});
+
+	it("recomputes hydrology maps when envelope hydrology is absent", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-no-hydrology.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				tiles: [
+					{ x: 0, y: 0, topography: { h: 0.9, r: 0, v: 0 } },
+					{ x: 1, y: 0, topography: { h: 0.4, r: 0, v: 0 } },
+				],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--x",
+			"0",
+			"--y",
+			"0",
+			"--debug",
+		]);
+		expect(result.code).toBe(0);
+		const payload = JSON.parse(result.stdout.trim());
+		expect(payload.hydrologyMapsSource).toBe("recomputed");
+		expect(payload.hydrologyAtSource).toMatchObject({
+			fd: expect.any(Number),
+			fa: expect.any(Number),
+			faN: expect.any(Number),
+			isStream: expect.any(Boolean),
+		});
 	});
 });

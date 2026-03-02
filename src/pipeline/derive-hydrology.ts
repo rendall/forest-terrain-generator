@@ -1,13 +1,16 @@
 import {
+	createHydrologyMaps,
 	DIR8_CODE,
 	DIR8_NONE,
-	WATER_CLASS_CODE,
-	createHydrologyMaps,
 	type HydrologyMapsSoA,
+	WATER_CLASS_CODE,
 } from "../domain/hydrology.js";
 import type { TopographicFeatureNode } from "../domain/topographic-features.js";
+import type {
+	GridShape,
+	TopographicStructureMapsSoA,
+} from "../domain/topography.js";
 import type { JsonObject } from "../domain/types.js";
-import type { GridShape, TopographicStructureMapsSoA } from "../domain/topography.js";
 
 export interface StreamCoherenceMetrics {
 	enabled: boolean;
@@ -64,13 +67,17 @@ const isObject = (value: unknown): value is JsonObject =>
 	typeof value === "object" && value !== null && !Array.isArray(value);
 
 const readHydrologyParams = (params: JsonObject): HydrologyParams => {
-	const hydrology = isObject(params.hydrology) ? (params.hydrology as JsonObject) : {};
+	const hydrology = isObject(params.hydrology)
+		? (params.hydrology as JsonObject)
+		: {};
 	const sinkModeRaw = hydrology.sinkMode;
 	const sinkMode =
 		sinkModeRaw === "overflow_guided" ? "overflow_guided" : "strict_local";
 	const faThresholdRaw = hydrology.faThreshold;
 	const faThreshold =
-		typeof faThresholdRaw === "number" && Number.isFinite(faThresholdRaw) && faThresholdRaw >= 0
+		typeof faThresholdRaw === "number" &&
+		Number.isFinite(faThresholdRaw) &&
+		faThresholdRaw >= 0
 			? Math.floor(faThresholdRaw)
 			: 16;
 	const quantileRaw = hydrology.faQuantileThreshold;
@@ -86,7 +93,8 @@ const indexToXY = (shape: GridShape, index: number): [number, number] => [
 	Math.floor(index / shape.width),
 ];
 
-const toIndex = (shape: GridShape, x: number, y: number): number => y * shape.width + x;
+const toIndex = (shape: GridShape, x: number, y: number): number =>
+	y * shape.width + x;
 
 const compareCandidates = (
 	shape: GridShape,
@@ -97,19 +105,10 @@ const compareCandidates = (
 	const [cx, cy] = indexToXY(shape, current);
 	const [ax, ay] = indexToXY(shape, a);
 	const [bx, by] = indexToXY(shape, b);
-	const centerX = (shape.width - 1) / 2;
-	const centerY = (shape.height - 1) / 2;
-	const dirX = centerX - cx;
-	const dirY = centerY - cy;
-	const aFlow = (ax - cx) * dirX + (ay - cy) * dirY;
-	const bFlow = (bx - cx) * dirX + (by - cy) * dirY;
-	if (aFlow !== bFlow) {
-		return bFlow - aFlow;
-	}
-	const aCenterDist = (centerX - ax) ** 2 + (centerY - ay) ** 2;
-	const bCenterDist = (centerX - bx) ** 2 + (centerY - by) ** 2;
-	if (aCenterDist !== bCenterDist) {
-		return aCenterDist - bCenterDist;
+	const aDistance = Math.abs(ax - cx) + Math.abs(ay - cy);
+	const bDistance = Math.abs(bx - cx) + Math.abs(by - cy);
+	if (aDistance !== bDistance) {
+		return aDistance - bDistance;
 	}
 	return a - b;
 };
@@ -142,15 +141,72 @@ const chooseDownhill = (
 			best = candidate;
 			continue;
 		}
-		if (h[candidate] === h[best] && compareCandidates(shape, current, candidate, best) < 0) {
+		if (
+			h[candidate] === h[best] &&
+			compareCandidates(shape, current, candidate, best) < 0
+		) {
 			best = candidate;
 		}
 	}
 	return best;
 };
 
-const resolveOverflowTarget = (
+const collectBasinTileSets = (
 	basinsById: Map<string, TopographicFeatureNode>,
+): Map<string, Set<number>> => {
+	const cache = new Map<string, Set<number>>();
+	const resolve = (basinId: string, visiting: Set<string>): Set<number> => {
+		const cached = cache.get(basinId);
+		if (cached) {
+			return cached;
+		}
+		if (visiting.has(basinId)) {
+			return new Set<number>();
+		}
+		visiting.add(basinId);
+		const basin = basinsById.get(basinId);
+		const tileSet = new Set<number>(
+			Array.isArray(basin?.tileIds)
+				? basin.tileIds.filter(
+						(value): value is number =>
+							typeof value === "number" &&
+							Number.isInteger(value) &&
+							value >= 0,
+					)
+				: [],
+		);
+		const childIds = Array.isArray(basin?.childIds)
+			? basin.childIds.filter(
+					(value): value is string => typeof value === "string",
+				)
+			: [];
+		for (const childId of childIds) {
+			for (const tileId of resolve(childId, visiting)) {
+				tileSet.add(tileId);
+			}
+		}
+		visiting.delete(basinId);
+		cache.set(basinId, tileSet);
+		return tileSet;
+	};
+	for (const basinId of basinsById.keys()) {
+		resolve(basinId, new Set<string>());
+	}
+	return cache;
+};
+
+const isAdjacentDir8 = (shape: GridShape, a: number, b: number): boolean => {
+	const [ax, ay] = indexToXY(shape, a);
+	const [bx, by] = indexToXY(shape, b);
+	const dx = Math.abs(ax - bx);
+	const dy = Math.abs(ay - by);
+	return (dx > 0 || dy > 0) && dx <= 1 && dy <= 1;
+};
+
+const resolveOverflowTarget = (
+	shape: GridShape,
+	basinsById: Map<string, TopographicFeatureNode>,
+	basinTileSets: Map<string, Set<number>>,
 	basinIdByTile: string[],
 	current: number,
 	size: number,
@@ -163,16 +219,39 @@ const resolveOverflowTarget = (
 	if (!basin) {
 		return null;
 	}
-	const candidate =
-		typeof basin.parentContactTileId === "number"
+	const spillFrom =
+		typeof basin.childSpillFromTileId === "number" &&
+		Number.isInteger(basin.childSpillFromTileId)
+			? basin.childSpillFromTileId
+			: null;
+	const spillTo =
+		typeof basin.parentContactTileId === "number" &&
+		Number.isInteger(basin.parentContactTileId)
 			? basin.parentContactTileId
-			: typeof basin.spillOutTileId === "number"
-				? basin.spillOutTileId
-				: null;
-	if (candidate === null || candidate < 0 || candidate >= size || candidate === current) {
+			: null;
+	if (spillFrom === null || spillTo === null) {
 		return null;
 	}
-	return candidate;
+	if (
+		spillFrom < 0 ||
+		spillFrom >= size ||
+		spillTo < 0 ||
+		spillTo >= size ||
+		spillTo === current
+	) {
+		return null;
+	}
+	const basinTiles = basinTileSets.get(basinId);
+	if (!basinTiles || !basinTiles.has(spillFrom) || basinTiles.has(spillTo)) {
+		return null;
+	}
+	if (!isAdjacentDir8(shape, spillFrom, spillTo)) {
+		return null;
+	}
+	if (current !== spillFrom) {
+		return null;
+	}
+	return spillTo;
 };
 
 const setFlowDirCode = (shape: GridShape, from: number, to: number): number => {
@@ -185,15 +264,25 @@ const setFlowDirCode = (shape: GridShape, from: number, to: number): number => {
 export const deriveHydrology = (
 	shape: GridShape,
 	topographyH: Float32Array,
-	topographicStructure: Pick<TopographicStructureMapsSoA, "basinFeatures" | "tileFeatureIds">,
+	topographicStructure: Pick<
+		TopographicStructureMapsSoA,
+		"basinFeatures" | "tileFeatureIds"
+	>,
 	params: JsonObject,
 ): HydrologyDeriveResult => {
 	const cfg = readHydrologyParams(params);
 	const maps = createHydrologyMaps(shape);
 	const basinsById = new Map<string, TopographicFeatureNode>();
-	topographicStructure.basinFeatures.forEach((b) => basinsById.set(b.id, b));
-	const basinIdByTile = Array.from({ length: shape.size }, (_, i) =>
-		topographicStructure.tileFeatureIds[i]?.find((id) => id.startsWith("b_")) ?? "",
+	for (const basin of topographicStructure.basinFeatures) {
+		basinsById.set(basin.id, basin);
+	}
+	const basinTileSets = collectBasinTileSets(basinsById);
+	const basinIdByTile = Array.from(
+		{ length: shape.size },
+		(_, i) =>
+			topographicStructure.tileFeatureIds[i]?.find((id) =>
+				id.startsWith("b_"),
+			) ?? "",
 	);
 	let overflowFallbackCount = 0;
 	let overflowAppliedCount = 0;
@@ -206,7 +295,14 @@ export const deriveHydrology = (
 			continue;
 		}
 		if (cfg.sinkMode === "overflow_guided") {
-			const target = resolveOverflowTarget(basinsById, basinIdByTile, i, shape.size);
+			const target = resolveOverflowTarget(
+				shape,
+				basinsById,
+				basinTileSets,
+				basinIdByTile,
+				i,
+				shape.size,
+			);
 			if (target !== null) {
 				maps.fd[i] = setFlowDirCode(shape, i, target);
 				maps.inDeg[target] += 1;
@@ -235,7 +331,9 @@ export const deriveHydrology = (
 			continue;
 		}
 		const [x, y] = indexToXY(shape, i);
-		const neighbor = NEIGHBORS.find(({ dx, dy }) => (DIR_BY_DELTA.get(`${dx},${dy}`) ?? -1) === code);
+		const neighbor = NEIGHBORS.find(
+			({ dx, dy }) => (DIR_BY_DELTA.get(`${dx},${dy}`) ?? -1) === code,
+		);
 		if (!neighbor) {
 			continue;
 		}
@@ -268,12 +366,16 @@ export const deriveHydrology = (
 		maxFa = Math.max(maxFa, maps.fa[i]);
 	}
 	const quantileThreshold = cfg.quantileThreshold;
-	const faSorted = quantileThreshold !== undefined ? Array.from(maps.fa).sort((a, b) => a - b) : [];
+	const faSorted =
+		quantileThreshold !== undefined
+			? Array.from(maps.fa).sort((a, b) => a - b)
+			: [];
 	const quantileCut =
 		quantileThreshold !== undefined && faSorted.length > 0
 			? faSorted[Math.floor((faSorted.length - 1) * quantileThreshold)]
 			: 0;
-	const threshold = quantileThreshold === undefined ? cfg.faThreshold : quantileCut;
+	const threshold =
+		quantileThreshold === undefined ? cfg.faThreshold : quantileCut;
 
 	let streamTiles = 0;
 	let sinkCount = 0;

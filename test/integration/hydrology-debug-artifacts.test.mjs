@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -9,10 +9,14 @@ const tempDirs = [];
 
 function runCli(args = []) {
 	return new Promise((resolveResult, rejectResult) => {
-		const child = spawn(process.execPath, ["--import", "tsx", CLI_ENTRY, ...args], {
-			cwd: process.cwd(),
-			env: { ...process.env, FORCE_COLOR: "0" },
-		});
+		const child = spawn(
+			process.execPath,
+			["--import", "tsx", CLI_ENTRY, ...args],
+			{
+				cwd: process.cwd(),
+				env: { ...process.env, FORCE_COLOR: "0" },
+			},
+		);
 		let stdout = "";
 		let stderr = "";
 		child.stdout.setEncoding("utf8");
@@ -20,18 +24,24 @@ function runCli(args = []) {
 		child.stdout.on("data", (chunk) => (stdout += chunk));
 		child.stderr.on("data", (chunk) => (stderr += chunk));
 		child.once("error", rejectResult);
-		child.once("close", (code) => resolveResult({ code: code ?? 0, stdout, stderr }));
+		child.once("close", (code) =>
+			resolveResult({ code: code ?? 0, stdout, stderr }),
+		);
 	});
 }
 
 async function makeTempDir() {
-	const dir = await mkdtemp(join(tmpdir(), "forest-terrain-generator-hydrology-debug-"));
+	const dir = await mkdtemp(
+		join(tmpdir(), "forest-terrain-generator-hydrology-debug-"),
+	);
 	tempDirs.push(dir);
 	return dir;
 }
 
 afterEach(async () => {
-	await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
+	await Promise.all(
+		tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })),
+	);
 });
 
 describe("hydrology debug artifacts", () => {
@@ -57,5 +67,25 @@ describe("hydrology debug artifacts", () => {
 		expect(hydrology.tiles[0].hydrology).toHaveProperty("fa");
 		expect(hydrology.tiles[0].hydrology).toHaveProperty("faN");
 		expect(hydrology.tiles[0].hydrology).toHaveProperty("isStream");
+
+		await expect(stat(join(outDir, "fd.json"))).resolves.toBeDefined();
+		await expect(stat(join(outDir, "fa.json"))).resolves.toBeDefined();
+		await expect(
+			stat(join(outDir, "fa-normalized.json")),
+		).resolves.toBeDefined();
+		await expect(stat(join(outDir, "stream-mask.json"))).resolves.toBeDefined();
+
+		const fd = JSON.parse(await readFile(join(outDir, "fd.json"), "utf8"));
+		const fa = JSON.parse(await readFile(join(outDir, "fa.json"), "utf8"));
+		const faNormalized = JSON.parse(
+			await readFile(join(outDir, "fa-normalized.json"), "utf8"),
+		);
+		const streamMask = JSON.parse(
+			await readFile(join(outDir, "stream-mask.json"), "utf8"),
+		);
+		expect(fd.tiles[0]).toHaveProperty("fd");
+		expect(fa.tiles[0]).toHaveProperty("fa");
+		expect(faNormalized.tiles[0]).toHaveProperty("faN");
+		expect(streamMask.tiles[0]).toHaveProperty("isStream");
 	});
 });
