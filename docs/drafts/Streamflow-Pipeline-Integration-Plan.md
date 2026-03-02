@@ -68,7 +68,7 @@ The Stream CLI remains a targeted inspection tool that can query/visualize these
 
 - Use deterministic **D8 single-flow routing**.
 - For each tile, select strictly downhill neighbor with lowest `h`.
-- Stable tie-break by index order.
+- Stable tie-break preference for equal-height downhill candidates: (1) in direction of flow, (2) toward map center, (3) tile index.
 - If no downhill neighbor exists, route = NONE (sink).
 
 ### 5.2 Sink handling policy
@@ -116,6 +116,29 @@ To avoid breaking current envelope consumers:
 
 ---
 
+
+## 6.1) Specific Integration Mechanism (Pipeline Topology)
+
+Yes — the intended integration path is the same pipeline flow used by other derived products.
+
+Proposed new pipeline module:
+
+- `src/pipeline/derive-hydrology.ts`
+
+Proposed orchestration point:
+
+- `src/app/run-generator.ts`, immediately after `deriveTopographicStructure(...)` and before envelope tile serialization.
+
+Planned call sequence in `runGenerator`:
+
+1. Resolve/generate base maps (`resolveBaseMaps`).
+2. Derive topography (`deriveTopographyFromBaseMaps`).
+3. Derive structure (`deriveTopographicStructure`).
+4. **Derive hydrology (`deriveHydrology`)** from shape + `topography.h` + structure feature links/params.
+5. Serialize envelope/debug outputs (initially debug/internal only for hydrology products).
+
+The reason for this placement is that hydrology depends on finalized height/topography and (for overflow-guided mode) basin/feature relationships already produced by topographic structure.
+
 ## 7) Integration Plan (Phased)
 
 ### Phase A: Internal pipeline hydrology maps
@@ -133,13 +156,11 @@ To avoid breaking current envelope consumers:
   - `stream-mask.json`
 - Add optional visualization helper output (PPM/PGM overlays).
 
-### Phase C: Hydrology inspector rollout (without changing `stream` toy behavior)
+### Phase C: Inspector planning (no implementation yet)
 
 - Keep `stream` unchanged as the existing toy/experimental tracer.
-- Introduce `hydrology-inspector` as a copied/evolved CLI for production-facing inspection workflows.
-- Make `hydrology-inspector` read pipeline hydrology maps when present.
-- Preserve single-source trace mode for route introspection.
-- Add command mode for reporting local accumulation at `(x,y)`.
+- Plan a future `hydrology-inspector` CLI as a separate inspector surface, but do not implement it until approved.
+- Design expectation for that future inspector: read pipeline hydrology maps when present, preserve single-source trace mode, and optionally report local accumulation at `(x,y)`.
 
 ### Phase D: Contract decision
 
@@ -190,7 +211,7 @@ Implementation note: document all ordering rules explicitly and lock with tests.
 
 1. Should v1 default to `strict_local` or `overflow_guided` accumulation?
 2. Do we want thresholding by absolute `fa` or by quantile `faN` as default?
-3. Should `hydrology-inspector` eventually become a subcommand of main CLI, or remain separate?
+3. For a future `hydrology-inspector`, should it become a subcommand of main CLI, or remain separate?
 4. At what phase should hydrology values become part of public envelope tile schema?
 5. Do we want a dedicated ADR before Phase A or only before Phase D?
 
