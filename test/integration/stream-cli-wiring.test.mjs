@@ -38,7 +38,9 @@ function runCli(entry, args = []) {
 }
 
 async function makeTempDir() {
-	const dir = await mkdtemp(join(tmpdir(), "forest-terrain-generator-stream-cli-"));
+	const dir = await mkdtemp(
+		join(tmpdir(), "forest-terrain-generator-stream-cli-"),
+	);
 	tempDirs.push(dir);
 	return dir;
 }
@@ -429,7 +431,7 @@ describe("stream CLI wiring", () => {
 				stepsTaken: 2,
 			},
 		]);
-		expect(parsed.continuePathTileIds).toEqual([8, 10, 9]);
+		expect(parsed.continuePathTileIds).toEqual([8]);
 		expect(parsed.segments).toEqual([
 			{
 				kind: "downhill",
@@ -452,9 +454,9 @@ describe("stream CLI wiring", () => {
 			{
 				kind: "downhill",
 				startTileId: 8,
-				tileIds: [8, 10, 9],
-				reason: "sea_level",
-				stepsTaken: 3,
+				tileIds: [8],
+				reason: "local_minimum",
+				stepsTaken: 1,
 			},
 		]);
 		expect(parsed.overflowConnectorTileIds.at(-1)).toBe(5);
@@ -477,6 +479,11 @@ describe("stream CLI wiring", () => {
 				basinId: "b_00000",
 				parentBasinId: "b_parent",
 				atTileId: 8,
+			},
+			{
+				type: "overflow_no_spill_edge",
+				basinId: null,
+				sinkTileId: 8,
 			},
 		]);
 	});
@@ -846,9 +853,11 @@ describe("stream CLI wiring", () => {
 				stepsTaken: 2,
 			},
 		]);
-		expect(parsed.overflowEvents.some((event) => event.type === "overflow_connector")).toBe(
-			true,
-		);
+		expect(
+			parsed.overflowEvents.some(
+				(event) => event.type === "overflow_connector",
+			),
+		).toBe(true);
 		expect(
 			parsed.overflowEvents.some(
 				(event) => event.type === "overflow_no_spill_tile_in_basin",
@@ -937,9 +946,7 @@ describe("stream CLI wiring", () => {
 		const parentContactTileIndex = 8;
 		const parentBase = parentContactTileIndex * 3;
 		expect(Array.from(pixels.subarray(parentBase, parentBase + 3))).toEqual([
-			255,
-			80,
-			0,
+			255, 80, 0,
 		]);
 	});
 

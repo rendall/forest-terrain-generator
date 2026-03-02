@@ -235,6 +235,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			undefined,
 			hydrology.diagnostics,
 			hydrology.maps,
+			hydrology.lakeAccounting,
 		);
 		return;
 	}
@@ -315,5 +316,6 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		topographyStructure,
 		hydrology.diagnostics,
 		hydrology.maps,
+		hydrology.lakeAccounting,
 	);
 }

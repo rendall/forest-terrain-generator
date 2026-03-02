@@ -60,13 +60,17 @@ describe("hydrology debug artifacts", () => {
 			outDir,
 		]);
 		expect(result.code).toBe(0);
-		const hydrologyRaw = await readFile(join(outDir, "hydrology.json"), "utf8");
-		const hydrology = JSON.parse(hydrologyRaw);
-		expect(Array.isArray(hydrology.tiles)).toBe(true);
-		expect(hydrology.tiles[0].hydrology).toHaveProperty("fd");
-		expect(hydrology.tiles[0].hydrology).toHaveProperty("fa");
-		expect(hydrology.tiles[0].hydrology).toHaveProperty("faN");
-		expect(hydrology.tiles[0].hydrology).toHaveProperty("isStream");
+			const hydrologyRaw = await readFile(join(outDir, "hydrology.json"), "utf8");
+			const hydrology = JSON.parse(hydrologyRaw);
+			expect(hydrology.lakeAccounting).toBeDefined();
+			expect(Array.isArray(hydrology.lakeAccounting.basins)).toBe(true);
+			expect(Array.isArray(hydrology.tiles)).toBe(true);
+			expect(hydrology.tiles[0].hydrology).toHaveProperty("fd");
+			expect(hydrology.tiles[0].hydrology).toHaveProperty("fa");
+			expect(hydrology.tiles[0].hydrology).toHaveProperty("faN");
+			expect(hydrology.tiles[0].hydrology).toHaveProperty("isStream");
+			expect(hydrology.tiles[0].hydrology).toHaveProperty("lakeDepth");
+			expect(hydrology.tiles[0].hydrology).toHaveProperty("lakeBasinId");
 
 		await expect(stat(join(outDir, "fd.json"))).resolves.toBeDefined();
 		await expect(stat(join(outDir, "fa.json"))).resolves.toBeDefined();

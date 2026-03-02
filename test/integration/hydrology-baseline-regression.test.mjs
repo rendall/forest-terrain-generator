@@ -49,10 +49,6 @@ describe("hydrology baseline regression", () => {
 		const result = await runCli([
 			"--input-json",
 			FIXTURE_ENVELOPE,
-			"--x",
-			"10",
-			"--y",
-			"10",
 			"--debug-dir",
 			FIXTURE_DEBUG_DIR,
 			"--stats",
