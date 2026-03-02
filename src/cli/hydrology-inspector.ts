@@ -1,4 +1,47 @@
 #!/usr/bin/env node
+/**
+ * Hydrology Inspector CLI Manual
+ *
+ * Purpose:
+ * - Inspect hydrology routing from one source tile `(x,y)` against an envelope JSON.
+ * - Compare sink behavior between `strict_local` and `overflow_guided`.
+ * - Optionally write a PPM overlay for quick visual inspection.
+ *
+ * Basic Usage:
+ * - `node --import tsx src/cli/hydrology-inspector.ts --input-json <file> --x <int> --y <int>`
+ * - Required flags:
+ *   - `--input-json <path>`: terrain envelope file
+ *   - `--x <number>`, `--y <number>`: source tile coordinates
+ *
+ * Main Options:
+ * - `--sink-mode strict_local|overflow_guided`
+ *   - `strict_local` (default): downhill-only trace, stops at local minimum / sea level / max steps.
+ *   - `overflow_guided`: includes overflow continuation metadata/events.
+ * - `--max-steps <number>`: hard cap for tracing steps.
+ * - `--debug`: emit full diagnostics (step-by-step neighbors, segments, events, warnings).
+ * - `--output-ppm <path>`: write grayscale height map with traced stream overlays.
+ * - `--force`: allow replacing existing `--output-ppm` target.
+ *
+ * Accepted-but-ignored (current behavior):
+ * - `--water-level <number>`
+ * - `--volume <number>`
+ * These are parsed for forward compatibility and currently not used in routing decisions.
+ *
+ * Output Shape:
+ * - Always prints pretty JSON.
+ * - Non-debug:
+ *   - `{ path: [...] }`
+ *   - plus `{ overflow: {...} }` when `--sink-mode overflow_guided`.
+ * - Debug (`--debug`):
+ *   - Includes `path`, `hydrologyMapsSource`, `hydrologyAtSource`, `debugSteps`,
+ *     `segments`, `overflowEvents`, tile-id sets, and warnings.
+ *
+ * Notes:
+ * - `hydrologyMapsSource` indicates whether inspector used envelope hydrology maps
+ *   (`"envelope"`) or recomputed them (`"recomputed"`).
+ * - In overflow-guided mode, event count can be large on complex terrain because each
+ *   overflow hop emits connector/crossing/parent events.
+ */
 import { Command, CommanderError } from "commander";
 import {
 	runHydrologyInspectorTrace,
@@ -18,6 +61,10 @@ interface HydrologyInspectorOptions {
 	outputPpm?: string;
 	force?: boolean;
 }
+
+const printJson = (value: unknown): void => {
+	console.log(JSON.stringify(value, null, 2));
+};
 
 const program = new Command();
 program
@@ -71,35 +118,79 @@ try {
 		},
 	});
 	if (options.debug) {
-		console.log(
-			JSON.stringify({
-				path: trace.path,
-				hydrologyMapsSource: trace.hydrologyMapsSource,
-				hydrologyAtSource: trace.hydrologyAtSource,
-				debugSteps: trace.debugSteps,
-				pathTileIds: trace.pathTileIds,
-				continuePathTileIds: trace.continuePathTileIds,
-				segments: trace.segments,
-				routingExcludedTileIds: trace.routingExcludedTileIds,
-				overflowConnectorTileIds: trace.overflowConnectorTileIds,
-				overflowCrossingEdges: trace.overflowCrossingEdges,
-				overflowEvents: trace.overflowEvents,
-				warnings: trace.debugWarnings,
-			}),
-		);
+		printJson({
+			path: trace.path,
+			hydrologyMapsSource: trace.hydrologyMapsSource,
+			hydrologyAtSource: trace.hydrologyAtSource,
+			debugSteps: trace.debugSteps,
+			pathTileIds: trace.pathTileIds,
+			continuePathTileIds: trace.continuePathTileIds,
+			segments: trace.segments,
+			routingExcludedTileIds: trace.routingExcludedTileIds,
+			overflowConnectorTileIds: trace.overflowConnectorTileIds,
+			overflowCrossingEdges: trace.overflowCrossingEdges,
+			overflowEvents: trace.overflowEvents,
+			warnings: trace.debugWarnings,
+		});
 	} else {
-		console.log(JSON.stringify(trace.path));
+		const payload: Record<string, unknown> = {
+			path: trace.path,
+		};
 		if (options.sinkMode === "overflow_guided") {
-			console.log(
-				JSON.stringify({
-					overflow: {
-						ran: true,
-						connectorLen: trace.overflowConnectorTileIds.length,
-						events: trace.overflowEvents.map((event) => event.type),
-					},
-				}),
-			);
+			const overflowEvents = trace.overflowEvents.map((event) => {
+				if (event.type === "overflow_connector") {
+					return {
+						type: event.type,
+						basinId: event.basinId,
+						fromTileId: event.fromTileId,
+						toTileId: event.toTileId,
+					};
+				}
+				if (event.type === "overflow_crossing") {
+					return {
+						type: event.type,
+						basinId: event.basinId,
+						fromTileId: event.fromTileId,
+						toTileId: event.toTileId,
+					};
+				}
+				if (event.type === "overflow_to_parent") {
+					return {
+						type: event.type,
+						basinId: event.basinId,
+						parentBasinId: event.parentBasinId,
+						atTileId: event.atTileId,
+					};
+				}
+				if (event.type === "cycle_detected") {
+					return {
+						type: event.type,
+						basinId: event.basinId,
+						atTileId: event.atTileId,
+					};
+				}
+				if (event.type === "overflow_no_spill_tile_in_basin") {
+					return {
+						type: event.type,
+						basinId: event.basinId,
+						sinkTileId: event.sinkTileId,
+						spillTileId: event.spillTileId,
+					};
+				}
+				return {
+					type: event.type,
+					basinId: event.basinId,
+					sinkTileId: event.sinkTileId,
+				};
+			});
+			payload.overflow = {
+				ran: true,
+				connectorLen: trace.overflowConnectorTileIds.length,
+				eventCount: overflowEvents.length,
+				events: overflowEvents,
+			};
 		}
+		printJson(payload);
 	}
 	if (options.outputPpm) {
 		await writeHydrologyInspectorOverlayPpm({

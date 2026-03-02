@@ -98,7 +98,9 @@ describe("hydrology-inspector CLI", () => {
 			"0",
 		]);
 		expect(strict.code).toBe(0);
-		expect(strict.stdout.trim().split("\n").length).toBe(1);
+		const strictPayload = JSON.parse(strict.stdout.trim());
+		expect(Array.isArray(strictPayload.path)).toBe(true);
+		expect(Object.hasOwn(strictPayload, "overflow")).toBe(false);
 
 		const guided = await runCli([
 			"--input-json",
@@ -111,7 +113,22 @@ describe("hydrology-inspector CLI", () => {
 			"overflow_guided",
 		]);
 		expect(guided.code).toBe(0);
-		expect(guided.stdout.trim().split("\n").length).toBe(2);
+		const guidedPayload = JSON.parse(guided.stdout.trim());
+		expect(Array.isArray(guidedPayload.path)).toBe(true);
+		expect(guidedPayload.overflow.ran).toBe(true);
+		expect(guidedPayload.overflow.eventCount).toBeGreaterThan(0);
+		expect(Array.isArray(guidedPayload.overflow.events)).toBe(true);
+		expect(guidedPayload.overflow.events[0]).toMatchObject({
+			type: expect.any(String),
+		});
+		const eventHasTileRef = guidedPayload.overflow.events.some(
+			(event) =>
+				typeof event.fromTileId === "number" ||
+				typeof event.toTileId === "number" ||
+				typeof event.atTileId === "number" ||
+				typeof event.sinkTileId === "number",
+		);
+		expect(eventHasTileRef).toBe(true);
 	});
 
 	it("prefers envelope hydrology maps when present", async () => {
