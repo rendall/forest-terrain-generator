@@ -23,7 +23,7 @@ Commands:
 
 ## Other CLIs
 
-- `hydrology-inspector`: Inspect hydrology maps via stats and visualization outputs (`fa`, `fd`, `fa-normalized`, `hydrology`) from an envelope/debug dir.
+- `hydrology-inspector`: Inspect hydrology maps via stats and visualization outputs (`fa`, `fd`, `fa-normalized`, `carry-over`, `hydrology`) from an envelope/debug dir.
 
 Example:
 

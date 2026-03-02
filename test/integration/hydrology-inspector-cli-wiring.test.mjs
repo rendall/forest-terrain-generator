@@ -258,13 +258,14 @@ describe("hydrology-inspector CLI", () => {
 		]);
 		expect(result.code).toBe(0);
 		const payload = JSON.parse(result.stdout.trim());
-		expect(payload.viz.writtenFiles).toHaveLength(4);
+		expect(payload.viz.writtenFiles).toHaveLength(5);
 		expect(payload.stats).toBeDefined();
 		await expect(stat(join(debugDir, "fa.ppm"))).resolves.toBeDefined();
 		await expect(stat(join(debugDir, "fd.ppm"))).resolves.toBeDefined();
 		await expect(
 			stat(join(debugDir, "fa-normalized.ppm")),
 		).resolves.toBeDefined();
+		await expect(stat(join(debugDir, "carry-over.ppm"))).resolves.toBeDefined();
 		await expect(stat(join(debugDir, "hydrology.ppm"))).resolves.toBeDefined();
 		await expect(
 			stat(join(debugDir, "hydrology-inspector-stats.json")),

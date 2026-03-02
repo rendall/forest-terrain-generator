@@ -16,6 +16,7 @@ export type HydrologyVizMode =
 	| "fa"
 	| "fd"
 	| "fa-normalized"
+	| "carry-over"
 	| "hydrology"
 	| "all";
 
@@ -40,6 +41,7 @@ interface HydrologyContext {
 	h: Float32Array;
 	maps: HydrologyMapsSoA;
 	lakeAccountingBasins: BasinLakeAccounting[];
+	tileLakeBasinId: string[];
 }
 
 interface VisualizationNeeds {
@@ -266,7 +268,8 @@ const buildNeeds = (
 		needFa: vizMode === "fa" || statsEnabled,
 		needFd: vizMode === "fd" || statsEnabled,
 		needFaN: vizMode === "fa-normalized" || statsEnabled,
-		needHydrology: vizMode === "hydrology" || statsEnabled,
+		needHydrology:
+			vizMode === "hydrology" || vizMode === "carry-over" || statsEnabled,
 		needStats: statsEnabled,
 	};
 };
@@ -311,6 +314,7 @@ const loadContextFromDebugArtifacts = async (
 	}
 
 	const maps = createHydrologyMaps(shape);
+	const tileLakeBasinId = new Array<string>(shape.size).fill("");
 	const requiredFiles = new Set<string>();
 	if (needs.needFd) {
 		requiredFiles.add("fd.json");
@@ -432,6 +436,11 @@ const loadContextFromDebugArtifacts = async (
 			if (!needs.needFaN && faN !== null) {
 				maps.faN[index] = faN;
 			}
+			const lakeBasinId =
+				typeof hydrology?.lakeBasinId === "string"
+					? hydrology.lakeBasinId
+					: "";
+			tileLakeBasinId[index] = lakeBasinId;
 		});
 
 		const lakeAccountingRaw = isObject(hydrologyDoc.lakeAccounting)
@@ -441,14 +450,15 @@ const loadContextFromDebugArtifacts = async (
 			? (lakeAccountingRaw.basins as BasinLakeAccounting[])
 			: [];
 
-		return {
-			source: "debug_artifacts",
-			shape,
-			h,
-			maps,
-			lakeAccountingBasins,
-		};
-	}
+			return {
+				source: "debug_artifacts",
+				shape,
+				h,
+				maps,
+				lakeAccountingBasins,
+				tileLakeBasinId,
+			};
+		}
 
 	return {
 		source: "debug_artifacts",
@@ -456,6 +466,7 @@ const loadContextFromDebugArtifacts = async (
 		h,
 		maps,
 		lakeAccountingBasins: [],
+		tileLakeBasinId,
 	};
 };
 
@@ -529,6 +540,7 @@ const buildContextFromEnvelope = async (
 
 	if (hasEnvelopeHydrologyFields) {
 		const maps = createHydrologyMaps(shape);
+		const tileLakeBasinId = new Array<string>(shape.size).fill("");
 		for (const tile of envelope.tiles) {
 			if (
 				typeof tile.x !== "number" ||
@@ -567,22 +579,27 @@ const buildContextFromEnvelope = async (
 				if (lakeSurfaceH !== null) {
 					maps.lakeSurfaceH[index] = lakeSurfaceH;
 				}
-				if (
-					waterClass !== null &&
-					Number.isInteger(waterClass) &&
-					waterClass >= 0
-				) {
-					maps.waterClass[index] = waterClass;
+					if (
+						waterClass !== null &&
+						Number.isInteger(waterClass) &&
+						waterClass >= 0
+					) {
+						maps.waterClass[index] = waterClass;
+					}
+					tileLakeBasinId[index] =
+						typeof hydrology?.lakeBasinId === "string"
+							? hydrology.lakeBasinId
+							: "";
 				}
+				return {
+					source: "envelope",
+					shape,
+					h,
+					maps,
+					lakeAccountingBasins: [],
+					tileLakeBasinId,
+				};
 			}
-			return {
-				source: "envelope",
-				shape,
-				h,
-				maps,
-				lakeAccountingBasins: [],
-			};
-		}
 
 	const derived = deriveHydrology(
 		shape,
@@ -599,6 +616,7 @@ const buildContextFromEnvelope = async (
 		h,
 		maps: derived.maps,
 		lakeAccountingBasins: derived.lakeAccounting.basins,
+		tileLakeBasinId: derived.lakeAccounting.tileLakeBasinId,
 	};
 };
 
@@ -720,6 +738,21 @@ const createVisualizationPixels = (
 				continue;
 			}
 			applyColorTint(pixels, i, tint, 0.42);
+		}
+		return pixels;
+	}
+	if (mode === "carry-over") {
+		const carryOverIds = new Set(
+			context.lakeAccountingBasins
+				.filter((basin) => basin.role === "overflow_carrier")
+				.map((basin) => basin.id),
+		);
+		for (let i = 0; i < context.shape.size; i += 1) {
+			const basinId = context.tileLakeBasinId[i] ?? "";
+			if (!carryOverIds.has(basinId)) {
+				continue;
+			}
+			applyColorTint(pixels, i, [0, 96, 255], 0.72);
 		}
 		return pixels;
 	}
@@ -894,7 +927,7 @@ export const runHydrologyInspectorVisualization = async (
 		const outputDir = debugDirPath ?? request.cwd;
 		const modes =
 			vizMode === "all"
-				? (["fa", "fd", "fa-normalized", "hydrology"] as const)
+				? (["fa", "fd", "fa-normalized", "carry-over", "hydrology"] as const)
 				: ([vizMode] as const);
 		for (const mode of modes) {
 			const filename = `${mode}.ppm`;
