@@ -1,61 +1,70 @@
 # Tile Data Shape Implementation Checklist
 
-Status: v1-draft
+Status: ready-for-execution
 Source discussion: `docs/Tile-Data-Shape-Discussion.md`
 
-- [ ] [migration] `TDS-MIG-01` Add cross-cutting migration helpers used by the v2 shape rollout: basin membership expansion, stream-direction mapping, and JSON delta computation.
-- [ ] [migration] `TDS-MIG-02` Switch generator envelope emission to v2 meta/tile shape (`meta.seed`, `meta.elevation`, required tile hydrology object, removed legacy tile payload fields).
-- [ ] [migration] `TDS-MIG-03` Adapt debug artifact serialization and inspector ingestion to the v2 hydrology field set while retaining legacy-read compatibility where needed.
-- [ ] [migration] `TDS-MIG-04` Adapt consumers that previously depended on tile-level `featureIds` to feature-tree-derived membership fallback logic.
-- [ ] [migration] `TDS-MIG-05` Update docs and tests to assert v2 contract behavior and provenance/source-mode outputs.
+Execution note: `TDS-MIG-*` items are orchestration checkpoints; `TDS-*` items define the detailed contract behavior.
 
-- [ ] [contract] `TDS-01` Declare `v2` as a breaking tile/envelope contract in docs and wire output version marker to `meta.specVersion = "forest-terrain-v2"` for v2 outputs.
-- [ ] [hydrology] `TDS-02` Make `tile.hydrology` required on every tile in v2 outputs (no optional hydrology object in emitted tiles).
-- [ ] [hydrology] `TDS-03` Replace `tile.hydrology.isStream` with `tile.hydrology.hasStream?: true` and remove `isStream` from v2 tile payloads.
-- [ ] [hydrology] `TDS-04` Emit `tile.hydrology.waterDepth: number` on every tile in v2 (default `0` when no local water influence).
-- [ ] [hydrology] `TDS-05` Emit `tile.hydrology.basinId: string | null` on every tile in v2 alongside `waterDepth`.
-- [ ] [hydrology] `TDS-06` Add stream-direction fields for stream tiles in v2: `inStreamDir?: StreamDir[]`, `outStreamDir?: StreamDir`, with `StreamDir = "N" | "NE" | "E" | "SE" | "S" | "SW" | "W" | "NW"`.
-- [ ] [hydrology] `TDS-07` Enforce direction-field presence rules: omit `inStreamDir`/`outStreamDir` when `hasStream` is absent; allow missing `inStreamDir` at headwaters and missing `outStreamDir` at terminal sinks/outlets (depends on `TDS-03`, `TDS-06`).
-- [ ] [hydrology] `TDS-08` Derive `inStreamDir`/`outStreamDir` deterministically from the finalized FD graph (incoming FD edges and tile FD out-edge), with no heuristic side channels (depends on `TDS-06`, `TDS-07`).
-- [ ] [hydrology] `TDS-09` Remove v1 lake abstraction fields from v2 tile hydrology payload: `lakeMask`, `lakeSurfaceH`, `lakeDepth`, `lakeBasinId`, `waterClass`.
-- [ ] [validation] `TDS-10` Add v2 hydrology validation contract for ingest/debug source selection: `fd in {0..7,255}`, `fa >= 0`, finite `faN`, `hasStream` only when `true`, finite `waterDepth`, `basinId` string-or-null, valid `StreamDir` values in direction fields (depends on `TDS-03` to `TDS-09`).
-- [ ] [debug] `TDS-11` Implement hydrology source mode selection (`auto | envelope | recompute`) in debug/hydrology-inspector request handling.
-- [ ] [debug] `TDS-12` Implement `auto` mode behavior: use envelope hydrology only when all tiles pass v2 hydrology validation, otherwise recompute (depends on `TDS-10`, `TDS-11`).
-- [ ] [debug] `TDS-13` Implement `envelope` mode behavior: fail fast when envelope hydrology is missing or invalid (depends on `TDS-10`, `TDS-11`).
-- [ ] [debug] `TDS-14` Implement `recompute` mode behavior: always recompute hydrology maps from topology + params (depends on `TDS-11`).
-- [ ] [debug] `TDS-15` Emit hydrology provenance in debug outputs: `hydrologyMapsSource`, `hydrologySourceMode`, and recompute context (`sinkMode`, key hydrology params such as `lakeFill.wetnessScale`) (depends on `TDS-11` to `TDS-14`).
-- [ ] [io] `TDS-16` Persist top-level `paramOverrides` in generated envelopes as non-default parameter deltas only.
-- [ ] [io] `TDS-17` Serialize `paramOverrides` after `tiles` in top-level output order for v2 envelopes (depends on `TDS-16`).
-- [ ] [debug] `TDS-18` When recomputing from `--input-file`, load envelope `paramOverrides` into recompute context before hydrology derivation (depends on `TDS-16`).
-- [ ] [topography] `TDS-19` Remove tile-level `featureIds` from v2 tile payloads.
-- [ ] [topography] `TDS-20` Remove tile-level `activeFeatureIds` from v2 tile payloads.
-- [ ] [topography] `TDS-21` Remove low-value tile structure fields from v2 payloads: `topography.structure.basinLike`, `ridgeLike`, `basinPersistence`, `peakPersistence`.
-- [ ] [topography] `TDS-22` Remove tile-level `topography.elevationMeters` from v2 payloads.
-- [ ] [metadata] `TDS-23` Add `meta.seed` as a canonical generation seed token (`string`) when envelope originates from seeded generation.
-- [ ] [metadata] `TDS-24` Add `meta.elevation` block with `h0`, `h1`, `zMinMeters`, `zMaxMeters` and derive `zMinMeters/zMaxMeters` from realized map heights.
-- [ ] [docs] `TDS-25` Document `topography.h` as canonical tile elevation scalar and `elevationMeters` as derived-from-metadata value (depends on `TDS-22`, `TDS-24`).
-- [ ] [governance] `TDS-26` Record v2 decision that tile-level feature lookup replacement is `none`; canonical lookup is feature-centric (depends on `TDS-19`, `TDS-20`).
-- [ ] [governance] `TDS-27` Defer CLI-vs-`paramOverrides` precedence expansion to `docs/Parameter-Override-Precedence-Discussion.md`; do not expand CLI override behavior in this checklist scope.
-- [ ] [governance] `TDS-28` Lock v2 marker policy to `meta.specVersion = \"forest-terrain-v2\"` as the single required contract marker for this track.
+- [ ] [migration] `TDS-MIG-01` Freeze v2 contract marker in the envelope skeleton (`meta.specVersion = "forest-terrain-v2"`). Targets: `src/app/build-envelope.ts#SPEC_VERSION`.
+- [ ] [migration] `TDS-MIG-02` Add v2 envelope metadata shape fields (`meta.seed`, `meta.elevation`) to the core domain contract. Targets: `src/domain/types.ts#TerrainEnvelopeMeta`.
+- [ ] [migration] `TDS-MIG-03` Add top-level `paramOverrides` support to envelope types and preserve deterministic serialization placement after `tiles`. Targets: `src/domain/types.ts#TerrainEnvelope`, `src/io/serialize-envelope.ts#serializeEnvelope`.
+- [ ] [migration] `TDS-MIG-04` Update envelope reader validation to accept v2 metadata and top-level `paramOverrides` while retaining v1 readability. Targets: `src/io/read-envelope.ts#readTerrainEnvelopeFile`, `src/io/read-envelope.ts#assertTileShape`.
+- [ ] [migration] `TDS-MIG-05` Switch generator emission to v2 tile payload shape (required `hydrology`, removed legacy tile fields). Targets: `src/app/run-generator.ts#runGenerator`, `src/io/write-outputs.ts#writeModeOutputs`.
+- [ ] [migration] `TDS-MIG-06` Migrate hydrology derivation output mapping from legacy stream/lake fields to v2 fields (`hasStream`, `waterDepth`, `basinId`). Targets: `src/pipeline/derive-hydrology.ts#deriveHydrology`, `src/pipeline/derive-lake-accounting.ts#deriveLakeAccounting`.
+- [ ] [migration] `TDS-MIG-07` Migrate hydrology-inspector ingestion/normalization to v2 hydrology field set with source-mode-aware validation. Targets: `src/app/run-hydrology-inspector.ts`, `src/cli/hydrology-inspector.ts`.
+- [ ] [migration] `TDS-MIG-08` Migrate feature-dependent consumers away from tile-level `featureIds` to feature-tree expansion fallback. Targets: `src/app/run-map.ts#runMap`, `src/app/run-stream.ts#runStream`, `src/app/run-hydrology-inspector.ts#collectExpandedBasinTileSets`.
+- [ ] [migration] `TDS-MIG-09` Update canonical docs/examples to v2 payload shape and source-mode semantics. Targets: `README.md`, `docs/Tile-Data-Shape-Discussion.md`, `docs/example/forest.json`.
+- [ ] [migration] `TDS-MIG-10` Update canonical examples/fixtures to v2 payload contract and provenance behavior. Targets: `docs/example/forest.json`, `test/fixtures/hydrology-baseline/debug-envelope.json`, `test/fixtures/hydrology-baseline/README.md`.
+
+- [ ] [contract] `TDS-01` Declare `v2` as a breaking tile/envelope contract in docs and CLI help text. Targets: `README.md`, `src/cli/main.ts`.
+- [ ] [hydrology] `TDS-02` Make `tile.hydrology` required on every tile in v2 outputs. Targets: `src/io/write-outputs.ts#buildHydrologyDebugTiles`, `src/app/run-generator.ts#runGenerator`.
+- [ ] [hydrology] `TDS-03` Replace `tile.hydrology.isStream` with `tile.hydrology.hasStream?: true` in emitted tiles and ingest logic. Targets: `src/pipeline/derive-hydrology.ts#deriveHydrology`, `src/io/write-outputs.ts#buildHydrologyDebugTiles`, `src/app/run-hydrology-inspector.ts`.
+- [ ] [hydrology] `TDS-04` Emit `tile.hydrology.waterDepth: number` on every tile in v2 (default `0`). Targets: `src/pipeline/derive-lake-accounting.ts#deriveLakeAccounting`, `src/io/write-outputs.ts#buildHydrologyDebugTiles`.
+- [ ] [hydrology] `TDS-04B` Enforce and document signed `waterDepth` semantics (`>0` submerged, `0` shoreline/no local water influence, `<0` above local basin water surface). Targets: `src/pipeline/derive-lake-accounting.ts#deriveLakeAccounting`, `docs/Tile-Data-Shape-Discussion.md`, `README.md`.
+- [ ] [hydrology] `TDS-05` Emit `tile.hydrology.basinId: string | null` on every tile in v2 alongside `waterDepth`. Targets: `src/pipeline/derive-lake-accounting.ts#deriveLakeAccounting`, `src/io/write-outputs.ts#buildHydrologyDebugTiles`.
+- [ ] [hydrology] `TDS-06` Add stream-direction fields for stream tiles in v2: `inStreamDir?: StreamDir[]`, `outStreamDir?: StreamDir`, where `StreamDir = "N" | "NE" | "E" | "SE" | "S" | "SW" | "W" | "NW"`. Targets: `src/domain/hydrology.ts`, `src/pipeline/derive-hydrology.ts#deriveHydrology`.
+- [ ] [hydrology] `TDS-07` Enforce direction-field presence rules: omit `inStreamDir`/`outStreamDir` when `hasStream` is absent; allow missing `inStreamDir` at headwaters and missing `outStreamDir` at terminal sinks/outlets. Targets: `src/pipeline/derive-hydrology.ts#deriveHydrology`, `src/app/run-hydrology-inspector.ts`.
+- [ ] [hydrology] `TDS-08` Derive `inStreamDir`/`outStreamDir` deterministically from finalized FD edges only (no heuristic side channels). Targets: `src/pipeline/derive-hydrology.ts#deriveHydrology`.
+- [ ] [hydrology] `TDS-09` Remove v1 lake abstraction fields from v2 tile hydrology payload: `lakeMask`, `lakeSurfaceH`, `lakeDepth`, `lakeBasinId`, `waterClass`. Targets: `src/io/write-outputs.ts#buildHydrologyDebugTiles`, `src/app/run-hydrology-inspector.ts`.
+- [ ] [validation] `TDS-10` Add v2 hydrology validation contract for ingest/debug source selection: `fd in {0..7,255}`, `fa >= 0`, finite `faN`, `hasStream` only when `true`, finite `waterDepth`, `basinId` string-or-null, valid `StreamDir` values. Targets: `src/app/run-hydrology-inspector.ts`, `src/io/read-envelope.ts`.
+- [ ] [debug] `TDS-11` Implement hydrology source mode selection (`auto | envelope | recompute`) in inspector/debug request handling, with default mode explicitly set to `auto`. Targets: `src/cli/hydrology-inspector.ts`, `src/app/run-hydrology-inspector.ts`.
+- [ ] [debug] `TDS-12` Implement `auto` mode: use envelope hydrology only when all tiles pass v2 hydrology validation; otherwise recompute. Targets: `src/app/run-hydrology-inspector.ts`.
+- [ ] [debug] `TDS-13` Implement `envelope` mode: fail fast when envelope hydrology is missing/invalid. Targets: `src/app/run-hydrology-inspector.ts`, `src/cli/hydrology-inspector.ts`.
+- [ ] [debug] `TDS-14` Implement `recompute` mode: always recompute hydrology maps from topology + params. Targets: `src/app/run-hydrology-inspector.ts`, `src/pipeline/derive-hydrology.ts#deriveHydrology`.
+- [ ] [debug] `TDS-15` Emit hydrology provenance in inspector/debug outputs: `hydrologyMapsSource`, `hydrologySourceMode`, and recompute context (`sinkMode`, `lakeFill.wetnessScale`). Targets: `src/app/run-hydrology-inspector.ts`, `src/cli/hydrology-inspector.ts`.
+- [ ] [io] `TDS-16` Persist top-level `paramOverrides` in generated envelopes as non-default parameter deltas only. Targets: `src/app/run-generator.ts#resolveInputs`, `src/io/write-outputs.ts#writeStandardOutput`.
+- [ ] [io] `TDS-17` Serialize `paramOverrides` after `tiles` in top-level output order for v2 envelopes. Targets: `src/io/serialize-envelope.ts#serializeEnvelope`.
+- [ ] [debug] `TDS-18` In recompute-from-`--input-file`, apply precedence exactly as `defaults -> envelope.paramOverrides -> CLI --params file -> explicit CLI parameter flags`. Targets: `src/app/run-generator.ts#resolveInputs`, `src/app/run-generator.ts#assertDebugInputFileArgs`, `src/app/run-hydrology-inspector.ts`, `src/cli/argv-validation.ts#validateArgv`.
+- [ ] [cli] `TDS-29` Allow `--input-file` to be combined with `--params` and explicit CLI parameter overrides for debug/inspector recompute paths; preserve clear diagnostics for disallowed combinations. Targets: `src/app/run-generator.ts#assertDebugInputFileArgs`, `src/cli/argv-validation.ts#validateArgv`, `src/cli/main.ts`, `README.md`.
+- [ ] [topography] `TDS-19` Remove tile-level `featureIds` from v2 payloads. Targets: `src/io/write-outputs.ts`, `src/app/run-generator.ts#runGenerator`.
+- [ ] [topography] `TDS-20` Remove tile-level `activeFeatureIds` from v2 payloads. Targets: `src/io/write-outputs.ts`, `src/app/run-generator.ts#runGenerator`.
+- [ ] [topography] `TDS-21` Remove low-value tile structure fields from v2 payloads: `topography.structure.basinLike`, `ridgeLike`, `basinPersistence`, `peakPersistence`. Targets: `src/io/write-outputs.ts`, `src/pipeline/derive-topographic-structure.ts`.
+- [ ] [topography] `TDS-22` Remove tile-level `topography.elevationMeters` from v2 payloads. Targets: `src/io/write-outputs.ts`, `src/app/run-generator.ts#runGenerator`.
+- [ ] [metadata] `TDS-23` Add `meta.seed` as canonical generation seed token (`string`) when envelope originates from seeded generation. Targets: `src/app/build-envelope.ts#buildEnvelopeSkeleton`, `src/app/run-generator.ts#resolveInputs`.
+- [ ] [metadata] `TDS-24` Add `meta.elevation` block with `h0`, `h1`, `zMinMeters`, `zMaxMeters`; derive `zMinMeters/zMaxMeters` from realized map heights. Targets: `src/app/run-generator.ts#buildElevationParams`, `src/io/write-outputs.ts`.
+- [ ] [docs] `TDS-25` Document `topography.h` as canonical scalar and `elevationMeters` as derived from `meta.elevation`. Targets: `README.md`, `docs/Tile-Data-Shape-Discussion.md`.
+- [ ] [governance] `TDS-26` Record v2 decision that direct tile-level feature lookup replacement is `none`; canonical lookup is feature-centric. Targets: `docs/Tile-Data-Shape-Discussion.md`, `README.md`.
+- [ ] [governance] `TDS-27` Record and document the authoritative precedence contract as `defaults < envelope paramOverrides < CLI --params file < explicit CLI flags`. Targets: `docs/Tile-Data-Shape-Discussion.md`, `docs/Parameter-Override-Precedence-Discussion.md`, `README.md`.
+- [ ] [governance] `TDS-28` Keep `meta.specVersion` as the only contract marker in this track; do not add `tileContractVersion`/`hydrologyContractVersion` fields. Targets: `src/domain/types.ts#TerrainEnvelopeMeta`, `README.md`, `docs/Tile-Data-Shape-Discussion.md`.
 
 ## Behavior Slices
 
 ### Slice M
 
-- Goal: Execute the concrete cross-cutting migration sequence used to land the v2 tile data shape.
-- Items: `TDS-MIG-01`, `TDS-MIG-02`, `TDS-MIG-03`, `TDS-MIG-04`, `TDS-MIG-05`
+- Goal: Perform the concrete cross-cutting migration sequence for v2 shape rollout with deterministic touchpoints.
+- Items: `TDS-MIG-01`, `TDS-MIG-02`, `TDS-MIG-03`, `TDS-MIG-04`, `TDS-MIG-05`, `TDS-MIG-06`, `TDS-MIG-07`, `TDS-MIG-08`, `TDS-MIG-09`, `TDS-MIG-10`
 - Type: mechanical
 
 ### Slice A
 
 - Goal: Establish v2 hydrology tile contract semantics with explicit stream and water-depth fields.
-- Items: `TDS-02`, `TDS-03`, `TDS-04`, `TDS-05`, `TDS-06`, `TDS-07`, `TDS-08`, `TDS-09`, `TDS-10`
+- Items: `TDS-02`, `TDS-03`, `TDS-04`, `TDS-04B`, `TDS-05`, `TDS-06`, `TDS-07`, `TDS-08`, `TDS-09`, `TDS-10`
 - Type: behavior
 
 ### Slice B
 
 - Goal: Make debug hydrology sourcing deterministic and provenance-visible.
-- Items: `TDS-11`, `TDS-12`, `TDS-13`, `TDS-14`, `TDS-15`, `TDS-18`
+- Items: `TDS-11`, `TDS-12`, `TDS-13`, `TDS-14`, `TDS-15`, `TDS-18`, `TDS-29`
 - Type: behavior
 
 ### Slice C
@@ -66,7 +75,7 @@ Source discussion: `docs/Tile-Data-Shape-Discussion.md`
 
 ### Slice D
 
-- Goal: Remove redundant/low-signal tile payload fields and keep only canonical signals.
+- Goal: Remove redundant or low-signal tile payload fields and keep only canonical signals.
 - Items: `TDS-19`, `TDS-20`, `TDS-21`, `TDS-22`
 - Type: behavior
 

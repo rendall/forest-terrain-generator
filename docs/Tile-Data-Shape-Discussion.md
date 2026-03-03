@@ -109,7 +109,7 @@ Validation for envelope hydrology in v2:
   - gives debug/replay tools the parameter context without requiring external files.
 - Debug behavior proposal:
   - when `debug --input-file` is used, use envelope `paramOverrides` as recompute input context.
-  - precedence (discussion target): defaults -> `paramOverrides` -> explicit CLI overrides (if enabled for that mode).
+  - precedence (locked for this track): defaults -> `paramOverrides` -> `--params` file -> explicit CLI parameter flags.
 
 ### Problem: topology tile signals are low-value or stale
 
@@ -456,7 +456,7 @@ Issue 3:
 
 Decision:
 - Derive `inStreamDir/outStreamDir` directly from the finalized FD graph (deterministic, no heuristic side channel).
-- Keep precedence behavior in this checklist at: defaults + envelope `paramOverrides` for recompute context; no new CLI precedence expansion in this track.
+- Lock precedence behavior to: defaults -> envelope `paramOverrides` -> CLI `--params` file -> explicit CLI parameter flags.
 
 ### Pass 2: Integration
 
@@ -470,3 +470,66 @@ Integration check after QC decisions:
 Sanity outcome:
 - No remaining checklist-structure blockers for implementation.
 - Scope remains aligned with this document and `docs/Parameter-Override-Precedence-Discussion.md` deferral boundary.
+
+## Checklist Four-Pass Audit (2026-03-03, follow-up)
+
+### Pass 1: Completeness
+
+Completeness question:
+- If another engineer used only `Tile-Data-Shape-ImplementationChecklist.md`, would they implement all currently locked intent from this discussion set?
+
+Missing intent found:
+1. Signed `waterDepth` semantics (`>0`, `=0`, `<0`) were explicit in discussion but not represented as an implementation item.
+2. The locked precedence chain required support for all listed sources, but checklist items did not explicitly include enabling `--input-file` with `--params` and explicit CLI overrides in debug/inspector paths.
+3. Source-mode default (`auto`) was implied but not explicitly called out as a checklist requirement.
+
+Actions taken in checklist:
+- Added `TDS-04B` for signed `waterDepth` semantics and docs alignment.
+- Added `TDS-29` for debug/inspector CLI compatibility with the full precedence chain.
+- Updated `TDS-11` to explicitly require default `auto` source mode.
+
+### Pass 2: Quality Control (coherency and consistency)
+
+Issue QC-1:
+- Migration checkpoints and detailed contract items can be read as duplicate work.
+- Risk: engineers may execute both as independent behavior changes instead of staged checkpoints.
+
+Plan:
+- Add explicit execution note in checklist that `TDS-MIG-*` are orchestration checkpoints and `TDS-*` are the detailed behavior contract.
+
+Issue QC-2:
+- Migration item `TDS-MIG-10` previously prescribed direct test-writing work, which conflicts with `docs/normative/checklist.md` guidance unless explicitly requested.
+- Risk: checklist process drift against declared checklist norms.
+
+Plan:
+- Reframe `TDS-MIG-10` to examples/fixtures updates (contract artifacts), while leaving testing verification to implementation workflow outside checklist itemization.
+
+Issue QC-3:
+- Precedence item (`TDS-18`) named the order but omitted one key enforcement point (`assertDebugInputFileArgs`) that currently blocks the desired flow.
+- Risk: item can be checked as “done” while behavior remains blocked by validation.
+
+Plan:
+- Expand `TDS-18` targets to include `assertDebugInputFileArgs` and add explicit CLI behavior item (`TDS-29`).
+
+Checklist updates applied:
+- Added execution note near checklist header.
+- Reframed `TDS-MIG-10`.
+- Updated `TDS-18` targets.
+- Added `TDS-29`.
+
+### Pass 3: Integration
+
+Integration checks after updates:
+- New items (`TDS-04B`, `TDS-29`) are attached to behavior slices (`Slice A`, `Slice B`).
+- Every checklist item still belongs to exactly one slice.
+- Precedence decisions now align across:
+  - this discussion doc,
+  - `Tile-Data-Shape-ImplementationChecklist.md`,
+  - `Parameter-Override-Precedence-Discussion.md`.
+
+### Pass 4: Sanity
+
+Sanity outcome:
+- No structural blockers remain for checklist-driven implementation.
+- Remaining risk is implementation complexity, not checklist ambiguity.
+- The checklist is now fit for steady execution by an engineer using it as the primary guide.
