@@ -4,7 +4,7 @@
  *
  * Purpose:
  * - Produce hydrology diagnostics from an envelope or debug artifacts.
- * - Write hydrology visualization outputs (`fa`, `fd`, `fa-normalized`, `carry-over`, `hydrology`).
+ * - Write hydrology visualization outputs (`fa`, `fd`, `fa-normalized`, `carry-over`, `basins`, `hydrology`).
  * - Emit deterministic hydrology stats snapshots for review/regression.
  *
  * Basic Usage:
@@ -14,7 +14,7 @@
  * - `--input-json <path>`
  *
  * Main options:
- * - `--viz <mode>` where mode is `fa|fd|fa-normalized|carry-over|hydrology|all`
+ * - `--viz <mode>` where mode is `fa|fd|fa-normalized|carry-over|basins|hydrology|all`
  * - `--debug-dir <path>` required when `--viz` is set
  * - `--stats` emit stats JSON
  * - `--stats-file <path>` optional stats output override (requires `--stats`)
@@ -66,11 +66,12 @@ const assertVizMode = (
 		raw !== "fd" &&
 		raw !== "fa-normalized" &&
 		raw !== "carry-over" &&
+		raw !== "basins" &&
 		raw !== "hydrology" &&
 		raw !== "all"
 	) {
 		throw new InputValidationError(
-			`Invalid --viz mode "${raw}". Expected one of: fa|fd|fa-normalized|carry-over|hydrology|all.`,
+			`Invalid --viz mode "${raw}". Expected one of: fa|fd|fa-normalized|carry-over|basins|hydrology|all.`,
 		);
 	}
 	return raw;
@@ -91,7 +92,7 @@ program
 	.option("--debug", "Include request/options diagnostics", false)
 	.option(
 		"--viz <mode>",
-		"Write hydrology visualization(s) to --debug-dir (fa|fd|fa-normalized|carry-over|hydrology|all)",
+		"Write hydrology visualization(s) to --debug-dir (fa|fd|fa-normalized|carry-over|basins|hydrology|all)",
 	)
 	.option(
 		"--debug-dir <path>",

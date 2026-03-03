@@ -7,6 +7,7 @@ import {
 	type HydrologyMapsSoA,
 	WATER_CLASS_CODE,
 } from "../domain/hydrology.js";
+import type { TopographicFeatureNode } from "../domain/topographic-features.js";
 import { createGridShape, type GridShape } from "../domain/topography.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
 import { deriveHydrology } from "../pipeline/derive-hydrology.js";
@@ -17,6 +18,7 @@ export type HydrologyVizMode =
 	| "fd"
 	| "fa-normalized"
 	| "carry-over"
+	| "basins"
 	| "hydrology"
 	| "all";
 
@@ -42,6 +44,7 @@ interface HydrologyContext {
 	maps: HydrologyMapsSoA;
 	lakeAccountingBasins: BasinLakeAccounting[];
 	tileLakeBasinId: string[];
+	basinExpandedTileSets: Map<string, Set<number>>;
 }
 
 interface VisualizationNeeds {
@@ -113,6 +116,8 @@ const DIRECTION_COLORS: Record<number, [number, number, number]> = {
 	6: [96, 160, 255],
 	7: [192, 96, 255],
 };
+
+const BASINS_BACKGROUND_COLOR: [number, number, number] = [255, 0, 0];
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
 	typeof value === "object" && value !== null && !Array.isArray(value);
@@ -221,6 +226,55 @@ const deriveShapeFromTiles = (tiles: unknown[]): GridShape | null => {
 	return createGridShape(maxX + 1, maxY + 1);
 };
 
+const collectExpandedBasinTileSets = (
+	basinFeatures: TopographicFeatureNode[],
+): Map<string, Set<number>> => {
+	const byId = new Map<string, TopographicFeatureNode>();
+	for (const basin of basinFeatures) {
+		byId.set(basin.id, basin);
+	}
+	const cache = new Map<string, Set<number>>();
+	const resolve = (basinId: string, visiting: Set<string>): Set<number> => {
+		const cached = cache.get(basinId);
+		if (cached) {
+			return cached;
+		}
+		if (visiting.has(basinId)) {
+			return new Set<number>();
+		}
+		visiting.add(basinId);
+		const basin = byId.get(basinId);
+		const expanded = new Set<number>(
+			Array.isArray(basin?.tileIds)
+				? basin.tileIds.filter(
+						(tileId): tileId is number =>
+							typeof tileId === "number" &&
+							Number.isInteger(tileId) &&
+							tileId >= 0,
+					)
+				: [],
+		);
+		const childIds = Array.isArray(basin?.childIds)
+			? basin.childIds.filter(
+					(childId): childId is string => typeof childId === "string",
+				)
+			: [];
+		for (const childId of childIds) {
+			const childSet = resolve(childId, visiting);
+			for (const tileId of childSet) {
+				expanded.add(tileId);
+			}
+		}
+		visiting.delete(basinId);
+		cache.set(basinId, expanded);
+		return expanded;
+	};
+	for (const basinId of byId.keys()) {
+		resolve(basinId, new Set<string>());
+	}
+	return cache;
+};
+
 const resolveTileIndex = (
 	shape: GridShape,
 	tile: Record<string, unknown>,
@@ -269,7 +323,10 @@ const buildNeeds = (
 		needFd: vizMode === "fd" || statsEnabled,
 		needFaN: vizMode === "fa-normalized" || statsEnabled,
 		needHydrology:
-			vizMode === "hydrology" || vizMode === "carry-over" || statsEnabled,
+			vizMode === "hydrology" ||
+			vizMode === "carry-over" ||
+			vizMode === "basins" ||
+			statsEnabled,
 		needStats: statsEnabled,
 	};
 };
@@ -457,6 +514,7 @@ const loadContextFromDebugArtifacts = async (
 				maps,
 				lakeAccountingBasins,
 				tileLakeBasinId,
+				basinExpandedTileSets: new Map<string, Set<number>>(),
 			};
 		}
 
@@ -467,6 +525,7 @@ const loadContextFromDebugArtifacts = async (
 		maps,
 		lakeAccountingBasins: [],
 		tileLakeBasinId,
+		basinExpandedTileSets: new Map<string, Set<number>>(),
 	};
 };
 
@@ -482,6 +541,9 @@ const buildContextFromEnvelope = async (
 		throw new InputValidationError("Missing required input: --input-json.");
 	}
 	const envelope = await readTerrainEnvelopeFile(inputPath);
+	const basinExpandedTileSets = collectExpandedBasinTileSets(
+		envelope.features?.basins ?? [],
+	);
 
 	const maxX = envelope.tiles.reduce(
 		(max, tile) =>
@@ -598,6 +660,7 @@ const buildContextFromEnvelope = async (
 					maps,
 					lakeAccountingBasins: [],
 					tileLakeBasinId,
+					basinExpandedTileSets,
 				};
 			}
 
@@ -617,7 +680,26 @@ const buildContextFromEnvelope = async (
 		maps: derived.maps,
 		lakeAccountingBasins: derived.lakeAccounting.basins,
 		tileLakeBasinId: derived.lakeAccounting.tileLakeBasinId,
+		basinExpandedTileSets,
 	};
+};
+
+const loadBasinTileSetsFromInputEnvelope = async (
+	request: HydrologyInspectorRequest,
+): Promise<Map<string, Set<number>>> => {
+	const inputPath = resolveRequiredInputPath(
+		request.cwd,
+		request.args.inputJsonPath,
+	);
+	if (!inputPath) {
+		return new Map<string, Set<number>>();
+	}
+	try {
+		const envelope = await readTerrainEnvelopeFile(inputPath);
+		return collectExpandedBasinTileSets(envelope.features?.basins ?? []);
+	} catch {
+		return new Map<string, Set<number>>();
+	}
 };
 
 const resolveHydrologyContext = async (
@@ -631,7 +713,15 @@ const resolveHydrologyContext = async (
 	if (debugDirPath) {
 		const fromDebug = await loadContextFromDebugArtifacts(debugDirPath, needs);
 		if (fromDebug) {
-			return fromDebug;
+			if (fromDebug.basinExpandedTileSets.size > 0) {
+				return fromDebug;
+			}
+			const basinExpandedTileSets =
+				await loadBasinTileSetsFromInputEnvelope(request);
+			return {
+				...fromDebug,
+				basinExpandedTileSets,
+			};
 		}
 	}
 	return buildContextFromEnvelope(request);
@@ -753,6 +843,83 @@ const createVisualizationPixels = (
 				continue;
 			}
 			applyColorTint(pixels, i, [0, 96, 255], 0.72);
+		}
+		return pixels;
+	}
+	if (mode === "basins") {
+		for (let i = 0; i < context.shape.size; i += 1) {
+			const base = i * 3;
+			pixels[base] = BASINS_BACKGROUND_COLOR[0];
+			pixels[base + 1] = BASINS_BACKGROUND_COLOR[1];
+			pixels[base + 2] = BASINS_BACKGROUND_COLOR[2];
+		}
+		if (
+			context.lakeAccountingBasins.length > 0 &&
+			context.basinExpandedTileSets.size > 0
+		) {
+			const byId = new Map(
+				context.lakeAccountingBasins.map((basin) => [basin.id, basin] as const),
+			);
+			const depthCache = new Map<string, number>();
+			const depthFor = (basinId: string): number => {
+				const cached = depthCache.get(basinId);
+				if (typeof cached === "number") {
+					return cached;
+				}
+				const basin = byId.get(basinId);
+				if (!basin || basin.parentId === null || !byId.has(basin.parentId)) {
+					depthCache.set(basinId, 0);
+					return 0;
+				}
+				const depth = depthFor(basin.parentId) + 1;
+				depthCache.set(basinId, depth);
+				return depth;
+			};
+			const ordered = [...context.lakeAccountingBasins].sort((a, b) => {
+				const depthDelta = depthFor(a.id) - depthFor(b.id);
+				if (depthDelta !== 0) {
+					return depthDelta;
+				}
+				return a.id.localeCompare(b.id);
+			});
+			for (const basin of ordered) {
+				const tiles = context.basinExpandedTileSets.get(basin.id);
+				if (!tiles) {
+					continue;
+				}
+				const mergeH =
+					typeof basin.mergeH === "number" && Number.isFinite(basin.mergeH)
+						? basin.mergeH
+						: 1;
+				const gray = Math.round(clamp01(mergeH) * 255);
+				for (const tileId of tiles) {
+					if (tileId < 0 || tileId >= context.shape.size) {
+						continue;
+					}
+					const base = tileId * 3;
+					pixels[base] = gray;
+					pixels[base + 1] = gray;
+					pixels[base + 2] = gray;
+				}
+			}
+			return pixels;
+		}
+		const basinRoleById = new Map(
+			context.lakeAccountingBasins.map((basin) => [basin.id, basin.role] as const),
+		);
+		for (let i = 0; i < context.shape.size; i += 1) {
+			const basinId = context.tileLakeBasinId[i] ?? "";
+			if (!basinId) {
+				continue;
+			}
+			const role = basinRoleById.get(basinId);
+			if (role === "overflow_carrier") {
+				applyColorTint(pixels, i, [0, 96, 255], 0.72);
+			} else if (role === "terminal_lake") {
+				applyColorTint(pixels, i, [0, 196, 255], 0.7);
+			} else if (role === "sink") {
+				applyColorTint(pixels, i, [255, 166, 0], 0.66);
+			}
 		}
 		return pixels;
 	}
@@ -927,7 +1094,14 @@ export const runHydrologyInspectorVisualization = async (
 		const outputDir = debugDirPath ?? request.cwd;
 		const modes =
 			vizMode === "all"
-				? (["fa", "fd", "fa-normalized", "carry-over", "hydrology"] as const)
+				? ([
+						"fa",
+						"fd",
+						"fa-normalized",
+						"carry-over",
+						"basins",
+						"hydrology",
+					] as const)
 				: ([vizMode] as const);
 		for (const mode of modes) {
 			const filename = `${mode}.ppm`;

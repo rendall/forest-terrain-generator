@@ -23,7 +23,7 @@ Commands:
 
 ## Other CLIs
 
-- `hydrology-inspector`: Inspect hydrology maps via stats and visualization outputs (`fa`, `fd`, `fa-normalized`, `carry-over`, `hydrology`) from an envelope/debug dir.
+- `hydrology-inspector`: Inspect hydrology maps via stats and visualization outputs (`fa`, `fd`, `fa-normalized`, `carry-over`, `basins`, `hydrology`) from an envelope/debug dir.
 
 Example:
 
@@ -57,7 +57,7 @@ Mode/output validation highlights:
 - Existing output files/directories fail by default and require `--force` to overwrite/replace.
 
 ```bash
-node --import tsx src/cli/main.ts debug --input-file forest.json --output-dir outdir
+node --import tsx src/cli/main.ts debug --input-file forest.json --output-dir out
 ```
 
 Render topography as grayscale image (`h:0` black, `h:1` white):

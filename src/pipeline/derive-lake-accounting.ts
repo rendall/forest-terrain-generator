@@ -10,6 +10,8 @@ export interface BasinLakeAccounting {
 	id: string;
 	parentId: string | null;
 	childIds: string[];
+	tileCount: number;
+	directTileCount: number;
 	externalInflow: number;
 	totalInflow: number;
 	spillCapacity: number;
@@ -245,6 +247,15 @@ export const deriveLakeAccounting = (
 		if (!basin) {
 			continue;
 		}
+		const directTileCount = Array.isArray(basin.tileIds)
+			? basin.tileIds.filter(
+					(tileId): tileId is number =>
+						typeof tileId === "number" &&
+						Number.isInteger(tileId) &&
+						tileId >= 0,
+				).length
+			: 0;
+		const expandedTileCount = expandedTileSets.get(basinId)?.size ?? directTileCount;
 		const childIds = Array.isArray(basin.childIds)
 			? basin.childIds.filter(
 					(childId): childId is string => typeof childId === "string",
@@ -294,6 +305,8 @@ export const deriveLakeAccounting = (
 			id: basinId,
 			parentId: basin.parentId ?? null,
 			childIds,
+			tileCount: expandedTileCount,
+			directTileCount,
 			externalInflow,
 			totalInflow,
 			spillCapacity,

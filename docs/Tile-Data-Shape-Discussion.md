@@ -50,28 +50,27 @@ This creates output drift and makes debugging non-reproducible from the user per
   - `recompute`
 
 - `auto`:
-  - If envelope is hydrology-complete, use envelope hydrology.
+  - If envelope hydrology is present on all tiles and validates against v2 hydrology shape, use envelope hydrology.
   - Else recompute from topology + params.
 
 - `envelope`:
-  - Require complete hydrology fields on all tiles.
+  - Require hydrology fields on all tiles and validate against v2 hydrology shape.
   - Fail fast if incomplete.
 
 - `recompute`:
   - Always recompute hydrology maps from topology + params.
 
-#### Proposal: Hydrology-complete tile shape
+#### Proposal: Hydrology tile shape (v2 draft)
 
 Per tile, under `tile.hydrology`:
 
-- Core required fields:
+- Required fields:
   - `fd: number` (DIR8 code or `255` sink)
   - `fa: number`
   - `faN: number`
   - `hasStream?: true`
-- Optional lake/surface fields:
-  - `waterDepth?: number`
-  - `basinId?: string`
+  - `waterDepth: number`
+  - `basinId: string | null`
 
 Water-depth semantics (discussion target):
 
@@ -79,25 +78,19 @@ Water-depth semantics (discussion target):
   - `> 0`: submerged,
   - `= 0`: shoreline/surface intersection,
   - `< 0`: above water surface but near/within the same water-bearing basin context.
-- `waterDepth` is emitted only for tiles in a basin context that currently has water.
-  - no water-bearing context -> omit `waterDepth`.
+- `waterDepth` is emitted on all tiles in v2.
+  - default/non-water context is `0`.
 - `basinId` is emitted whenever `waterDepth` is emitted.
-  - (discussion invariant, not yet enforced in code)
+  - with always-emitted `waterDepth`, `basinId` is always present (nullable when no basin mapping is available).
 
-Hydrology completeness levels:
-
-- Level 0: none
-- Level 1: partial
-- Level 2: complete (all core fields valid on all tiles)
-
-Only Level 2 is eligible as direct source when source mode uses envelope data.
-
-Validation for hydrology-complete envelopes:
+Validation for envelope hydrology in v2:
 
 - `fd` integer in `{0..7, 255}`
 - `fa` finite and non-negative
 - `faN` finite
 - `hasStream` when present must be `true` (absence means no stream on the tile)
+- `waterDepth` finite
+- `basinId` is string or null
 
 #### Proposal: Hydrology provenance in debug outputs
 
@@ -202,7 +195,7 @@ This makes domain modeling harder for consumers and increases naming churn press
 
 #### Proposal H: Stream-presence naming in v2 contract
 
-- v2 canonical field name: `tile.hydrology.hasStream: boolean`.
+- v2 canonical field name: `tile.hydrology.hasStream?: true`.
 - `isStream` is not part of the v2 tile shape.
 - Discussion rationale:
   - `hasStream` communicates presence intent more clearly than identity-style naming.
@@ -211,8 +204,8 @@ This makes domain modeling harder for consumers and increases naming churn press
 
 - `fa` is accumulation magnitude and does not encode per-tile stream directionality.
 - For tiles where `hasStream === true`, add directional fields:
-  - `inStreamDir?: number[]`
-  - `outStreamDir?: number`
+  - `inStreamDir?: StreamDir[]`
+  - `outStreamDir?: StreamDir`
 
 - Presence rules:
   - if `hasStream === false`: omit `inStreamDir` and `outStreamDir`
@@ -225,6 +218,7 @@ This makes domain modeling harder for consumers and increases naming churn press
   - `outStreamDir` is expected to be single-valued in current flow model.
   - either field may be absent in valid cases (for example headwater/start or terminal sink/outlet edges).
   - this keeps directional topology explicit without forcing placeholder values.
+  - `StreamDir` values are cardinal/intercardinal string codes: `"N" | "NE" | "E" | "SE" | "S" | "SW" | "W" | "NW"`.
 
 ### Problem: elevation frame-of-reference is split
 
@@ -278,10 +272,10 @@ This increases the chance of accidental breaking changes during cleanup.
 #### Cross-cutting migration proposals
 
 - Define direct v2 canonical fields (no mandatory alias windows).
-- Add explicit contract/version markers when cleanup lands (for example `tileContractVersion` / `hydrologyContractVersion`).
+- Keep explicit contract/version marker decision deferred until v2 shape lock, then pin contract marker to `2.0.0` (exact marker field naming remains open).
 - Keep explicit open questions tracked:
   - If `featureIds`/`activeFeatureIds` are removed, what is the preferred replacement for tile->feature lookup (`index artifact`, `query CLI`, or `none`)?
-  - Should a `tileContractVersion` or `hydrologyContractVersion` marker be added (or both)?
+  - Should a `tileContractVersion` or `hydrologyContractVersion` marker be added (or both), or should `meta.specVersion` carry all contract versioning?
 
 ## Goals
 
@@ -330,8 +324,8 @@ This is a discussion-only example of the proposed envelope shape after current c
         "fa": 13,
         "faN": 0.030878860503435135,
         "hasStream": true,
-        "inStreamDir": [6, 7],
-        "outStreamDir": 7,
+        "inStreamDir": ["W", "NW"],
+        "outStreamDir": "NW",
         "waterDepth": -0.11,
         "basinId": "b_00061"
       }
@@ -349,7 +343,9 @@ This is a discussion-only example of the proposed envelope shape after current c
       "hydrology": {
         "fd": 255,
         "fa": 2,
-        "faN": 0.005
+        "faN": 0.005,
+        "waterDepth": 0,
+        "basinId": null
       }
     }
   ],
@@ -373,14 +369,17 @@ Notes:
 
 - `paramOverrides` is top-level and contains only non-default values.
 - `elevationMeters` is intentionally omitted from tile shape in this v2 draft.
-- `waterDepth` and `basinId` are emitted only for water-bearing basin context.
-- `inStreamDir` is optional array; `outStreamDir` is optional single value.
+- `hydrology` is present on all tiles.
+- `waterDepth` is always emitted (commonly `0` outside local water influence).
+- `basinId` is emitted with `waterDepth` and may be `null`.
+- `inStreamDir` is optional array; `outStreamDir` is optional single cardinal direction string.
 
 ## Working Schema Sketch (v2 draft)
 
 ```ts
 type Dir8 = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 type FdCode = Dir8 | 255;
+type StreamDir = "N" | "NE" | "E" | "SE" | "S" | "SW" | "W" | "NW";
 
 interface EnvelopeV2Draft {
   meta: {
@@ -410,15 +409,15 @@ interface TileV2Draft {
     v: number;
     structure?: Record<string, unknown>;
   };
-  hydrology?: {
+  hydrology: {
     fd: FdCode;
     fa: number;
     faN: number;
     hasStream?: true;
-    inStreamDir?: Dir8[];
-    outStreamDir?: Dir8;
-    waterDepth?: number;
-    basinId?: string;
+    inStreamDir?: StreamDir[];
+    outStreamDir?: StreamDir;
+    waterDepth: number;
+    basinId: string | null;
   };
 }
 ```
