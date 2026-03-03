@@ -12,6 +12,8 @@ export interface BasinLakeAccounting {
 	childIds: string[];
 	tileCount: number;
 	directTileCount: number;
+	receiverId: string | null;
+	mapExitTileId: number | null;
 	externalInflow: number;
 	totalInflow: number;
 	spillCapacity: number;
@@ -177,6 +179,31 @@ const computeSpillCapacity = (
 	return sum;
 };
 
+const findBoundaryExitTileId = (
+	shape: GridShape,
+	h: Float32Array,
+	tiles: Set<number>,
+): number | null => {
+	let bestTileId: number | null = null;
+	let bestH = Number.POSITIVE_INFINITY;
+	for (const tileId of tiles) {
+		if (tileId < 0 || tileId >= shape.size) {
+			continue;
+		}
+		const x = tileId % shape.width;
+		const y = Math.floor(tileId / shape.width);
+		if (x !== 0 && y !== 0 && x !== shape.width - 1 && y !== shape.height - 1) {
+			continue;
+		}
+		const tileH = h[tileId] ?? 0;
+		if (tileH < bestH || (tileH === bestH && (bestTileId === null || tileId < bestTileId))) {
+			bestH = tileH;
+			bestTileId = tileId;
+		}
+	}
+	return bestTileId;
+};
+
 const sortBasinIdsPostorder = (
 	basinsById: Map<string, TopographicFeatureNode>,
 ): string[] => {
@@ -261,20 +288,33 @@ export const deriveLakeAccounting = (
 					(childId): childId is string => typeof childId === "string",
 				)
 			: [];
+		const expandedTiles = expandedTileSets.get(basinId) ?? new Set<number>();
+		const mapExitTileId =
+			basin.parentId === null
+				? findBoundaryExitTileId(shape, h, expandedTiles)
+				: null;
+		const receiverId =
+			basin.parentId !== null
+				? basin.parentId
+				: mapExitTileId !== null
+					? "OCEAN"
+					: null;
 		const externalInflow = externalInflowById.get(basinId) ?? 0;
 		const childOverflow = childIds.reduce((sum, childId) => {
 			const child = byId.get(childId);
 			return sum + (child?.overflowExcess ?? 0);
 		}, 0);
 		const totalInflow = externalInflow + childOverflow;
-		const mergeH =
+		const effectiveSpillH =
 			typeof basin.mergeH === "number" && Number.isFinite(basin.mergeH)
 				? basin.mergeH
+				: mapExitTileId !== null
+					? (h[mapExitTileId] ?? 1)
 				: 1;
 		const spillCapacity = computeSpillCapacity(
 			h,
-			expandedTileSets.get(basinId) ?? new Set<number>(),
-			mergeH,
+			expandedTiles,
+			effectiveSpillH,
 		);
 		const fillRatio =
 			spillCapacity > 0
@@ -297,9 +337,10 @@ export const deriveLakeAccounting = (
 				: null;
 		const canOverflow =
 			isFilled &&
-			basin.parentId !== null &&
-			childSpillFromTileId !== null &&
-			parentContactTileId !== null;
+			((basin.parentId !== null &&
+				childSpillFromTileId !== null &&
+				parentContactTileId !== null) ||
+				receiverId === "OCEAN");
 
 		byId.set(basinId, {
 			id: basinId,
@@ -307,6 +348,8 @@ export const deriveLakeAccounting = (
 			childIds,
 			tileCount: expandedTileCount,
 			directTileCount,
+			receiverId,
+			mapExitTileId,
 			externalInflow,
 			totalInflow,
 			spillCapacity,
@@ -335,6 +378,8 @@ export const deriveLakeAccounting = (
 		const level =
 			typeof accounting.mergeH === "number" && Number.isFinite(accounting.mergeH)
 				? accounting.mergeH
+				: accounting.mapExitTileId !== null
+					? (h[accounting.mapExitTileId] ?? 1)
 				: 1;
 		const tiles = expandedTileSets.get(basinId);
 		if (!tiles) {

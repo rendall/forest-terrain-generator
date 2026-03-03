@@ -84,6 +84,9 @@ describe("lake accounting from production hydrology pipeline", () => {
 		expect(child.overflowExcess).toBeCloseTo(0.8, 6);
 		expect(parent.externalInflow).toBe(0);
 		expect(parent.totalInflow).toBeCloseTo(child.overflowExcess, 6);
+		expect(parent.receiverId).toBe("OCEAN");
+		expect(parent.mapExitTileId).toBeTypeOf("number");
+		expect(parent.role).toBe("overflow_carrier");
 	});
 
 	it("keeps the same basin as a sink when wetnessScale is zero", () => {

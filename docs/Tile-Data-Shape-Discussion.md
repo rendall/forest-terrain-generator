@@ -25,6 +25,7 @@ The current tile/envelope contract has drift in multiple dimensions:
 2. Source-of-truth drift: envelope-carried data and debug/recomputed data can diverge without clear provenance.
 3. Shape drift: naming and placement of fields (tile vs feature vs metadata) are inconsistent across use cases.
 4. Evolution drift: deprecations/renames are not yet organized around a clear contract migration path.
+5. Provenance drift: envelope metadata does not always preserve the generation seed that produced the map.
 
 Net effect:
 
@@ -232,13 +233,14 @@ Without a clear elevation contract, derivability and provenance are implicit rat
 #### Proposal G: Elevation z-axis metadata contract
 
 - Discussion goal:
-  - Move elevation frame-of-reference to envelope metadata and reduce per-tile redundancy.
+  - Move elevation frame-of-reference and key generation provenance to envelope metadata and reduce per-tile redundancy.
 
 - Proposed metadata shape:
 
 ```json
 "meta": {
   "specVersion": "forest-terrain-v2",
+  "seed": "1187",
   "elevation": {
     "h0": 80,
     "h1": 300,
@@ -249,6 +251,9 @@ Without a clear elevation contract, derivability and provenance are implicit rat
 ```
 
 - Field semantics:
+  - `seed`: canonical generation seed token for maps created from seeded generation flow.
+    - stored as string to preserve uint64 token fidelity and avoid JS number precision loss.
+    - may be absent for envelopes produced from non-seeded/authored workflows.
   - `h0`: meters at normalized `h=0`
   - `h1`: meters at normalized `h=1`
   - `zMinMeters`: realized map minimum elevation
@@ -297,6 +302,7 @@ This is a discussion-only example of the proposed envelope shape after current c
 {
   "meta": {
     "specVersion": "forest-terrain-v2",
+    "seed": "1187",
     "elevation": {
       "h0": 80,
       "h1": 300,
@@ -384,6 +390,7 @@ type StreamDir = "N" | "NE" | "E" | "SE" | "S" | "SW" | "W" | "NW";
 interface EnvelopeV2Draft {
   meta: {
     specVersion: "forest-terrain-v2";
+    seed?: string;
     elevation: {
       h0: number;
       h1: number;

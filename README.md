@@ -144,6 +144,7 @@ Inflow accounting uses strict-local `FD/FA` as a fixed basis, then applies basin
 Debug hydrology outputs (`debug/hydrology.json`) include:
 
 - `lakeAccounting.basins` (per-basin accounting + role)
+  - includes `receiverId` (`parent basin id` or `"OCEAN"`) and `mapExitTileId` when a root drains off-map
 - per-tile hydrology fields:
   - `fd`, `fa`, `faN`, `isStream`
   - `lakeMask`, `lakeSurfaceH`, `waterClass`
