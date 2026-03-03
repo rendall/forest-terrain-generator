@@ -19,7 +19,7 @@ afterEach(async () => {
 });
 
 describe("elevation params and tile output", () => {
-	it("accepts params.elevation.h0/h1 and maps h to elevationMeters", async () => {
+	it("accepts params.elevation.h0/h1 and writes elevation frame to meta", async () => {
 		const cwd = await makeTempDir();
 		const paramsPath = join(cwd, "params.json");
 		const outputFile = join(cwd, "out.json");
@@ -65,11 +65,17 @@ describe("elevation params and tile output", () => {
 		});
 
 		const envelope = JSON.parse(await readFile(outputFile, "utf8"));
+		expect(envelope.meta.elevation).toBeDefined();
+		expect(envelope.meta.elevation.h0).toBe(100);
+		expect(envelope.meta.elevation.h1).toBe(200);
 		for (const tile of envelope.tiles) {
 			expect(typeof tile.topography.h).toBe("number");
-			expect(typeof tile.topography.elevationMeters).toBe("number");
 			const expected = 100 + tile.topography.h * 100;
-			expect(tile.topography.elevationMeters).toBeCloseTo(expected, 6);
+			const derived =
+				envelope.meta.elevation.h0 +
+				tile.topography.h *
+					(envelope.meta.elevation.h1 - envelope.meta.elevation.h0);
+			expect(derived).toBeCloseTo(expected, 6);
 		}
 	});
 

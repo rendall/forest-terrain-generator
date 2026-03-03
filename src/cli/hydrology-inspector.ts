@@ -18,6 +18,8 @@
  * - `--debug-dir <path>` required when `--viz` is set
  * - `--stats` emit stats JSON
  * - `--stats-file <path>` optional stats output override (requires `--stats`)
+ * - `--source-mode <mode>` where mode is `auto|envelope|recompute`
+ * - `--params <path>` optional params file used when recomputing hydrology
  * - `--sink-mode strict_local|overflow_guided` used only when hydrology maps must be recomputed
  * - `--force` required to overwrite existing viz/stats target files
  * - `--debug` include request/options echo in output payload
@@ -42,6 +44,8 @@ import {
 interface HydrologyInspectorOptions {
 	inputJson?: string;
 	sinkMode?: "strict_local" | "overflow_guided";
+	sourceMode?: "auto" | "envelope" | "recompute";
+	params?: string;
 	debug?: boolean;
 	viz?: string;
 	debugDir?: string;
@@ -89,6 +93,15 @@ program
 		"Sink handling mode when recomputing hydrology (strict_local|overflow_guided)",
 		"strict_local",
 	)
+	.option(
+		"--source-mode <mode>",
+		"Hydrology source mode (auto|envelope|recompute)",
+		"auto",
+	)
+	.option(
+		"--params <path>",
+		"Optional params file applied when hydrology is recomputed",
+	)
 	.option("--debug", "Include request/options diagnostics", false)
 	.option(
 		"--viz <mode>",
@@ -118,6 +131,8 @@ try {
 		args: {
 			inputJsonPath: options.inputJson,
 			sinkMode: options.sinkMode,
+			sourceMode: options.sourceMode,
+			paramsPath: options.params,
 			viz: vizMode,
 			debugDirPath: options.debugDir,
 			stats: statsEnabled,
@@ -132,6 +147,10 @@ try {
 
 	const payload: Record<string, unknown> = {
 		hydrologyMapsSource: result.hydrologyMapsSource,
+		hydrologySourceMode: result.hydrologySourceMode,
+		...(result.hydrologyRecomputeContext
+			? { hydrologyRecomputeContext: result.hydrologyRecomputeContext }
+			: {}),
 	};
 	if (result.writtenFiles.length > 0) {
 		payload.viz = { writtenFiles: result.writtenFiles };
@@ -144,7 +163,9 @@ try {
 		payload.debug = {
 			inputJsonPath: options.inputJson,
 			debugDirPath: options.debugDir,
+			paramsPath: options.params,
 			sinkMode: options.sinkMode,
+			sourceMode: options.sourceMode,
 			viz: vizMode,
 			stats: statsEnabled,
 		};

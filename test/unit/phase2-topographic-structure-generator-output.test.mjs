@@ -17,7 +17,7 @@ afterEach(async () => {
 });
 
 describe("Phase 2 topographic structure tile payload", () => {
-  it("emits minimal topography.structure fields and excludes internals", async () => {
+  it("emits v2 tile payload without legacy feature/topography structure fields", async () => {
     const cwd = await makeTempDir();
     const outputFile = join(cwd, "out.json");
 
@@ -44,31 +44,29 @@ describe("Phase 2 topographic structure tile payload", () => {
 
     const firstTile = envelope.tiles[0];
     expect(firstTile.index).toBe(0);
-    expect(Array.isArray(firstTile.featureIds)).toBe(true);
-    expect(Array.isArray(firstTile.activeFeatureIds)).toBe(true);
-    expect(firstTile.featureIds.length).toBeLessThanOrEqual(2);
-    expect(firstTile.topography.structure).toBeDefined();
-    expect(firstTile.topography.structure.basinPersistence === null
-      || typeof firstTile.topography.structure.basinPersistence === "number").toBe(true);
-    expect(firstTile.topography.structure.peakPersistence === null
-      || typeof firstTile.topography.structure.peakPersistence === "number").toBe(true);
-    expect(typeof firstTile.topography.structure.basinLike).toBe("boolean");
-    expect(typeof firstTile.topography.structure.ridgeLike).toBe("boolean");
-    expect(firstTile.topography.structure.basinMinIdx).toBeUndefined();
-    expect(firstTile.topography.structure.peakMaxIdx).toBeUndefined();
+    expect(firstTile.featureIds).toBeUndefined();
+    expect(firstTile.activeFeatureIds).toBeUndefined();
+    expect(firstTile.topography.structure).toBeUndefined();
+    expect(firstTile.topography.elevationMeters).toBeUndefined();
+    expect(firstTile.hydrology).toBeDefined();
+    expect(firstTile.hydrology).toHaveProperty("fd");
+    expect(firstTile.hydrology).toHaveProperty("fa");
+    expect(firstTile.hydrology).toHaveProperty("faN");
+    expect(firstTile.hydrology).toHaveProperty("waterDepth");
+    expect(firstTile.hydrology).toHaveProperty("basinId");
 
     for (const tile of envelope.tiles) {
       expect(tile.index).toBe(tile.y * 8 + tile.x);
-      expect(Array.isArray(tile.featureIds)).toBe(true);
-      expect(tile.featureIds.length).toBeLessThanOrEqual(2);
-      expect(Array.isArray(tile.activeFeatureIds)).toBe(true);
-      expect(tile.topography.structure).toBeDefined();
-      expect(Object.keys(tile.topography.structure)).toEqual([
-        "basinPersistence",
-        "peakPersistence",
-        "basinLike",
-        "ridgeLike",
-      ]);
+      expect(tile.featureIds).toBeUndefined();
+      expect(tile.activeFeatureIds).toBeUndefined();
+      expect(tile.topography.structure).toBeUndefined();
+      expect(tile.topography.elevationMeters).toBeUndefined();
+      expect(tile.hydrology).toBeDefined();
+      expect(typeof tile.hydrology.waterDepth).toBe("number");
+      expect(
+        typeof tile.hydrology.basinId === "string" ||
+          tile.hydrology.basinId === null,
+      ).toBe(true);
     }
   });
 });

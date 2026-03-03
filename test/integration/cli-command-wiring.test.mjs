@@ -189,10 +189,11 @@ describe("CLI command wiring and contract failures", () => {
 		expect(result.code).toBe(0);
 		const written = await readFile(outputFile, "utf8");
 		const parsed = JSON.parse(written);
-		expect(parsed.meta.specVersion).toBe("forest-terrain-v1");
-		expect(Object.keys(parsed.meta)).toEqual(["specVersion"]);
+		expect(parsed.meta.specVersion).toBe("forest-terrain-v2");
+		expect(parsed.meta.seed).toBe("42");
+		expect(parsed.meta.elevation).toBeDefined();
 		expect(written).toContain(
-			'\n  "meta": {\n    "specVersion": "forest-terrain-v1"\n  },\n',
+			'\n  "meta": {\n    "specVersion": "forest-terrain-v2",',
 		);
 		expect(written.endsWith("\n")).toBe(true);
 		expect(Array.isArray(parsed.tiles)).toBe(true);
@@ -270,7 +271,7 @@ describe("CLI command wiring and contract failures", () => {
 		);
 		const manifest = JSON.parse(manifestRaw);
 		expect(manifest.mode).toBe("debug");
-		expect(manifest.specVersion).toBe("forest-terrain-v1");
+		expect(manifest.specVersion).toBe("forest-terrain-v2");
 		expect(manifest.width).toBe(4);
 		expect(manifest.height).toBe(4);
 		expect(manifest.tileCount).toBe(16);
@@ -305,8 +306,9 @@ describe("CLI command wiring and contract failures", () => {
 
 		const envelope = await readFile(debugOutputFile, "utf8");
 		const parsed = JSON.parse(envelope);
-		expect(parsed.meta.specVersion).toBe("forest-terrain-v1");
-		expect(Object.keys(parsed.meta)).toEqual(["specVersion"]);
+		expect(parsed.meta.specVersion).toBe("forest-terrain-v2");
+		expect(parsed.meta.seed).toBe("42");
+		expect(parsed.meta.elevation).toBeDefined();
 		expect(envelope.endsWith("\n")).toBe(true);
 		expect(Array.isArray(parsed.tiles)).toBe(true);
 		expect(parsed.tiles.length).toBeGreaterThan(0);
@@ -377,7 +379,7 @@ describe("CLI command wiring and contract failures", () => {
 		);
 		const manifest = JSON.parse(manifestRaw);
 		expect(manifest.mode).toBe("debug");
-		expect(manifest.specVersion).toBe("forest-terrain-v1");
+		expect(manifest.specVersion).toBe("forest-terrain-v2");
 		expect(manifest.width).toBe(4);
 		expect(manifest.height).toBe(4);
 		expect(manifest.tileCount).toBe(16);

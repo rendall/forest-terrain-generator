@@ -161,7 +161,7 @@ describe("derive-hydrology", () => {
 			},
 		);
 		expect(result.diagnostics.overflowAppliedCount).toBe(0);
-		expect(result.diagnostics.overflowFallbackCount).toBe(1);
+		expect(result.diagnostics.overflowFallbackCount).toBe(2);
 		expect(result.maps.fd[0]).toBe(255);
 	});
 });

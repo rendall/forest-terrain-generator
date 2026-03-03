@@ -1,5 +1,11 @@
 import { isAbsolute, resolve } from "node:path";
 import { InputValidationError } from "../domain/errors.js";
+import {
+	DIR8_NONE,
+	flowCodeToStreamDir,
+	oppositeStreamDir,
+	type StreamDir,
+} from "../domain/hydrology.js";
 import { createGridShape } from "../domain/topography.js";
 import type {
 	CliArgs,
@@ -11,8 +17,10 @@ import type {
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
 import { readParamsFile } from "../io/read-params.js";
 import { writeModeOutputs } from "../io/write-outputs.js";
+import { buildBasinTileMembership } from "../lib/basin-membership.js";
 import { deepMerge } from "../lib/deep-merge.js";
 import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
+import { computeJsonDelta } from "../lib/json-delta.js";
 import { deriveTopographicStructure } from "../pipeline/derive-topographic-structure.js";
 import { deriveTopographyFromBaseMaps } from "../pipeline/derive-topography.js";
 import { deriveHydrology } from "../pipeline/derive-hydrology.js";
@@ -30,7 +38,6 @@ const DEBUG_INPUT_FILE_EXCLUSIVE_FLAGS = [
 	{ valueKey: "seed", flag: "--seed" },
 	{ valueKey: "width", flag: "--width" },
 	{ valueKey: "height", flag: "--height" },
-	{ valueKey: "paramsPath", flag: "--params" },
 	{ valueKey: "mapHPath", flag: "--map-h" },
 	{ valueKey: "mapRPath", flag: "--map-r" },
 	{ valueKey: "mapVPath", flag: "--map-v" },
@@ -100,6 +107,63 @@ interface ElevationParams {
 	h0: number;
 	h1: number;
 }
+
+const isFiniteNumber = (value: unknown): value is number =>
+	typeof value === "number" && Number.isFinite(value);
+
+const basinIdFromFeatureIds = (featureIds: string[]): string | null =>
+	featureIds.find((id) => id.startsWith("b_")) ?? null;
+
+const resolveFlowTarget = (
+	index: number,
+	width: number,
+	height: number,
+	fdCode: number,
+): number | null => {
+	const x = index % width;
+	const y = Math.floor(index / width);
+	let nx = x;
+	let ny = y;
+	const dir = flowCodeToStreamDir(fdCode);
+	if (!dir) {
+		return null;
+	}
+	switch (dir) {
+		case "E":
+			nx += 1;
+			break;
+		case "SE":
+			nx += 1;
+			ny += 1;
+			break;
+		case "S":
+			ny += 1;
+			break;
+		case "SW":
+			nx -= 1;
+			ny += 1;
+			break;
+		case "W":
+			nx -= 1;
+			break;
+		case "NW":
+			nx -= 1;
+			ny -= 1;
+			break;
+		case "N":
+			ny -= 1;
+			break;
+		case "NE":
+			nx += 1;
+			ny -= 1;
+			break;
+	}
+	if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+		return null;
+	}
+	return ny * width + nx;
+};
+
 
 function buildElevationParams(params: JsonObject): ElevationParams {
 	const elevation = isJsonObject(params.elevation)
@@ -211,17 +275,55 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		assertDebugInputFileArgs(request.args);
 		const validated = validateDebugInputFileInputs(resolved);
 		const envelope = await readTerrainEnvelopeFile(validated.inputFilePath);
-		const { shape, h } = gridFromEnvelope(envelope);
-		const tileFeatureIds = envelope.tiles.map((tile) =>
-			Array.isArray(tile.featureIds)
-				? tile.featureIds.filter((id): id is string => typeof id === "string")
-				: [],
+		const paramsFile = await readParamsFile(request.args.paramsPath, request.cwd);
+		const envelopeParamOverrides = isJsonObject(envelope.paramOverrides)
+			? (envelope.paramOverrides as JsonObject)
+			: {};
+		const paramsFromFile = isJsonObject(paramsFile.params)
+			? (paramsFile.params as JsonObject)
+			: {};
+		const recomputeParams = deepMerge(
+			deepMerge(APPENDIX_A_DEFAULTS, envelopeParamOverrides),
+			paramsFromFile,
 		);
+		applyLegacyVegVarianceStrengthOverride(recomputeParams, paramsFromFile);
+		const recomputeParamOverrides = computeJsonDelta(
+			APPENDIX_A_DEFAULTS,
+			recomputeParams,
+		);
+		if (Object.keys(recomputeParamOverrides).length > 0) {
+			envelope.paramOverrides = recomputeParamOverrides;
+		}
+		const { shape, h } = gridFromEnvelope(envelope);
+		const membership = buildBasinTileMembership(
+			shape.size,
+			envelope.features?.basins ?? [],
+		);
+		const tileFeatureIds = envelope.tiles.map((tile) => {
+			if (Array.isArray(tile.featureIds)) {
+				return tile.featureIds.filter(
+					(id): id is string => typeof id === "string",
+				);
+			}
+			if (
+				typeof tile.x !== "number" ||
+				typeof tile.y !== "number" ||
+				!Number.isInteger(tile.x) ||
+				!Number.isInteger(tile.y) ||
+				tile.x < 0 ||
+				tile.y < 0 ||
+				tile.x >= shape.width ||
+				tile.y >= shape.height
+			) {
+				return [];
+			}
+			return membership.tileFeatureIds[tile.y * shape.width + tile.x] ?? [];
+		});
 		const hydrology = deriveHydrology(
 			shape,
 			h,
 			{ basinFeatures: envelope.features?.basins ?? [], tileFeatureIds },
-			validated.params,
+			recomputeParams,
 		);
 		await writeModeOutputs(
 			request.mode,
@@ -271,38 +373,108 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 	);
 	const elevation = buildElevationParams(validated.params);
 	const elevationSpan = elevation.h1 - elevation.h0;
+	const minH = topography.h.reduce(
+		(min, value) => Math.min(min, value),
+		Number.POSITIVE_INFINITY,
+	);
+	const maxH = topography.h.reduce(
+		(max, value) => Math.max(max, value),
+		Number.NEGATIVE_INFINITY,
+	);
+	const zMinMeters = elevation.h0 + minH * elevationSpan;
+	const zMaxMeters = elevation.h0 + maxH * elevationSpan;
+	const paramOverrides = computeJsonDelta(APPENDIX_A_DEFAULTS, validated.params);
 
 	const envelope: TerrainEnvelope = buildEnvelopeSkeleton();
+	envelope.meta.seed = validated.seed.toString();
+	envelope.meta.elevation = {
+		h0: elevation.h0,
+		h1: elevation.h1,
+		zMinMeters,
+		zMaxMeters,
+	};
 	envelope.features = {
 		basins: topographyStructure.basinFeatures,
 		peaks: topographyStructure.peakFeatures,
 	};
 
+	const tileWaterDepth = hydrology.lakeAccounting.tileWaterDepth;
+	const tileLakeBasinId = hydrology.lakeAccounting.tileLakeBasinId;
+	const outStreamDirByTile = new Array<StreamDir | undefined>(shape.size);
+	const inStreamDirsByTile = Array.from(
+		{ length: shape.size },
+		() => new Set<StreamDir>(),
+	);
+	for (let i = 0; i < shape.size; i += 1) {
+		if ((hydrology.maps.isStream[i] ?? 0) !== 1) {
+			continue;
+		}
+		const outDir = flowCodeToStreamDir(hydrology.maps.fd[i] ?? DIR8_NONE);
+		if (!outDir) {
+			continue;
+		}
+		outStreamDirByTile[i] = outDir;
+		const target = resolveFlowTarget(
+			i,
+			shape.width,
+			shape.height,
+			hydrology.maps.fd[i] ?? DIR8_NONE,
+		);
+		if (target === null || target < 0 || target >= shape.size) {
+			continue;
+		}
+		inStreamDirsByTile[target].add(oppositeStreamDir(outDir));
+	}
+
 	const tiles: JsonObject[] = [];
 	for (let i = 0; i < shape.size; i += 1) {
 		const x = i % shape.width;
 		const y = Math.floor(i / shape.width);
+		const featureIds = topographyStructure.tileFeatureIds[i] ?? [];
+		const directBasinId = basinIdFromFeatureIds(featureIds);
+		const fallbackBasinId =
+			typeof tileLakeBasinId[i] === "string" && tileLakeBasinId[i].length > 0
+				? tileLakeBasinId[i]
+				: null;
+		const basinId = directBasinId ?? fallbackBasinId;
+		const waterDepth = isFiniteNumber(tileWaterDepth?.[i])
+			? tileWaterDepth[i]
+			: 0;
+		const hasStream = (hydrology.maps.isStream[i] ?? 0) === 1;
+		const inDirs = hasStream ? [...inStreamDirsByTile[i]].sort() : [];
+		const outDir = hasStream ? outStreamDirByTile[i] : undefined;
+		const tileHydrology: JsonObject = {
+			fd: hydrology.maps.fd[i] ?? DIR8_NONE,
+			fa: hydrology.maps.fa[i] ?? 0,
+			faN: hydrology.maps.faN[i] ?? 0,
+			waterDepth,
+			basinId,
+		};
+		if (hasStream) {
+			tileHydrology.hasStream = true;
+			if (inDirs.length > 0) {
+				tileHydrology.inStreamDir = inDirs;
+			}
+			if (outDir) {
+				tileHydrology.outStreamDir = outDir;
+			}
+		}
 		tiles.push({
 			index: i,
 			x,
 			y,
-			featureIds: topographyStructure.tileFeatureIds[i],
-			activeFeatureIds: topographyStructure.tileActiveFeatureIds[i],
 			topography: {
 				h: topography.h[i],
-				elevationMeters: elevation.h0 + topography.h[i] * elevationSpan,
 				r: topography.r[i],
 				v: topography.v[i],
-				structure: {
-					basinPersistence: topographyStructure.basinPersistence[i],
-					peakPersistence: topographyStructure.peakPersistence[i],
-					basinLike: topographyStructure.basinLike[i] === 1,
-					ridgeLike: topographyStructure.ridgeLike[i] === 1,
-				},
 			},
+			hydrology: tileHydrology,
 		});
 	}
 	envelope.tiles = tiles;
+	if (Object.keys(paramOverrides).length > 0) {
+		envelope.paramOverrides = paramOverrides;
+	}
 
 	await writeModeOutputs(
 		request.mode,

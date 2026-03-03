@@ -54,7 +54,10 @@ function addCommonInputOptions(command: Command): Command {
 		.option("--width <width>", "Grid width", parseIntArg)
 		.option("--height <height>", "Grid height", parseIntArg)
 		.option("--params <path>", "Path to JSON params file")
-		.option("--input-file <path>", "Path to terrain envelope JSON (debug only)")
+		.option(
+			"--input-file <path>",
+			'Path to terrain envelope JSON (v2 preferred; debug only)',
+		)
 		.option("--map-h <path>", "Path to authored H map")
 		.option("--map-r <path>", "Path to authored R map")
 		.option("--map-v <path>", "Path to authored V map")
@@ -118,11 +121,13 @@ const assertHydrologyVizMode = (
 		raw !== "fa" &&
 		raw !== "fd" &&
 		raw !== "fa-normalized" &&
+		raw !== "carry-over" &&
+		raw !== "basins" &&
 		raw !== "hydrology" &&
 		raw !== "all"
 	) {
 		throw new InputValidationError(
-			`Invalid --hydrology-viz mode "${raw}". Expected one of: fa|fd|fa-normalized|hydrology|all.`,
+			`Invalid --hydrology-viz mode "${raw}". Expected one of: fa|fd|fa-normalized|carry-over|basins|hydrology|all.`,
 		);
 	}
 	return raw;
@@ -138,15 +143,23 @@ program
 	.exitOverride();
 
 addCommonInputOptions(
-	program.command("generate").description("Generate terrain"),
+	program
+		.command("generate")
+		.description('Generate terrain envelope (meta.specVersion="forest-terrain-v2")'),
 ).action(async (options) => runMode("generate", toArgs(options)));
 
 addCommonInputOptions(
-	program.command("derive").description("Derive terrain from authored maps"),
+	program
+		.command("derive")
+		.description(
+			'Derive terrain envelope from authored maps (meta.specVersion="forest-terrain-v2")',
+		),
 ).action(async (options) => runMode("derive", toArgs(options)));
 
 addCommonInputOptions(
-	program.command("debug").description("Emit debug artifacts"),
+	program
+		.command("debug")
+		.description("Emit debug artifacts and optional v2 debug envelope output"),
 )
 	.option(
 		"--hydrology-viz <mode>",
@@ -184,6 +197,8 @@ addCommonInputOptions(
 			args: {
 				inputJsonPath: options.debugOutputFile,
 				sinkMode: "strict_local",
+				sourceMode: "auto",
+				paramsPath: options.params,
 				viz: hydrologyViz,
 				debugDirPath: options.outputDir,
 				stats: statsEnabled,

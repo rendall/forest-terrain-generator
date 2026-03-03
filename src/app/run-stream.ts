@@ -7,6 +7,7 @@ import type { JsonObject } from "../domain/types.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
 import { deriveHydrology } from "../pipeline/derive-hydrology.js";
 import { STRUCTURE_DIR8_NEIGHBORS } from "../pipeline/derive-topographic-structure.js";
+import { buildBasinTileMembership } from "../lib/basin-membership.js";
 
 export interface StreamCliArgs {
 	inputJsonPath?: string;
@@ -447,7 +448,23 @@ export async function writeStreamOverlayPpm(
 	const seen = new Uint8Array(expectedSize);
 	const hByIndex = new Float64Array(expectedSize);
 	for (const tile of envelope.tiles) {
-		const index = tile.y * width + tile.x;
+		const tx = tile.x;
+		const ty = tile.y;
+		if (
+			typeof tx !== "number" ||
+			typeof ty !== "number" ||
+			!Number.isInteger(tx) ||
+			!Number.isInteger(ty) ||
+			tx < 0 ||
+			ty < 0 ||
+			tx >= width ||
+			ty >= height
+		) {
+			throw new InputValidationError(
+				`Input terrain file "${inputFilePath}" contains invalid tile coordinates at (${String(tile.x)},${String(tile.y)}).`,
+			);
+		}
+		const index = ty * width + tx;
 		if (seen[index] === 1) {
 			throw new InputValidationError(
 				`Input terrain file "${inputFilePath}" has duplicate tile coordinates at (${tile.x},${tile.y}).`,
@@ -675,7 +692,23 @@ export async function runStreamTrace(
 		() => [] as string[],
 	);
 	for (const tile of envelope.tiles) {
-		const index = tile.y * width + tile.x;
+		const tx = tile.x;
+		const ty = tile.y;
+		if (
+			typeof tx !== "number" ||
+			typeof ty !== "number" ||
+			!Number.isInteger(tx) ||
+			!Number.isInteger(ty) ||
+			tx < 0 ||
+			ty < 0 ||
+			tx >= width ||
+			ty >= height
+		) {
+			throw new InputValidationError(
+				`Input terrain file "${inputFilePath}" contains invalid tile coordinates at (${String(tile.x)},${String(tile.y)}).`,
+			);
+		}
+		const index = ty * width + tx;
 		if (seen[index] === 1) {
 			throw new InputValidationError(
 				`Input terrain file "${inputFilePath}" has duplicate tile coordinates at (${tile.x},${tile.y}).`,
@@ -767,6 +800,18 @@ export async function runStreamTrace(
 			basinId,
 			resolveBasinTileIds(basinId, new Set<string>()),
 		);
+	}
+	const membership = buildBasinTileMembership(
+		expectedSize,
+		envelope.features?.basins ?? [],
+	);
+	for (let tileId = 0; tileId < expectedSize; tileId += 1) {
+		if ((tileFeatureIdsByIndex[tileId] ?? []).length === 0) {
+			tileFeatureIdsByIndex[tileId] = membership.tileFeatureIds[tileId] ?? [];
+		}
+		if (!basinIdByIndex[tileId]) {
+			basinIdByIndex[tileId] = membership.directBasinIdByTile[tileId] ?? "";
+		}
 	}
 	const shape = createGridShape(width, height);
 	const topographyH = new Float32Array(expectedSize);

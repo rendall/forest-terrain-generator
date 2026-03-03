@@ -2,7 +2,13 @@ import { randomUUID } from "node:crypto";
 import { mkdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { FileIoError, InputValidationError } from "../domain/errors.js";
-import type { HydrologyMapsSoA } from "../domain/hydrology.js";
+import {
+	DIR8_NONE,
+	flowCodeToStreamDir,
+	oppositeStreamDir,
+	type HydrologyMapsSoA,
+	type StreamDir,
+} from "../domain/hydrology.js";
 import type { TerrainFeatureCollection } from "../domain/topographic-features.js";
 import type { Mode, TerrainEnvelope } from "../domain/types.js";
 import type {
@@ -91,10 +97,92 @@ function buildHydrologyDebugTiles(
 	hydrologyMaps: HydrologyMapsSoA | undefined,
 	lakeAccounting: LakeAccountingResult | undefined,
 ) {
+	const basinIdFromTile = (tile: TerrainEnvelope["tiles"][number]): string | null => {
+		const hydrology = asObject(tile.hydrology);
+		if (typeof hydrology?.basinId === "string" && hydrology.basinId.length > 0) {
+			return hydrology.basinId;
+		}
+		if (Array.isArray(tile.featureIds)) {
+			const featureBasinId = tile.featureIds.find(
+				(id): id is string =>
+					typeof id === "string" && id.startsWith("b_"),
+			);
+			if (featureBasinId) {
+				return featureBasinId;
+			}
+		}
+		return null;
+	};
+
+	const buildIncomingDirs = (
+		shape: HydrologyMapsSoA["shape"],
+		fd: Uint8Array,
+		isStream: Uint8Array,
+	): StreamDir[][] => {
+		const incoming = Array.from({ length: shape.size }, () => [] as StreamDir[]);
+		for (let index = 0; index < shape.size; index += 1) {
+			if ((isStream[index] ?? 0) !== 1) {
+				continue;
+			}
+			const outDir = flowCodeToStreamDir(fd[index] ?? DIR8_NONE);
+			if (!outDir) {
+				continue;
+			}
+			const x = index % shape.width;
+			const y = Math.floor(index / shape.width);
+			let nx = x;
+			let ny = y;
+			switch (outDir) {
+				case "E":
+					nx += 1;
+					break;
+				case "SE":
+					nx += 1;
+					ny += 1;
+					break;
+				case "S":
+					ny += 1;
+					break;
+				case "SW":
+					nx -= 1;
+					ny += 1;
+					break;
+				case "W":
+					nx -= 1;
+					break;
+				case "NW":
+					nx -= 1;
+					ny -= 1;
+					break;
+				case "N":
+					ny -= 1;
+					break;
+				case "NE":
+					nx += 1;
+					ny -= 1;
+					break;
+			}
+			if (nx < 0 || ny < 0 || nx >= shape.width || ny >= shape.height) {
+				continue;
+			}
+			const target = ny * shape.width + nx;
+			incoming[target].push(oppositeStreamDir(outDir));
+		}
+		for (const dirs of incoming) {
+			dirs.sort();
+		}
+		return incoming;
+	};
+
 	if (!hydrologyMaps) {
 		return buildPhaseTiles(envelope, "hydrology");
 	}
 	const shape = hydrologyMaps.shape;
+	const incomingDirsByTile = buildIncomingDirs(
+		shape,
+		hydrologyMaps.fd,
+		hydrologyMaps.isStream,
+	);
 	return envelope.tiles.map((tile, fallbackIndex) => {
 		const index =
 			typeof tile.index === "number" &&
@@ -107,25 +195,39 @@ function buildHydrologyDebugTiles(
 			index,
 			x: tile.x,
 			y: tile.y,
-				hydrology: {
-					fd: inRange ? hydrologyMaps.fd[index] : null,
-					fa: inRange ? hydrologyMaps.fa[index] : null,
-					faN: inRange ? hydrologyMaps.faN[index] : null,
-					isStream: inRange ? hydrologyMaps.isStream[index] === 1 : false,
-					lakeMask: inRange ? hydrologyMaps.lakeMask[index] === 1 : false,
-					lakeSurfaceH: inRange ? hydrologyMaps.lakeSurfaceH[index] : null,
-					waterClass: inRange ? hydrologyMaps.waterClass[index] : null,
-					lakeDepth:
-						inRange && lakeAccounting
-							? lakeAccounting.tileLakeDepth[index] ?? 0
-							: null,
-					lakeBasinId:
-						inRange && lakeAccounting
-							? (lakeAccounting.tileLakeBasinId[index] || null)
-							: null,
-				},
-			};
-		});
+			hydrology: (() => {
+				if (!inRange) {
+					return {
+						fd: null,
+						fa: null,
+						faN: null,
+						waterDepth: 0,
+						basinId: null,
+					};
+				}
+				const hasStream = hydrologyMaps.isStream[index] === 1;
+				const outDir = flowCodeToStreamDir(hydrologyMaps.fd[index] ?? DIR8_NONE);
+				const incomingDirs = incomingDirsByTile[index] ?? [];
+				const waterDepth = lakeAccounting?.tileWaterDepth[index] ?? 0;
+				const basinId =
+					(lakeAccounting?.tileLakeBasinId[index] ?? "") ||
+					basinIdFromTile(tile) ||
+					null;
+				return {
+					fd: hydrologyMaps.fd[index],
+					fa: hydrologyMaps.fa[index],
+					faN: hydrologyMaps.faN[index],
+					...(hasStream ? { hasStream: true } : {}),
+					...(hasStream && incomingDirs.length > 0
+						? { inStreamDir: incomingDirs }
+						: {}),
+					...(hasStream && outDir ? { outStreamDir: outDir } : {}),
+					waterDepth,
+					basinId,
+				};
+			})(),
+		};
+	});
 }
 
 type HydrologyDebugField = "fd" | "fa" | "faN" | "streamMask";
@@ -158,7 +260,11 @@ function buildHydrologyFieldTiles(
 				x: tile.x,
 				y: tile.y,
 				isStream:
-					typeof hydrology.isStream === "boolean" ? hydrology.isStream : null,
+					hydrology.hasStream === true
+						? true
+						: typeof hydrology.isStream === "boolean"
+							? hydrology.isStream
+							: null,
 			};
 		});
 	}

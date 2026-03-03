@@ -1,11 +1,10 @@
 # Forest Terrain Generator
 
-Procedurally generate forest data.
+Procedurally generate deterministic forest terrain envelopes.
 
-The *Forest Terrain Generator* is a deterministic terrain synthesis engine for producing complete, machine-readable, procedurally generated forest landscapes. Given a seed, dimensions, and a parameter set, it generates a rectangular grid of tiles and derives a coherent physical model of that region: elevation, slope, landform, hydrology, moisture, biome classification, vegetation structure, ground conditions, roughness features, visibility, and movement semantics.
+The *Forest Terrain Generator* is a deterministic terrain synthesis engine for producing machine-readable, procedurally generated forest landscapes. Given a seed, dimensions, and a parameter set, it generates a rectangular grid of tiles and derives a coherent physical model of that region (topography and hydrology in the current v2 contract).
 
-The output is a versioned JSON dataset whose `tiles` array contains one fully described record per coordinate. Each tile represents a physically consistent location within a forest environment, including both environmental attributes and navigation-related properties. The result is not prose or rendered content, but a structured terrain model designed to be deterministic, reproducible, and suitable for downstream systems that require spatially coherent forest data.
-An optional post-processing CLI can attach deterministic prose descriptions per tile.
+The output is a versioned JSON envelope (`meta.specVersion = "forest-terrain-v2"`) whose `tiles` array contains one record per coordinate. Each tile currently carries canonical `topography` and `hydrology` fields. Additional downstream passes (for example description) remain separate so core terrain generation stays reproducible.
 
 ```bash
 node --import tsx src/cli/main.ts generate --params params.json --seed 42 --width 32 --height 32 --output-file out.json
@@ -53,7 +52,9 @@ Path resolution:
 Mode/output validation highlights:
 
 - In `debug`, using `--output-file` is rejected with the hint: `You might mean --debug-output-file.`
-- In `debug`, `--input-file` cannot be combined with generation inputs (`--seed`, `--width`, `--height`, `--params`, `--map-h`, `--map-r`, `--map-v`).
+- In `debug`, `--input-file` cannot be combined with generation inputs (`--seed`, `--width`, `--height`, `--map-h`, `--map-r`, `--map-v`).
+- In `debug`, `--input-file` can be combined with `--params`; recompute precedence is:
+  `defaults < envelope.paramOverrides < --params file < explicit CLI flags`.
 - Existing output files/directories fail by default and require `--force` to overwrite/replace.
 
 ```bash
@@ -112,9 +113,9 @@ All three noise maps (`heightNoise`, `roughnessNoise`, `vegVarianceNoise`) also 
 - `roughnessNoise` controls `topography.r` (terrain roughness signal). Low values are smoother ground; high values are rougher, more broken ground.
 - `vegVarianceNoise` controls `topography.v` (vegetation variance signal). It is a stable variation map used to create patchiness instead of uniform vegetation everywhere.
 
-## Topography Structure
+## Topography Structure Params
 
-`topography.structure` controls structural basin/peak labeling:
+`topography.structure` params control structural basin/peak derivation:
 
 - `enabled` turns structure derivation on/off.
 - `connectivity` chooses neighborhood mode (currently `dir8`).
@@ -146,9 +147,12 @@ Debug hydrology outputs (`debug/hydrology.json`) include:
 - `lakeAccounting.basins` (per-basin accounting + role)
   - includes `receiverId` (`parent basin id` or `"OCEAN"`) and `mapExitTileId` when a root drains off-map
 - per-tile hydrology fields:
-  - `fd`, `fa`, `faN`, `isStream`
-  - `lakeMask`, `lakeSurfaceH`, `waterClass`
-  - `lakeDepth`, `lakeBasinId`
+  - `fd`, `fa`, `faN`
+  - `waterDepth` (signed)
+  - `basinId` (`string | null`)
+  - `hasStream?: true`
+  - `inStreamDir?: StreamDir[]`
+  - `outStreamDir?: StreamDir`
 
 ## Feature Trees
 
@@ -173,8 +177,8 @@ Each feature node includes:
 
 Tile membership:
 
-- each tile includes `featureIds` (leaf basin + leaf peak IDs)
-- each tile includes `activeFeatureIds` (composite IDs selected by persistence cut)
+- v2 envelope tiles do not include tile-level `featureIds` or `activeFeatureIds`
+- tile->feature lookup is feature-centric (via `features.basins` / `features.peaks`)
 
 Storage rules:
 

@@ -1,6 +1,6 @@
 import { isAbsolute, resolve } from "node:path";
 import { InputValidationError } from "../domain/errors.js";
-import type { JsonObject, TerrainEnvelope } from "../domain/types.js";
+import type { JsonObject, JsonValue, TerrainEnvelope } from "../domain/types.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
 import { writeStandardOutput } from "../io/write-outputs.js";
 import {
@@ -505,9 +505,9 @@ export function attachTileDescriptions(
 								if (typeof sentence.basicText === "string") {
 									out.basicText = sentence.basicText;
 								}
-								if (sentence.contributors) {
-									out.contributors = sentence.contributors;
-								}
+									if (sentence.contributors) {
+										out.contributors = sentence.contributors as JsonValue;
+									}
 									const structuredText =
 										typeof sentence.text === "string"
 											? sentence.text

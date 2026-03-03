@@ -151,7 +151,23 @@ export async function runLos(request: LosRequest): Promise<LosResult> {
 	const h = new Float64Array(expectedSize);
 	const seen = new Uint8Array(expectedSize);
 	for (const tile of envelope.tiles) {
-		const index = tile.y * width + tile.x;
+		const tx = tile.x;
+		const ty = tile.y;
+		if (
+			typeof tx !== "number" ||
+			typeof ty !== "number" ||
+			!Number.isInteger(tx) ||
+			!Number.isInteger(ty) ||
+			tx < 0 ||
+			ty < 0 ||
+			tx >= width ||
+			ty >= height
+		) {
+			throw new InputValidationError(
+				`Input terrain file "${inputFilePath}" contains invalid tile coordinates at (${String(tile.x)},${String(tile.y)}).`,
+			);
+		}
+		const index = ty * width + tx;
 		if (seen[index] === 1) {
 			throw new InputValidationError(
 				`Input terrain file "${inputFilePath}" has duplicate tile coordinates at (${tile.x},${tile.y}).`,

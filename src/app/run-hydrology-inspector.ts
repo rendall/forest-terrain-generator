@@ -4,12 +4,18 @@ import { FileIoError, InputValidationError } from "../domain/errors.js";
 import {
 	createHydrologyMaps,
 	DIR8_NONE,
+	STREAM_DIR_VALUES,
 	type HydrologyMapsSoA,
 	WATER_CLASS_CODE,
 } from "../domain/hydrology.js";
 import type { TopographicFeatureNode } from "../domain/topographic-features.js";
 import { createGridShape, type GridShape } from "../domain/topography.js";
+import type { JsonObject } from "../domain/types.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
+import { readParamsFile } from "../io/read-params.js";
+import { buildBasinTileMembership } from "../lib/basin-membership.js";
+import { deepMerge } from "../lib/deep-merge.js";
+import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
 import { deriveHydrology } from "../pipeline/derive-hydrology.js";
 import type { BasinLakeAccounting } from "../pipeline/derive-lake-accounting.js";
 
@@ -25,6 +31,8 @@ export type HydrologyVizMode =
 export interface HydrologyInspectorCliArgs {
 	inputJsonPath?: string;
 	sinkMode?: "strict_local" | "overflow_guided";
+	sourceMode?: "auto" | "envelope" | "recompute";
+	paramsPath?: string;
 	viz?: HydrologyVizMode;
 	debugDirPath?: string;
 	stats?: boolean;
@@ -39,6 +47,11 @@ export interface HydrologyInspectorRequest {
 
 interface HydrologyContext {
 	source: "debug_artifacts" | "envelope" | "recomputed";
+	sourceMode: "auto" | "envelope" | "recompute";
+	recomputeContext?: {
+		sinkMode: "strict_local" | "overflow_guided";
+		wetnessScale: number;
+	};
 	shape: GridShape;
 	h: Float32Array;
 	maps: HydrologyMapsSoA;
@@ -101,6 +114,11 @@ export interface HydrologyInspectorStats {
 
 export interface HydrologyInspectorVisualizationResult {
 	hydrologyMapsSource: HydrologyContext["source"];
+	hydrologySourceMode: HydrologyContext["sourceMode"];
+	hydrologyRecomputeContext?: {
+		sinkMode: "strict_local" | "overflow_guided";
+		wetnessScale: number;
+	};
 	writtenFiles: string[];
 	stats: HydrologyInspectorStats | null;
 	statsFilePath: string | null;
@@ -137,6 +155,73 @@ const readFiniteNumber = (value: unknown): number | null =>
 
 const readBoolean = (value: unknown): boolean | null =>
 	typeof value === "boolean" ? value : null;
+
+const isJsonObject = (value: unknown): value is JsonObject =>
+	typeof value === "object" && value !== null && !Array.isArray(value);
+
+const isStreamDir = (value: unknown): boolean =>
+	typeof value === "string" &&
+	(STREAM_DIR_VALUES as string[]).includes(value);
+
+const isV2HydrologyTile = (tile: unknown): boolean => {
+	if (!isObject(tile)) {
+		return false;
+	}
+	const hydrology = isObject(tile.hydrology) ? tile.hydrology : undefined;
+	if (!hydrology) {
+		return false;
+	}
+	const fd = readFiniteNumber(hydrology.fd);
+	if (
+		fd === null ||
+		!Number.isInteger(fd) ||
+		(fd < 0 || fd > 7) && fd !== DIR8_NONE
+	) {
+		return false;
+	}
+	const fa = readFiniteNumber(hydrology.fa);
+	const faN = readFiniteNumber(hydrology.faN);
+	const waterDepth = readFiniteNumber(hydrology.waterDepth);
+	if (
+		fa === null ||
+		fa < 0 ||
+		faN === null ||
+		waterDepth === null
+	) {
+		return false;
+	}
+	if (
+		typeof hydrology.hasStream !== "undefined" &&
+		hydrology.hasStream !== true
+	) {
+		return false;
+	}
+	if (
+		typeof hydrology.basinId !== "string" &&
+		hydrology.basinId !== null
+	) {
+		return false;
+	}
+	if (
+		typeof hydrology.inStreamDir !== "undefined" &&
+		(!Array.isArray(hydrology.inStreamDir) ||
+			!hydrology.inStreamDir.every((value) => isStreamDir(value)))
+	) {
+		return false;
+	}
+	if (
+		typeof hydrology.outStreamDir !== "undefined" &&
+		!isStreamDir(hydrology.outStreamDir)
+	) {
+		return false;
+	}
+	return true;
+};
+
+const readSourceMode = (
+	value: HydrologyInspectorCliArgs["sourceMode"],
+): "auto" | "envelope" | "recompute" =>
+	value === "envelope" || value === "recompute" ? value : "auto";
 
 const resolvePathFromCwd = (
 	cwd: string,
@@ -457,8 +542,13 @@ const loadContextFromDebugArtifacts = async (
 			const hydrology = isObject(tile.hydrology) ? tile.hydrology : undefined;
 			const streamFromRoot = readBoolean(tile.isStream);
 			const streamFromHydrology = readBoolean(hydrology?.isStream);
+			const hasStreamFromHydrology = hydrology?.hasStream === true;
 			maps.isStream[index] =
-				streamFromRoot === true || streamFromHydrology === true ? 1 : 0;
+				streamFromRoot === true ||
+				streamFromHydrology === true ||
+				hasStreamFromHydrology
+					? 1
+					: 0;
 			const lakeMask = readBoolean(hydrology?.lakeMask);
 			if (lakeMask !== null) {
 				maps.lakeMask[index] = lakeMask ? 1 : 0;
@@ -494,10 +584,20 @@ const loadContextFromDebugArtifacts = async (
 				maps.faN[index] = faN;
 			}
 			const lakeBasinId =
-				typeof hydrology?.lakeBasinId === "string"
-					? hydrology.lakeBasinId
+				typeof hydrology?.basinId === "string"
+					? hydrology.basinId
+					: typeof hydrology?.lakeBasinId === "string"
+						? hydrology.lakeBasinId
 					: "";
 			tileLakeBasinId[index] = lakeBasinId;
+			const waterDepth = readFiniteNumber(hydrology?.waterDepth);
+			if (waterDepth !== null && waterDepth > 0) {
+				maps.lakeMask[index] = 1;
+				maps.lakeSurfaceH[index] = (h[index] ?? 0) + waterDepth;
+				if (maps.waterClass[index] === WATER_CLASS_CODE.none) {
+					maps.waterClass[index] = WATER_CLASS_CODE.lake;
+				}
+			}
 		});
 
 		const lakeAccountingRaw = isObject(hydrologyDoc.lakeAccounting)
@@ -509,6 +609,7 @@ const loadContextFromDebugArtifacts = async (
 
 			return {
 				source: "debug_artifacts",
+				sourceMode: "auto",
 				shape,
 				h,
 				maps,
@@ -520,6 +621,7 @@ const loadContextFromDebugArtifacts = async (
 
 	return {
 		source: "debug_artifacts",
+		sourceMode: "auto",
 		shape,
 		h,
 		maps,
@@ -531,6 +633,7 @@ const loadContextFromDebugArtifacts = async (
 
 const buildContextFromEnvelope = async (
 	request: HydrologyInspectorRequest,
+	sourceMode: "auto" | "envelope" | "recompute",
 ): Promise<HydrologyContext> => {
 	const sinkMode = request.args.sinkMode ?? "strict_local";
 	const inputPath = resolveRequiredInputPath(
@@ -561,10 +664,15 @@ const buildContextFromEnvelope = async (
 	);
 	const shape = createGridShape(maxX + 1, maxY + 1);
 	const h = new Float32Array(shape.size);
+	const membership = buildBasinTileMembership(
+		shape.size,
+		envelope.features?.basins ?? [],
+	);
 	const tileFeatureIds = Array.from(
 		{ length: shape.size },
 		() => [] as string[],
 	);
+
 	for (const tile of envelope.tiles) {
 		if (
 			typeof tile.x !== "number" ||
@@ -584,23 +692,21 @@ const buildContextFromEnvelope = async (
 		h[index] = typeof tileH === "number" ? tileH : 0;
 		const featureIds = Array.isArray(tile.featureIds)
 			? tile.featureIds.filter((id): id is string => typeof id === "string")
-			: [];
-		tileFeatureIds[index] = featureIds;
+			: membership.tileFeatureIds[index];
+		tileFeatureIds[index] = featureIds ?? [];
 	}
 
-	const hasEnvelopeHydrologyFields =
-		envelope.tiles.length > 0 &&
-		envelope.tiles.every((tile) => {
-			const hydrology = isObject(tile.hydrology) ? tile.hydrology : undefined;
-			return (
-				readFiniteNumber(hydrology?.fd) !== null &&
-				readFiniteNumber(hydrology?.fa) !== null &&
-				readFiniteNumber(hydrology?.faN) !== null &&
-				readBoolean(hydrology?.isStream) !== null
-			);
-		});
+	const hasV2EnvelopeHydrology =
+		envelope.tiles.length > 0 && envelope.tiles.every((tile) => isV2HydrologyTile(tile));
+	if (sourceMode === "envelope" && !hasV2EnvelopeHydrology) {
+		throw new InputValidationError(
+			"Hydrology source mode 'envelope' requires valid v2 tile hydrology on every tile.",
+		);
+	}
+	const shouldUseEnvelope =
+		sourceMode === "envelope" || (sourceMode === "auto" && hasV2EnvelopeHydrology);
 
-	if (hasEnvelopeHydrologyFields) {
+	if (shouldUseEnvelope) {
 		const maps = createHydrologyMaps(shape);
 		const tileLakeBasinId = new Array<string>(shape.size).fill("");
 		for (const tile of envelope.tiles) {
@@ -618,52 +724,56 @@ const buildContextFromEnvelope = async (
 			}
 			const index = tile.y * shape.width + tile.x;
 			const hydrology = isObject(tile.hydrology) ? tile.hydrology : undefined;
-				const fd = readFiniteNumber(hydrology?.fd);
-				const fa = readFiniteNumber(hydrology?.fa);
-				const faN = readFiniteNumber(hydrology?.faN);
-				const isStream = readBoolean(hydrology?.isStream);
-				const lakeMask = readBoolean(hydrology?.lakeMask);
-				const lakeSurfaceH = readFiniteNumber(hydrology?.lakeSurfaceH);
-				const waterClass = readFiniteNumber(hydrology?.waterClass);
-				if (fd !== null && Number.isInteger(fd) && fd >= 0 && fd <= 255) {
-					maps.fd[index] = fd;
-				}
+			const fd = readFiniteNumber(hydrology?.fd);
+			const fa = readFiniteNumber(hydrology?.fa);
+			const faN = readFiniteNumber(hydrology?.faN);
+			const waterDepth = readFiniteNumber(hydrology?.waterDepth) ?? 0;
+			if (fd !== null && Number.isInteger(fd) && ((fd >= 0 && fd <= 7) || fd === DIR8_NONE)) {
+				maps.fd[index] = fd;
+			}
 			if (fa !== null && fa >= 0) {
 				maps.fa[index] = Math.floor(fa);
 			}
-				if (faN !== null) {
-					maps.faN[index] = faN;
-				}
-				maps.isStream[index] = isStream === true ? 1 : 0;
-				if (lakeMask !== null) {
-					maps.lakeMask[index] = lakeMask ? 1 : 0;
-				}
-				if (lakeSurfaceH !== null) {
-					maps.lakeSurfaceH[index] = lakeSurfaceH;
-				}
-					if (
-						waterClass !== null &&
-						Number.isInteger(waterClass) &&
-						waterClass >= 0
-					) {
-						maps.waterClass[index] = waterClass;
-					}
-					tileLakeBasinId[index] =
-						typeof hydrology?.lakeBasinId === "string"
-							? hydrology.lakeBasinId
-							: "";
-				}
-				return {
-					source: "envelope",
-					shape,
-					h,
-					maps,
-					lakeAccountingBasins: [],
-					tileLakeBasinId,
-					basinExpandedTileSets,
-				};
+			if (faN !== null) {
+				maps.faN[index] = faN;
 			}
+			maps.isStream[index] = hydrology?.hasStream === true ? 1 : 0;
+			if (waterDepth > 0) {
+				maps.lakeMask[index] = 1;
+				maps.lakeSurfaceH[index] = (h[index] ?? 0) + waterDepth;
+				maps.waterClass[index] = WATER_CLASS_CODE.lake;
+			}
+			tileLakeBasinId[index] =
+				typeof hydrology?.basinId === "string" ? hydrology.basinId : "";
+		}
+		return {
+			source: "envelope",
+			sourceMode,
+			shape,
+			h,
+			maps,
+			lakeAccountingBasins: [],
+			tileLakeBasinId,
+			basinExpandedTileSets,
+		};
+	}
 
+	const envelopeOverrides = isJsonObject(envelope.paramOverrides)
+		? (envelope.paramOverrides as JsonObject)
+		: {};
+	const paramsFile = await readParamsFile(request.args.paramsPath, request.cwd);
+	const paramsFromFile = isJsonObject(paramsFile.params)
+		? (paramsFile.params as JsonObject)
+		: {};
+	const recomputeParams = deepMerge(
+		deepMerge(APPENDIX_A_DEFAULTS, envelopeOverrides),
+		paramsFromFile,
+	);
+	const hydrologyParams = isJsonObject(recomputeParams.hydrology)
+		? (recomputeParams.hydrology as JsonObject)
+		: {};
+	hydrologyParams.sinkMode = sinkMode;
+	recomputeParams.hydrology = hydrologyParams;
 	const derived = deriveHydrology(
 		shape,
 		h,
@@ -671,10 +781,21 @@ const buildContextFromEnvelope = async (
 			basinFeatures: envelope.features?.basins ?? [],
 			tileFeatureIds,
 		},
-		{ hydrology: { sinkMode } },
+		recomputeParams,
 	);
+	const wetnessScale =
+		isJsonObject(hydrologyParams.lakeFill) &&
+		typeof hydrologyParams.lakeFill.wetnessScale === "number" &&
+		Number.isFinite(hydrologyParams.lakeFill.wetnessScale)
+			? hydrologyParams.lakeFill.wetnessScale
+			: 1;
 	return {
 		source: "recomputed",
+		sourceMode,
+		recomputeContext: {
+			sinkMode,
+			wetnessScale,
+		},
 		shape,
 		h,
 		maps: derived.maps,
@@ -706,6 +827,7 @@ const resolveHydrologyContext = async (
 	request: HydrologyInspectorRequest,
 	needs: VisualizationNeeds,
 ): Promise<HydrologyContext> => {
+	const sourceMode = readSourceMode(request.args.sourceMode);
 	const debugDirPath = resolvePathFromCwd(
 		request.cwd,
 		request.args.debugDirPath,
@@ -714,17 +836,18 @@ const resolveHydrologyContext = async (
 		const fromDebug = await loadContextFromDebugArtifacts(debugDirPath, needs);
 		if (fromDebug) {
 			if (fromDebug.basinExpandedTileSets.size > 0) {
-				return fromDebug;
+				return { ...fromDebug, sourceMode };
 			}
 			const basinExpandedTileSets =
 				await loadBasinTileSetsFromInputEnvelope(request);
 			return {
 				...fromDebug,
+				sourceMode,
 				basinExpandedTileSets,
 			};
 		}
 	}
-	return buildContextFromEnvelope(request);
+	return buildContextFromEnvelope(request, sourceMode);
 };
 
 const blendChannel = (base: number, tint: number, alpha: number): number =>
@@ -1140,6 +1263,10 @@ export const runHydrologyInspectorVisualization = async (
 
 	return {
 		hydrologyMapsSource: context.source,
+		hydrologySourceMode: context.sourceMode,
+		...(context.recomputeContext
+			? { hydrologyRecomputeContext: context.recomputeContext }
+			: {}),
 		writtenFiles,
 		stats,
 		statsFilePath,

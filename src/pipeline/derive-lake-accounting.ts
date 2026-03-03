@@ -30,6 +30,7 @@ export interface BasinLakeAccounting {
 export interface LakeAccountingResult {
 	basins: BasinLakeAccounting[];
 	byId: Map<string, BasinLakeAccounting>;
+	tileWaterDepth: Float32Array;
 	tileLakeDepth: Float32Array;
 	tileLakeBasinId: string[];
 	lakeTileCount: number;
@@ -368,6 +369,7 @@ export const deriveLakeAccounting = (
 		});
 	}
 
+	const tileWaterDepth = new Float32Array(shape.size);
 	const tileLakeDepth = new Float32Array(shape.size);
 	const tileLakeBasinId = new Array<string>(shape.size).fill("");
 	let lakeTileCount = 0;
@@ -386,19 +388,18 @@ export const deriveLakeAccounting = (
 			continue;
 		}
 		for (const tileId of tiles) {
-			const depth = Math.max(0, level - (h[tileId] ?? 0));
-			if (depth <= 0) {
-				continue;
-			}
+			const signedDepth = level - (h[tileId] ?? 0);
+			const positiveDepth = Math.max(0, signedDepth);
 			if (
-				depth > tileLakeDepth[tileId] ||
-				(depth === tileLakeDepth[tileId] &&
+				signedDepth > tileWaterDepth[tileId] ||
+				(signedDepth === tileWaterDepth[tileId] &&
 					(tileLakeBasinId[tileId] === "" || basinId < tileLakeBasinId[tileId]))
 			) {
-				if (tileLakeDepth[tileId] <= 0) {
+				if (tileLakeDepth[tileId] <= 0 && positiveDepth > 0) {
 					lakeTileCount += 1;
 				}
-				tileLakeDepth[tileId] = depth;
+				tileWaterDepth[tileId] = signedDepth;
+				tileLakeDepth[tileId] = positiveDepth;
 				tileLakeBasinId[tileId] = basinId;
 			}
 		}
@@ -407,6 +408,7 @@ export const deriveLakeAccounting = (
 	return {
 		basins: Array.from(byId.values()).sort((a, b) => a.id.localeCompare(b.id)),
 		byId,
+		tileWaterDepth,
 		tileLakeDepth,
 		tileLakeBasinId,
 		lakeTileCount,

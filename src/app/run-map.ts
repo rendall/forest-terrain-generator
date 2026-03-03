@@ -180,9 +180,11 @@ export async function runMap(request: MapRequest): Promise<void> {
 				? tile.featureIds.filter((value): value is string => typeof value === "string")
 				: [];
 			const hasBasinLeaf =
-				basinInfo.leafTileIds.has(index) || featureIds.some((id) => basinInfo.leafIds.has(id));
+				basinInfo.leafTileIds.has(index) ||
+				featureIds.some((id) => basinInfo.leafIds.has(id));
 			const hasPeakLeaf =
-				peakInfo.leafTileIds.has(index) || featureIds.some((id) => peakInfo.leafIds.has(id));
+				peakInfo.leafTileIds.has(index) ||
+				featureIds.some((id) => peakInfo.leafIds.has(id));
 
 			pixels[index] = 128;
 			if (hasBasinLeaf) {

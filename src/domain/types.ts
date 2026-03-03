@@ -66,6 +66,13 @@ export interface ResolvedInputs {
 
 export interface TerrainEnvelopeMeta {
 	specVersion: string;
+	seed?: string;
+	elevation?: {
+		h0: number;
+		h1: number;
+		zMinMeters: number;
+		zMaxMeters: number;
+	};
 }
 
 export interface RegionSummaryBbox {
@@ -92,4 +99,5 @@ export interface TerrainEnvelope {
 	regions?: RegionSummary[];
 	features?: TerrainFeatureCollection;
 	tiles: JsonObject[];
+	paramOverrides?: JsonObject;
 }

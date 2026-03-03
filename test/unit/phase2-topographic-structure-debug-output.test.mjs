@@ -66,16 +66,10 @@ describe("Phase 2 topographic structure debug output", () => {
     expect(envelope.tiles[0].index).toBe(0);
     expect(Array.isArray(envelope.features.basins)).toBe(true);
     expect(Array.isArray(envelope.features.peaks)).toBe(true);
-    expect(Array.isArray(envelope.tiles[0].featureIds)).toBe(true);
-    expect(Array.isArray(envelope.tiles[0].activeFeatureIds)).toBe(true);
-    const envelopeStructure = envelope.tiles[0].topography.structure;
-    expect(Object.keys(envelopeStructure)).toEqual([
-      "basinPersistence",
-      "peakPersistence",
-      "basinLike",
-      "ridgeLike",
-    ]);
-    expect(envelopeStructure.basinMinIdx).toBeUndefined();
-    expect(envelopeStructure.peakMaxIdx).toBeUndefined();
+    expect(envelope.tiles[0].featureIds).toBeUndefined();
+    expect(envelope.tiles[0].activeFeatureIds).toBeUndefined();
+    expect(envelope.tiles[0].topography.structure).toBeUndefined();
+    expect(envelope.tiles[0].topography.elevationMeters).toBeUndefined();
+    expect(envelope.tiles[0].hydrology).toBeDefined();
   });
 });

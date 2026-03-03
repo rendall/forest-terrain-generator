@@ -18,3 +18,4 @@ node --import tsx src/cli/main.ts debug \
 Notes:
 - Keep this fixture immutable for regression stability.
 - Write test stats output to a temp file, not into this directory.
+- The envelope fixture uses `meta.specVersion = "forest-terrain-v2"`.

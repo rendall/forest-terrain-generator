@@ -1,6 +1,6 @@
 import type { TerrainEnvelope } from "../domain/types.js";
 
-const SPEC_VERSION = "forest-terrain-v1";
+const SPEC_VERSION = "forest-terrain-v2";
 
 export function buildEnvelopeSkeleton(): TerrainEnvelope {
   return {

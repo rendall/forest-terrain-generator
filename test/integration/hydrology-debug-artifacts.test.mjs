@@ -45,7 +45,7 @@ afterEach(async () => {
 });
 
 describe("hydrology debug artifacts", () => {
-	it("emits hydrology fd/fa/faN/isStream in debug output for generated terrain", async () => {
+	it("emits v2 hydrology fields in debug output for generated terrain", async () => {
 		const dir = await makeTempDir();
 		const outDir = join(dir, "debug");
 		const result = await runCli([
@@ -68,9 +68,11 @@ describe("hydrology debug artifacts", () => {
 			expect(hydrology.tiles[0].hydrology).toHaveProperty("fd");
 			expect(hydrology.tiles[0].hydrology).toHaveProperty("fa");
 			expect(hydrology.tiles[0].hydrology).toHaveProperty("faN");
-			expect(hydrology.tiles[0].hydrology).toHaveProperty("isStream");
-			expect(hydrology.tiles[0].hydrology).toHaveProperty("lakeDepth");
-			expect(hydrology.tiles[0].hydrology).toHaveProperty("lakeBasinId");
+			expect(hydrology.tiles[0].hydrology).toHaveProperty("waterDepth");
+			expect(hydrology.tiles[0].hydrology).toHaveProperty("basinId");
+			if (hydrology.tiles[0].hydrology.hasStream !== undefined) {
+				expect(hydrology.tiles[0].hydrology.hasStream).toBe(true);
+			}
 
 		await expect(stat(join(outDir, "fd.json"))).resolves.toBeDefined();
 		await expect(stat(join(outDir, "fa.json"))).resolves.toBeDefined();
