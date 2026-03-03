@@ -428,3 +428,45 @@ interface TileV2Draft {
   };
 }
 ```
+
+## Checklist Review Passes (2026-03-03)
+
+### Pass 1: Quality Control (glaring issues)
+
+Issue 1:
+- Checklist item `TDS-27` left contract-marker naming/value open while `TDS-01` already binds v2 output marker behavior.
+- Risk: implementation drift (two competing version-marker directions).
+
+Decision:
+- For this implementation track, use `meta.specVersion` as the only required contract marker.
+- Set v2 marker value to `forest-terrain-v2` per current discussion/examples.
+- Keep semantic-version marker discussion deferred; do not add a second marker in this pass.
+
+Issue 2:
+- Checklist item `TDS-25` was framed as an unresolved governance decision.
+- Risk: checklist cannot be fully executed without choosing an explicit replacement policy.
+
+Decision:
+- For v2 tile contract, adopt `none` as the replacement for direct tile-level feature lookup fields.
+- Canonical lookup remains feature-centric; future index/query tooling stays out of this checklist scope.
+
+Issue 3:
+- Direction field derivation and `paramOverrides` precedence were underspecified for implementation.
+- Risk: non-deterministic or silently divergent behavior across CLI/debug paths.
+
+Decision:
+- Derive `inStreamDir/outStreamDir` directly from the finalized FD graph (deterministic, no heuristic side channel).
+- Keep precedence behavior in this checklist at: defaults + envelope `paramOverrides` for recompute context; no new CLI precedence expansion in this track.
+
+### Pass 2: Integration
+
+Integration check after QC decisions:
+- Checklist items were updated to encode the above decisions directly.
+- Behavior slices remain valid and complete after updates.
+- No additional cross-item dependency conflicts were introduced.
+
+### Pass 3: Sanity
+
+Sanity outcome:
+- No remaining checklist-structure blockers for implementation.
+- Scope remains aligned with this document and `docs/Parameter-Override-Precedence-Discussion.md` deferral boundary.
