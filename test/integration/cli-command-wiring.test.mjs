@@ -549,6 +549,145 @@ describe("CLI command wiring and contract failures", () => {
 		expect(byId.get("b_child")?.role).toBe("sink");
 	});
 
+	it("applies --params over envelope paramOverrides in debug --input-file mode", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-envelope.json");
+		const paramsFile = join(dir, "params.json");
+		const outputDir = join(dir, "debug");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(
+				{
+					meta: { specVersion: "forest-terrain-v1" },
+					features: {
+						basins: [
+							{
+								id: "b_child",
+								kind: "leaf",
+								parentId: "b_parent",
+								childIds: [],
+								birthH: 0.1,
+								mergeH: 0.3,
+								persistence: 0.2,
+								spillOutTileId: 4,
+								childSpillFromTileId: 0,
+								parentContactTileId: 1,
+								minH: 0.1,
+								maxH: 0.1,
+								size: 1,
+								bbox: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
+								tileIds: [0],
+							},
+							{
+								id: "b_parent",
+								kind: "composite",
+								parentId: null,
+								childIds: ["b_child"],
+								birthH: 0.3,
+								mergeH: null,
+								persistence: null,
+								spillOutTileId: null,
+								minH: 0.05,
+								maxH: 0.4,
+								size: 6,
+								bbox: { minX: 0, minY: 0, maxX: 2, maxY: 1 },
+								tileIds: [1, 2, 3, 4, 5],
+							},
+						],
+						peaks: [],
+					},
+					tiles: [
+						{
+							index: 0,
+							x: 0,
+							y: 0,
+							featureIds: ["b_child", "b_parent"],
+							topography: { h: 0.1, r: 0, v: 0 },
+						},
+						{
+							index: 1,
+							x: 1,
+							y: 0,
+							featureIds: ["b_parent"],
+							topography: { h: 0.3, r: 0, v: 0 },
+						},
+						{
+							index: 2,
+							x: 2,
+							y: 0,
+							featureIds: ["b_parent"],
+							topography: { h: 0.05, r: 0, v: 0 },
+						},
+						{
+							index: 3,
+							x: 0,
+							y: 1,
+							featureIds: ["b_parent"],
+							topography: { h: 0.15, r: 0, v: 0 },
+						},
+						{
+							index: 4,
+							x: 1,
+							y: 1,
+							featureIds: ["b_parent"],
+							topography: { h: 0.35, r: 0, v: 0 },
+						},
+						{
+							index: 5,
+							x: 2,
+							y: 1,
+							featureIds: ["b_parent"],
+							topography: { h: 0.4, r: 0, v: 0 },
+						},
+					],
+					paramOverrides: {
+						hydrology: {
+							lakeFill: {
+								wetnessScale: 0,
+							},
+						},
+					},
+				},
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+		await writeFile(
+			paramsFile,
+			`${JSON.stringify(
+				{
+					hydrology: {
+						lakeFill: {
+							wetnessScale: 1,
+						},
+					},
+				},
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"debug",
+			"--input-file",
+			sourceFile,
+			"--params",
+			paramsFile,
+			"--output-dir",
+			outputDir,
+		]);
+		expect(result.code).toBe(0);
+
+		const hydrology = JSON.parse(await readFile(join(outputDir, "hydrology.json"), "utf8"));
+		const byId = new Map(
+			(hydrology.lakeAccounting?.basins ?? []).map((basin) => [basin.id, basin]),
+		);
+		expect(byId.get("b_child")?.fillFraction).toBe(1);
+		expect(byId.get("b_child")?.role).toBe("overflow_carrier");
+	});
+
 	it("rejects debug --input-file when generation inputs are also provided", async () => {
 		const dir = await makeTempDir();
 		const sourceFile = join(dir, "source-envelope.json");
