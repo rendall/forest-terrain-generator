@@ -79,6 +79,9 @@ describe("lake accounting from production hydrology pipeline", () => {
 		expect(child.externalInflow).toBe(1);
 		expect(child.totalInflow).toBe(1);
 		expect(child.spillCapacity).toBeCloseTo(0.2, 6);
+		expect(child.fillRatio).toBeCloseTo(5, 6);
+		expect(child.rawFillRatio).toBeCloseTo(5, 6);
+		expect(child.fillFraction).toBe(1);
 		expect(child.isFilled).toBe(true);
 		expect(child.role).toBe("overflow_carrier");
 		expect(child.overflowExcess).toBeCloseTo(0.8, 6);
@@ -102,6 +105,31 @@ describe("lake accounting from production hydrology pipeline", () => {
 		const child = result.lakeAccounting.byId.get("b_child");
 		expect(child).toBeDefined();
 		expect(child.fillRatio).toBe(0);
+		expect(child.rawFillRatio).toBe(0);
+		expect(child.fillFraction).toBe(0);
+		expect(child.isFilled).toBe(false);
+		expect(child.role).toBe("sink");
+		expect(child.overflowExcess).toBe(0);
+	});
+
+	it("reports partial basin fill fractions below 1 without changing sink behavior", () => {
+		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
+		const result = deriveHydrology(
+			shape,
+			h,
+			{ basinFeatures, tileFeatureIds },
+			{
+				hydrology: {
+					sinkMode: "strict_local",
+					lakeFill: { wetnessScale: 0.1 },
+				},
+			},
+		);
+		const child = result.lakeAccounting.byId.get("b_child");
+		expect(child).toBeDefined();
+		expect(child.fillRatio).toBeCloseTo(0.5, 6);
+		expect(child.rawFillRatio).toBeCloseTo(0.5, 6);
+		expect(child.fillFraction).toBeCloseTo(0.5, 6);
 		expect(child.isFilled).toBe(false);
 		expect(child.role).toBe("sink");
 		expect(child.overflowExcess).toBe(0);

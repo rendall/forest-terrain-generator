@@ -14,6 +14,8 @@ export interface BasinLakeAccounting {
 	totalInflow: number;
 	spillCapacity: number;
 	fillRatio: number;
+	rawFillRatio: number;
+	fillFraction: number;
 	isFilled: boolean;
 	overflowExcess: number;
 	role: "sink" | "overflow_carrier" | "terminal_lake";
@@ -265,15 +267,16 @@ export const deriveLakeAccounting = (
 			expandedTileSets.get(basinId) ?? new Set<number>(),
 			mergeH,
 		);
-		const fillRatio =
+		const scaledInflow = wetnessScale * totalInflow;
+		const rawFillRatio =
 			spillCapacity > 0
-				? (wetnessScale * totalInflow) / spillCapacity
+				? scaledInflow / spillCapacity
 				: Number.POSITIVE_INFINITY;
-		const isFilled = wetnessScale * totalInflow >= spillCapacity;
-		const overflowExcess = Math.max(
-			0,
-			wetnessScale * totalInflow - spillCapacity,
-		);
+		const fillRatio = rawFillRatio;
+		const fillFraction =
+			spillCapacity > 0 ? Math.max(0, Math.min(1, rawFillRatio)) : 1;
+		const isFilled = scaledInflow >= spillCapacity;
+		const overflowExcess = Math.max(0, scaledInflow - spillCapacity);
 		const childSpillFromTileId =
 			typeof basin.childSpillFromTileId === "number" &&
 			Number.isInteger(basin.childSpillFromTileId)
@@ -298,6 +301,8 @@ export const deriveLakeAccounting = (
 			totalInflow,
 			spillCapacity,
 			fillRatio,
+			rawFillRatio,
+			fillFraction,
 			isFilled,
 			overflowExcess,
 			role: canOverflow ? "overflow_carrier" : isFilled ? "terminal_lake" : "sink",
