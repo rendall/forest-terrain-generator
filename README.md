@@ -54,9 +54,11 @@ Mode/output validation highlights:
 
 - In `debug`, using `--output-file` is rejected with the hint: `You might mean --debug-output-file.`
 - In `debug`, `--input-file` cannot be combined with generation inputs (`--seed`, `--width`, `--height`, `--map-h`, `--map-r`, `--map-v`).
-- In `debug --input-file`, hydrology recompute param precedence is:
+- In `debug --input-file`, replay recompute param precedence is:
   `defaults < envelope paramOverrides < --params <file>`.
-- In current `debug --input-file` behavior, `--debug-output-file` writes the input envelope payload (normalized JSON); debug artifacts are the recomputed/derived surfaces.
+- In `debug --input-file`, replay recompute derives topographic structure + hydrology from tile `topography.h`; envelope `features`, tile `featureIds`, and tile `hydrology` are ignored as replay inputs.
+- In `debug --input-file`, `--debug-output-file` writes the recomputed replay envelope (recomputed `features`, tile memberships, tile hydrology, and effective `paramOverrides` delta).
+- In `debug --input-file` with `--params <file>`, CLI emits a replay warning to `stderr` noting active override precedence.
 - Existing output files/directories fail by default and require `--force` to overwrite/replace.
 
 ```bash
@@ -117,7 +119,7 @@ All three noise maps (`heightNoise`, `roughnessNoise`, `vegVarianceNoise`) also 
 
 ## Envelope Param Overrides
 
-Generated/derived envelopes may include top-level `paramOverrides` with only non-default parameter values. This is used for replay/debug context (especially `debug --input-file` hydrology recompute).
+Generated/derived envelopes may include top-level `paramOverrides` with only non-default parameter values. This is used for replay/debug context (especially `debug --input-file` structure+hydrology recompute).
 
 ## Topography Structure
 

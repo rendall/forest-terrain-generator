@@ -12,16 +12,29 @@ Use this as a practical execution guide when implementing an approved checklist.
 ## Working Loop
 
 1. Take the first incomplete checklist item (or its required prerequisite).
-2. Group dependent items into one behavior slice when they form one coherent change.
-3. Implement the slice.
+2. Implement that single atomic item.
 4. Run targeted tests for touched scope.
 5. Run broader/full tests at natural checkpoints.
 6. Mark completed checklist items.
 7. Commit with a short, imperative message.
 
+## Commit Granularity (Agent-Critical)
+
+- Default rule: **one commit per atomic checklist item**.
+- Do not batch multiple checklist items into one commit by default.
+- If two or more checklist items must be implemented together due to a hard technical dependency, treat them as one explicit slice and list the item IDs in the commit message body.
+- If bundling is based on convenience (not hard dependency), stop and ask for confirmation before proceeding.
+
+Required commit message structure for checklist-driven work:
+
+- Subject: imperative summary.
+- Body:
+  - `Checklist:` `<ITEM-ID>`
+  - or `Checklist:` `<ITEM-ID-1>, <ITEM-ID-2>` (hard-dependency slice only)
+
 ## Commit Hygiene
 
-- Keep commits scoped to the current slice.
+- Keep commits scoped to the current atomic item (or approved hard-dependency slice).
 - Avoid bundling unrelated file changes.
 - Keep message lines concise and descriptive.
 
