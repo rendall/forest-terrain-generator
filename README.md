@@ -56,6 +56,7 @@ Mode/output validation highlights:
 - In `debug`, `--input-file` cannot be combined with generation inputs (`--seed`, `--width`, `--height`, `--map-h`, `--map-r`, `--map-v`).
 - In `debug --input-file`, hydrology recompute param precedence is:
   `defaults < envelope paramOverrides < --params <file>`.
+- In current `debug --input-file` behavior, `--debug-output-file` writes the input envelope payload (normalized JSON); debug artifacts are the recomputed/derived surfaces.
 - Existing output files/directories fail by default and require `--force` to overwrite/replace.
 
 ```bash
