@@ -454,6 +454,25 @@ function validateHydrologyPipelineParams(params: JsonObject): void {
   expectOptionalNonNegativeInteger(hydrology.faThreshold, hydrologyPath("faThreshold"));
   expectOptionalRangeNumber(hydrology.faQuantileThreshold, hydrologyPath("faQuantileThreshold"), 0, 1);
 }
+
+export function normalizeAndValidateParamsObject(
+  params: JsonObject,
+  pathPrefix: string = "params"
+): JsonObject {
+  normalizeLegacyHydrologyAliases(params);
+  validateUnknownKeys(params, PARAMS_VALIDATION_SCHEMA, pathPrefix);
+  validateNoiseNormalizeParams(params, "heightNoise");
+  validateNoiseNormalizeParams(params, "roughnessNoise");
+  validateNoiseNormalizeParams(params, "vegVarianceNoise");
+  validateLakeCoherenceParams(params);
+  validateHydrologyStructureParams(params);
+  validateHydrologyLakeFillParams(params);
+  validateHydrologyPipelineParams(params);
+  validateTopographyStructureParams(params);
+  validateElevationParams(params);
+  return params;
+}
+
 export async function readParamsFile(
   paramsPath: string | undefined,
   cwd: string
@@ -539,17 +558,7 @@ export async function readParamsFile(
       : undefined;
   const force = typeof parsed.force === "boolean" ? parsed.force : undefined;
   const params = isObject(parsed.params) ? parsed.params : parsed;
-  normalizeLegacyHydrologyAliases(params);
-  validateUnknownKeys(params, PARAMS_VALIDATION_SCHEMA, "params");
-  validateNoiseNormalizeParams(params, "heightNoise");
-  validateNoiseNormalizeParams(params, "roughnessNoise");
-  validateNoiseNormalizeParams(params, "vegVarianceNoise");
-  validateLakeCoherenceParams(params);
-  validateHydrologyStructureParams(params);
-  validateHydrologyLakeFillParams(params);
-  validateHydrologyPipelineParams(params);
-  validateTopographyStructureParams(params);
-  validateElevationParams(params);
+  normalizeAndValidateParamsObject(params, "params");
 
   return {
     seed,
