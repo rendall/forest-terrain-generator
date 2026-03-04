@@ -47,6 +47,82 @@ async function makeTempDir() {
 	return dir;
 }
 
+function createReplaySourceEnvelope({
+	tiles,
+	paramOverrides,
+} = {}) {
+	return {
+		meta: { specVersion: "forest-terrain-v1" },
+		features: {
+			basins: [{ id: "stale_basin", childIds: [] }],
+			peaks: [{ id: "stale_peak", childIds: [] }],
+		},
+		tiles: tiles ?? [
+			{
+				index: 0,
+				x: 0,
+				y: 0,
+				featureIds: ["stale_basin"],
+				activeFeatureIds: ["stale_basin"],
+				topography: { h: 0.1, r: 0, v: 0 },
+				hydrology: { fd: 7, fa: 1, faN: 0.1, isStream: false },
+			},
+			{
+				index: 1,
+				x: 1,
+				y: 0,
+				featureIds: ["stale_basin"],
+				activeFeatureIds: ["stale_basin"],
+				topography: { h: 0.3, r: 0, v: 0 },
+				hydrology: { fd: 7, fa: 2, faN: 0.2, isStream: false },
+			},
+			{
+				index: 2,
+				x: 2,
+				y: 0,
+				featureIds: ["stale_basin"],
+				activeFeatureIds: ["stale_basin"],
+				topography: { h: 0.05, r: 0, v: 0 },
+				hydrology: { fd: 7, fa: 3, faN: 0.3, isStream: false },
+			},
+			{
+				index: 3,
+				x: 0,
+				y: 1,
+				featureIds: ["stale_basin"],
+				activeFeatureIds: ["stale_basin"],
+				topography: { h: 0.15, r: 0, v: 0 },
+				hydrology: { fd: 7, fa: 4, faN: 0.4, isStream: false },
+			},
+			{
+				index: 4,
+				x: 1,
+				y: 1,
+				featureIds: ["stale_basin"],
+				activeFeatureIds: ["stale_basin"],
+				topography: { h: 0.35, r: 0, v: 0 },
+				hydrology: { fd: 7, fa: 5, faN: 0.5, isStream: false },
+			},
+			{
+				index: 5,
+				x: 2,
+				y: 1,
+				featureIds: ["stale_basin"],
+				activeFeatureIds: ["stale_basin"],
+				topography: { h: 0.4, r: 0, v: 0 },
+				hydrology: { fd: 7, fa: 6, faN: 0.6, isStream: false },
+			},
+		],
+		paramOverrides: paramOverrides ?? {
+			hydrology: {
+				lakeFill: {
+					wetnessScale: 0,
+				},
+			},
+		},
+	};
+}
+
 afterEach(async () => {
 	await Promise.all(
 		tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })),
@@ -428,107 +504,14 @@ describe("CLI command wiring and contract failures", () => {
 		expect(manifest.tileCount).toBe(16);
 	});
 
-	it("uses envelope paramOverrides when recomputing hydrology in debug --input-file mode", async () => {
+	it("recomputes structure and hydrology for debug --input-file and writes recomputed replay envelope", async () => {
 		const dir = await makeTempDir();
 		const sourceFile = join(dir, "source-envelope.json");
 		const outputDir = join(dir, "debug");
+		const debugOutputFile = join(dir, "debug-envelope.json");
 		await writeFile(
 			sourceFile,
-			`${JSON.stringify(
-				{
-					meta: { specVersion: "forest-terrain-v1" },
-					features: {
-						basins: [
-							{
-								id: "b_child",
-								kind: "leaf",
-								parentId: "b_parent",
-								childIds: [],
-								birthH: 0.1,
-								mergeH: 0.3,
-								persistence: 0.2,
-								spillOutTileId: 4,
-								childSpillFromTileId: 0,
-								parentContactTileId: 1,
-								minH: 0.1,
-								maxH: 0.1,
-								size: 1,
-								bbox: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
-								tileIds: [0],
-							},
-							{
-								id: "b_parent",
-								kind: "composite",
-								parentId: null,
-								childIds: ["b_child"],
-								birthH: 0.3,
-								mergeH: null,
-								persistence: null,
-								spillOutTileId: null,
-								minH: 0.05,
-								maxH: 0.4,
-								size: 6,
-								bbox: { minX: 0, minY: 0, maxX: 2, maxY: 1 },
-								tileIds: [1, 2, 3, 4, 5],
-							},
-						],
-						peaks: [],
-					},
-					tiles: [
-						{
-							index: 0,
-							x: 0,
-							y: 0,
-							featureIds: ["b_child", "b_parent"],
-							topography: { h: 0.1, r: 0, v: 0 },
-						},
-						{
-							index: 1,
-							x: 1,
-							y: 0,
-							featureIds: ["b_parent"],
-							topography: { h: 0.3, r: 0, v: 0 },
-						},
-						{
-							index: 2,
-							x: 2,
-							y: 0,
-							featureIds: ["b_parent"],
-							topography: { h: 0.05, r: 0, v: 0 },
-						},
-						{
-							index: 3,
-							x: 0,
-							y: 1,
-							featureIds: ["b_parent"],
-							topography: { h: 0.15, r: 0, v: 0 },
-						},
-						{
-							index: 4,
-							x: 1,
-							y: 1,
-							featureIds: ["b_parent"],
-							topography: { h: 0.35, r: 0, v: 0 },
-						},
-						{
-							index: 5,
-							x: 2,
-							y: 1,
-							featureIds: ["b_parent"],
-							topography: { h: 0.4, r: 0, v: 0 },
-						},
-					],
-					paramOverrides: {
-						hydrology: {
-							lakeFill: {
-								wetnessScale: 0,
-							},
-						},
-					},
-				},
-				null,
-				2,
-			)}\n`,
+			`${JSON.stringify(createReplaySourceEnvelope(), null, 2)}\n`,
 			"utf8",
 		);
 
@@ -538,119 +521,59 @@ describe("CLI command wiring and contract failures", () => {
 			sourceFile,
 			"--output-dir",
 			outputDir,
+			"--debug-output-file",
+			debugOutputFile,
 		]);
 		expect(result.code).toBe(0);
 
-		const hydrology = JSON.parse(await readFile(join(outputDir, "hydrology.json"), "utf8"));
-		const byId = new Map(
-			(hydrology.lakeAccounting?.basins ?? []).map((basin) => [basin.id, basin]),
+		const replayEnvelope = JSON.parse(await readFile(debugOutputFile, "utf8"));
+		expect(replayEnvelope.features.basins.length).toBeGreaterThan(0);
+		expect(Array.isArray(replayEnvelope.features.peaks)).toBe(true);
+		expect(
+			replayEnvelope.features.basins.some((basin) => basin.id === "stale_basin"),
+		).toBe(false);
+		expect(
+			replayEnvelope.tiles.every(
+				(tile) => Array.isArray(tile.featureIds) && !tile.featureIds.includes("stale_basin"),
+			),
+		).toBe(true);
+		expect(replayEnvelope.paramOverrides).toEqual({
+			hydrology: {
+				lakeFill: {
+					wetnessScale: 0,
+				},
+			},
+		});
+		const replayHydrology = replayEnvelope.tiles[0].hydrology;
+		expect(Object.keys(replayHydrology)).toEqual([
+			"fd",
+			"fa",
+			"faN",
+			"isStream",
+			"lakeMask",
+			"lakeSurfaceH",
+			"waterClass",
+			"lakeDepth",
+			"lakeBasinId",
+		]);
+
+		const debugTopography = JSON.parse(
+			await readFile(join(outputDir, "topography.json"), "utf8"),
 		);
-		expect(byId.get("b_child")?.fillFraction).toBe(0);
-		expect(byId.get("b_child")?.role).toBe("sink");
+		expect(
+			debugTopography.features.basins.some((basin) => basin.id === "stale_basin"),
+		).toBe(false);
 	});
 
-	it("applies --params over envelope paramOverrides in debug --input-file mode", async () => {
+	it("applies --params over envelope paramOverrides in debug --input-file mode and warns once", async () => {
 		const dir = await makeTempDir();
 		const sourceFile = join(dir, "source-envelope.json");
 		const paramsFile = join(dir, "params.json");
 		const outputDir = join(dir, "debug");
+		const debugOutputFile = join(dir, "debug-envelope.json");
 		await writeFile(
 			sourceFile,
-			`${JSON.stringify(
-				{
-					meta: { specVersion: "forest-terrain-v1" },
-					features: {
-						basins: [
-							{
-								id: "b_child",
-								kind: "leaf",
-								parentId: "b_parent",
-								childIds: [],
-								birthH: 0.1,
-								mergeH: 0.3,
-								persistence: 0.2,
-								spillOutTileId: 4,
-								childSpillFromTileId: 0,
-								parentContactTileId: 1,
-								minH: 0.1,
-								maxH: 0.1,
-								size: 1,
-								bbox: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
-								tileIds: [0],
-							},
-							{
-								id: "b_parent",
-								kind: "composite",
-								parentId: null,
-								childIds: ["b_child"],
-								birthH: 0.3,
-								mergeH: null,
-								persistence: null,
-								spillOutTileId: null,
-								minH: 0.05,
-								maxH: 0.4,
-								size: 6,
-								bbox: { minX: 0, minY: 0, maxX: 2, maxY: 1 },
-								tileIds: [1, 2, 3, 4, 5],
-							},
-						],
-						peaks: [],
-					},
-					tiles: [
-						{
-							index: 0,
-							x: 0,
-							y: 0,
-							featureIds: ["b_child", "b_parent"],
-							topography: { h: 0.1, r: 0, v: 0 },
-						},
-						{
-							index: 1,
-							x: 1,
-							y: 0,
-							featureIds: ["b_parent"],
-							topography: { h: 0.3, r: 0, v: 0 },
-						},
-						{
-							index: 2,
-							x: 2,
-							y: 0,
-							featureIds: ["b_parent"],
-							topography: { h: 0.05, r: 0, v: 0 },
-						},
-						{
-							index: 3,
-							x: 0,
-							y: 1,
-							featureIds: ["b_parent"],
-							topography: { h: 0.15, r: 0, v: 0 },
-						},
-						{
-							index: 4,
-							x: 1,
-							y: 1,
-							featureIds: ["b_parent"],
-							topography: { h: 0.35, r: 0, v: 0 },
-						},
-						{
-							index: 5,
-							x: 2,
-							y: 1,
-							featureIds: ["b_parent"],
-							topography: { h: 0.4, r: 0, v: 0 },
-						},
-					],
-					paramOverrides: {
-						hydrology: {
-							lakeFill: {
-								wetnessScale: 0,
-							},
-						},
-					},
-				},
-				null,
-				2,
-			)}\n`,
+			`${JSON.stringify(createReplaySourceEnvelope(), null, 2)}\n`,
 			"utf8",
 		);
 		await writeFile(
@@ -659,7 +582,7 @@ describe("CLI command wiring and contract failures", () => {
 				{
 					hydrology: {
 						lakeFill: {
-							wetnessScale: 1,
+							wetnessScale: 0.9,
 						},
 					},
 				},
@@ -677,15 +600,153 @@ describe("CLI command wiring and contract failures", () => {
 			paramsFile,
 			"--output-dir",
 			outputDir,
+			"--debug-output-file",
+			debugOutputFile,
 		]);
 		expect(result.code).toBe(0);
-
-		const hydrology = JSON.parse(await readFile(join(outputDir, "hydrology.json"), "utf8"));
-		const byId = new Map(
-			(hydrology.lakeAccounting?.basins ?? []).map((basin) => [basin.id, basin]),
+		expect(result.stderr).toContain(
+			"precedence: defaults -> envelope.paramOverrides -> --params <file>",
 		);
-		expect(byId.get("b_child")?.fillFraction).toBe(1);
-		expect(byId.get("b_child")?.role).toBe("overflow_carrier");
+		expect(
+			result.stderr.match(
+				/precedence: defaults -> envelope\.paramOverrides -> --params <file>/g,
+			)?.length ?? 0,
+		).toBe(1);
+
+		const replayEnvelope = JSON.parse(await readFile(debugOutputFile, "utf8"));
+		expect(replayEnvelope.paramOverrides).toEqual({
+			hydrology: {
+				lakeFill: {
+					wetnessScale: 0.9,
+				},
+			},
+		});
+	});
+
+	it("fails debug replay when envelope paramOverrides are invalid", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-envelope.json");
+		const outputDir = join(dir, "debug");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(
+				createReplaySourceEnvelope({
+					paramOverrides: {
+						hydrology: {
+							lakeFill: {
+								wetnessScale: 0.5,
+								notARealKey: true,
+							},
+						},
+					},
+				}),
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"debug",
+			"--input-file",
+			sourceFile,
+			"--output-dir",
+			outputDir,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain(
+			'Unknown params key "envelope.paramOverrides.hydrology.lakeFill.notARealKey"',
+		);
+	});
+
+	it("fails debug replay when any tile is missing topography.h", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-envelope.json");
+		const outputDir = join(dir, "debug");
+		const tiles = createReplaySourceEnvelope().tiles.map((tile) => ({ ...tile }));
+		delete tiles[3].topography.h;
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(createReplaySourceEnvelope({ tiles }), null, 2)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"debug",
+			"--input-file",
+			sourceFile,
+			"--output-dir",
+			outputDir,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain('missing "topography.h"');
+		expect(result.stderr).toContain("tile index 3");
+		expect(result.stderr).toContain("(0,1)");
+	});
+
+	it("fails debug replay when input tiles are not a dense rectangular grid", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-envelope.json");
+		const outputDir = join(dir, "debug");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(
+				createReplaySourceEnvelope({
+					tiles: [
+						{ x: 0, y: 0, topography: { h: 0.1 } },
+						{ x: 2, y: 0, topography: { h: 0.2 } },
+					],
+				}),
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"debug",
+			"--input-file",
+			sourceFile,
+			"--output-dir",
+			outputDir,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain("not a dense 3x1 replay grid");
+		expect(result.stderr).toContain("expected=3");
+		expect(result.stderr).toContain("observedTileCount=2");
+	});
+
+	it("fails debug replay when duplicate coordinates are present", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-envelope.json");
+		const outputDir = join(dir, "debug");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(
+				createReplaySourceEnvelope({
+					tiles: [
+						{ x: 0, y: 0, topography: { h: 0.1 } },
+						{ x: 0, y: 0, topography: { h: 0.2 } },
+						{ x: 2, y: 0, topography: { h: 0.3 } },
+					],
+				}),
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"debug",
+			"--input-file",
+			sourceFile,
+			"--output-dir",
+			outputDir,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain("duplicate tile coordinates at (0,0)");
+		expect(result.stderr).toContain("first tile index=0");
+		expect(result.stderr).toContain("duplicate tile index=1");
 	});
 
 	it("rejects debug --input-file when generation inputs are also provided", async () => {
