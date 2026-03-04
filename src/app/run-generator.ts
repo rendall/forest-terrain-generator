@@ -31,7 +31,6 @@ const DEBUG_INPUT_FILE_EXCLUSIVE_FLAGS = [
 	{ valueKey: "seed", flag: "--seed" },
 	{ valueKey: "width", flag: "--width" },
 	{ valueKey: "height", flag: "--height" },
-	{ valueKey: "paramsPath", flag: "--params" },
 	{ valueKey: "mapHPath", flag: "--map-h" },
 	{ valueKey: "mapRPath", flag: "--map-r" },
 	{ valueKey: "mapVPath", flag: "--map-v" },
@@ -169,12 +168,15 @@ export async function resolveInputs(
 	const fileParams = (fromFile.params ?? {}) as JsonObject;
 	const mergedParams = deepMerge(baseParams, fileParams);
 	applyLegacyVegVarianceStrengthOverride(mergedParams, fileParams);
+	const paramsFromFile = deepMerge({}, fileParams);
+	applyLegacyVegVarianceStrengthOverride(paramsFromFile, fileParams);
 
 	return {
 		seed: request.args.seed ?? fromFile.seed,
 		width: request.args.width ?? fromFile.width,
 		height: request.args.height ?? fromFile.height,
 		params: mergedParams,
+		paramsFromFile,
 		paramsPath: cliParamsPath,
 		inputFilePath: cliInputFilePath,
 		mapHPath: cliMapHPath ?? fromFile.mapHPath,
@@ -243,9 +245,10 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		assertDebugInputFileArgs(request.args);
 		const validated = validateDebugInputFileInputs(resolved);
 		const envelope = await readTerrainEnvelopeFile(validated.inputFilePath);
-		const replayParams = isJsonObject(envelope.paramOverrides)
-			? deepMerge(validated.params, envelope.paramOverrides)
-			: validated.params;
+		const replayBase = isJsonObject(envelope.paramOverrides)
+			? deepMerge(APPENDIX_A_DEFAULTS, envelope.paramOverrides)
+			: APPENDIX_A_DEFAULTS;
+		const replayParams = deepMerge(replayBase, validated.paramsFromFile);
 		const { shape, h } = gridFromEnvelope(envelope);
 		const tileFeatureIds = envelope.tiles.map((tile) =>
 			Array.isArray(tile.featureIds)

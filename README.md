@@ -53,8 +53,9 @@ Path resolution:
 Mode/output validation highlights:
 
 - In `debug`, using `--output-file` is rejected with the hint: `You might mean --debug-output-file.`
-- In `debug`, `--input-file` cannot be combined with generation inputs (`--seed`, `--width`, `--height`, `--params`, `--map-h`, `--map-r`, `--map-v`).
-- In `debug --input-file`, hydrology recompute uses envelope `paramOverrides` when present (for example `hydrology.lakeFill.wetnessScale`), then falls back to defaults.
+- In `debug`, `--input-file` cannot be combined with generation inputs (`--seed`, `--width`, `--height`, `--map-h`, `--map-r`, `--map-v`).
+- In `debug --input-file`, hydrology recompute param precedence is:
+  `defaults < envelope paramOverrides < --params <file>`.
 - Existing output files/directories fail by default and require `--force` to overwrite/replace.
 
 ```bash
