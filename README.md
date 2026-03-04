@@ -54,6 +54,7 @@ Mode/output validation highlights:
 
 - In `debug`, using `--output-file` is rejected with the hint: `You might mean --debug-output-file.`
 - In `debug`, `--input-file` cannot be combined with generation inputs (`--seed`, `--width`, `--height`, `--params`, `--map-h`, `--map-r`, `--map-v`).
+- In `debug --input-file`, hydrology recompute uses envelope `paramOverrides` when present (for example `hydrology.lakeFill.wetnessScale`), then falls back to defaults.
 - Existing output files/directories fail by default and require `--force` to overwrite/replace.
 
 ```bash
@@ -111,6 +112,10 @@ All three noise maps (`heightNoise`, `roughnessNoise`, `vegVarianceNoise`) also 
 - `heightNoise` controls `topography.h` (elevation). `0` is lowest (black in grayscale), `1` is highest (white).
 - `roughnessNoise` controls `topography.r` (terrain roughness signal). Low values are smoother ground; high values are rougher, more broken ground.
 - `vegVarianceNoise` controls `topography.v` (vegetation variance signal). It is a stable variation map used to create patchiness instead of uniform vegetation everywhere.
+
+## Envelope Param Overrides
+
+Generated/derived envelopes may include top-level `paramOverrides` with only non-default parameter values. This is used for replay/debug context (especially `debug --input-file` hydrology recompute).
 
 ## Topography Structure
 
