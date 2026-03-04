@@ -109,6 +109,56 @@ describe("read terrain envelope", () => {
 		expect(envelope.regions).toBeUndefined();
 	});
 
+	it("preserves top-level paramOverrides when present", async () => {
+		const dir = await makeTempDir();
+		const path = join(dir, "terrain.json");
+		const paramOverrides = {
+			hydrology: {
+				lakeFill: {
+					wetnessScale: 0.1,
+				},
+			},
+		};
+		await writeFile(
+			path,
+			`${JSON.stringify(
+				{
+					meta: { specVersion: "forest-terrain-v1" },
+					paramOverrides,
+					tiles: [makeValidTile()],
+				},
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		const envelope = await readTerrainEnvelopeFile(path);
+		expect(envelope.paramOverrides).toEqual(paramOverrides);
+	});
+
+	it("rejects malformed top-level paramOverrides when present", async () => {
+		const dir = await makeTempDir();
+		const path = join(dir, "terrain.json");
+		await writeFile(
+			path,
+			`${JSON.stringify(
+				{
+					meta: { specVersion: "forest-terrain-v1" },
+					paramOverrides: [],
+					tiles: [makeValidTile()],
+				},
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		await expect(readTerrainEnvelopeFile(path)).rejects.toThrow(
+			/Invalid envelope "paramOverrides"/,
+		);
+	});
+
 	it("rejects malformed top-level regions when present", async () => {
 		const dir = await makeTempDir();
 		const path = join(dir, "terrain.json");

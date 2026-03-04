@@ -4,6 +4,7 @@ import { createGridShape } from "../domain/topography.js";
 import type {
 	CliArgs,
 	JsonObject,
+	JsonValue,
 	ResolvedInputs,
 	RunRequest,
 	TerrainEnvelope,
@@ -50,6 +51,37 @@ function resolveFromCwd(
 
 function isJsonObject(value: unknown): value is JsonObject {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function deriveParamOverrideValue(
+	value: JsonValue | undefined,
+	defaultValue: JsonValue | undefined,
+): JsonValue | undefined {
+	if (value === undefined) {
+		return undefined;
+	}
+	if (isJsonObject(value) && isJsonObject(defaultValue)) {
+		const nested = deriveParamOverrides(value, defaultValue);
+		return nested && Object.keys(nested).length > 0 ? nested : undefined;
+	}
+	if (value === defaultValue) {
+		return undefined;
+	}
+	return value;
+}
+
+function deriveParamOverrides(
+	params: JsonObject,
+	defaults: JsonObject,
+): JsonObject | undefined {
+	const overrides: JsonObject = {};
+	for (const [key, value] of Object.entries(params)) {
+		const overrideValue = deriveParamOverrideValue(value, defaults[key]);
+		if (overrideValue !== undefined) {
+			overrides[key] = overrideValue;
+		}
+	}
+	return Object.keys(overrides).length > 0 ? overrides : undefined;
 }
 
 function hasExplicitNestedVegVarianceStrength(params: JsonObject): boolean {
@@ -211,6 +243,9 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		assertDebugInputFileArgs(request.args);
 		const validated = validateDebugInputFileInputs(resolved);
 		const envelope = await readTerrainEnvelopeFile(validated.inputFilePath);
+		const replayParams = isJsonObject(envelope.paramOverrides)
+			? deepMerge(validated.params, envelope.paramOverrides)
+			: validated.params;
 		const { shape, h } = gridFromEnvelope(envelope);
 		const tileFeatureIds = envelope.tiles.map((tile) =>
 			Array.isArray(tile.featureIds)
@@ -221,7 +256,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			shape,
 			h,
 			{ basinFeatures: envelope.features?.basins ?? [], tileFeatureIds },
-			validated.params,
+			replayParams,
 		);
 		await writeModeOutputs(
 			request.mode,
@@ -303,6 +338,10 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		});
 	}
 	envelope.tiles = tiles;
+	const paramOverrides = deriveParamOverrides(validated.params, APPENDIX_A_DEFAULTS);
+	if (paramOverrides) {
+		envelope.paramOverrides = paramOverrides;
+	}
 
 	await writeModeOutputs(
 		request.mode,

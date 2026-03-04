@@ -92,4 +92,5 @@ export interface TerrainEnvelope {
 	regions?: RegionSummary[];
 	features?: TerrainFeatureCollection;
 	tiles: JsonObject[];
+	paramOverrides?: JsonObject;
 }
