@@ -7,7 +7,7 @@ Use this as a practical execution guide when implementing an approved checklist.
 - Run relevant tests to understand baseline behavior.
 - Check `git status`.
 - If unrelated files are dirty and scope is unclear, pause and confirm before proceeding.
-- Checkout a new branch with a desriptive name `<verb>-<optional adjective>-<noun>`
+- Checkout a new branch with a descriptive name `<verb>-<optional adjective>-<noun>`
 
 ## Working Loop
 
