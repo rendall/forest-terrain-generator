@@ -63,6 +63,16 @@ describe("hydrology baseline regression", () => {
 			tileCount: 1024,
 			sinkCount: 23,
 			streamTileCount: 111,
+			basins: {
+				fillFraction: {
+					min: 0,
+					max: 0,
+					mean: 0,
+					zero: 0,
+					partial: 0,
+					full: 0,
+				},
+			},
 			fa: {
 				max: 130,
 				p95: 27,

@@ -142,6 +142,18 @@ describe("hydrology-inspector CLI", () => {
 					sink: expect.any(Number),
 					overflowCarrier: expect.any(Number),
 					terminalLake: expect.any(Number),
+					fillFraction: {
+						min: expect.any(Number),
+						max: expect.any(Number),
+						mean: expect.any(Number),
+						p50: expect.any(Number),
+						p90: expect.any(Number),
+						p95: expect.any(Number),
+						p99: expect.any(Number),
+						zero: expect.any(Number),
+						partial: expect.any(Number),
+						full: expect.any(Number),
+					},
 				},
 			});
 		});

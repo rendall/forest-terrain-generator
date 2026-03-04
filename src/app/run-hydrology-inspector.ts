@@ -67,6 +67,18 @@ export interface HydrologyInspectorStats {
 		sink: number;
 		overflowCarrier: number;
 		terminalLake: number;
+		fillFraction: {
+			min: number;
+			max: number;
+			mean: number;
+			p50: number;
+			p90: number;
+			p95: number;
+			p99: number;
+			zero: number;
+			partial: number;
+			full: number;
+		};
 	};
 	fa: {
 		min: number;
@@ -782,6 +794,28 @@ const quantileFromSorted = (sortedValues: number[], q: number): number => {
 	return sortedValues[index] ?? 0;
 };
 
+const resolveBasinFillFraction = (basin: BasinLakeAccounting): number => {
+	if (typeof basin.fillFraction === "number") {
+		if (!Number.isFinite(basin.fillFraction)) {
+			return basin.fillFraction > 0 ? 1 : 0;
+		}
+		return clamp01(basin.fillFraction);
+	}
+	if (typeof basin.rawFillRatio === "number") {
+		if (!Number.isFinite(basin.rawFillRatio)) {
+			return basin.rawFillRatio > 0 ? 1 : 0;
+		}
+		return clamp01(basin.rawFillRatio);
+	}
+	if (typeof basin.fillRatio === "number") {
+		if (!Number.isFinite(basin.fillRatio)) {
+			return basin.fillRatio > 0 ? 1 : 0;
+		}
+		return clamp01(basin.fillRatio);
+	}
+	return 0;
+};
+
 const computeStats = (
 	context: HydrologyContext,
 	topN: number,
@@ -822,6 +856,10 @@ const computeStats = (
 	let sinkBasinCount = 0;
 	let overflowCarrierBasinCount = 0;
 	let terminalLakeBasinCount = 0;
+	let zeroFillBasinCount = 0;
+	let partialFillBasinCount = 0;
+	let fullFillBasinCount = 0;
+	const basinFillFractions: number[] = [];
 	for (const basin of context.lakeAccountingBasins) {
 		switch (basin.role) {
 			case "sink":
@@ -836,7 +874,18 @@ const computeStats = (
 			default:
 				break;
 		}
+		const fillFraction = resolveBasinFillFraction(basin);
+		basinFillFractions.push(fillFraction);
+		if (fillFraction <= 0) {
+			zeroFillBasinCount += 1;
+		} else if (fillFraction >= 1) {
+			fullFillBasinCount += 1;
+		} else {
+			partialFillBasinCount += 1;
+		}
 	}
+	const basinFillSorted = [...basinFillFractions].sort((a, b) => a - b);
+	const basinFillSum = basinFillFractions.reduce((sum, value) => sum + value, 0);
 
 	const rankedTileIds = Array.from(
 		{ length: context.shape.size },
@@ -866,6 +915,21 @@ const computeStats = (
 				sink: sinkBasinCount,
 				overflowCarrier: overflowCarrierBasinCount,
 				terminalLake: terminalLakeBasinCount,
+				fillFraction: {
+					min: basinFillSorted[0] ?? 0,
+					max: basinFillSorted[basinFillSorted.length - 1] ?? 0,
+					mean:
+						basinFillFractions.length > 0
+							? basinFillSum / basinFillFractions.length
+							: 0,
+					p50: quantileFromSorted(basinFillSorted, 0.5),
+					p90: quantileFromSorted(basinFillSorted, 0.9),
+					p95: quantileFromSorted(basinFillSorted, 0.95),
+					p99: quantileFromSorted(basinFillSorted, 0.99),
+					zero: zeroFillBasinCount,
+					partial: partialFillBasinCount,
+					full: fullFillBasinCount,
+				},
 			},
 			fa: {
 			min: faSorted[0] ?? 0,
