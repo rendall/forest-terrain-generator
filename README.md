@@ -8,7 +8,7 @@ The output is a versioned JSON dataset whose `tiles` array contains one fully de
 An optional post-processing CLI can attach deterministic prose descriptions per tile.
 
 ```bash
-node --import tsx src/cli/main.ts generate --params params.json --seed 42 --width 32 --height 32 --output-file out.json
+node --import tsx src/cli/main.ts generate --params params.json --seed 1187 --width 64 --height 64 --output-file forest.json
 ```
 
 ## CLI Summary
@@ -135,7 +135,10 @@ Inflow accounting uses strict-local `FD/FA` as a fixed basis, then applies basin
 - `externalInflow`: sum of boundary FD crossings into basin tile set
 - `totalInflow`: `externalInflow + child overflowExcess`
 - `spillCapacity`: `sum(max(0, mergeH - h(tile)))`
-- `fillRatio`: `(wetnessScale * totalInflow) / spillCapacity`
+- `fillRatio`: `(wetnessScale * totalInflow) / spillCapacity` (legacy/raw ratio)
+- `rawFillRatio`: same as `fillRatio` (can exceed `1`)
+- `fillFraction`: `clamp(rawFillRatio, 0, 1)` (always `0..1`)
+  - if `spillCapacity <= 0`, `rawFillRatio = +Infinity` and `fillFraction = 1`
 - basin role:
   - `sink`
   - `overflow_carrier` (routes via `childSpillFromTileId -> parentContactTileId`)
