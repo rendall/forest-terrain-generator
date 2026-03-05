@@ -128,16 +128,16 @@ Add explicit checks so tests validate production behavior, not only fixture plum
 
 ---
 
-## Phase 4 — Add expected-behavior tests for child-first ordering
+## Phase 3 — Add expected-behavior tests for child-first ordering
 
-## 4.1 Desired invariant
+## 3.1 Desired invariant
 
 For any non-leaf basin:
 
 - If **any direct child is not filled**, parent effective fill inflow is blocked.
 - Parent begins filling only once all direct children are filled.
 
-## 4.2 New expected-behavior tests
+## 3.2 New expected-behavior tests
 
 Create tests that assert:
 
@@ -150,9 +150,9 @@ These tests should run on the same synthetic fixture to isolate policy differenc
 
 ---
 
-## Phase 5 — Implement child-first fill gating
+## Phase 4 — Implement child-first fill gating
 
-## 5.1 Implementation approach
+## 4.1 Implementation approach
 
 In lake accounting (postorder loop), compute:
 
@@ -168,16 +168,16 @@ Use `effectiveInflow` for:
 
 Decide/document whether `totalInflow` field remains raw or becomes effective. If kept raw, document clearly in tests and comments.
 
-## 5.2 Non-goals
+## 4.2 Non-goals
 
 - Do not change unrelated flow-direction routing logic.
 - Do not add nondeterministic or iterative simulation steps in this patch.
 
 ---
 
-## Phase 6 — Verification after implementation
+## Phase 5 — Verification after implementation
 
-## 6.1 Required checks
+## 5.1 Required checks
 
 1. Characterization tests:
    - Some should now fail if they encoded old behavior (expected).
@@ -188,7 +188,7 @@ Decide/document whether `totalInflow` field remains raw or becomes effective. If
 4. Determinism tests:
    - Must still pass.
 
-## 6.2 Success criteria
+## 5.2 Success criteria
 
 Implementation is successful when:
 
@@ -199,7 +199,7 @@ Implementation is successful when:
 
 ---
 
-## Phase 7 — If implementation does not succeed
+## Phase 6 — If implementation does not succeed
 
 If tests or results disagree with expectations:
 
