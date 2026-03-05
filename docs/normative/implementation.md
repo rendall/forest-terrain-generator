@@ -12,11 +12,14 @@ Use this as a practical execution guide when implementing an approved checklist.
 ## Working Loop
 
 1. Take the first incomplete checklist item (or its required prerequisite).
-2. Implement that single atomic item.
+2. If the item is not covered by any previous behavior slice or test item, write a light-weight fail-first test.
+3. Implement that single atomic item.
 4. Run targeted tests for touched scope.
 5. Run broader/full tests at natural checkpoints.
-6. Mark completed checklist items.
-7. Commit with a short, imperative message.
+6. Ensure tests run green. Do not change tests. If the test is bad, then stop.
+7. Mark completed checklist item.
+8. You MUST commit this change with a short, imperative message.
+9. Return to step 1 until all items are checked.
 
 ## Commit Granularity (Agent-Critical)
 
