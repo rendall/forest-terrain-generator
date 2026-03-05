@@ -41,7 +41,7 @@ import {
 
 interface HydrologyInspectorOptions {
 	inputJson?: string;
-	sinkMode?: "strict_local" | "overflow_guided";
+	sinkMode?: string;
 	debug?: boolean;
 	viz?: string;
 	debugDir?: string;
@@ -76,6 +76,20 @@ const assertVizMode = (
 	return raw;
 };
 
+const assertSinkMode = (
+	raw: string | undefined,
+): "strict_local" | "overflow_guided" | undefined => {
+	if (typeof raw === "undefined") {
+		return undefined;
+	}
+	if (raw !== "strict_local" && raw !== "overflow_guided") {
+		throw new InputValidationError(
+			`Invalid --sink-mode "${raw}". Expected one of: strict_local|overflow_guided.`,
+		);
+	}
+	return raw;
+};
+
 program
 	.name("forest-terrain-hydrology-inspector")
 	.description("Inspect hydrology maps, visualizations, and stats")
@@ -86,7 +100,6 @@ program
 	.option(
 		"--sink-mode <mode>",
 		"Sink handling mode when recomputing hydrology (strict_local|overflow_guided)",
-		"strict_local",
 	)
 	.option("--debug", "Include request/options diagnostics", false)
 	.option(
@@ -105,6 +118,7 @@ try {
 	await program.parseAsync(process.argv);
 	const options = program.opts<HydrologyInspectorOptions>();
 	const vizMode = assertVizMode(options.viz);
+	const sinkMode = assertSinkMode(options.sinkMode);
 	const statsEnabled = options.stats === true;
 	if (!vizMode && !statsEnabled) {
 		throw new InputValidationError(
@@ -116,7 +130,7 @@ try {
 		cwd: process.cwd(),
 		args: {
 			inputJsonPath: options.inputJson,
-			sinkMode: options.sinkMode,
+			sinkMode,
 			viz: vizMode,
 			debugDirPath: options.debugDir,
 			stats: statsEnabled,
@@ -143,7 +157,7 @@ try {
 		payload.debug = {
 			inputJsonPath: options.inputJson,
 			debugDirPath: options.debugDir,
-			sinkMode: options.sinkMode,
+			sinkMode,
 			viz: vizMode,
 			stats: statsEnabled,
 		};

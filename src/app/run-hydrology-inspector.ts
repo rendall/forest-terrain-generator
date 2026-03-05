@@ -191,14 +191,17 @@ const messageFromUnknown = (error: unknown): string => {
 
 const buildInspectorRecomputeParams = (
 	envelopeParamOverrides: JsonObject | undefined,
-	sinkMode: "strict_local" | "overflow_guided",
+	sinkModeOverride: "strict_local" | "overflow_guided" | undefined,
 ): JsonObject => {
 	const mergedWithDefaults = envelopeParamOverrides
 		? deepMerge(APPENDIX_A_DEFAULTS, deepMerge({}, envelopeParamOverrides))
 		: deepMerge({}, APPENDIX_A_DEFAULTS);
+	if (!sinkModeOverride) {
+		return mergedWithDefaults;
+	}
 	return deepMerge(mergedWithDefaults, {
 		hydrology: {
-			sinkMode,
+			sinkMode: sinkModeOverride,
 		},
 	});
 };
@@ -503,7 +506,6 @@ const loadContextFromDebugArtifacts = async (
 const buildContextFromEnvelope = async (
 	request: HydrologyInspectorRequest,
 ): Promise<HydrologyContext> => {
-	const sinkMode = request.args.sinkMode ?? "strict_local";
 	const inputPath = resolveRequiredInputPath(
 		request.cwd,
 		request.args.inputJsonPath,
@@ -639,7 +641,7 @@ const buildContextFromEnvelope = async (
 
 	const effectiveParams = buildInspectorRecomputeParams(
 		envelopeParamOverrides,
-		sinkMode,
+		request.args.sinkMode,
 	);
 
 	const derived = deriveHydrology(
