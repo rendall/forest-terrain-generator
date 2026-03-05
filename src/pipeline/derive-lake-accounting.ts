@@ -256,6 +256,10 @@ export const deriveLakeAccounting = (
 			return sum + (child?.overflowExcess ?? 0);
 		}, 0);
 		const totalInflow = externalInflow + childOverflow;
+		const allChildrenFilled = childIds.every(
+			(childId) => byId.get(childId)?.isFilled === true,
+		);
+		const effectiveInflow = allChildrenFilled ? totalInflow : 0;
 		const mergeH =
 			typeof basin.mergeH === "number" && Number.isFinite(basin.mergeH)
 				? basin.mergeH
@@ -267,12 +271,12 @@ export const deriveLakeAccounting = (
 		);
 		const fillRatio =
 			spillCapacity > 0
-				? (wetnessScale * totalInflow) / spillCapacity
+				? (wetnessScale * effectiveInflow) / spillCapacity
 				: Number.POSITIVE_INFINITY;
-		const isFilled = wetnessScale * totalInflow >= spillCapacity;
+		const isFilled = wetnessScale * effectiveInflow >= spillCapacity;
 		const overflowExcess = Math.max(
 			0,
-			wetnessScale * totalInflow - spillCapacity,
+			wetnessScale * effectiveInflow - spillCapacity,
 		);
 		const childSpillFromTileId =
 			typeof basin.childSpillFromTileId === "number" &&
@@ -295,6 +299,8 @@ export const deriveLakeAccounting = (
 			parentId: basin.parentId ?? null,
 			childIds,
 			externalInflow,
+			// totalInflow remains raw (external + child overflow); child gating applies
+			// through effectiveInflow for fill and overflow computations.
 			totalInflow,
 			spillCapacity,
 			fillRatio,
