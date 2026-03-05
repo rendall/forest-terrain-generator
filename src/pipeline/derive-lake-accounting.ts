@@ -224,6 +224,20 @@ export const deriveLakeAccounting = (
 	for (const basin of basinFeatures) {
 		basinsById.set(basin.id, basin);
 	}
+	for (const basin of basinFeatures) {
+		const childIds = Array.isArray(basin.childIds)
+			? basin.childIds.filter(
+					(childId): childId is string => typeof childId === "string",
+				)
+			: [];
+		for (const childId of childIds) {
+			if (!basinsById.has(childId)) {
+				throw new Error(
+					`Lake accounting topology error: basin \"${basin.id}\" references missing child basin \"${childId}\".`,
+				);
+			}
+		}
+	}
 	const expandedTileSets = collectExpandedTileSets(basinsById);
 	const { membershipList, membershipSet } = buildTileMembership(
 		shape.size,
@@ -256,9 +270,9 @@ export const deriveLakeAccounting = (
 			return sum + (child?.overflowExcess ?? 0);
 		}, 0);
 		const totalInflow = externalInflow + childOverflow;
-		const allChildrenFilled = childIds
-			.filter((childId) => byId.has(childId))
-			.every((childId) => byId.get(childId)?.isFilled === true);
+		const allChildrenFilled = childIds.every(
+			(childId) => byId.get(childId)?.isFilled === true,
+		);
 		const effectiveInflow = allChildrenFilled ? totalInflow : 0;
 		const mergeH =
 			typeof basin.mergeH === "number" && Number.isFinite(basin.mergeH)

@@ -107,31 +107,26 @@ describe("lake accounting from production hydrology pipeline", () => {
 		expect(child.overflowExcess).toBe(0);
 	});
 
-	it("ignores unknown child ids when evaluating child-fill gating", () => {
+	it("throws when a basin references an unknown child id", () => {
 		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
 		const parent = basinFeatures.find((basin) => basin.id === "b_parent");
 		expect(parent).toBeDefined();
 		parent.childIds = ["b_child", "b_missing"];
 
-		const result = deriveHydrology(
-			shape,
-			h,
-			{ basinFeatures, tileFeatureIds },
-			{
-				hydrology: {
-					sinkMode: "strict_local",
-					lakeFill: { wetnessScale: 1.0 },
+		expect(() =>
+			deriveHydrology(
+				shape,
+				h,
+				{ basinFeatures, tileFeatureIds },
+				{
+					hydrology: {
+						sinkMode: "strict_local",
+						lakeFill: { wetnessScale: 1.0 },
+					},
 				},
-			},
+			),
+		).toThrow(
+			'Lake accounting topology error: basin "b_parent" references missing child basin "b_missing".',
 		);
-
-		const byId = result.lakeAccounting.byId;
-		const child = byId.get("b_child");
-		const gatedParent = byId.get("b_parent");
-		expect(child).toBeDefined();
-		expect(gatedParent).toBeDefined();
-		expect(gatedParent.totalInflow).toBeCloseTo(child.overflowExcess, 6);
-		expect(gatedParent.fillRatio).toBeGreaterThan(0);
-		expect(gatedParent.overflowExcess).toBeGreaterThanOrEqual(0);
 	});
 });
