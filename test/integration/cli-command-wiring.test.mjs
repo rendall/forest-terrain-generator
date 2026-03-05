@@ -749,6 +749,34 @@ describe("CLI command wiring and contract failures", () => {
 		expect(result.stderr).toContain("duplicate tile index=1");
 	});
 
+	it("fails debug replay when replay grid exceeds allocation cap", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-envelope.json");
+		const outputDir = join(dir, "debug");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(
+				createReplaySourceEnvelope({
+					tiles: [{ x: 5000, y: 5000, topography: { h: 0.2 } }],
+				}),
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"debug",
+			"--input-file",
+			sourceFile,
+			"--output-dir",
+			outputDir,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain("exceed replay allocation cap");
+		expect(result.stderr).toContain("maxAllowedTiles=16777216");
+	});
+
 	it("rejects debug --input-file when generation inputs are also provided", async () => {
 		const dir = await makeTempDir();
 		const sourceFile = join(dir, "source-envelope.json");

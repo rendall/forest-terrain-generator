@@ -366,6 +366,32 @@ describe("hydrology-inspector CLI", () => {
 		expect(result.stderr).toContain("(1,0)");
 	});
 
+	it("fails recompute when replay grid exceeds allocation cap", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-grid-cap.json");
+		const statsFile = join(dir, "stats.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				tiles: [{ x: 5000, y: 5000, topography: { h: 0.2 } }],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--stats",
+			"--stats-file",
+			statsFile,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain("exceed replay allocation cap");
+		expect(result.stderr).toContain("maxAllowedTiles=16777216");
+	});
+
 	it("writes all viz outputs and stats to debug dir without stream trace args", async () => {
 		const dir = await makeTempDir();
 		const sourceFile = join(dir, "source.json");

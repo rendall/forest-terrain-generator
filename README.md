@@ -59,6 +59,7 @@ Mode/output validation highlights:
 - In `debug --input-file`, replay recompute derives topographic structure + hydrology from tile `topography.h`; envelope `features`, tile `featureIds`, and tile `hydrology` are ignored as replay inputs.
 - In `debug --input-file`, `--debug-output-file` writes the recomputed replay envelope (recomputed `features`, tile memberships, tile hydrology, and effective `paramOverrides` delta).
 - In `debug --input-file` with `--params <file>`, CLI emits a replay warning to `stderr` noting active override precedence.
+- Replay-grid validation for both `debug --input-file` and hydrology-inspector recompute includes an allocation cap guard; pathological coordinates that imply oversized replay grids fail fast with input-validation errors before map allocation.
 - In `hydrology-inspector` recompute mode, effective hydrology params follow `defaults < envelope paramOverrides < explicit --sink-mode` (sink-mode override only), and recompute uses the full effective hydrology param block (for parity with debug replay hydrology behavior).
 - In `hydrology-inspector` recompute mode, tile geometry must be a dense rectangular grid with finite tile `topography.h`; sparse coverage, duplicate coordinates, or missing/invalid `topography.h` fail fast with input-validation errors.
 - Existing output files/directories fail by default and require `--force` to overwrite/replace.

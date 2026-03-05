@@ -16,6 +16,9 @@ export interface ValidatedReplayTopographyGrid {
 const isObject = (value: unknown): value is JsonObject =>
 	typeof value === "object" && value !== null && !Array.isArray(value);
 
+const MAX_REPLAY_GRID_TILES = 16_777_216;
+const MAX_SAFE_TILE_COUNT = BigInt(Number.MAX_SAFE_INTEGER);
+
 const toCoord = (
 	tile: JsonObject,
 	sourceTileIndex: number,
@@ -26,13 +29,13 @@ const toCoord = (
 	if (
 		typeof x !== "number" ||
 		typeof y !== "number" ||
-		!Number.isInteger(x) ||
-		!Number.isInteger(y) ||
+		!Number.isSafeInteger(x) ||
+		!Number.isSafeInteger(y) ||
 		x < 0 ||
 		y < 0
 	) {
 		throw new InputValidationError(
-			`Invalid replay tile coordinates at tile index ${sourceTileIndex} in "${inputFilePath}". Expected non-negative integer "x" and "y".`,
+			`Invalid replay tile coordinates at tile index ${sourceTileIndex} in "${inputFilePath}". Expected non-negative safe integer "x" and "y".`,
 		);
 	}
 	return { x, y };
@@ -56,8 +59,21 @@ export const validateReplayTopographyGrid = (
 		maxY = Math.max(maxY, coord.y);
 		return coord;
 	});
-	const shape = createGridShape(maxX + 1, maxY + 1);
-	const expectedSize = shape.size;
+	const width = maxX + 1;
+	const height = maxY + 1;
+	const expectedSizeBigInt = BigInt(width) * BigInt(height);
+	if (expectedSizeBigInt > MAX_SAFE_TILE_COUNT) {
+		throw new InputValidationError(
+			`Input terrain file "${inputFilePath}" replay grid dimensions ${width}x${height} exceed safe tile-count arithmetic (expectedTiles=${expectedSizeBigInt.toString()}).`,
+		);
+	}
+	const expectedSize = Number(expectedSizeBigInt);
+	if (expectedSize > MAX_REPLAY_GRID_TILES) {
+		throw new InputValidationError(
+			`Input terrain file "${inputFilePath}" replay grid dimensions ${width}x${height} exceed replay allocation cap (expectedTiles=${expectedSize}, maxAllowedTiles=${MAX_REPLAY_GRID_TILES}).`,
+		);
+	}
+	const shape = createGridShape(width, height);
 
 	const h = new Float32Array(expectedSize);
 	const tilesByIndex = new Array<JsonObject>(expectedSize);
