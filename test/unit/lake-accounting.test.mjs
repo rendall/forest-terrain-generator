@@ -114,6 +114,39 @@ describe("lake accounting from production hydrology pipeline", () => {
 		);
 	});
 
+	it("keeps deterministic behavior with out-of-range basin tileIds", () => {
+		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
+		const invalidFeatures = basinFeatures.map((basin) =>
+			basin.id === "b_child"
+				? { ...basin, tileIds: [0, 99999] }
+				: basin.id === "b_parent"
+					? { ...basin, tileIds: [1, 2, 3, 4, 5, 88888] }
+					: basin,
+		);
+		const runOnce = () =>
+			deriveHydrology(
+				shape,
+				h,
+				{ basinFeatures: invalidFeatures, tileFeatureIds },
+				{
+					hydrology: {
+						sinkMode: "strict_local",
+						lakeFill: { wetnessScale: 1.0 },
+					},
+				},
+			);
+
+		const first = runOnce();
+		const second = runOnce();
+		const firstChild = first.lakeAccounting.byId.get("b_child");
+		const secondChild = second.lakeAccounting.byId.get("b_child");
+		expect(firstChild).toBeDefined();
+		expect(secondChild).toBeDefined();
+		expect(secondChild.fillFraction).toBeCloseTo(firstChild.fillFraction, 6);
+		expect(secondChild.spillCapacity).toBeCloseTo(firstChild.spillCapacity, 6);
+		expect(secondChild.role).toBe(firstChild.role);
+	});
+
 	it("classifies a supplied leaf basin as overflow carrier and computes accounting", () => {
 		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
 		const result = deriveHydrology(
