@@ -277,6 +277,95 @@ describe("hydrology-inspector CLI", () => {
 		);
 	});
 
+	it("fails recompute when input tiles are not a dense rectangular grid", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-sparse-grid.json");
+		const statsFile = join(dir, "stats.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				tiles: [
+					{ x: 0, y: 0, topography: { h: 0.1 } },
+					{ x: 2, y: 0, topography: { h: 0.2 } },
+				],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--stats",
+			"--stats-file",
+			statsFile,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain("not a dense 3x1 replay grid");
+		expect(result.stderr).toContain("expected=3");
+		expect(result.stderr).toContain("observedTileCount=2");
+	});
+
+	it("fails recompute when duplicate coordinates are present", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-duplicate-grid.json");
+		const statsFile = join(dir, "stats.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				tiles: [
+					{ x: 0, y: 0, topography: { h: 0.1 } },
+					{ x: 0, y: 0, topography: { h: 0.2 } },
+					{ x: 1, y: 0, topography: { h: 0.3 } },
+				],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--stats",
+			"--stats-file",
+			statsFile,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain("duplicate tile coordinates at (0,0)");
+	});
+
+	it("fails recompute when any tile is missing topography.h", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-missing-h.json");
+		const statsFile = join(dir, "stats.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				tiles: [
+					{ x: 0, y: 0, topography: { h: 0.1 } },
+					{ x: 1, y: 0, topography: {} },
+				],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--stats",
+			"--stats-file",
+			statsFile,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain('missing "topography.h"');
+		expect(result.stderr).toContain("tile index 1");
+		expect(result.stderr).toContain("(1,0)");
+	});
+
 	it("writes all viz outputs and stats to debug dir without stream trace args", async () => {
 		const dir = await makeTempDir();
 		const sourceFile = join(dir, "source.json");
