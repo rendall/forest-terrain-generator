@@ -146,6 +146,44 @@ describe("hydrology-inspector CLI", () => {
 			});
 		});
 
+	it("fails recompute when envelope paramOverrides are invalid", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-invalid-overrides.json");
+		const statsFile = join(dir, "stats.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				paramOverrides: {
+					hydrology: {
+						lakeFill: {
+							wetnessScale: 0.4,
+							notARealKey: true,
+						},
+					},
+				},
+				tiles: [
+					{ x: 0, y: 0, topography: { h: 0.9, r: 0, v: 0 } },
+					{ x: 1, y: 0, topography: { h: 0.4, r: 0, v: 0 } },
+				],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--stats",
+			"--stats-file",
+			statsFile,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain(
+			'Unknown params key "envelope.paramOverrides.hydrology.lakeFill.notARealKey"',
+		);
+	});
+
 	it("writes all viz outputs and stats to debug dir without stream trace args", async () => {
 		const dir = await makeTempDir();
 		const sourceFile = join(dir, "source.json");
