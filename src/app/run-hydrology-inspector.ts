@@ -644,21 +644,29 @@ const buildContextFromEnvelope = async (
 		envelopeParamOverrides,
 		request.args.sinkMode,
 	);
-	validateReplayTopographyGrid(envelope.tiles as JsonObject[], inputPath);
+	const replayGrid = validateReplayTopographyGrid(
+		envelope.tiles as JsonObject[],
+		inputPath,
+	);
+	const replayTileFeatureIds = replayGrid.tilesByIndex.map((tile) =>
+		Array.isArray(tile.featureIds)
+			? tile.featureIds.filter((id): id is string => typeof id === "string")
+			: [],
+	);
 
 	const derived = deriveHydrology(
-		shape,
-		h,
+		replayGrid.shape,
+		replayGrid.h,
 		{
 			basinFeatures: envelope.features?.basins ?? [],
-			tileFeatureIds,
+			tileFeatureIds: replayTileFeatureIds,
 		},
 		effectiveParams,
 	);
 	return {
 		source: "recomputed",
-		shape,
-		h,
+		shape: replayGrid.shape,
+		h: replayGrid.h,
 		maps: derived.maps,
 		lakeAccountingBasins: derived.lakeAccounting.basins,
 		tileLakeBasinId: derived.lakeAccounting.tileLakeBasinId,
