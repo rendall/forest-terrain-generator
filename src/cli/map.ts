@@ -22,7 +22,7 @@ program
 	.requiredOption("--output-pgm <path>", "Path to output PGM image")
 	.option(
 		"--layer <layer>",
-		"Layer to render (h|r|v|landforms|structure-leaves)",
+		"Layer to render (h|r|v|landforms|landscape|structure-leaves)",
 		"h",
 	)
 	.option(
