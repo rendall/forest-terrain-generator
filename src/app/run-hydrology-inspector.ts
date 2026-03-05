@@ -7,8 +7,11 @@ import {
 	type HydrologyMapsSoA,
 	WATER_CLASS_CODE,
 } from "../domain/hydrology.js";
+import type { JsonObject } from "../domain/types.js";
 import { createGridShape, type GridShape } from "../domain/topography.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
+import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
+import { deepMerge } from "../lib/deep-merge.js";
 import { deriveHydrology } from "../pipeline/derive-hydrology.js";
 import type { BasinLakeAccounting } from "../pipeline/derive-lake-accounting.js";
 
@@ -171,6 +174,23 @@ const messageFromUnknown = (error: unknown): string => {
 		return error.message;
 	}
 	return "Unknown filesystem error.";
+};
+
+const buildInspectorRecomputeParams = (
+	envelopeParamOverrides: unknown,
+	sinkMode: "strict_local" | "overflow_guided",
+): JsonObject => {
+	const mergedWithDefaults = isObject(envelopeParamOverrides)
+		? deepMerge(
+				APPENDIX_A_DEFAULTS,
+				deepMerge({}, envelopeParamOverrides as JsonObject),
+			)
+		: deepMerge({}, APPENDIX_A_DEFAULTS);
+	return deepMerge(mergedWithDefaults, {
+		hydrology: {
+			sinkMode,
+		},
+	});
 };
 
 const readJsonFile = async (path: string): Promise<unknown> => {
@@ -599,7 +619,19 @@ const buildContextFromEnvelope = async (
 					lakeAccountingBasins: [],
 					tileLakeBasinId,
 				};
-			}
+	}
+
+	const effectiveParams = buildInspectorRecomputeParams(
+		envelope.paramOverrides,
+		sinkMode,
+	);
+	const effectiveHydrology = isObject(effectiveParams.hydrology)
+		? effectiveParams.hydrology
+		: undefined;
+	const effectiveSinkMode =
+		effectiveHydrology?.sinkMode === "overflow_guided"
+			? "overflow_guided"
+			: "strict_local";
 
 	const derived = deriveHydrology(
 		shape,
@@ -608,7 +640,7 @@ const buildContextFromEnvelope = async (
 			basinFeatures: envelope.features?.basins ?? [],
 			tileFeatureIds,
 		},
-		{ hydrology: { sinkMode } },
+		{ hydrology: { sinkMode: effectiveSinkMode } },
 	);
 	return {
 		source: "recomputed",
