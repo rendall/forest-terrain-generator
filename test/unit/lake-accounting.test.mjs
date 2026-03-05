@@ -106,4 +106,27 @@ describe("lake accounting from production hydrology pipeline", () => {
 		expect(child.role).toBe("sink");
 		expect(child.overflowExcess).toBe(0);
 	});
+
+	it("throws when a basin references an unknown child id", () => {
+		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
+		const parent = basinFeatures.find((basin) => basin.id === "b_parent");
+		expect(parent).toBeDefined();
+		parent.childIds = ["b_child", "b_missing"];
+
+		expect(() =>
+			deriveHydrology(
+				shape,
+				h,
+				{ basinFeatures, tileFeatureIds },
+				{
+					hydrology: {
+						sinkMode: "strict_local",
+						lakeFill: { wetnessScale: 1.0 },
+					},
+				},
+			),
+		).toThrow(
+			'Lake accounting topology error: basin "b_parent" references missing child basin "b_missing".',
+		);
+	});
 });
