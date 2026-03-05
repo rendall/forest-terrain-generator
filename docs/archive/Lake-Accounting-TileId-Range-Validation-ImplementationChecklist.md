@@ -1,6 +1,6 @@
 # Lake Accounting TileId Range Validation Implementation Checklist
 
-Status: proposed  
+Status: implemented  
 Scope: address Copilot review feedback by preventing out-of-range basin `tileIds` from skewing lake accounting.
 
 ## Intended Solution
