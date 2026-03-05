@@ -39,7 +39,7 @@ const runByK = () => {
 };
 
 describe("lake fill ordering characterization", () => {
-	it("captures gated accounting contract and gate-blocked parent behavior", () => {
+	it("captures current accounting contract and partial multi-level behavior", () => {
 		const results = runByK();
 		results.forEach(({ k, byId }) => {
 			const basins = Array.from(byId.values());
@@ -52,11 +52,19 @@ describe("lake fill ordering characterization", () => {
 					basin.externalInflow + childOverflow,
 					6,
 				);
+				const allChildrenFilled = basin.childIds.every(
+					(childId) => byId.get(childId)?.isFilled === true,
+				);
+				const effectiveInflow = allChildrenFilled ? basin.totalInflow : 0;
+				expect(basin.overflowExcess).toBeCloseTo(
+					Math.max(0, k * effectiveInflow - basin.spillCapacity),
+					6,
+				);
 				expect(basin.overflowExcess).toBeGreaterThanOrEqual(0);
 			});
 		});
 
-		const hasAnyParentBlockedByUnfilledChild = results.some(({ byId }) => {
+		const hasParentBlockedByUnfilledChild = results.some(({ byId }) => {
 			const parent = byId.get("b_A");
 			if (!parent) {
 				return false;
@@ -70,7 +78,7 @@ describe("lake fill ordering characterization", () => {
 			const hasUnfilledChild = children.some((child) => !child.isFilled);
 			return hasUnfilledChild && parent.totalInflow > 0 && parent.fillRatio === 0;
 		});
-		expect(hasAnyParentBlockedByUnfilledChild).toBe(true);
+		expect(hasParentBlockedByUnfilledChild).toBe(true);
 	});
 
 	it("emits deterministic per-k summary table", () => {
