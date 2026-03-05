@@ -70,6 +70,7 @@ const targetFromFd = (
 };
 
 const collectExpandedTileSets = (
+	shape: GridShape,
 	basinsById: Map<string, TopographicFeatureNode>,
 ): Map<string, Set<number>> => {
 	const cache = new Map<string, Set<number>>();
@@ -83,16 +84,17 @@ const collectExpandedTileSets = (
 		}
 		visiting.add(basinId);
 		const basin = basinsById.get(basinId);
-		const expanded = new Set<number>(
-			Array.isArray(basin?.tileIds)
-				? basin.tileIds.filter(
-						(tileId): tileId is number =>
-							typeof tileId === "number" &&
-							Number.isInteger(tileId) &&
-							tileId >= 0,
-					)
-				: [],
-		);
+			const expanded = new Set<number>(
+				Array.isArray(basin?.tileIds)
+					? basin.tileIds.filter(
+							(tileId): tileId is number =>
+								typeof tileId === "number" &&
+								Number.isInteger(tileId) &&
+								tileId >= 0 &&
+								tileId < shape.size,
+						)
+					: [],
+			);
 		for (const childId of Array.isArray(basin?.childIds) ? basin.childIds : []) {
 			if (typeof childId !== "string") {
 				continue;
@@ -226,7 +228,7 @@ export const deriveLakeAccounting = (
 	for (const basin of basinFeatures) {
 		basinsById.set(basin.id, basin);
 	}
-	const expandedTileSets = collectExpandedTileSets(basinsById);
+	const expandedTileSets = collectExpandedTileSets(shape, basinsById);
 	const { membershipList, membershipSet } = buildTileMembership(
 		shape.size,
 		expandedTileSets,
