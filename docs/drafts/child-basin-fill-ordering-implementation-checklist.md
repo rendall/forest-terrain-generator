@@ -4,6 +4,8 @@ Scope: execute the approved child-first basin fill rollout while preserving phas
 
 ## Atomic Checklist Items
 
+- [ ] [process] Capture implementation start state: run relevant baseline lake/hydrology tests and record current outcomes in the implementation notes.
+- [ ] [process] Confirm clean working scope (`git status`), and isolate work on a dedicated branch before editing checklist-target files.
 - [ ] [docs] Create `docs/drafts/child-basin-fill-ordering-fixture-spec.md` describing the synthetic reference topology (single root, nested levels, sibling branches) and explicit suitability criteria.
 - [ ] [test-fixture] Add `buildNestedSiblingBasinFixture()` in `test/unit/helpers/lake-fixtures.mjs` returning `{ shape, h, basinFeatures, tileFeatureIds }` for a deterministic nested+sibling basin graph.
 - [ ] [test-fixture] Add a fixture invariant helper in `test/unit/helpers/lake-fixtures.mjs` that validates exactly one root (`parentId: null`), depth `>= 2`, and at least one parent with `>= 2` children.
@@ -23,47 +25,52 @@ Scope: execute the approved child-first basin fill rollout while preserving phas
 - [ ] [docs] Add `docs/drafts/child-basin-fill-ordering-mismatch-report-template.md` containing required mismatch fields (`k`, basin ids, child fill states, raw/effective inflow, expected vs actual, classification).
 - [ ] [process] If characterization and expected-behavior results conflict after implementation, produce a mismatch report using the template before changing assertions or policy.
 - [ ] [process] If unresolved semantic ambiguity remains (for example `totalInflow` meaning), record the decision in an ADR or draft decision note before proceeding.
+- [ ] [process] Run targeted tests for touched scope after each behavior slice and run a broader hydrology/lake checkpoint before finalizing.
+- [ ] [process] Mark completed checklist items and commit each completed slice with a scoped, imperative commit message.
 
 Dependencies:
 
 - Item 2 depends on item 1.
-- Items 3–4 depend on item 2.
-- Items 5–7 depend on items 2–4.
-- Items 8–10 depend on items 2–7.
-- Items 11–12 depend on items 2–4 and 8–10.
-- Items 13–15 depend on items 5–12.
-- Item 16 depends on items 13–15.
-- Item 17 can be done in parallel with items 13–16.
-- Items 18–19 depend on items 13–17.
+- Item 4 depends on items 1–3.
+- Items 5–6 depend on item 4.
+- Items 7–11 depend on items 4–6.
+- Item 12 depends on items 7–11.
+- Items 13–14 depend on items 4–6 and 7–12.
+- Items 15–17 depend on items 7–14.
+- Item 18 depends on items 15–17.
+- Item 19 can be done in parallel with items 15–18.
+- Items 20–21 depend on items 15–19.
+- Item 22 depends on items 7–21.
+- Item 23 depends on items 1–22.
 
 ## Behavior Slices
 
-### Slice A — Synthetic fixture and suitability gate
+### Slice A — Start-state and fixture suitability gate
 
-- Goal: Establish a deterministic nested+sibling reference fixture and prove it is structurally suitable.
-- Items: 1, 2, 3, 4
+- Goal: Establish implementation baseline and create a deterministic nested+sibling reference fixture proven structurally suitable.
+- Items: 1, 2, 3, 4, 5, 6
 - Type: mechanical
 
 ### Slice B — Current behavior lock (pre-change characterization)
 
-- Goal: Freeze current basin-fill behavior across the wetness sweep before algorithm changes.
-- Items: 5, 6, 7, 8, 9, 10
+- Goal: Freeze current basin-fill behavior across the wetness sweep before algorithm changes and prove tests hit production code.
+- Items: 7, 8, 9, 10, 11, 12
 - Type: behavior
 
 ### Slice C — Desired invariant contract tests
 
 - Goal: Express child-first expected behavior independently from implementation details.
-- Items: 11, 12
+- Items: 13, 14
 - Type: behavior
 
 ### Slice D — Accounting implementation
 
 - Goal: Implement child-complete gating in lake accounting while preserving determinism and explicit field semantics.
-- Items: 13, 14, 15
+- Items: 15, 16, 17
 - Type: behavior
 
-### Slice E — Verification artifacts and mismatch protocol
+### Slice E — Verification artifacts and implementation hygiene
 
-- Goal: Preserve phase separation and ensure failures lead to diagnosis rather than expectation drift.
-- Items: 16, 17, 18, 19
+- Goal: Preserve phase separation and ensure failures lead to diagnosis rather than expectation drift while following execution hygiene.
+- Items: 18, 19, 20, 21, 22, 23
 - Type: mechanical
