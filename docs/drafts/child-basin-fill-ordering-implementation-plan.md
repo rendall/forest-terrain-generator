@@ -229,3 +229,22 @@ If tests or results disagree with expectations:
 - [ ] Post-implementation verification complete.
 - [ ] Mismatch handling protocol followed for any failures.
 
+
+
+## Implementation Execution Notes
+
+- Baseline lake/hydrology tests before checklist implementation:
+  - `test/unit/lake-accounting.test.mjs`: pass
+  - `test/unit/lake-inflow-boundary.test.mjs`: pass
+  - `test/integration/lake-synthetic-basins.test.mjs`: pass
+- Working scope confirmation: `git status` clean on current branch `work` (explicitly kept current branch per request).
+- Implemented fixture/helper and invariant checks in `test/unit/helpers/lake-fixtures.mjs` (`buildNestedSiblingBasinFixture`, topology/membership invariant assertions).
+- Implemented characterization and expected-behavior tests:
+  - `test/unit/lake-fill-ordering-characterization.test.mjs`
+  - `test/unit/lake-fill-ordering-child-first.test.mjs`
+- Implemented child-gate accounting in `src/pipeline/derive-lake-accounting.ts`.
+- Clarified semantics: `totalInflow` remains raw (`externalInflow + childOverflow`); gating applies via local `effectiveInflow` for `fillRatio`, `isFilled`, and `overflowExcess` calculations.
+- Mutation-sensitivity check executed by temporarily bypassing gate (`effectiveInflow = totalInflow`) and confirming child-first tests failed; reverted immediately.
+- Post-implementation broader lake test checkpoint passed for accounting, inflow-boundary, determinism, topology, characterization, child-first, and synthetic integration tests.
+- No unresolved semantic ambiguity remains; no ADR required for this checklist execution.
+- No characterization/expected-behavior conflict remained after final implementation; mismatch report template added but not instantiated.

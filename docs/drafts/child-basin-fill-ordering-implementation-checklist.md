@@ -4,29 +4,29 @@ Scope: execute the approved child-first basin fill rollout while preserving phas
 
 ## Atomic Checklist Items
 
-- [ ] [process] Capture implementation start state: run relevant baseline lake/hydrology tests and record current outcomes in the implementation notes.
-- [ ] [process] Confirm clean working scope (`git status`), and isolate work on a dedicated branch before editing checklist-target files.
-- [ ] [docs] Create `docs/drafts/child-basin-fill-ordering-fixture-spec.md` describing the synthetic reference topology (single root, nested levels, sibling branches) and explicit suitability criteria.
-- [ ] [test-fixture] Add `buildNestedSiblingBasinFixture()` in `test/unit/helpers/lake-fixtures.mjs` returning `{ shape, h, basinFeatures, tileFeatureIds }` for a deterministic nested+sibling basin graph.
-- [ ] [test-fixture] Add a fixture invariant helper in `test/unit/helpers/lake-fixtures.mjs` that validates exactly one root (`parentId: null`), depth `>= 2`, and at least one parent with `>= 2` children.
-- [ ] [test-fixture] Add a fixture invariant helper in `test/unit/helpers/lake-fixtures.mjs` that validates tile membership consistency (all referenced basin ids exist; expanded root coverage is complete for fixture scope).
-- [ ] [test-char] Add `test/unit/lake-fill-ordering-characterization.test.mjs` to capture current behavior over wetness sweep `k=[1,0.5,0.1,0.01,0.001,0.0001]` using `buildNestedSiblingBasinFixture()`.
-- [ ] [test-char] In `test/unit/lake-fill-ordering-characterization.test.mjs`, assert current accounting contract per basin: `totalInflow(parent)=externalInflow(parent)+sum(child overflowExcess)` and preserve observed multi-level partial-fill outcomes where present.
-- [ ] [test-char] In `test/unit/lake-fill-ordering-characterization.test.mjs`, include a deterministic readable per-`k` basin summary artifact (inline snapshot/string table) for reviewer inspection.
-- [ ] [test-char] In `test/unit/lake-fill-ordering-characterization.test.mjs`, call production entrypoint `deriveHydrology(...)` only; do not call `deriveLakeAccounting(...)` directly from tests.
-- [ ] [test-char] Add at least one independent oracle assertion (output-contract/algebraic) that is not a test-side clone of accounting control flow.
-- [ ] [process] Run a local mutation-sensitivity check (temporary accounting comparison flip, then revert) and confirm characterization/expected-behavior tests fail before merge.
-- [ ] [test-expected] Add `test/unit/lake-fill-ordering-child-first.test.mjs` that encodes desired invariant scenarios on the same fixture: unfilled-child blocks parent fill; all-children-filled unlocks parent fill; mixed child states keep parent blocked.
-- [ ] [test-expected] In `test/unit/lake-fill-ordering-child-first.test.mjs`, assert overflow propagation semantics still hold after gate-open transitions.
-- [ ] [hydrology] In `src/pipeline/derive-lake-accounting.ts`, add explicit child-gate computation (`allChildrenFilled`) in the postorder basin loop.
-- [ ] [hydrology] In `src/pipeline/derive-lake-accounting.ts`, compute `rawInflow=externalInflow+childOverflow` and `effectiveInflow` gated by child completion; use `effectiveInflow` for fill computations (`fillRatio`, `isFilled`, `overflowExcess`).
-- [ ] [hydrology] In `src/pipeline/derive-lake-accounting.ts`, document and enforce `totalInflow` field semantics (raw vs effective), and keep behavior deterministic.
-- [ ] [docs] Update `docs/drafts/child-basin-fill-ordering-implementation-plan.md` with final implementation notes and any clarified field semantics produced by checklist execution.
-- [ ] [docs] Add `docs/drafts/child-basin-fill-ordering-mismatch-report-template.md` containing required mismatch fields (`k`, basin ids, child fill states, raw/effective inflow, expected vs actual, classification).
-- [ ] [process] If characterization and expected-behavior results conflict after implementation, produce a mismatch report using the template before changing assertions or policy.
-- [ ] [process] If unresolved semantic ambiguity remains (for example `totalInflow` meaning), record the decision in an ADR or draft decision note before proceeding.
-- [ ] [process] Run targeted tests for touched scope after each behavior slice and run a broader hydrology/lake checkpoint before finalizing.
-- [ ] [process] Mark completed checklist items and commit each completed slice with a scoped, imperative commit message.
+- [x] [process] Capture implementation start state: run relevant baseline lake/hydrology tests and record current outcomes in the implementation notes.
+- [x] [process] Confirm clean working scope (`git status`), and isolate work on a dedicated branch before editing checklist-target files.
+- [x] [docs] Create `docs/drafts/child-basin-fill-ordering-fixture-spec.md` describing the synthetic reference topology (single root, nested levels, sibling branches) and explicit suitability criteria.
+- [x] [test-fixture] Add `buildNestedSiblingBasinFixture()` in `test/unit/helpers/lake-fixtures.mjs` returning `{ shape, h, basinFeatures, tileFeatureIds }` for a deterministic nested+sibling basin graph.
+- [x] [test-fixture] Add a fixture invariant helper in `test/unit/helpers/lake-fixtures.mjs` that validates exactly one root (`parentId: null`), depth `>= 2`, and at least one parent with `>= 2` children.
+- [x] [test-fixture] Add a fixture invariant helper in `test/unit/helpers/lake-fixtures.mjs` that validates tile membership consistency (all referenced basin ids exist; expanded root coverage is complete for fixture scope).
+- [x] [test-char] Add `test/unit/lake-fill-ordering-characterization.test.mjs` to capture current behavior over wetness sweep `k=[1,0.5,0.1,0.01,0.001,0.0001]` using `buildNestedSiblingBasinFixture()`.
+- [x] [test-char] In `test/unit/lake-fill-ordering-characterization.test.mjs`, assert current accounting contract per basin: `totalInflow(parent)=externalInflow(parent)+sum(child overflowExcess)` and preserve observed multi-level partial-fill outcomes where present.
+- [x] [test-char] In `test/unit/lake-fill-ordering-characterization.test.mjs`, include a deterministic readable per-`k` basin summary artifact (inline snapshot/string table) for reviewer inspection.
+- [x] [test-char] In `test/unit/lake-fill-ordering-characterization.test.mjs`, call production entrypoint `deriveHydrology(...)` only; do not call `deriveLakeAccounting(...)` directly from tests.
+- [x] [test-char] Add at least one independent oracle assertion (output-contract/algebraic) that is not a test-side clone of accounting control flow.
+- [x] [process] Run a local mutation-sensitivity check (temporary accounting comparison flip, then revert) and confirm characterization/expected-behavior tests fail before merge.
+- [x] [test-expected] Add `test/unit/lake-fill-ordering-child-first.test.mjs` that encodes desired invariant scenarios on the same fixture: unfilled-child blocks parent fill; all-children-filled unlocks parent fill; mixed child states keep parent blocked.
+- [x] [test-expected] In `test/unit/lake-fill-ordering-child-first.test.mjs`, assert overflow propagation semantics still hold after gate-open transitions.
+- [x] [hydrology] In `src/pipeline/derive-lake-accounting.ts`, add explicit child-gate computation (`allChildrenFilled`) in the postorder basin loop.
+- [x] [hydrology] In `src/pipeline/derive-lake-accounting.ts`, compute `rawInflow=externalInflow+childOverflow` and `effectiveInflow` gated by child completion; use `effectiveInflow` for fill computations (`fillRatio`, `isFilled`, `overflowExcess`).
+- [x] [hydrology] In `src/pipeline/derive-lake-accounting.ts`, document and enforce `totalInflow` field semantics (raw vs effective), and keep behavior deterministic.
+- [x] [docs] Update `docs/drafts/child-basin-fill-ordering-implementation-plan.md` with final implementation notes and any clarified field semantics produced by checklist execution.
+- [x] [docs] Add `docs/drafts/child-basin-fill-ordering-mismatch-report-template.md` containing required mismatch fields (`k`, basin ids, child fill states, raw/effective inflow, expected vs actual, classification).
+- [x] [process] If characterization and expected-behavior results conflict after implementation, produce a mismatch report using the template before changing assertions or policy.
+- [x] [process] If unresolved semantic ambiguity remains (for example `totalInflow` meaning), record the decision in an ADR or draft decision note before proceeding.
+- [x] [process] Run targeted tests for touched scope after each behavior slice and run a broader hydrology/lake checkpoint before finalizing.
+- [x] [process] Mark completed checklist items and commit each completed slice with a scoped, imperative commit message.
 
 Dependencies:
 
