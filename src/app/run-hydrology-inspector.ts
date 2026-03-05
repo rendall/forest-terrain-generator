@@ -13,6 +13,7 @@ import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
 import { normalizeAndValidateParamsObject } from "../io/read-params.js";
 import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
 import { deepMerge } from "../lib/deep-merge.js";
+import { validateReplayTopographyGrid } from "../lib/validate-replay-tiles.js";
 import { deriveHydrology } from "../pipeline/derive-hydrology.js";
 import type { BasinLakeAccounting } from "../pipeline/derive-lake-accounting.js";
 
@@ -643,20 +644,29 @@ const buildContextFromEnvelope = async (
 		envelopeParamOverrides,
 		request.args.sinkMode,
 	);
+	const replayGrid = validateReplayTopographyGrid(
+		envelope.tiles as JsonObject[],
+		inputPath,
+	);
+	const replayTileFeatureIds = replayGrid.tilesByIndex.map((tile) =>
+		Array.isArray(tile.featureIds)
+			? tile.featureIds.filter((id): id is string => typeof id === "string")
+			: [],
+	);
 
 	const derived = deriveHydrology(
-		shape,
-		h,
+		replayGrid.shape,
+		replayGrid.h,
 		{
 			basinFeatures: envelope.features?.basins ?? [],
-			tileFeatureIds,
+			tileFeatureIds: replayTileFeatureIds,
 		},
 		effectiveParams,
 	);
 	return {
 		source: "recomputed",
-		shape,
-		h,
+		shape: replayGrid.shape,
+		h: replayGrid.h,
 		maps: derived.maps,
 		lakeAccountingBasins: derived.lakeAccounting.basins,
 		tileLakeBasinId: derived.lakeAccounting.tileLakeBasinId,
