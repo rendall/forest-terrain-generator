@@ -629,13 +629,6 @@ const buildContextFromEnvelope = async (
 		envelopeParamOverrides,
 		sinkMode,
 	);
-	const effectiveHydrology = isObject(effectiveParams.hydrology)
-		? effectiveParams.hydrology
-		: undefined;
-	const effectiveSinkMode =
-		effectiveHydrology?.sinkMode === "overflow_guided"
-			? "overflow_guided"
-			: "strict_local";
 
 	const derived = deriveHydrology(
 		shape,
@@ -644,7 +637,7 @@ const buildContextFromEnvelope = async (
 			basinFeatures: envelope.features?.basins ?? [],
 			tileFeatureIds,
 		},
-		{ hydrology: { sinkMode: effectiveSinkMode } },
+		effectiveParams,
 	);
 	return {
 		source: "recomputed",
