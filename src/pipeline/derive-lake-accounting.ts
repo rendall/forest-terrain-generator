@@ -256,9 +256,9 @@ export const deriveLakeAccounting = (
 			return sum + (child?.overflowExcess ?? 0);
 		}, 0);
 		const totalInflow = externalInflow + childOverflow;
-		const allChildrenFilled = childIds.every(
-			(childId) => byId.get(childId)?.isFilled === true,
-		);
+		const allChildrenFilled = childIds
+			.filter((childId) => byId.has(childId))
+			.every((childId) => byId.get(childId)?.isFilled === true);
 		const effectiveInflow = allChildrenFilled ? totalInflow : 0;
 		const mergeH =
 			typeof basin.mergeH === "number" && Number.isFinite(basin.mergeH)
