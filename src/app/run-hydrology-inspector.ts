@@ -10,6 +10,7 @@ import {
 import type { JsonObject } from "../domain/types.js";
 import { createGridShape, type GridShape } from "../domain/topography.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
+import { normalizeAndValidateParamsObject } from "../io/read-params.js";
 import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
 import { deepMerge } from "../lib/deep-merge.js";
 import { deriveHydrology } from "../pipeline/derive-hydrology.js";
@@ -189,14 +190,11 @@ const messageFromUnknown = (error: unknown): string => {
 };
 
 const buildInspectorRecomputeParams = (
-	envelopeParamOverrides: unknown,
+	envelopeParamOverrides: JsonObject | undefined,
 	sinkMode: "strict_local" | "overflow_guided",
 ): JsonObject => {
-	const mergedWithDefaults = isObject(envelopeParamOverrides)
-		? deepMerge(
-				APPENDIX_A_DEFAULTS,
-				deepMerge({}, envelopeParamOverrides as JsonObject),
-			)
+	const mergedWithDefaults = envelopeParamOverrides
+		? deepMerge(APPENDIX_A_DEFAULTS, deepMerge({}, envelopeParamOverrides))
 		: deepMerge({}, APPENDIX_A_DEFAULTS);
 	return deepMerge(mergedWithDefaults, {
 		hydrology: {
@@ -514,6 +512,12 @@ const buildContextFromEnvelope = async (
 		throw new InputValidationError("Missing required input: --input-json.");
 	}
 	const envelope = await readTerrainEnvelopeFile(inputPath);
+	const envelopeParamOverrides = isObject(envelope.paramOverrides)
+		? normalizeAndValidateParamsObject(
+				deepMerge({}, envelope.paramOverrides as JsonObject),
+				"envelope.paramOverrides",
+			)
+		: undefined;
 
 	const maxX = envelope.tiles.reduce(
 		(max, tile) =>
@@ -634,7 +638,7 @@ const buildContextFromEnvelope = async (
 	}
 
 	const effectiveParams = buildInspectorRecomputeParams(
-		envelope.paramOverrides,
+		envelopeParamOverrides,
 		sinkMode,
 	);
 	const effectiveHydrology = isObject(effectiveParams.hydrology)
