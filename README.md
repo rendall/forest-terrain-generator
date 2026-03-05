@@ -59,6 +59,7 @@ Mode/output validation highlights:
 - In `debug --input-file`, replay recompute derives topographic structure + hydrology from tile `topography.h`; envelope `features`, tile `featureIds`, and tile `hydrology` are ignored as replay inputs.
 - In `debug --input-file`, `--debug-output-file` writes the recomputed replay envelope (recomputed `features`, tile memberships, tile hydrology, and effective `paramOverrides` delta).
 - In `debug --input-file` with `--params <file>`, CLI emits a replay warning to `stderr` noting active override precedence.
+- In `hydrology-inspector` recompute mode, effective hydrology params follow `defaults < envelope paramOverrides < explicit --sink-mode` (sink-mode override only), and recompute uses the full effective hydrology param block (for parity with debug replay hydrology behavior).
 - Existing output files/directories fail by default and require `--force` to overwrite/replace.
 
 ```bash
