@@ -13,6 +13,7 @@ import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
 import { normalizeAndValidateParamsObject } from "../io/read-params.js";
 import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
 import { deepMerge } from "../lib/deep-merge.js";
+import { validateReplayTopographyGrid } from "../lib/validate-replay-tiles.js";
 import { deriveHydrology } from "../pipeline/derive-hydrology.js";
 import type { BasinLakeAccounting } from "../pipeline/derive-lake-accounting.js";
 
@@ -643,6 +644,7 @@ const buildContextFromEnvelope = async (
 		envelopeParamOverrides,
 		request.args.sinkMode,
 	);
+	validateReplayTopographyGrid(envelope.tiles as JsonObject[], inputPath);
 
 	const derived = deriveHydrology(
 		shape,
