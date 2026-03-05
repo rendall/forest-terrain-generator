@@ -1,6 +1,6 @@
 # Hydrology Inspector Recompute Effective Params Implementation Checklist
 
-Status: proposed  
+Status: implemented  
 Scope: address PR `P1` by making hydrology-inspector recompute parity match generator/debug effective hydrology params.
 
 ## Investigation Summary
@@ -14,7 +14,7 @@ Scope: address PR `P1` by making hydrology-inspector recompute parity match gene
 - [x] [input] `HIP-INP-01` Normalize and validate envelope overrides before merge (same contract as debug replay) using [`normalizeAndValidateParamsObject` in src/io/read-params.ts](/mnt/c/workspace/projects/forest-terrain-generator/src/io/read-params.ts) with path prefix `envelope.paramOverrides`.
 - [x] [app] `HIP-APP-02` Pass full effective recompute params into [`deriveHydrology` in src/pipeline/derive-hydrology.ts](/mnt/c/workspace/projects/forest-terrain-generator/src/pipeline/derive-hydrology.ts) from [`src/app/run-hydrology-inspector.ts`](/mnt/c/workspace/projects/forest-terrain-generator/src/app/run-hydrology-inspector.ts) instead of sink-mode-only params. Depends on `HIP-APP-01`.
 - [x] [contract] `HIP-CON-01` Preserve explicit CLI override semantics so `--sink-mode` overrides envelope/default sink mode only (without suppressing other effective hydrology params) in [`src/cli/hydrology-inspector.ts`](/mnt/c/workspace/projects/forest-terrain-generator/src/cli/hydrology-inspector.ts) and [`src/app/run-hydrology-inspector.ts`](/mnt/c/workspace/projects/forest-terrain-generator/src/app/run-hydrology-inspector.ts). Depends on `HIP-APP-01`.
-- [ ] [docs] `HIP-DOC-01` Update hydrology-inspector user docs to state recompute precedence and parity target with generator/debug replay in [`README.md`](/mnt/c/workspace/projects/forest-terrain-generator/README.md) and CLI manual block in [`src/cli/hydrology-inspector.ts`](/mnt/c/workspace/projects/forest-terrain-generator/src/cli/hydrology-inspector.ts).
+- [x] [docs] `HIP-DOC-01` Update hydrology-inspector user docs to state recompute precedence and parity target with generator/debug replay in [`README.md`](/mnt/c/workspace/projects/forest-terrain-generator/README.md) and CLI manual block in [`src/cli/hydrology-inspector.ts`](/mnt/c/workspace/projects/forest-terrain-generator/src/cli/hydrology-inspector.ts).
 
 ## Behavior Slices
 

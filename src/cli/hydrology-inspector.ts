@@ -18,9 +18,13 @@
  * - `--debug-dir <path>` required when `--viz` is set
  * - `--stats` emit stats JSON
  * - `--stats-file <path>` optional stats output override (requires `--stats`)
- * - `--sink-mode strict_local|overflow_guided` used only when hydrology maps must be recomputed
+ * - `--sink-mode strict_local|overflow_guided` explicit override used only when hydrology maps must be recomputed
  * - `--force` required to overwrite existing viz/stats target files
  * - `--debug` include request/options echo in output payload
+ *
+ * Recompute params precedence:
+ * - `defaults -> envelope.paramOverrides -> explicit --sink-mode`
+ * - Full effective hydrology params are applied during recompute for parity with debug replay hydrology behavior.
  *
  * Output shape:
  * - Always pretty JSON.
