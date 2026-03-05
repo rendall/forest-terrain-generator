@@ -116,22 +116,28 @@ Use robust assertions:
 - Predicates across values (e.g., existence of `0 < fillRatio < 1`) rather than brittle exact long decimals.
 - Exact equality only where structurally guaranteed.
 
-## 2.4 Artifact for review
+## 2.5 Prove tests execute production code (anti-harness checks)
 
-Include a readable per-`k` table in test comments or test-only snapshot text (kept deterministic) to make behavior easy to inspect during reviews.
+Add explicit checks so tests validate production behavior, not only fixture plumbing:
+
+- Invoke only production entrypoint `deriveHydrology(...)` in characterization and expected-behavior tests.
+- Avoid test-side reimplementation of lake-accounting logic; assert algebraic/contracts from outputs instead.
+- Add at least one independent oracle assertion that does not mirror implementation control flow.
+- Add a local mutation-sensitivity check during development (temporary flip like `>=`/`>` in accounting) and confirm tests fail, then revert.
+- Keep fixture-invariant assertions separate from behavior assertions so topology bugs cannot masquerade as accounting behavior.
 
 ---
 
-## Phase 3 — Add expected-behavior tests for child-first ordering
+## Phase 4 — Add expected-behavior tests for child-first ordering
 
-## 3.1 Desired invariant
+## 4.1 Desired invariant
 
 For any non-leaf basin:
 
 - If **any direct child is not filled**, parent effective fill inflow is blocked.
 - Parent begins filling only once all direct children are filled.
 
-## 3.2 New expected-behavior tests
+## 4.2 New expected-behavior tests
 
 Create tests that assert:
 
@@ -144,9 +150,9 @@ These tests should run on the same synthetic fixture to isolate policy differenc
 
 ---
 
-## Phase 4 — Implement child-first fill gating
+## Phase 5 — Implement child-first fill gating
 
-## 4.1 Implementation approach
+## 5.1 Implementation approach
 
 In lake accounting (postorder loop), compute:
 
@@ -162,16 +168,16 @@ Use `effectiveInflow` for:
 
 Decide/document whether `totalInflow` field remains raw or becomes effective. If kept raw, document clearly in tests and comments.
 
-## 4.2 Non-goals
+## 5.2 Non-goals
 
 - Do not change unrelated flow-direction routing logic.
 - Do not add nondeterministic or iterative simulation steps in this patch.
 
 ---
 
-## Phase 5 — Verification after implementation
+## Phase 6 — Verification after implementation
 
-## 5.1 Required checks
+## 6.1 Required checks
 
 1. Characterization tests:
    - Some should now fail if they encoded old behavior (expected).
@@ -182,7 +188,7 @@ Decide/document whether `totalInflow` field remains raw or becomes effective. If
 4. Determinism tests:
    - Must still pass.
 
-## 5.2 Success criteria
+## 6.2 Success criteria
 
 Implementation is successful when:
 
@@ -193,7 +199,7 @@ Implementation is successful when:
 
 ---
 
-## Phase 6 — If implementation does not succeed
+## Phase 7 — If implementation does not succeed
 
 If tests or results disagree with expectations:
 

@@ -11,6 +11,9 @@ Scope: execute the approved child-first basin fill rollout while preserving phas
 - [ ] [test-char] Add `test/unit/lake-fill-ordering-characterization.test.mjs` to capture current behavior over wetness sweep `k=[1,0.5,0.1,0.01,0.001,0.0001]` using `buildNestedSiblingBasinFixture()`.
 - [ ] [test-char] In `test/unit/lake-fill-ordering-characterization.test.mjs`, assert current accounting contract per basin: `totalInflow(parent)=externalInflow(parent)+sum(child overflowExcess)` and preserve observed multi-level partial-fill outcomes where present.
 - [ ] [test-char] In `test/unit/lake-fill-ordering-characterization.test.mjs`, include a deterministic readable per-`k` basin summary artifact (inline snapshot/string table) for reviewer inspection.
+- [ ] [test-char] In `test/unit/lake-fill-ordering-characterization.test.mjs`, call production entrypoint `deriveHydrology(...)` only; do not call `deriveLakeAccounting(...)` directly from tests.
+- [ ] [test-char] Add at least one independent oracle assertion (output-contract/algebraic) that is not a test-side clone of accounting control flow.
+- [ ] [process] Run a local mutation-sensitivity check (temporary accounting comparison flip, then revert) and confirm characterization/expected-behavior tests fail before merge.
 - [ ] [test-expected] Add `test/unit/lake-fill-ordering-child-first.test.mjs` that encodes desired invariant scenarios on the same fixture: unfilled-child blocks parent fill; all-children-filled unlocks parent fill; mixed child states keep parent blocked.
 - [ ] [test-expected] In `test/unit/lake-fill-ordering-child-first.test.mjs`, assert overflow propagation semantics still hold after gate-open transitions.
 - [ ] [hydrology] In `src/pipeline/derive-lake-accounting.ts`, add explicit child-gate computation (`allChildrenFilled`) in the postorder basin loop.
@@ -26,11 +29,12 @@ Dependencies:
 - Item 2 depends on item 1.
 - Items 3–4 depend on item 2.
 - Items 5–7 depend on items 2–4.
-- Items 8–9 depend on items 2–4.
-- Items 10–12 depend on items 5–9.
-- Item 13 depends on items 10–12.
-- Item 14 can be done in parallel with items 10–13.
-- Items 15–16 depend on items 10–14.
+- Items 8–10 depend on items 2–7.
+- Items 11–12 depend on items 2–4 and 8–10.
+- Items 13–15 depend on items 5–12.
+- Item 16 depends on items 13–15.
+- Item 17 can be done in parallel with items 13–16.
+- Items 18–19 depend on items 13–17.
 
 ## Behavior Slices
 
@@ -43,23 +47,23 @@ Dependencies:
 ### Slice B — Current behavior lock (pre-change characterization)
 
 - Goal: Freeze current basin-fill behavior across the wetness sweep before algorithm changes.
-- Items: 5, 6, 7
+- Items: 5, 6, 7, 8, 9, 10
 - Type: behavior
 
 ### Slice C — Desired invariant contract tests
 
 - Goal: Express child-first expected behavior independently from implementation details.
-- Items: 8, 9
+- Items: 11, 12
 - Type: behavior
 
 ### Slice D — Accounting implementation
 
 - Goal: Implement child-complete gating in lake accounting while preserving determinism and explicit field semantics.
-- Items: 10, 11, 12
+- Items: 13, 14, 15
 - Type: behavior
 
 ### Slice E — Verification artifacts and mismatch protocol
 
 - Goal: Preserve phase separation and ensure failures lead to diagnosis rather than expectation drift.
-- Items: 13, 14, 15, 16
+- Items: 16, 17, 18, 19
 - Type: mechanical
