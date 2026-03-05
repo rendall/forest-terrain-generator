@@ -161,6 +161,34 @@ Debug hydrology outputs (`debug/hydrology.json`) include:
   - `lakeMask`, `lakeSurfaceH`, `waterClass`
   - `lakeDepth`, `lakeBasinId`
 
+## Wetness Sweep Workflow
+
+Run a replay sweep over `hydrology.lakeFill.wetnessScale` (`k`) and collect basin/lake summary metrics:
+
+```bash
+bash scripts/sweep-wetness.sh --seed 1187 --width 128 --height 128 --force
+```
+
+By default, outputs are written under `<project-root>/out/wetness-sweep`.
+
+Or replay from an existing envelope:
+
+```bash
+bash scripts/sweep-wetness.sh --base-envelope runs/base/terrain.json --k-values "0.03 0.1 0.3 1.0" --force
+```
+
+Outputs:
+
+- per-k debug artifacts: `<runs-dir>/k-<k>/debug/*`
+- per-k replay envelope: `<runs-dir>/k-<k>/replay.json`
+- summary table: `<runs-dir>/summary.tsv`
+
+`summary.tsv` columns:
+
+- `k`, `basinTotal`, `sink`, `overflowCarrier`, `terminalLake`
+- `fillZero`, `fillPartial`, `fillFull`
+- `lakeTiles`, `streamTiles`, `fillFractionMean`
+
 ## Feature Trees
 
 Generated envelopes now include top-level structural feature trees:
