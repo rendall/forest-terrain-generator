@@ -26,6 +26,10 @@
  * - `defaults -> envelope.paramOverrides -> explicit --sink-mode`
  * - Full effective hydrology params are applied during recompute for parity with debug replay hydrology behavior.
  *
+ * Recompute input requirements:
+ * - Recompute requires dense rectangular tile coverage with finite `tile.topography.h`.
+ * - Sparse coverage, duplicate coordinates, or missing/non-finite `topography.h` fail fast with input-validation errors.
+ *
  * Output shape:
  * - Always pretty JSON.
  * - Includes `hydrologyMapsSource` (`debug_artifacts|envelope|recomputed`).

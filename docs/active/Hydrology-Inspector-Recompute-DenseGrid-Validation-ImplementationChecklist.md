@@ -1,6 +1,6 @@
 # Hydrology Inspector Recompute Dense-Grid Validation Implementation Checklist
 
-Status: proposed  
+Status: implemented  
 Scope: address PR `P2` by rejecting invalid tile geometry before hydrology-inspector recompute.
 
 ## Investigation Summary
@@ -13,7 +13,7 @@ Scope: address PR `P2` by rejecting invalid tile geometry before hydrology-inspe
 - [x] [input] `HIPDG-INP-01` In hydrology-inspector recompute path, validate envelope tiles with [`validateReplayTopographyGrid` in src/lib/validate-replay-tiles.ts](/mnt/c/workspace/projects/forest-terrain-generator/src/lib/validate-replay-tiles.ts) before any hydrology derivation in [`src/app/run-hydrology-inspector.ts`](/mnt/c/workspace/projects/forest-terrain-generator/src/app/run-hydrology-inspector.ts).
 - [x] [input] `HIPDG-INP-02` Replace max-coordinate shape inference and implicit `h=0` fill behavior in recompute mode with validated replay-grid outputs (`shape`, `h`, coordinate uniqueness) from [`validateReplayTopographyGrid` in src/lib/validate-replay-tiles.ts](/mnt/c/workspace/projects/forest-terrain-generator/src/lib/validate-replay-tiles.ts). Depends on `HIPDG-INP-01`.
 - [x] [contract] `HIPDG-CON-01` Preserve fail-fast error contract for invalid recompute geometry (holes, duplicates, invalid/missing `topography.h`) by surfacing input-validation failures from replay-grid validation in [`src/app/run-hydrology-inspector.ts`](/mnt/c/workspace/projects/forest-terrain-generator/src/app/run-hydrology-inspector.ts). Depends on `HIPDG-INP-01`.
-- [ ] [docs] `HIPDG-DOC-01` Update hydrology-inspector docs to state that recompute mode requires dense rectangular tile coverage with finite `topography.h`, and that invalid coverage fails fast, in [`README.md`](/mnt/c/workspace/projects/forest-terrain-generator/README.md) and [`src/cli/hydrology-inspector.ts`](/mnt/c/workspace/projects/forest-terrain-generator/src/cli/hydrology-inspector.ts).
+- [x] [docs] `HIPDG-DOC-01` Update hydrology-inspector docs to state that recompute mode requires dense rectangular tile coverage with finite `topography.h`, and that invalid coverage fails fast, in [`README.md`](/mnt/c/workspace/projects/forest-terrain-generator/README.md) and [`src/cli/hydrology-inspector.ts`](/mnt/c/workspace/projects/forest-terrain-generator/src/cli/hydrology-inspector.ts).
 
 ## Behavior Slices
 
