@@ -15,9 +15,21 @@ The terrain model should represent water in a way that is physically intuitive f
 
 Basins are nested.
 
-- Leaf/child basins can accumulate water first.
-- A parent basin should not begin filling until its children are filled to their connecting/spill condition.
-- After children connect, additional water raises the parent-level connected water surface.
+### Child-connect threshold invariant
+
+For a parent basin `P` with required child basins `C1..Cn`, define `T_connect(P)` as the first moment when every required child reaches its connecting/spill condition.
+
+At `T_connect(P)`:
+
+- each required child basin is full to its connection level;
+- parent basin `P` has zero water volume;
+- parent basin `P` has no emitted water-surface field (`waterSurfaceH` absent).
+
+Allocation rule:
+
+- Inflow up to and including `T_connect(P)` is consumed by child fill only.
+- Only inflow strictly beyond `T_connect(P)` contributes to parent fill.
+- Therefore parent fill onset is strict (`> T_connect(P)`), not inclusive (`>= T_connect(P)`).
 
 This is intended to match intuitive behavior in small examples (for example, a 3×3 case with two low side dips and a shallower middle connector):
 
