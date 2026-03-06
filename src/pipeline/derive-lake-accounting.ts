@@ -297,15 +297,23 @@ export const deriveLakeAccounting = (
 			expandedTileSets.get(basinId) ?? new Set<number>(),
 			mergeH,
 		);
+		const scaledInflow = wetnessScale * effectiveInflow;
 		const fillRatio =
 			spillCapacity > 0
-				? (wetnessScale * effectiveInflow) / spillCapacity
+				? scaledInflow / spillCapacity
 				: Number.POSITIVE_INFINITY;
-		const isFilled = wetnessScale * effectiveInflow >= spillCapacity;
-		const overflowExcess = Math.max(
-			0,
-			wetnessScale * effectiveInflow - spillCapacity,
-		);
+		const isFilled = scaledInflow >= spillCapacity;
+		const overflowExcess = Math.max(0, scaledInflow - spillCapacity);
+		const isOrdinaryRoot = basin.parentId === null && basin.mergeH === null;
+		if (
+			isOrdinaryRoot &&
+			spillCapacity <= CHILD_CONNECT_EPS &&
+			scaledInflow > CHILD_CONNECT_EPS
+		) {
+			throw new Error(
+				`Lake accounting invariant error: root basin "${basinId}" reaches impossible full-map fill state.`,
+			);
+		}
 		const childSpillFromTileId =
 			typeof basin.childSpillFromTileId === "number" &&
 			Number.isInteger(basin.childSpillFromTileId)

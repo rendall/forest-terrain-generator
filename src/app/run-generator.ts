@@ -235,16 +235,21 @@ function buildReplayEnvelope(
 		const sourceStructure = isJsonObject(sourceTopography.structure)
 			? sourceTopography.structure
 			: {};
+		const lakeMask = hydrology.maps.lakeMask[index] === 1;
+		const waterDepth = hydrology.lakeAccounting.tileLakeDepth[index] ?? 0;
+		const hasWaterSurface = lakeMask;
 		const tileHydrology: JsonObject = {
 			fd: hydrology.maps.fd[index],
 			fa: hydrology.maps.fa[index],
 			faN: hydrology.maps.faN[index],
 			isStream: hydrology.maps.isStream[index] === 1,
-			lakeMask: hydrology.maps.lakeMask[index] === 1,
-			waterSurfaceH: hydrology.maps.waterSurfaceH[index],
+			lakeMask,
 			waterClass: hydrology.maps.waterClass[index],
-			lakeDepth: hydrology.lakeAccounting.tileLakeDepth[index] ?? 0,
 			lakeBasinId: hydrology.lakeAccounting.tileLakeBasinId[index] || null,
+			...(hasWaterSurface
+				? { waterSurfaceH: hydrology.maps.waterSurfaceH[index] }
+				: {}),
+			...(waterDepth > 0 ? { waterDepth } : {}),
 		};
 		tiles.push({
 			...sourceTile,

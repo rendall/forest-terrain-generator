@@ -544,18 +544,22 @@ describe("CLI command wiring and contract failures", () => {
 				},
 			},
 		});
-		const replayHydrology = replayEnvelope.tiles[0].hydrology;
-		expect(Object.keys(replayHydrology)).toEqual([
-			"fd",
-			"fa",
-			"faN",
-			"isStream",
-			"lakeMask",
-			"waterSurfaceH",
-			"waterClass",
-			"lakeDepth",
-			"lakeBasinId",
-		]);
+		expect(Array.isArray(replayEnvelope.tiles)).toBe(true);
+		replayEnvelope.tiles.forEach((tile) => {
+			expect(tile.hydrology).toMatchObject({
+				fd: expect.any(Number),
+				fa: expect.any(Number),
+				faN: expect.any(Number),
+				isStream: expect.any(Boolean),
+				lakeMask: expect.any(Boolean),
+				waterClass: expect.any(Number),
+			});
+			if ("waterSurfaceH" in tile.hydrology) {
+				expect(tile.hydrology).toHaveProperty("waterDepth");
+			} else {
+				expect(tile.hydrology).not.toHaveProperty("waterDepth");
+			}
+		});
 
 		const debugTopography = JSON.parse(
 			await readFile(join(outputDir, "topography.json"), "utf8"),

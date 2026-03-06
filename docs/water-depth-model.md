@@ -46,7 +46,7 @@ The previous name `lakeSurfaceH` is replaced with **`waterSurfaceH`**.
 - A dry basin has no water and should not emit a `waterSurfaceH` value.
 - A partially filled basin has `waterSurfaceH` below its spill surface.
 - A fully filled non-root basin has `waterSurfaceH` at spill surface.
-- In ordinary map operation, a root basin should not have water. If root-basin water occurs, it is an error condition.
+- In ordinary map operation, root full-map saturation is an error condition (root spill capacity effectively zero while positive inflow still exists).
 
 ## Tile water depth
 

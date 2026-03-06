@@ -103,27 +103,30 @@ function buildHydrologyDebugTiles(
 				? tile.index
 				: fallbackIndex;
 		const inRange = index >= 0 && index < shape.size;
+		const lakeMask = inRange ? hydrologyMaps.lakeMask[index] === 1 : false;
+		const waterDepth =
+			inRange && lakeAccounting ? (lakeAccounting.tileLakeDepth[index] ?? 0) : 0;
+		const hasWaterSurface = inRange && lakeMask;
+		const hydrology = {
+			fd: inRange ? hydrologyMaps.fd[index] : null,
+			fa: inRange ? hydrologyMaps.fa[index] : null,
+			faN: inRange ? hydrologyMaps.faN[index] : null,
+			isStream: inRange ? hydrologyMaps.isStream[index] === 1 : false,
+			lakeMask,
+			waterClass: inRange ? hydrologyMaps.waterClass[index] : null,
+			...(hasWaterSurface
+				? { waterSurfaceH: hydrologyMaps.waterSurfaceH[index] }
+				: {}),
+			...(waterDepth > 0 ? { waterDepth } : {}),
+			...(inRange && lakeAccounting
+				? { lakeBasinId: lakeAccounting.tileLakeBasinId[index] || null }
+				: { lakeBasinId: null }),
+		};
 		return {
 			index,
 			x: tile.x,
 			y: tile.y,
-			hydrology: {
-				fd: inRange ? hydrologyMaps.fd[index] : null,
-				fa: inRange ? hydrologyMaps.fa[index] : null,
-				faN: inRange ? hydrologyMaps.faN[index] : null,
-				isStream: inRange ? hydrologyMaps.isStream[index] === 1 : false,
-				lakeMask: inRange ? hydrologyMaps.lakeMask[index] === 1 : false,
-				waterSurfaceH: inRange ? hydrologyMaps.waterSurfaceH[index] : null,
-				waterClass: inRange ? hydrologyMaps.waterClass[index] : null,
-				lakeDepth:
-					inRange && lakeAccounting
-						? lakeAccounting.tileLakeDepth[index] ?? 0
-						: null,
-				lakeBasinId:
-					inRange && lakeAccounting
-						? (lakeAccounting.tileLakeBasinId[index] || null)
-						: null,
-			},
+			hydrology,
 		};
 	});
 }

@@ -221,6 +221,38 @@ describe("lake accounting from production hydrology pipeline", () => {
 		);
 	});
 
+	it("throws on impossible ordinary-root full-map fill state", () => {
+		const shape = createGridShape(2, 1);
+		const h = new Float32Array([0.9, 1.0]);
+		const basinFeatures = [
+			makeBasinNode({
+				id: "b_root",
+				kind: "leaf",
+				parentId: null,
+				childIds: [],
+				birthH: 0.1,
+				mergeH: null,
+				persistence: 0.1,
+				spillOutTileId: null,
+				childSpillFromTileId: null,
+				parentContactTileId: null,
+				minH: 0.1,
+				maxH: 0.1,
+				size: 1,
+				bbox: { minX: 1, minY: 0, maxX: 1, maxY: 0 },
+				tileIds: [1],
+			}),
+		];
+		const fdBase = new Uint8Array([DIR8_CODE.e, DIR8_NONE]);
+		const faBase = new Uint32Array([1, 1]);
+
+		expect(() =>
+			deriveLakeAccounting(shape, h, fdBase, faBase, basinFeatures, {
+				wetnessScale: 1,
+			}),
+		).toThrow(/root basin "b_root" reaches impossible full-map fill state/i);
+	});
+
 	it("keeps parent dry at child-connect threshold even with parent external inflow", () => {
 		const shape = createGridShape(2, 2);
 		const h = new Float32Array([
