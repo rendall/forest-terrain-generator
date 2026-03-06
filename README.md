@@ -8,7 +8,7 @@ The output is a versioned JSON dataset whose `tiles` array contains one fully de
 An optional post-processing CLI can attach deterministic prose descriptions per tile.
 
 ```bash
-node --import tsx src/cli/main.ts generate --params params.json --seed 42 --width 32 --height 32 --output-file out.json
+node --import tsx src/cli/main.ts generate --params params.json --seed 42 --width 32 --height 32 --output-file forest.json
 ```
 
 ## CLI Summary
@@ -53,6 +53,7 @@ Path resolution:
 Mode/output validation highlights:
 
 - In `debug`, using `--output-file` is rejected with the hint: `You might mean --debug-output-file.`
+- In `generate` and `derive`, envelope tiles include computed `hydrology` alongside `topography`.
 - In `debug`, `--input-file` cannot be combined with generation inputs (`--seed`, `--width`, `--height`, `--map-h`, `--map-r`, `--map-v`).
 - In `debug --input-file`, replay recompute param precedence is:
   `defaults < envelope paramOverrides < --params <file>`.

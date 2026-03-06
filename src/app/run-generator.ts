@@ -212,6 +212,28 @@ function assertDebugInputFileArgs(args: CliArgs): void {
 	}
 }
 
+function buildTileHydrologyPayload(
+	hydrology: ReturnType<typeof deriveHydrology>,
+	index: number,
+): JsonObject {
+	const lakeMask = hydrology.maps.lakeMask[index] === 1;
+	const waterDepth = hydrology.lakeAccounting.tileLakeDepth[index] ?? 0;
+	const hasWaterSurface = lakeMask;
+	return {
+		fd: hydrology.maps.fd[index],
+		fa: hydrology.maps.fa[index],
+		faN: hydrology.maps.faN[index],
+		isStream: hydrology.maps.isStream[index] === 1,
+		lakeMask,
+		waterClass: hydrology.maps.waterClass[index],
+		lakeBasinId: hydrology.lakeAccounting.tileLakeBasinId[index] || null,
+		...(hasWaterSurface
+			? { waterSurfaceH: hydrology.maps.waterSurfaceH[index] }
+			: {}),
+		...(waterDepth > 0 ? { waterDepth } : {}),
+	};
+}
+
 function buildReplayEnvelope(
 	sourceEnvelope: TerrainEnvelope,
 	sourceTilesByIndex: JsonObject[],
@@ -235,22 +257,7 @@ function buildReplayEnvelope(
 		const sourceStructure = isJsonObject(sourceTopography.structure)
 			? sourceTopography.structure
 			: {};
-		const lakeMask = hydrology.maps.lakeMask[index] === 1;
-		const waterDepth = hydrology.lakeAccounting.tileLakeDepth[index] ?? 0;
-		const hasWaterSurface = lakeMask;
-		const tileHydrology: JsonObject = {
-			fd: hydrology.maps.fd[index],
-			fa: hydrology.maps.fa[index],
-			faN: hydrology.maps.faN[index],
-			isStream: hydrology.maps.isStream[index] === 1,
-			lakeMask,
-			waterClass: hydrology.maps.waterClass[index],
-			lakeBasinId: hydrology.lakeAccounting.tileLakeBasinId[index] || null,
-			...(hasWaterSurface
-				? { waterSurfaceH: hydrology.maps.waterSurfaceH[index] }
-				: {}),
-			...(waterDepth > 0 ? { waterDepth } : {}),
-		};
+		const tileHydrology = buildTileHydrologyPayload(hydrology, index);
 		tiles.push({
 			...sourceTile,
 			index,
@@ -421,6 +428,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 					ridgeLike: topographyStructure.ridgeLike[i] === 1,
 				},
 			},
+			hydrology: buildTileHydrologyPayload(hydrology, i),
 		});
 	}
 	envelope.tiles = tiles;
