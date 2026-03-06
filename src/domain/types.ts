@@ -53,6 +53,7 @@ export interface ResolvedInputs {
 	width?: number;
 	height?: number;
 	params: JsonObject;
+	paramsFromFile: JsonObject;
 	paramsPath?: string;
 	inputFilePath?: string;
 	mapHPath?: string;
@@ -92,4 +93,5 @@ export interface TerrainEnvelope {
 	regions?: RegionSummary[];
 	features?: TerrainFeatureCollection;
 	tiles: JsonObject[];
+	paramOverrides?: JsonObject;
 }

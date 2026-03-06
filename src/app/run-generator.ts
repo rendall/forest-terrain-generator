@@ -4,15 +4,20 @@ import { createGridShape } from "../domain/topography.js";
 import type {
 	CliArgs,
 	JsonObject,
+	JsonValue,
 	ResolvedInputs,
 	RunRequest,
 	TerrainEnvelope,
 } from "../domain/types.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
-import { readParamsFile } from "../io/read-params.js";
+import {
+	normalizeAndValidateParamsObject,
+	readParamsFile,
+} from "../io/read-params.js";
 import { writeModeOutputs } from "../io/write-outputs.js";
 import { deepMerge } from "../lib/deep-merge.js";
 import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
+import { validateReplayTopographyGrid } from "../lib/validate-replay-tiles.js";
 import { deriveTopographicStructure } from "../pipeline/derive-topographic-structure.js";
 import { deriveTopographyFromBaseMaps } from "../pipeline/derive-topography.js";
 import { deriveHydrology } from "../pipeline/derive-hydrology.js";
@@ -30,7 +35,6 @@ const DEBUG_INPUT_FILE_EXCLUSIVE_FLAGS = [
 	{ valueKey: "seed", flag: "--seed" },
 	{ valueKey: "width", flag: "--width" },
 	{ valueKey: "height", flag: "--height" },
-	{ valueKey: "paramsPath", flag: "--params" },
 	{ valueKey: "mapHPath", flag: "--map-h" },
 	{ valueKey: "mapRPath", flag: "--map-r" },
 	{ valueKey: "mapVPath", flag: "--map-v" },
@@ -50,6 +54,37 @@ function resolveFromCwd(
 
 function isJsonObject(value: unknown): value is JsonObject {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function deriveParamOverrideValue(
+	value: JsonValue | undefined,
+	defaultValue: JsonValue | undefined,
+): JsonValue | undefined {
+	if (value === undefined) {
+		return undefined;
+	}
+	if (isJsonObject(value) && isJsonObject(defaultValue)) {
+		const nested = deriveParamOverrides(value, defaultValue);
+		return nested && Object.keys(nested).length > 0 ? nested : undefined;
+	}
+	if (value === defaultValue) {
+		return undefined;
+	}
+	return value;
+}
+
+function deriveParamOverrides(
+	params: JsonObject,
+	defaults: JsonObject,
+): JsonObject | undefined {
+	const overrides: JsonObject = {};
+	for (const [key, value] of Object.entries(params)) {
+		const overrideValue = deriveParamOverrideValue(value, defaults[key]);
+		if (overrideValue !== undefined) {
+			overrides[key] = overrideValue;
+		}
+	}
+	return Object.keys(overrides).length > 0 ? overrides : undefined;
 }
 
 function hasExplicitNestedVegVarianceStrength(params: JsonObject): boolean {
@@ -137,12 +172,15 @@ export async function resolveInputs(
 	const fileParams = (fromFile.params ?? {}) as JsonObject;
 	const mergedParams = deepMerge(baseParams, fileParams);
 	applyLegacyVegVarianceStrengthOverride(mergedParams, fileParams);
+	const paramsFromFile = deepMerge({}, fileParams);
+	applyLegacyVegVarianceStrengthOverride(paramsFromFile, fileParams);
 
 	return {
 		seed: request.args.seed ?? fromFile.seed,
 		width: request.args.width ?? fromFile.width,
 		height: request.args.height ?? fromFile.height,
 		params: mergedParams,
+		paramsFromFile,
 		paramsPath: cliParamsPath,
 		inputFilePath: cliInputFilePath,
 		mapHPath: cliMapHPath ?? fromFile.mapHPath,
@@ -174,35 +212,76 @@ function assertDebugInputFileArgs(args: CliArgs): void {
 	}
 }
 
+function buildReplayEnvelope(
+	sourceEnvelope: TerrainEnvelope,
+	sourceTilesByIndex: JsonObject[],
+	replayH: Float32Array,
+	replayParams: JsonObject,
+	topographyStructure: ReturnType<typeof deriveTopographicStructure>,
+	hydrology: ReturnType<typeof deriveHydrology>,
+): TerrainEnvelope {
+	const elevation = buildElevationParams(replayParams);
+	const elevationSpan = elevation.h1 - elevation.h0;
+	const tiles: JsonObject[] = [];
+	const shape = hydrology.maps.shape;
 
-function gridFromEnvelope(envelope: TerrainEnvelope): { shape: ReturnType<typeof createGridShape>; h: Float32Array } {
-	let maxX = -1;
-	let maxY = -1;
-	for (const tile of envelope.tiles) {
-		if (typeof tile.x === "number" && Number.isInteger(tile.x) && tile.x >= 0) {
-			maxX = Math.max(maxX, tile.x);
-		}
-		if (typeof tile.y === "number" && Number.isInteger(tile.y) && tile.y >= 0) {
-			maxY = Math.max(maxY, tile.y);
-		}
+	for (let index = 0; index < shape.size; index += 1) {
+		const sourceTile = sourceTilesByIndex[index] ?? {};
+		const x = index % shape.width;
+		const y = Math.floor(index / shape.width);
+		const sourceTopography = isJsonObject(sourceTile.topography)
+			? sourceTile.topography
+			: {};
+		const sourceStructure = isJsonObject(sourceTopography.structure)
+			? sourceTopography.structure
+			: {};
+		const tileHydrology: JsonObject = {
+			fd: hydrology.maps.fd[index],
+			fa: hydrology.maps.fa[index],
+			faN: hydrology.maps.faN[index],
+			isStream: hydrology.maps.isStream[index] === 1,
+			lakeMask: hydrology.maps.lakeMask[index] === 1,
+			lakeSurfaceH: hydrology.maps.lakeSurfaceH[index],
+			waterClass: hydrology.maps.waterClass[index],
+			lakeDepth: hydrology.lakeAccounting.tileLakeDepth[index] ?? 0,
+			lakeBasinId: hydrology.lakeAccounting.tileLakeBasinId[index] || null,
+		};
+		tiles.push({
+			...sourceTile,
+			index,
+			x,
+			y,
+			featureIds: topographyStructure.tileFeatureIds[index],
+			activeFeatureIds: topographyStructure.tileActiveFeatureIds[index],
+			topography: {
+				...sourceTopography,
+				h: replayH[index],
+				elevationMeters: elevation.h0 + replayH[index] * elevationSpan,
+				structure: {
+					...sourceStructure,
+					basinPersistence: topographyStructure.basinPersistence[index],
+					peakPersistence: topographyStructure.peakPersistence[index],
+					basinLike: topographyStructure.basinLike[index] === 1,
+					ridgeLike: topographyStructure.ridgeLike[index] === 1,
+				},
+			},
+			hydrology: tileHydrology,
+		});
 	}
-	const shape = createGridShape(maxX + 1, maxY + 1);
-	const h = new Float32Array(shape.size);
-	for (const tile of envelope.tiles) {
-		if (
-			typeof tile.x !== "number" ||
-			typeof tile.y !== "number" ||
-			!Number.isInteger(tile.x) ||
-			!Number.isInteger(tile.y)
-		) {
-			continue;
-		}
-		const idx = tile.y * shape.width + tile.x;
-		const topo = isJsonObject(tile.topography) ? tile.topography : null;
-		const hv = topo && typeof topo.h === "number" && Number.isFinite(topo.h) ? topo.h : 0;
-		h[idx] = hv;
-	}
-	return { shape, h };
+
+	const paramOverrides = deriveParamOverrides(replayParams, APPENDIX_A_DEFAULTS);
+	return {
+		meta: {
+			specVersion: sourceEnvelope.meta.specVersion,
+		},
+		...(sourceEnvelope.regions ? { regions: sourceEnvelope.regions } : {}),
+		features: {
+			basins: topographyStructure.basinFeatures,
+			peaks: topographyStructure.peakFeatures,
+		},
+		tiles,
+		...(paramOverrides ? { paramOverrides } : {}),
+	};
 }
 
 export async function runGenerator(request: RunRequest): Promise<void> {
@@ -211,28 +290,65 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		assertDebugInputFileArgs(request.args);
 		const validated = validateDebugInputFileInputs(resolved);
 		const envelope = await readTerrainEnvelopeFile(validated.inputFilePath);
-		const { shape, h } = gridFromEnvelope(envelope);
-		const tileFeatureIds = envelope.tiles.map((tile) =>
-			Array.isArray(tile.featureIds)
-				? tile.featureIds.filter((id): id is string => typeof id === "string")
-				: [],
+		const envelopeParamOverrides = isJsonObject(envelope.paramOverrides)
+			? normalizeAndValidateParamsObject(
+					deepMerge({}, envelope.paramOverrides),
+					"envelope.paramOverrides",
+				)
+			: undefined;
+		const replayBase = deepMerge(
+			APPENDIX_A_DEFAULTS,
+			envelopeParamOverrides ?? {},
+		);
+		applyLegacyVegVarianceStrengthOverride(
+			replayBase,
+			envelopeParamOverrides ?? {},
+		);
+		const replayParams = deepMerge(replayBase, validated.paramsFromFile);
+		applyLegacyVegVarianceStrengthOverride(replayParams, validated.paramsFromFile);
+
+		if (validated.paramsPath) {
+			console.warn(
+				`debug --input-file replay: --params overrides are active from "${validated.paramsPath}" (precedence: defaults -> envelope.paramOverrides -> --params <file>).`,
+			);
+		}
+
+		const replayGrid = validateReplayTopographyGrid(
+			envelope.tiles,
+			validated.inputFilePath,
+		);
+		const topographyStructure = deriveTopographicStructure(
+			replayGrid.shape,
+			replayGrid.h,
+			buildTopographyStructureParams(replayParams),
 		);
 		const hydrology = deriveHydrology(
-			shape,
-			h,
-			{ basinFeatures: envelope.features?.basins ?? [], tileFeatureIds },
-			validated.params,
+			replayGrid.shape,
+			replayGrid.h,
+			{
+				basinFeatures: topographyStructure.basinFeatures,
+				tileFeatureIds: topographyStructure.tileFeatureIds,
+			},
+			replayParams,
+		);
+		const replayEnvelope = buildReplayEnvelope(
+			envelope,
+			replayGrid.tilesByIndex,
+			replayGrid.h,
+			replayParams,
+			topographyStructure,
+			hydrology,
 		);
 		await writeModeOutputs(
 			request.mode,
 			validated.outputFile,
 			validated.outputDir,
 			validated.debugOutputFile,
-			envelope,
+			replayEnvelope,
 			validated.force,
 			hydrology.streamCoherence,
 			hydrology.lakeCoherence,
-			undefined,
+			topographyStructure,
 			hydrology.diagnostics,
 			hydrology.maps,
 			hydrology.lakeAccounting,
@@ -303,6 +419,10 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		});
 	}
 	envelope.tiles = tiles;
+	const paramOverrides = deriveParamOverrides(validated.params, APPENDIX_A_DEFAULTS);
+	if (paramOverrides) {
+		envelope.paramOverrides = paramOverrides;
+	}
 
 	await writeModeOutputs(
 		request.mode,

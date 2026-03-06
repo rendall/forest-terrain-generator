@@ -7,8 +7,13 @@ import {
 	type HydrologyMapsSoA,
 	WATER_CLASS_CODE,
 } from "../domain/hydrology.js";
+import type { JsonObject } from "../domain/types.js";
 import { createGridShape, type GridShape } from "../domain/topography.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
+import { normalizeAndValidateParamsObject } from "../io/read-params.js";
+import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
+import { deepMerge } from "../lib/deep-merge.js";
+import { validateReplayTopographyGrid } from "../lib/validate-replay-tiles.js";
 import { deriveHydrology } from "../pipeline/derive-hydrology.js";
 import type { BasinLakeAccounting } from "../pipeline/derive-lake-accounting.js";
 
@@ -171,6 +176,23 @@ const messageFromUnknown = (error: unknown): string => {
 		return error.message;
 	}
 	return "Unknown filesystem error.";
+};
+
+const buildInspectorRecomputeParams = (
+	envelopeParamOverrides: JsonObject | undefined,
+	sinkModeOverride: "strict_local" | "overflow_guided" | undefined,
+): JsonObject => {
+	const mergedWithDefaults = envelopeParamOverrides
+		? deepMerge(APPENDIX_A_DEFAULTS, deepMerge({}, envelopeParamOverrides))
+		: deepMerge({}, APPENDIX_A_DEFAULTS);
+	if (!sinkModeOverride) {
+		return mergedWithDefaults;
+	}
+	return deepMerge(mergedWithDefaults, {
+		hydrology: {
+			sinkMode: sinkModeOverride,
+		},
+	});
 };
 
 const readJsonFile = async (path: string): Promise<unknown> => {
@@ -473,7 +495,6 @@ const loadContextFromDebugArtifacts = async (
 const buildContextFromEnvelope = async (
 	request: HydrologyInspectorRequest,
 ): Promise<HydrologyContext> => {
-	const sinkMode = request.args.sinkMode ?? "strict_local";
 	const inputPath = resolveRequiredInputPath(
 		request.cwd,
 		request.args.inputJsonPath,
@@ -482,6 +503,57 @@ const buildContextFromEnvelope = async (
 		throw new InputValidationError("Missing required input: --input-json.");
 	}
 	const envelope = await readTerrainEnvelopeFile(inputPath);
+	const envelopeParamOverrides = isObject(envelope.paramOverrides)
+		? normalizeAndValidateParamsObject(
+				deepMerge({}, envelope.paramOverrides as JsonObject),
+				"envelope.paramOverrides",
+		)
+		: undefined;
+	const hasEnvelopeHydrologyFields =
+		envelope.tiles.length > 0 &&
+		envelope.tiles.every((tile) => {
+			const hydrology = isObject(tile.hydrology) ? tile.hydrology : undefined;
+			return (
+				readFiniteNumber(hydrology?.fd) !== null &&
+				readFiniteNumber(hydrology?.fa) !== null &&
+				readFiniteNumber(hydrology?.faN) !== null &&
+				readBoolean(hydrology?.isStream) !== null
+			);
+		});
+
+	if (!hasEnvelopeHydrologyFields) {
+		const effectiveParams = buildInspectorRecomputeParams(
+			envelopeParamOverrides,
+			request.args.sinkMode,
+		);
+		const replayGrid = validateReplayTopographyGrid(
+			envelope.tiles as JsonObject[],
+			inputPath,
+		);
+		const replayTileFeatureIds = replayGrid.tilesByIndex.map((tile) =>
+			Array.isArray(tile.featureIds)
+				? tile.featureIds.filter((id): id is string => typeof id === "string")
+				: [],
+		);
+
+		const derived = deriveHydrology(
+			replayGrid.shape,
+			replayGrid.h,
+			{
+				basinFeatures: envelope.features?.basins ?? [],
+				tileFeatureIds: replayTileFeatureIds,
+			},
+			effectiveParams,
+		);
+		return {
+			source: "recomputed",
+			shape: replayGrid.shape,
+			h: replayGrid.h,
+			maps: derived.maps,
+			lakeAccountingBasins: derived.lakeAccounting.basins,
+			tileLakeBasinId: derived.lakeAccounting.tileLakeBasinId,
+		};
+	}
 
 	const maxX = envelope.tiles.reduce(
 		(max, tile) =>
@@ -526,97 +598,63 @@ const buildContextFromEnvelope = async (
 		tileFeatureIds[index] = featureIds;
 	}
 
-	const hasEnvelopeHydrologyFields =
-		envelope.tiles.length > 0 &&
-		envelope.tiles.every((tile) => {
-			const hydrology = isObject(tile.hydrology) ? tile.hydrology : undefined;
-			return (
-				readFiniteNumber(hydrology?.fd) !== null &&
-				readFiniteNumber(hydrology?.fa) !== null &&
-				readFiniteNumber(hydrology?.faN) !== null &&
-				readBoolean(hydrology?.isStream) !== null
-			);
-		});
-
-	if (hasEnvelopeHydrologyFields) {
-		const maps = createHydrologyMaps(shape);
-		const tileLakeBasinId = new Array<string>(shape.size).fill("");
-		for (const tile of envelope.tiles) {
-			if (
-				typeof tile.x !== "number" ||
-				typeof tile.y !== "number" ||
-				!Number.isInteger(tile.x) ||
-				!Number.isInteger(tile.y) ||
-				tile.x < 0 ||
-				tile.y < 0 ||
-				tile.x >= shape.width ||
-				tile.y >= shape.height
-			) {
-				continue;
-			}
-			const index = tile.y * shape.width + tile.x;
-			const hydrology = isObject(tile.hydrology) ? tile.hydrology : undefined;
-				const fd = readFiniteNumber(hydrology?.fd);
-				const fa = readFiniteNumber(hydrology?.fa);
-				const faN = readFiniteNumber(hydrology?.faN);
-				const isStream = readBoolean(hydrology?.isStream);
-				const lakeMask = readBoolean(hydrology?.lakeMask);
-				const lakeSurfaceH = readFiniteNumber(hydrology?.lakeSurfaceH);
-				const waterClass = readFiniteNumber(hydrology?.waterClass);
-				if (fd !== null && Number.isInteger(fd) && fd >= 0 && fd <= 255) {
-					maps.fd[index] = fd;
-				}
-			if (fa !== null && fa >= 0) {
-				maps.fa[index] = Math.floor(fa);
-			}
-				if (faN !== null) {
-					maps.faN[index] = faN;
-				}
-				maps.isStream[index] = isStream === true ? 1 : 0;
-				if (lakeMask !== null) {
-					maps.lakeMask[index] = lakeMask ? 1 : 0;
-				}
-				if (lakeSurfaceH !== null) {
-					maps.lakeSurfaceH[index] = lakeSurfaceH;
-				}
-					if (
-						waterClass !== null &&
-						Number.isInteger(waterClass) &&
-						waterClass >= 0
-					) {
-						maps.waterClass[index] = waterClass;
-					}
-					tileLakeBasinId[index] =
-						typeof hydrology?.lakeBasinId === "string"
-							? hydrology.lakeBasinId
-							: "";
-				}
-				return {
-					source: "envelope",
-					shape,
-					h,
-					maps,
-					lakeAccountingBasins: [],
-					tileLakeBasinId,
-				};
-			}
-
-	const derived = deriveHydrology(
-		shape,
-		h,
-		{
-			basinFeatures: envelope.features?.basins ?? [],
-			tileFeatureIds,
-		},
-		{ hydrology: { sinkMode } },
-	);
+	const maps = createHydrologyMaps(shape);
+	const tileLakeBasinId = new Array<string>(shape.size).fill("");
+	for (const tile of envelope.tiles) {
+		if (
+			typeof tile.x !== "number" ||
+			typeof tile.y !== "number" ||
+			!Number.isInteger(tile.x) ||
+			!Number.isInteger(tile.y) ||
+			tile.x < 0 ||
+			tile.y < 0 ||
+			tile.x >= shape.width ||
+			tile.y >= shape.height
+		) {
+			continue;
+		}
+		const index = tile.y * shape.width + tile.x;
+		const hydrology = isObject(tile.hydrology) ? tile.hydrology : undefined;
+		const fd = readFiniteNumber(hydrology?.fd);
+		const fa = readFiniteNumber(hydrology?.fa);
+		const faN = readFiniteNumber(hydrology?.faN);
+		const isStream = readBoolean(hydrology?.isStream);
+		const lakeMask = readBoolean(hydrology?.lakeMask);
+		const lakeSurfaceH = readFiniteNumber(hydrology?.lakeSurfaceH);
+		const waterClass = readFiniteNumber(hydrology?.waterClass);
+		if (fd !== null && Number.isInteger(fd) && fd >= 0 && fd <= 255) {
+			maps.fd[index] = fd;
+		}
+		if (fa !== null && fa >= 0) {
+			maps.fa[index] = Math.floor(fa);
+		}
+		if (faN !== null) {
+			maps.faN[index] = faN;
+		}
+		maps.isStream[index] = isStream === true ? 1 : 0;
+		if (lakeMask !== null) {
+			maps.lakeMask[index] = lakeMask ? 1 : 0;
+		}
+		if (lakeSurfaceH !== null) {
+			maps.lakeSurfaceH[index] = lakeSurfaceH;
+		}
+		if (
+			waterClass !== null &&
+			Number.isInteger(waterClass) &&
+			waterClass >= 0
+		) {
+			maps.waterClass[index] = waterClass;
+		}
+		tileLakeBasinId[index] =
+			typeof hydrology?.lakeBasinId === "string" ? hydrology.lakeBasinId : "";
+	}
 	return {
-		source: "recomputed",
+		source: "envelope",
 		shape,
 		h,
-		maps: derived.maps,
-		lakeAccountingBasins: derived.lakeAccounting.basins,
-		tileLakeBasinId: derived.lakeAccounting.tileLakeBasinId,
+		maps,
+		lakeAccountingBasins: [],
+		tileLakeBasinId,
 	};
 };
 

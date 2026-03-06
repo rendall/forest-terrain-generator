@@ -47,6 +47,82 @@ async function makeTempDir() {
 	return dir;
 }
 
+function createReplaySourceEnvelope({
+	tiles,
+	paramOverrides,
+} = {}) {
+	return {
+		meta: { specVersion: "forest-terrain-v1" },
+		features: {
+			basins: [{ id: "stale_basin", childIds: [] }],
+			peaks: [{ id: "stale_peak", childIds: [] }],
+		},
+		tiles: tiles ?? [
+			{
+				index: 0,
+				x: 0,
+				y: 0,
+				featureIds: ["stale_basin"],
+				activeFeatureIds: ["stale_basin"],
+				topography: { h: 0.1, r: 0, v: 0 },
+				hydrology: { fd: 7, fa: 1, faN: 0.1, isStream: false },
+			},
+			{
+				index: 1,
+				x: 1,
+				y: 0,
+				featureIds: ["stale_basin"],
+				activeFeatureIds: ["stale_basin"],
+				topography: { h: 0.3, r: 0, v: 0 },
+				hydrology: { fd: 7, fa: 2, faN: 0.2, isStream: false },
+			},
+			{
+				index: 2,
+				x: 2,
+				y: 0,
+				featureIds: ["stale_basin"],
+				activeFeatureIds: ["stale_basin"],
+				topography: { h: 0.05, r: 0, v: 0 },
+				hydrology: { fd: 7, fa: 3, faN: 0.3, isStream: false },
+			},
+			{
+				index: 3,
+				x: 0,
+				y: 1,
+				featureIds: ["stale_basin"],
+				activeFeatureIds: ["stale_basin"],
+				topography: { h: 0.15, r: 0, v: 0 },
+				hydrology: { fd: 7, fa: 4, faN: 0.4, isStream: false },
+			},
+			{
+				index: 4,
+				x: 1,
+				y: 1,
+				featureIds: ["stale_basin"],
+				activeFeatureIds: ["stale_basin"],
+				topography: { h: 0.35, r: 0, v: 0 },
+				hydrology: { fd: 7, fa: 5, faN: 0.5, isStream: false },
+			},
+			{
+				index: 5,
+				x: 2,
+				y: 1,
+				featureIds: ["stale_basin"],
+				activeFeatureIds: ["stale_basin"],
+				topography: { h: 0.4, r: 0, v: 0 },
+				hydrology: { fd: 7, fa: 6, faN: 0.6, isStream: false },
+			},
+		],
+		paramOverrides: paramOverrides ?? {
+			hydrology: {
+				lakeFill: {
+					wetnessScale: 0,
+				},
+			},
+		},
+	};
+}
+
 afterEach(async () => {
 	await Promise.all(
 		tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })),
@@ -197,6 +273,51 @@ describe("CLI command wiring and contract failures", () => {
 		expect(written.endsWith("\n")).toBe(true);
 		expect(Array.isArray(parsed.tiles)).toBe(true);
 		expect(parsed.tiles.length).toBeGreaterThan(0);
+	});
+
+	it("persists non-default params as top-level paramOverrides in generated envelopes", async () => {
+		const dir = await makeTempDir();
+		const outputFile = join(dir, "generated.json");
+		const paramsFile = join(dir, "params.json");
+		await writeFile(
+			paramsFile,
+			`${JSON.stringify(
+				{
+					hydrology: {
+						lakeFill: {
+							wetnessScale: 0.1,
+						},
+					},
+				},
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"generate",
+			"--seed",
+			"42",
+			"--width",
+			"4",
+			"--height",
+			"4",
+			"--params",
+			paramsFile,
+			"--output-file",
+			outputFile,
+		]);
+
+		expect(result.code).toBe(0);
+		const parsed = JSON.parse(await readFile(outputFile, "utf8"));
+		expect(parsed.paramOverrides).toEqual({
+			hydrology: {
+				lakeFill: {
+					wetnessScale: 0.1,
+				},
+			},
+		});
 	});
 
 	it("fails derive without required --map-h", async () => {
@@ -381,6 +502,279 @@ describe("CLI command wiring and contract failures", () => {
 		expect(manifest.width).toBe(4);
 		expect(manifest.height).toBe(4);
 		expect(manifest.tileCount).toBe(16);
+	});
+
+	it("recomputes structure and hydrology for debug --input-file and writes recomputed replay envelope", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-envelope.json");
+		const outputDir = join(dir, "debug");
+		const debugOutputFile = join(dir, "debug-envelope.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(createReplaySourceEnvelope(), null, 2)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"debug",
+			"--input-file",
+			sourceFile,
+			"--output-dir",
+			outputDir,
+			"--debug-output-file",
+			debugOutputFile,
+		]);
+		expect(result.code).toBe(0);
+
+		const replayEnvelope = JSON.parse(await readFile(debugOutputFile, "utf8"));
+		expect(replayEnvelope.features.basins.length).toBeGreaterThan(0);
+		expect(Array.isArray(replayEnvelope.features.peaks)).toBe(true);
+		expect(
+			replayEnvelope.features.basins.some((basin) => basin.id === "stale_basin"),
+		).toBe(false);
+		expect(
+			replayEnvelope.tiles.every(
+				(tile) => Array.isArray(tile.featureIds) && !tile.featureIds.includes("stale_basin"),
+			),
+		).toBe(true);
+		expect(replayEnvelope.paramOverrides).toEqual({
+			hydrology: {
+				lakeFill: {
+					wetnessScale: 0,
+				},
+			},
+		});
+		const replayHydrology = replayEnvelope.tiles[0].hydrology;
+		expect(Object.keys(replayHydrology)).toEqual([
+			"fd",
+			"fa",
+			"faN",
+			"isStream",
+			"lakeMask",
+			"lakeSurfaceH",
+			"waterClass",
+			"lakeDepth",
+			"lakeBasinId",
+		]);
+
+		const debugTopography = JSON.parse(
+			await readFile(join(outputDir, "topography.json"), "utf8"),
+		);
+		expect(
+			debugTopography.features.basins.some((basin) => basin.id === "stale_basin"),
+		).toBe(false);
+	});
+
+	it("applies --params over envelope paramOverrides in debug --input-file mode and warns once", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-envelope.json");
+		const paramsFile = join(dir, "params.json");
+		const outputDir = join(dir, "debug");
+		const debugOutputFile = join(dir, "debug-envelope.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(createReplaySourceEnvelope(), null, 2)}\n`,
+			"utf8",
+		);
+		await writeFile(
+			paramsFile,
+			`${JSON.stringify(
+				{
+					hydrology: {
+						lakeFill: {
+							wetnessScale: 0.9,
+						},
+					},
+				},
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"debug",
+			"--input-file",
+			sourceFile,
+			"--params",
+			paramsFile,
+			"--output-dir",
+			outputDir,
+			"--debug-output-file",
+			debugOutputFile,
+		]);
+		expect(result.code).toBe(0);
+		expect(result.stderr).toContain(
+			"precedence: defaults -> envelope.paramOverrides -> --params <file>",
+		);
+		expect(
+			result.stderr.match(
+				/precedence: defaults -> envelope\.paramOverrides -> --params <file>/g,
+			)?.length ?? 0,
+		).toBe(1);
+
+		const replayEnvelope = JSON.parse(await readFile(debugOutputFile, "utf8"));
+		expect(replayEnvelope.paramOverrides).toEqual({
+			hydrology: {
+				lakeFill: {
+					wetnessScale: 0.9,
+				},
+			},
+		});
+	});
+
+	it("fails debug replay when envelope paramOverrides are invalid", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-envelope.json");
+		const outputDir = join(dir, "debug");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(
+				createReplaySourceEnvelope({
+					paramOverrides: {
+						hydrology: {
+							lakeFill: {
+								wetnessScale: 0.5,
+								notARealKey: true,
+							},
+						},
+					},
+				}),
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"debug",
+			"--input-file",
+			sourceFile,
+			"--output-dir",
+			outputDir,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain(
+			'Unknown params key "envelope.paramOverrides.hydrology.lakeFill.notARealKey"',
+		);
+	});
+
+	it("fails debug replay when any tile is missing topography.h", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-envelope.json");
+		const outputDir = join(dir, "debug");
+		const tiles = createReplaySourceEnvelope().tiles.map((tile) => ({ ...tile }));
+		delete tiles[3].topography.h;
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(createReplaySourceEnvelope({ tiles }), null, 2)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"debug",
+			"--input-file",
+			sourceFile,
+			"--output-dir",
+			outputDir,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain('missing "topography.h"');
+		expect(result.stderr).toContain("tile index 3");
+		expect(result.stderr).toContain("(0,1)");
+	});
+
+	it("fails debug replay when input tiles are not a dense rectangular grid", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-envelope.json");
+		const outputDir = join(dir, "debug");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(
+				createReplaySourceEnvelope({
+					tiles: [
+						{ x: 0, y: 0, topography: { h: 0.1 } },
+						{ x: 2, y: 0, topography: { h: 0.2 } },
+					],
+				}),
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"debug",
+			"--input-file",
+			sourceFile,
+			"--output-dir",
+			outputDir,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain("not a dense 3x1 replay grid");
+		expect(result.stderr).toContain("expected=3");
+		expect(result.stderr).toContain("observedTileCount=2");
+	});
+
+	it("fails debug replay when duplicate coordinates are present", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-envelope.json");
+		const outputDir = join(dir, "debug");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(
+				createReplaySourceEnvelope({
+					tiles: [
+						{ x: 0, y: 0, topography: { h: 0.1 } },
+						{ x: 0, y: 0, topography: { h: 0.2 } },
+						{ x: 2, y: 0, topography: { h: 0.3 } },
+					],
+				}),
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"debug",
+			"--input-file",
+			sourceFile,
+			"--output-dir",
+			outputDir,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain("duplicate tile coordinates at (0,0)");
+		expect(result.stderr).toContain("first tile index=0");
+		expect(result.stderr).toContain("duplicate tile index=1");
+	});
+
+	it("fails debug replay when replay grid exceeds allocation cap", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-envelope.json");
+		const outputDir = join(dir, "debug");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(
+				createReplaySourceEnvelope({
+					tiles: [{ x: 5000, y: 5000, topography: { h: 0.2 } }],
+				}),
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"debug",
+			"--input-file",
+			sourceFile,
+			"--output-dir",
+			outputDir,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain("exceed replay allocation cap");
+		expect(result.stderr).toContain("maxAllowedTiles=16777216");
 	});
 
 	it("rejects debug --input-file when generation inputs are also provided", async () => {

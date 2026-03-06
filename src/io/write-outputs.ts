@@ -275,19 +275,19 @@ function resolveTopographyFeatures(
 	envelope: TerrainEnvelope,
 	topographyStructureDebug: TopographyStructureDebugPayload | undefined,
 ): TerrainFeatureCollection {
+	if (topographyStructureDebug) {
+		return {
+			basins: topographyStructureDebug.basinFeatures,
+			peaks: topographyStructureDebug.peakFeatures,
+		};
+	}
+
 	if (
 		envelope.features &&
 		Array.isArray(envelope.features.basins) &&
 		Array.isArray(envelope.features.peaks)
 	) {
 		return envelope.features;
-	}
-
-	if (topographyStructureDebug) {
-		return {
-			basins: topographyStructureDebug.basinFeatures,
-			peaks: topographyStructureDebug.peakFeatures,
-		};
 	}
 
 	return {

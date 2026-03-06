@@ -1,10 +1,14 @@
 import { spawn } from "node:child_process";
-import { mkdir, mkdtemp, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 const ENTRY = resolve(process.cwd(), "src/cli/hydrology-inspector.ts");
+const BASELINE_ENVELOPE_FIXTURE = resolve(
+	process.cwd(),
+	"test/fixtures/hydrology-baseline/debug-envelope.json",
+);
 const tempDirs = [];
 
 function runCli(args = []) {
@@ -145,6 +149,248 @@ describe("hydrology-inspector CLI", () => {
 				},
 			});
 		});
+
+	it("applies envelope paramOverrides when recomputing hydrology maps", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-with-overrides.json");
+		const statsFile = join(dir, "stats.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				paramOverrides: {
+					hydrology: {
+						faQuantileThreshold: 1,
+					},
+				},
+				tiles: [
+					{ x: 0, y: 0, topography: { h: 0.9, r: 0, v: 0 } },
+					{ x: 1, y: 0, topography: { h: 0.4, r: 0, v: 0 } },
+					{ x: 0, y: 1, topography: { h: 0.6, r: 0, v: 0 } },
+					{ x: 1, y: 1, topography: { h: 0.1, r: 0, v: 0 } },
+				],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--stats",
+			"--stats-file",
+			statsFile,
+		]);
+		expect(result.code).toBe(0);
+		const payload = JSON.parse(result.stdout.trim());
+		expect(payload.hydrologyMapsSource).toBe("recomputed");
+		expect(payload.stats.streamTileCount).toBe(1);
+	});
+
+	it("treats --sink-mode as an explicit override only", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-sink-mode-override.json");
+		const sourceEnvelope = JSON.parse(
+			await readFile(BASELINE_ENVELOPE_FIXTURE, "utf8"),
+		);
+		sourceEnvelope.paramOverrides = {
+			hydrology: {
+				sinkMode: "overflow_guided",
+			},
+		};
+		await writeFile(sourceFile, `${JSON.stringify(sourceEnvelope)}\n`, "utf8");
+
+		const defaultResult = await runCli([
+			"--input-json",
+			sourceFile,
+			"--stats",
+			"--stats-file",
+			join(dir, "stats-default.json"),
+		]);
+		const strictResult = await runCli([
+			"--input-json",
+			sourceFile,
+			"--sink-mode",
+			"strict_local",
+			"--stats",
+			"--stats-file",
+			join(dir, "stats-strict.json"),
+		]);
+		const overflowResult = await runCli([
+			"--input-json",
+			sourceFile,
+			"--sink-mode",
+			"overflow_guided",
+			"--stats",
+			"--stats-file",
+			join(dir, "stats-overflow.json"),
+		]);
+
+		expect(defaultResult.code).toBe(0);
+		expect(strictResult.code).toBe(0);
+		expect(overflowResult.code).toBe(0);
+		const defaultPayload = JSON.parse(defaultResult.stdout.trim());
+		const strictPayload = JSON.parse(strictResult.stdout.trim());
+		const overflowPayload = JSON.parse(overflowResult.stdout.trim());
+		expect(defaultPayload.stats.sinkCount).toBe(overflowPayload.stats.sinkCount);
+		expect(defaultPayload.stats.streamTileCount).toBe(
+			overflowPayload.stats.streamTileCount,
+		);
+		expect(defaultPayload.stats.sinkCount).not.toBe(strictPayload.stats.sinkCount);
+	});
+
+	it("fails recompute when envelope paramOverrides are invalid", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-invalid-overrides.json");
+		const statsFile = join(dir, "stats.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				paramOverrides: {
+					hydrology: {
+						lakeFill: {
+							wetnessScale: 0.4,
+							notARealKey: true,
+						},
+					},
+				},
+				tiles: [
+					{ x: 0, y: 0, topography: { h: 0.9, r: 0, v: 0 } },
+					{ x: 1, y: 0, topography: { h: 0.4, r: 0, v: 0 } },
+				],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--stats",
+			"--stats-file",
+			statsFile,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain(
+			'Unknown params key "envelope.paramOverrides.hydrology.lakeFill.notARealKey"',
+		);
+	});
+
+	it("fails recompute when input tiles are not a dense rectangular grid", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-sparse-grid.json");
+		const statsFile = join(dir, "stats.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				tiles: [
+					{ x: 0, y: 0, topography: { h: 0.1 } },
+					{ x: 2, y: 0, topography: { h: 0.2 } },
+				],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--stats",
+			"--stats-file",
+			statsFile,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain("not a dense 3x1 replay grid");
+		expect(result.stderr).toContain("expected=3");
+		expect(result.stderr).toContain("observedTileCount=2");
+	});
+
+	it("fails recompute when duplicate coordinates are present", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-duplicate-grid.json");
+		const statsFile = join(dir, "stats.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				tiles: [
+					{ x: 0, y: 0, topography: { h: 0.1 } },
+					{ x: 0, y: 0, topography: { h: 0.2 } },
+					{ x: 1, y: 0, topography: { h: 0.3 } },
+				],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--stats",
+			"--stats-file",
+			statsFile,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain("duplicate tile coordinates at (0,0)");
+	});
+
+	it("fails recompute when any tile is missing topography.h", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-missing-h.json");
+		const statsFile = join(dir, "stats.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				tiles: [
+					{ x: 0, y: 0, topography: { h: 0.1 } },
+					{ x: 1, y: 0, topography: {} },
+				],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--stats",
+			"--stats-file",
+			statsFile,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain('missing "topography.h"');
+		expect(result.stderr).toContain("tile index 1");
+		expect(result.stderr).toContain("(1,0)");
+	});
+
+	it("fails recompute when replay grid exceeds allocation cap", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-grid-cap.json");
+		const statsFile = join(dir, "stats.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				tiles: [{ x: 5000, y: 5000, topography: { h: 0.2 } }],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--stats",
+			"--stats-file",
+			statsFile,
+		]);
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain("exceed replay allocation cap");
+		expect(result.stderr).toContain("maxAllowedTiles=16777216");
+	});
 
 	it("writes all viz outputs and stats to debug dir without stream trace args", async () => {
 		const dir = await makeTempDir();

@@ -217,6 +217,18 @@ export async function readTerrainEnvelopeFile(
 	if (hasFeatures) {
 		assertFeaturesShape(parsedFeatures, inputFilePath);
 	}
+	const hasParamOverrides = Object.prototype.hasOwnProperty.call(
+		parsed,
+		"paramOverrides",
+	);
+	const parsedParamOverrides = hasParamOverrides
+		? parsed.paramOverrides
+		: undefined;
+	if (hasParamOverrides && !isJsonObject(parsedParamOverrides)) {
+		throw new InputValidationError(
+			`Invalid envelope "paramOverrides" in "${inputFilePath}". Expected an object when present.`,
+		);
+	}
 
 	for (let i = 0; i < parsed.tiles.length; i += 1) {
 		const tile = parsed.tiles[i];
@@ -239,5 +251,8 @@ export async function readTerrainEnvelopeFile(
 			? { features: parsedFeatures as unknown as TerrainFeatureCollection }
 			: {}),
 		tiles: parsed.tiles as JsonObject[],
+		...(hasParamOverrides
+			? { paramOverrides: parsedParamOverrides as JsonObject }
+			: {}),
 	};
 }
