@@ -76,8 +76,8 @@ function buildPhaseTiles(
 	return envelope.tiles.map((tile, fallbackIndex) => ({
 		index:
 			typeof tile.index === "number" &&
-			Number.isInteger(tile.index) &&
-			tile.index >= 0
+				Number.isInteger(tile.index) &&
+				tile.index >= 0
 				? tile.index
 				: fallbackIndex,
 		x: tile.x,
@@ -98,8 +98,8 @@ function buildHydrologyDebugTiles(
 	return envelope.tiles.map((tile, fallbackIndex) => {
 		const index =
 			typeof tile.index === "number" &&
-			Number.isInteger(tile.index) &&
-			tile.index >= 0
+				Number.isInteger(tile.index) &&
+				tile.index >= 0
 				? tile.index
 				: fallbackIndex;
 		const inRange = index >= 0 && index < shape.size;
@@ -107,25 +107,25 @@ function buildHydrologyDebugTiles(
 			index,
 			x: tile.x,
 			y: tile.y,
-				hydrology: {
-					fd: inRange ? hydrologyMaps.fd[index] : null,
-					fa: inRange ? hydrologyMaps.fa[index] : null,
-					faN: inRange ? hydrologyMaps.faN[index] : null,
-					isStream: inRange ? hydrologyMaps.isStream[index] === 1 : false,
-					lakeMask: inRange ? hydrologyMaps.lakeMask[index] === 1 : false,
-					lakeSurfaceH: inRange ? hydrologyMaps.lakeSurfaceH[index] : null,
-					waterClass: inRange ? hydrologyMaps.waterClass[index] : null,
-					lakeDepth:
-						inRange && lakeAccounting
-							? lakeAccounting.tileLakeDepth[index] ?? 0
-							: null,
-					lakeBasinId:
-						inRange && lakeAccounting
-							? (lakeAccounting.tileLakeBasinId[index] || null)
-							: null,
-				},
-			};
-		});
+			hydrology: {
+				fd: inRange ? hydrologyMaps.fd[index] : null,
+				fa: inRange ? hydrologyMaps.fa[index] : null,
+				faN: inRange ? hydrologyMaps.faN[index] : null,
+				isStream: inRange ? hydrologyMaps.isStream[index] === 1 : false,
+				lakeMask: inRange ? hydrologyMaps.lakeMask[index] === 1 : false,
+				waterSurfaceH: inRange ? hydrologyMaps.waterSurfaceH[index] : null,
+				waterClass: inRange ? hydrologyMaps.waterClass[index] : null,
+				lakeDepth:
+					inRange && lakeAccounting
+						? lakeAccounting.tileLakeDepth[index] ?? 0
+						: null,
+				lakeBasinId:
+					inRange && lakeAccounting
+						? (lakeAccounting.tileLakeBasinId[index] || null)
+						: null,
+			},
+		};
+	});
 }
 
 type HydrologyDebugField = "fd" | "fa" | "faN" | "streamMask";
@@ -139,8 +139,8 @@ function buildHydrologyFieldTiles(
 		return envelope.tiles.map((tile, fallbackIndex) => {
 			const index =
 				typeof tile.index === "number" &&
-				Number.isInteger(tile.index) &&
-				tile.index >= 0
+					Number.isInteger(tile.index) &&
+					tile.index >= 0
 					? tile.index
 					: fallbackIndex;
 			const hydrology = asObject(tile.hydrology) ?? {};
@@ -167,8 +167,8 @@ function buildHydrologyFieldTiles(
 	return envelope.tiles.map((tile, fallbackIndex) => {
 		const index =
 			typeof tile.index === "number" &&
-			Number.isInteger(tile.index) &&
-			tile.index >= 0
+				Number.isInteger(tile.index) &&
+				tile.index >= 0
 				? tile.index
 				: fallbackIndex;
 		const inRange = index >= 0 && index < shape.size;
@@ -220,8 +220,8 @@ function buildTopographyDebugTiles(
 		const topography = asObject(tile.topography) ?? {};
 		const tileIndex =
 			typeof tile.index === "number" &&
-			Number.isInteger(tile.index) &&
-			tile.index >= 0
+				Number.isInteger(tile.index) &&
+				tile.index >= 0
 				? tile.index
 				: index;
 		const featureIds = Array.isArray(tile.featureIds)
@@ -394,10 +394,10 @@ async function writeDebugArtifacts(
 		{
 			...(lakeAccounting
 				? {
-						lakeAccounting: {
-							basins: lakeAccounting.basins,
-						},
-					}
+					lakeAccounting: {
+						basins: lakeAccounting.basins,
+					},
+				}
 				: {}),
 			tiles: buildHydrologyDebugTiles(envelope, hydrologyMaps, lakeAccounting),
 		},
@@ -543,11 +543,11 @@ export async function writeModeOutputs(
 			force,
 			streamCoherence,
 			lakeCoherence,
-				topographyStructureDebug,
-				hydrologyStructureDiagnostics,
-				hydrologyMaps,
-				lakeAccounting,
-			);
+			topographyStructureDebug,
+			hydrologyStructureDiagnostics,
+			hydrologyMaps,
+			lakeAccounting,
+		);
 		return;
 	}
 

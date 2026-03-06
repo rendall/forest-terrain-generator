@@ -158,7 +158,7 @@ Debug hydrology outputs (`debug/hydrology.json`) include:
 - `lakeAccounting.basins` (per-basin accounting + role)
 - per-tile hydrology fields:
   - `fd`, `fa`, `faN`, `isStream`
-  - `lakeMask`, `lakeSurfaceH`, `waterClass`
+  - `lakeMask`, `waterSurfaceH`, `waterClass`
   - `lakeDepth`, `lakeBasinId`
 
 ## Wetness Sweep Workflow

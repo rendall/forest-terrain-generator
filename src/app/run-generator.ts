@@ -241,7 +241,7 @@ function buildReplayEnvelope(
 			faN: hydrology.maps.faN[index],
 			isStream: hydrology.maps.isStream[index] === 1,
 			lakeMask: hydrology.maps.lakeMask[index] === 1,
-			lakeSurfaceH: hydrology.maps.lakeSurfaceH[index],
+			waterSurfaceH: hydrology.maps.waterSurfaceH[index],
 			waterClass: hydrology.maps.waterClass[index],
 			lakeDepth: hydrology.lakeAccounting.tileLakeDepth[index] ?? 0,
 			lakeBasinId: hydrology.lakeAccounting.tileLakeBasinId[index] || null,
@@ -292,9 +292,9 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		const envelope = await readTerrainEnvelopeFile(validated.inputFilePath);
 		const envelopeParamOverrides = isJsonObject(envelope.paramOverrides)
 			? normalizeAndValidateParamsObject(
-					deepMerge({}, envelope.paramOverrides),
-					"envelope.paramOverrides",
-				)
+				deepMerge({}, envelope.paramOverrides),
+				"envelope.paramOverrides",
+			)
 			: undefined;
 		const replayBase = deepMerge(
 			APPENDIX_A_DEFAULTS,

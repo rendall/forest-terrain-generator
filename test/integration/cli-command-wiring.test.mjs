@@ -551,7 +551,7 @@ describe("CLI command wiring and contract failures", () => {
 			"faN",
 			"isStream",
 			"lakeMask",
-			"lakeSurfaceH",
+			"waterSurfaceH",
 			"waterClass",
 			"lakeDepth",
 			"lakeBasinId",
