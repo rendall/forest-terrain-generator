@@ -45,7 +45,8 @@ The previous name `lakeSurfaceH` is replaced with **`waterSurfaceH`**.
 - `waterSurfaceH` is a basin-level trait (one surface level per basin state).
 - A dry basin has no water and should not emit a `waterSurfaceH` value.
 - A partially filled basin has `waterSurfaceH` below its spill surface.
-- A fully filled basin has `waterSurfaceH` at spill surface.
+- A fully filled non-root basin has `waterSurfaceH` at spill surface.
+- In ordinary map operation, a root basin should not have water. If root-basin water occurs, it is an error condition.
 
 ## Tile water depth
 
@@ -54,6 +55,8 @@ Tile depth is computed directly from basin water surface and terrain elevation.
 ```text
 waterDepth = waterSurfaceH - h_tile
 ```
+
+`waterDepth` is defined only when `waterSurfaceH` is present.
 
 No clamp is applied.
 
@@ -69,5 +72,6 @@ This gives one continuous hydrologic variable that supports both open-water clas
 
 - `waterSurfaceH` is authored/owned at basin level.
 - Per-tile water quantity is `waterDepth`, derived from `waterSurfaceH` and tile `h`.
+- If `waterSurfaceH` is absent, `waterDepth` is also absent.
 - Basin membership alone must not imply that a tile has positive surface water.
 - Positive, zero, and negative `waterDepth` are all meaningful and intentional.
