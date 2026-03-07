@@ -1,5 +1,12 @@
 import { spawn } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import {
+	mkdir,
+	mkdtemp,
+	readFile,
+	rm,
+	stat,
+	writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -131,24 +138,24 @@ describe("hydrology-inspector CLI", () => {
 			statsFile,
 		]);
 		expect(result.code).toBe(0);
-			const payload = JSON.parse(result.stdout.trim());
-			expect(payload.hydrologyMapsSource).toBe("recomputed");
-			expect(payload.stats).toMatchObject({
-				sinkCount: expect.any(Number),
-				streamTileCount: expect.any(Number),
-				lakeTileCount: expect.any(Number),
-				lakeDepth: {
-					max: expect.any(Number),
-					mean: expect.any(Number),
-				},
-				basins: {
-					total: expect.any(Number),
-					sink: expect.any(Number),
-					overflowCarrier: expect.any(Number),
-					terminalLake: expect.any(Number),
-				},
-			});
+		const payload = JSON.parse(result.stdout.trim());
+		expect(payload.hydrologyMapsSource).toBe("recomputed");
+		expect(payload.stats).toMatchObject({
+			sinkCount: expect.any(Number),
+			streamTileCount: expect.any(Number),
+			lakeTileCount: expect.any(Number),
+			lakeDepth: {
+				max: expect.any(Number),
+				mean: expect.any(Number),
+			},
+			basins: {
+				total: expect.any(Number),
+				sink: expect.any(Number),
+				overflowCarrier: expect.any(Number),
+				terminalLake: expect.any(Number),
+			},
 		});
+	});
 
 	it("applies envelope paramOverrides when recomputing hydrology maps", async () => {
 		const dir = await makeTempDir();
@@ -185,6 +192,134 @@ describe("hydrology-inspector CLI", () => {
 		const payload = JSON.parse(result.stdout.trim());
 		expect(payload.hydrologyMapsSource).toBe("recomputed");
 		expect(payload.stats.streamTileCount).toBe(1);
+	});
+
+	it("uses waterDepth as standing-water authority even when lakeMask is false", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-water-depth-authority.json");
+		const statsFile = join(dir, "stats.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				tiles: [
+					{
+						x: 0,
+						y: 0,
+						topography: { h: 0.4, r: 0, v: 0 },
+						hydrology: {
+							fd: 255,
+							fa: 1,
+							faN: 0,
+							isStream: false,
+							lakeMask: false,
+							waterSurfaceH: 0.5,
+							waterDepth: 0.1,
+							waterClass: 1,
+							lakeBasinId: "b1",
+						},
+					},
+					{
+						x: 1,
+						y: 0,
+						topography: { h: 0.6, r: 0, v: 0 },
+						hydrology: {
+							fd: 255,
+							fa: 1,
+							faN: 0,
+							isStream: false,
+							lakeMask: true,
+							waterSurfaceH: 0.4,
+							waterDepth: -0.2,
+							waterClass: 0,
+							lakeBasinId: "b1",
+						},
+					},
+				],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--stats",
+			"--stats-file",
+			statsFile,
+		]);
+		expect(result.code).toBe(0);
+		const payload = JSON.parse(result.stdout.trim());
+		expect(payload.stats.standingSurfaceWaterTileCount).toBe(1);
+		expect(payload.stats.lakeTileCount).toBe(1);
+		expect(payload.stats.lakeDepth.max).toBeCloseTo(0.1, 6);
+		expect(payload.stats.lakeDepth.mean).toBeCloseTo(0.1, 6);
+		expect(payload.stats.subsurfaceInfluenceTileCount).toBe(1);
+		expect(payload.stats.waterGovernedTileCount).toBe(2);
+	});
+
+	it("derives governed and subsurface stats from basin/surface signals without lakeMask", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-governed-signals.json");
+		const statsFile = join(dir, "stats.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify({
+				meta: { specVersion: "forest-terrain-v1" },
+				tiles: [
+					{
+						x: 0,
+						y: 0,
+						topography: { h: 0.8, r: 0, v: 0 },
+						hydrology: {
+							fd: 255,
+							fa: 1,
+							faN: 0,
+							isStream: false,
+							waterSurfaceH: 0.7,
+							waterClass: 3,
+							lakeBasinId: "",
+						},
+					},
+					{
+						x: 1,
+						y: 0,
+						topography: { h: 0.2, r: 0, v: 0 },
+						hydrology: {
+							fd: 255,
+							fa: 1,
+							faN: 0,
+							isStream: false,
+							waterClass: 4,
+							lakeBasinId: "b2",
+						},
+					},
+				],
+				features: { basins: [], peaks: [] },
+			})}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"--input-json",
+			sourceFile,
+			"--stats",
+			"--stats-file",
+			statsFile,
+		]);
+		expect(result.code).toBe(0);
+		const payload = JSON.parse(result.stdout.trim());
+		expect(payload.stats.waterGovernedTileCount).toBe(2);
+		expect(payload.stats.standingSurfaceWaterTileCount).toBe(0);
+		expect(payload.stats.subsurfaceInfluenceTileCount).toBe(1);
+		expect(payload.stats.waterClassCounts).toMatchObject({
+			none: 0,
+			lake: 0,
+			stream: 0,
+			marsh: 1,
+			pool: 1,
+			other: 0,
+		});
 	});
 
 	it("treats --sink-mode as an explicit override only", async () => {
@@ -232,11 +367,15 @@ describe("hydrology-inspector CLI", () => {
 		const defaultPayload = JSON.parse(defaultResult.stdout.trim());
 		const strictPayload = JSON.parse(strictResult.stdout.trim());
 		const overflowPayload = JSON.parse(overflowResult.stdout.trim());
-		expect(defaultPayload.stats.sinkCount).toBe(overflowPayload.stats.sinkCount);
+		expect(defaultPayload.stats.sinkCount).toBe(
+			overflowPayload.stats.sinkCount,
+		);
 		expect(defaultPayload.stats.streamTileCount).toBe(
 			overflowPayload.stats.streamTileCount,
 		);
-		expect(defaultPayload.stats.sinkCount).not.toBe(strictPayload.stats.sinkCount);
+		expect(defaultPayload.stats.sinkCount).not.toBe(
+			strictPayload.stats.sinkCount,
+		);
 	});
 
 	it("fails recompute when envelope paramOverrides are invalid", async () => {
