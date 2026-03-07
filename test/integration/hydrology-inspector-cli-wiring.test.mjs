@@ -256,6 +256,7 @@ describe("hydrology-inspector CLI", () => {
 		expect(payload.stats.lakeDepth.mean).toBeCloseTo(0.1, 6);
 		expect(payload.stats.subsurfaceInfluenceTileCount).toBe(1);
 		expect(payload.stats.waterGovernedTileCount).toBe(2);
+		expect(payload.stats.depthDerivedFromSurfaceCount).toBe(0);
 	});
 
 	it("derives governed and subsurface stats from basin/surface signals without lakeMask", async () => {
@@ -312,6 +313,7 @@ describe("hydrology-inspector CLI", () => {
 		expect(payload.stats.waterGovernedTileCount).toBe(2);
 		expect(payload.stats.standingSurfaceWaterTileCount).toBe(0);
 		expect(payload.stats.subsurfaceInfluenceTileCount).toBe(1);
+		expect(payload.stats.depthDerivedFromSurfaceCount).toBe(1);
 		expect(payload.stats.waterClassCounts).toMatchObject({
 			none: 0,
 			lake: 0,

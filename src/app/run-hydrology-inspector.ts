@@ -65,9 +65,14 @@ export interface HydrologyInspectorStats {
 	tileCount: number;
 	sinkCount: number;
 	streamTileCount: number;
+	/** Count of tiles where resolved waterDepth is > 0 (standing surface water). */
 	standingSurfaceWaterTileCount: number;
+	/** Count of tiles with basin-governed water state (`lakeBasinId` present or `waterSurfaceH` present). */
 	waterGovernedTileCount: number;
+	/** Count of tiles where resolved waterDepth is < 0 (subsurface influence). */
 	subsurfaceInfluenceTileCount: number;
+	/** Count of tiles where inspector derived waterDepth from `waterSurfaceH - h` because explicit `waterDepth` was absent. */
+	depthDerivedFromSurfaceCount: number;
 	lakeTileCount: number;
 	lakeDepth: {
 		max: number;
@@ -442,6 +447,7 @@ const loadContextFromDebugArtifacts = async (
 			maps.isStream[index] =
 				streamFromRoot === true || streamFromHydrology === true ? 1 : 0;
 			const lakeMask = readBoolean(hydrology?.lakeMask);
+			// Legacy compatibility only: inspector semantics are driven by waterDepth/waterSurfaceH/lakeBasinId.
 			if (lakeMask !== null) {
 				maps.lakeMask[index] = lakeMask ? 1 : 0;
 			}
@@ -672,6 +678,7 @@ const buildContextFromEnvelope = async (
 			maps.faN[index] = faN;
 		}
 		maps.isStream[index] = isStream === true ? 1 : 0;
+		// Legacy compatibility only: inspector semantics are driven by waterDepth/waterSurfaceH/lakeBasinId.
 		if (lakeMask !== null) {
 			maps.lakeMask[index] = lakeMask ? 1 : 0;
 		}
@@ -872,6 +879,10 @@ const resolveTileWaterDepth = (
 	context: HydrologyContext,
 	index: number,
 ): number | null => {
+	// Precedence is strict by contract:
+	// 1) explicit waterDepth (authoritative output),
+	// 2) derived depth from waterSurfaceH - h,
+	// 3) undefined when neither signal exists.
 	if ((context.tileHasWaterDepth[index] ?? 0) === 1) {
 		const value = context.tileWaterDepth[index];
 		return Number.isFinite(value) ? value : null;
@@ -900,6 +911,7 @@ const computeStats = (
 	let standingSurfaceWaterTileCount = 0;
 	let waterGovernedTileCount = 0;
 	let subsurfaceInfluenceTileCount = 0;
+	let depthDerivedFromSurfaceCount = 0;
 	let lakeTileCount = 0;
 	let lakeDepthSum = 0;
 	let lakeDepthMax = 0;
@@ -949,6 +961,9 @@ const computeStats = (
 			waterGovernedTileCount += 1;
 		}
 		const depth = resolveTileWaterDepth(context, i);
+		if (depth !== null && (context.tileHasWaterDepth[i] ?? 0) === 0) {
+			depthDerivedFromSurfaceCount += 1;
+		}
 		if (depth !== null && depth < 0) {
 			subsurfaceInfluenceTileCount += 1;
 		}
@@ -1000,6 +1015,7 @@ const computeStats = (
 		standingSurfaceWaterTileCount,
 		waterGovernedTileCount,
 		subsurfaceInfluenceTileCount,
+		depthDerivedFromSurfaceCount,
 		lakeTileCount,
 		lakeDepth: {
 			max: lakeDepthMax,
