@@ -88,3 +88,28 @@ Per the model, `waterDepth` is the continuous source for tile water state and ca
 - Multiple tests still require `lakeMask` schema presence, so removal would currently break contract tests before semantic migration is complete.【F:test/integration/cli-command-wiring.test.mjs†L277-L284】【F:test/integration/cli-command-wiring.test.mjs†L564-L571】  
 
 No code was modified.
+
+<PREVIOUS_PR_TITLE>
+Hydrology inspector: derive standing-water stats from waterDepth/waterSurface and add lakeMask removal audit
+</PREVIOUS_PR_TITLE>
+
+<PREVIOUS_PR_DESCRIPTION>
+### Motivation
+
+- Move downstream logic away from the binary `lakeMask` projection toward the continuous `waterDepth`/`waterSurfaceH` and categorical `waterClass` signals to avoid semantic drift. 
+- Provide a repository-level audit documenting every consumer of `lakeMask` and a safe removal plan. 
+- Surface new hydrology diagnostics (standing-water, governed, subsurface influence, and `waterClass` counts) in the inspector to enable migration and validation.
+
+### Description
+
+- Added `docs/lakeMask-removal-audit.md` with a repository-wide usage audit and a safe removal plan for `lakeMask`.
+- Extended `src/app/run-hydrology-inspector.ts` to track `tileWaterDepth`, `tileHasWaterDepth`, and `tileHasWaterSurface`, to read `waterDepth`/`waterSurfaceH` from envelopes and debug artifacts, and to populate these when hydrology is recomputed from `deriveHydrology`.
+- Introduced `resolveTileWaterDepth` to compute depth from either explicit `waterDepth` or `waterSurfaceH - h`, and refactored `computeStats` to count `standingSurfaceWaterTileCount`, `waterGovernedTileCount`, `subsurfaceInfluenceTileCount`, and `waterClassCounts` instead of relying on `maps.lakeMask`.
+- Updated integration tests in `test/integration/hydrology-inspector-cli-wiring.test.mjs` to assert the new stats and the authoritative behavior of `waterDepth` over `lakeMask`, and applied minor test formatting/import tidy-ups.
+
+### Testing
+
+- Ran the hydrology-inspector integration test suite (`vitest` integration tests) which includes `test/integration/hydrology-inspector-cli-wiring.test.mjs`, and the modified tests passed. 
+- Recomputed-path tests that exercise `deriveHydrology` and inspector recompute logic were executed and passed, validating `tileWaterDepth` derivation and the new stats aggregation. 
+- No other automated tests were changed; existing unit/integration suites covering hydrology reading and recompute continued to pass after the changes.
+</PREVIOUS_PR_DESCRIPTION>
