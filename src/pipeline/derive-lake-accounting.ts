@@ -253,6 +253,37 @@ const sortBasinIdsPostorder = (
 	return order;
 };
 
+const computeBasinSpecificityDepths = (
+	basinsById: Map<string, TopographicFeatureNode>,
+): Map<string, number> => {
+	const depthById = new Map<string, number>();
+	const inPath = new Set<string>();
+	const resolveDepth = (basinId: string): number => {
+		const cached = depthById.get(basinId);
+		if (cached !== undefined) {
+			return cached;
+		}
+		if (inPath.has(basinId)) {
+			return 0;
+		}
+		inPath.add(basinId);
+		const basin = basinsById.get(basinId);
+		const parentId =
+			typeof basin?.parentId === "string" ? basin.parentId : null;
+		const depth =
+			parentId !== null && basinsById.has(parentId)
+				? resolveDepth(parentId) + 1
+				: 0;
+		inPath.delete(basinId);
+		depthById.set(basinId, depth);
+		return depth;
+	};
+	for (const basinId of basinsById.keys()) {
+		resolveDepth(basinId);
+	}
+	return depthById;
+};
+
 export const deriveLakeAccounting = (
 	shape: GridShape,
 	h: Float32Array,
@@ -297,6 +328,7 @@ export const deriveLakeAccounting = (
 		membershipSet,
 	);
 	const postorder = sortBasinIdsPostorder(basinsById);
+	const specificityDepthById = computeBasinSpecificityDepths(basinsById);
 	const byId = new Map<string, BasinLakeAccounting>();
 	const spillWetnessById = new Map<string, number>();
 	const upwardRateById = new Map<string, number>();
@@ -430,29 +462,36 @@ export const deriveLakeAccounting = (
 	const tileLakeDepth = new Float32Array(shape.size);
 	const tileLakeBasinId = new Array<string>(shape.size).fill("");
 	const hasTileWaterSurface = new Uint8Array(shape.size);
-	for (const [basinId, accounting] of byId) {
-		const level = accounting.waterSurfaceH;
-		if (typeof level !== "number" || !Number.isFinite(level)) {
-			continue;
-		}
-		const tiles = expandedTileSets.get(basinId);
-		if (!tiles) {
-			continue;
-		}
-		for (const tileId of tiles) {
-			const depth = level - (h[tileId] ?? 0);
-			const noPriorSelection = hasTileWaterSurface[tileId] === 0;
+	for (let tileId = 0; tileId < shape.size; tileId += 1) {
+		const candidateIds = membershipList[tileId] ?? [];
+		let governingBasinId = "";
+		let governingSpecificity = Number.NEGATIVE_INFINITY;
+		for (const basinId of candidateIds) {
+			const accounting = byId.get(basinId);
+			const level = accounting?.waterSurfaceH;
+			if (typeof level !== "number" || !Number.isFinite(level)) {
+				continue;
+			}
+			const specificity = specificityDepthById.get(basinId) ?? 0;
 			if (
-				noPriorSelection ||
-				depth > tileLakeDepth[tileId] ||
-				(depth === tileLakeDepth[tileId] &&
-					(tileLakeBasinId[tileId] === "" || basinId < tileLakeBasinId[tileId]))
+				governingBasinId === "" ||
+				specificity > governingSpecificity ||
+				(specificity === governingSpecificity && basinId < governingBasinId)
 			) {
-				tileLakeDepth[tileId] = depth;
-				tileLakeBasinId[tileId] = basinId;
-				hasTileWaterSurface[tileId] = 1;
+				governingBasinId = basinId;
+				governingSpecificity = specificity;
 			}
 		}
+		if (governingBasinId === "") {
+			continue;
+		}
+		const governingLevel = byId.get(governingBasinId)?.waterSurfaceH;
+		if (typeof governingLevel !== "number" || !Number.isFinite(governingLevel)) {
+			continue;
+		}
+		tileLakeDepth[tileId] = governingLevel - (h[tileId] ?? 0);
+		tileLakeBasinId[tileId] = governingBasinId;
+		hasTileWaterSurface[tileId] = 1;
 	}
 	let lakeTileCount = 0;
 	for (let tileId = 0; tileId < shape.size; tileId += 1) {

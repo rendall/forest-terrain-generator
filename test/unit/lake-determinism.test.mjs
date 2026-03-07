@@ -83,62 +83,67 @@ describe("lake accounting determinism", () => {
 		);
 	});
 
-	it("keeps deterministic tie resolution for equal-depth overlaps regardless basin input order", () => {
+	it("keeps deterministic stable-id tie-break for equally specific active overlaps", () => {
 		const shape = createGridShape(2, 1);
-		const h = new Float32Array([0.1, 0.2]);
-		const child = {
+		const h = new Float32Array([0.1, 0.9]);
+		const basinA = {
 			id: "b_aaa",
 			kind: "leaf",
-			parentId: "b_zzz",
+			parentId: null,
 			childIds: [],
 			birthH: 0.1,
-			mergeH: 0.3,
-			persistence: 0.2,
-			spillOutTileId: 1,
-			childSpillFromTileId: 0,
-			parentContactTileId: 1,
+			mergeH: 0.2,
+			persistence: 0.1,
+			spillOutTileId: null,
+			childSpillFromTileId: null,
+			parentContactTileId: null,
 			minH: 0.1,
 			maxH: 0.1,
 			size: 1,
 			bbox: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
 			tileIds: [0],
 		};
-		const parent = {
+		const basinZ = {
 			id: "b_zzz",
-			kind: "composite",
+			kind: "leaf",
 			parentId: null,
-			childIds: ["b_aaa"],
-			birthH: 0.3,
-			mergeH: 0.3,
-			persistence: null,
+			childIds: [],
+			birthH: 0.1,
+			mergeH: 0.8,
+			persistence: 0.7,
 			spillOutTileId: null,
+			childSpillFromTileId: null,
+			parentContactTileId: null,
 			minH: 0.1,
-			maxH: 0.2,
-			size: 2,
+			maxH: 0.1,
+			size: 1,
 			bbox: { minX: 0, minY: 0, maxX: 1, maxY: 0 },
-			tileIds: [1],
+			tileIds: [0],
 		};
-		const tileFeatureIds = [["b_aaa", "b_zzz"], ["b_zzz"]];
+		const tileFeatureIds = [["b_aaa", "b_zzz"], []];
 		const params = {
 			hydrology: {
 				sinkMode: "strict_local",
-				lakeFill: { wetnessScale: 10 },
+				lakeFill: { wetnessScale: 1 },
 			},
 		};
 
 		const first = deriveHydrology(
 			shape,
 			h,
-			{ basinFeatures: [child, parent], tileFeatureIds },
+			{ basinFeatures: [basinA, basinZ], tileFeatureIds },
 			params,
 		);
 		const second = deriveHydrology(
 			shape,
 			h,
-			{ basinFeatures: [parent, child], tileFeatureIds },
+			{ basinFeatures: [basinZ, basinA], tileFeatureIds },
 			params,
 		);
 
+		expect(first.lakeAccounting.byId.get("b_zzz")?.waterSurfaceH).toBeGreaterThan(
+			first.lakeAccounting.byId.get("b_aaa")?.waterSurfaceH ?? -Infinity,
+		);
 		expect(first.lakeAccounting.tileLakeBasinId[0]).toBe("b_aaa");
 		expect(second.lakeAccounting.tileLakeBasinId[0]).toBe("b_aaa");
 		expect(first.lakeAccounting.tileLakeBasinId).toEqual(
