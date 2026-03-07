@@ -13,6 +13,7 @@ export interface BasinLakeAccounting {
 	waterSurfaceH: number | null;
 	externalInflow: number;
 	totalInflow: number;
+	allocatedVolume: number;
 	spillCapacity: number;
 	fillRatio: number;
 	isFilled: boolean;
@@ -297,6 +298,8 @@ export const deriveLakeAccounting = (
 	);
 	const postorder = sortBasinIdsPostorder(basinsById);
 	const byId = new Map<string, BasinLakeAccounting>();
+	const spillWetnessById = new Map<string, number>();
+	const upwardRateById = new Map<string, number>();
 
 	for (const basinId of postorder) {
 		const basin = basinsById.get(basinId);
@@ -314,54 +317,65 @@ export const deriveLakeAccounting = (
 			return sum + (child?.overflowExcess ?? 0);
 		}, 0);
 		const totalInflow = externalInflow + childOverflow;
-		// Parent remains dry at exact child-connect threshold; parent inflow
-		// starts only after all direct children are strictly beyond connect.
-		const allChildrenBeyondConnect = childIds.every((childId) => {
-			const child = byId.get(childId);
-			if (!child || child.isFilled !== true) {
-				return false;
-			}
-			if (child.spillCapacity <= 0) {
-				return true;
-			}
-			return child.fillRatio > 1 + CHILD_CONNECT_EPS;
-		});
-		const effectiveInflow =
-			childIds.length === 0 || allChildrenBeyondConnect ? totalInflow : 0;
+		// V(B) is the basin-allocated water volume after child-first allocation.
+		// Parent onset is strict excess over child-connect threshold.
+		const gateOpenWetness =
+			childIds.length === 0
+				? 0
+				: childIds.reduce((maxScale, childId) => {
+						const childSpillWetness =
+							spillWetnessById.get(childId) ?? Number.POSITIVE_INFINITY;
+						return Math.max(maxScale, childSpillWetness);
+					}, 0);
+		const childUpwardRate = childIds.reduce(
+			(sum, childId) => sum + (upwardRateById.get(childId) ?? 0),
+			0,
+		);
+		const upwardRate = externalInflow + childUpwardRate;
+		const excessWetnessScale = Math.max(0, wetnessScale - gateOpenWetness);
+		const allocatedVolume =
+			excessWetnessScale > CHILD_CONNECT_EPS ? excessWetnessScale * upwardRate : 0;
 		const mergeH =
 			typeof basin.mergeH === "number" && Number.isFinite(basin.mergeH)
 				? basin.mergeH
 				: 1;
 		const basinTiles = expandedTileSets.get(basinId) ?? new Set<number>();
 		const spillCapacity = computeSpillCapacity(h, basinTiles, mergeH);
-		const scaledInflow = wetnessScale * effectiveInflow;
 		const fillRatio =
 			spillCapacity > 0
-				? scaledInflow / spillCapacity
+				? allocatedVolume / spillCapacity
 				: Number.POSITIVE_INFINITY;
-		const isFilled = scaledInflow >= spillCapacity;
+		const isFilled = allocatedVolume >= spillCapacity;
 		let waterSurfaceH: number | null = null;
-		if (scaledInflow > WATER_SURFACE_EPS) {
+		if (allocatedVolume > WATER_SURFACE_EPS) {
 			if (
 				spillCapacity <= WATER_SURFACE_EPS ||
-				scaledInflow >= spillCapacity - WATER_SURFACE_EPS
+				allocatedVolume >= spillCapacity - WATER_SURFACE_EPS
 			) {
 				waterSurfaceH = mergeH;
 			} else {
 				waterSurfaceH = solvePartialWaterSurface(
 					h,
 					basinTiles,
-					scaledInflow,
+					allocatedVolume,
 					mergeH,
 				);
 			}
 		}
-		const overflowExcess = Math.max(0, scaledInflow - spillCapacity);
+		const overflowExcess = Math.max(0, allocatedVolume - spillCapacity);
+		const spillWetness =
+			spillCapacity <= WATER_SURFACE_EPS
+				? gateOpenWetness
+				: upwardRate > WATER_SURFACE_EPS
+					? gateOpenWetness + spillCapacity / upwardRate
+					: Number.POSITIVE_INFINITY;
+		spillWetnessById.set(basinId, spillWetness);
+		upwardRateById.set(basinId, upwardRate);
 		const isOrdinaryRoot = basin.parentId === null && basin.mergeH === null;
 		if (
 			isOrdinaryRoot &&
 			spillCapacity <= CHILD_CONNECT_EPS &&
-			scaledInflow > CHILD_CONNECT_EPS
+			allocatedVolume > CHILD_CONNECT_EPS
 		) {
 			throw new Error(
 				`Lake accounting invariant error: root basin "${basinId}" reaches impossible full-map fill state.`,
@@ -390,8 +404,9 @@ export const deriveLakeAccounting = (
 			waterSurfaceH,
 			externalInflow,
 			// totalInflow remains raw (external + child overflow); child gating applies
-			// through effectiveInflow for fill and overflow computations.
+			// only through allocatedVolume V(B) for fill and overflow computations.
 			totalInflow,
+			allocatedVolume,
 			spillCapacity,
 			fillRatio,
 			isFilled,
