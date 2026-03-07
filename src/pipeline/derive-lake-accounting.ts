@@ -33,6 +33,8 @@ export interface LakeAccountingResult {
 }
 
 const CHILD_CONNECT_EPS = 1e-9;
+const WATER_SURFACE_EPS = 1e-9;
+const WATER_SURFACE_SOLVE_STEPS = 60;
 
 const DIR_TO_DELTA = new Map<number, readonly [number, number]>([
 	[DIR8_CODE.e, [1, 0]],
@@ -96,7 +98,9 @@ const collectExpandedTileSets = (
 					)
 				: [],
 		);
-		for (const childId of Array.isArray(basin?.childIds) ? basin.childIds : []) {
+		for (const childId of Array.isArray(basin?.childIds)
+			? basin.childIds
+			: []) {
 			if (typeof childId !== "string") {
 				continue;
 			}
@@ -168,16 +172,49 @@ const computeExternalInflow = (
 	return externalInflowById;
 };
 
-const computeSpillCapacity = (
+const computeSubmergedStorageAtLevel = (
 	h: Float32Array,
 	tiles: Set<number>,
-	mergeH: number,
+	level: number,
 ): number => {
 	let sum = 0;
 	for (const tileId of tiles) {
-		sum += Math.max(0, mergeH - (h[tileId] ?? 0));
+		sum += Math.max(0, level - (h[tileId] ?? 0));
 	}
 	return sum;
+};
+
+const computeSpillCapacity = (
+	h: Float32Array,
+	tiles: Set<number>,
+	spillSurfaceH: number,
+): number => computeSubmergedStorageAtLevel(h, tiles, spillSurfaceH);
+
+const solvePartialWaterSurface = (
+	h: Float32Array,
+	tiles: Set<number>,
+	targetVolume: number,
+	spillSurfaceH: number,
+): number => {
+	let minTileH = Number.POSITIVE_INFINITY;
+	for (const tileId of tiles) {
+		minTileH = Math.min(minTileH, h[tileId] ?? 0);
+	}
+	if (!Number.isFinite(minTileH)) {
+		return spillSurfaceH;
+	}
+	let lo = minTileH;
+	let hi = spillSurfaceH;
+	for (let i = 0; i < WATER_SURFACE_SOLVE_STEPS; i += 1) {
+		const mid = (lo + hi) / 2;
+		const storageAtMid = computeSubmergedStorageAtLevel(h, tiles, mid);
+		if (storageAtMid >= targetVolume) {
+			hi = mid;
+		} else {
+			lo = mid;
+		}
+	}
+	return hi;
 };
 
 const sortBasinIdsPostorder = (
@@ -196,7 +233,9 @@ const sortBasinIdsPostorder = (
 		}
 		inPath.add(basinId);
 		const basin = basinsById.get(basinId);
-		for (const childId of Array.isArray(basin?.childIds) ? basin.childIds : []) {
+		for (const childId of Array.isArray(basin?.childIds)
+			? basin.childIds
+			: []) {
 			if (typeof childId === "string" && basinsById.has(childId)) {
 				visit(childId);
 			}
@@ -238,7 +277,7 @@ export const deriveLakeAccounting = (
 		for (const childId of childIds) {
 			if (!basinsById.has(childId)) {
 				throw new Error(
-					`Lake accounting topology error: basin \"${basin.id}\" references missing child basin \"${childId}\".`,
+					`Lake accounting topology error: basin "${basin.id}" references missing child basin "${childId}".`,
 				);
 			}
 		}
@@ -293,18 +332,30 @@ export const deriveLakeAccounting = (
 			typeof basin.mergeH === "number" && Number.isFinite(basin.mergeH)
 				? basin.mergeH
 				: 1;
-		const spillCapacity = computeSpillCapacity(
-			h,
-			expandedTileSets.get(basinId) ?? new Set<number>(),
-			mergeH,
-		);
+		const basinTiles = expandedTileSets.get(basinId) ?? new Set<number>();
+		const spillCapacity = computeSpillCapacity(h, basinTiles, mergeH);
 		const scaledInflow = wetnessScale * effectiveInflow;
 		const fillRatio =
 			spillCapacity > 0
 				? scaledInflow / spillCapacity
 				: Number.POSITIVE_INFINITY;
 		const isFilled = scaledInflow >= spillCapacity;
-		const waterSurfaceH = isFilled ? mergeH : null;
+		let waterSurfaceH: number | null = null;
+		if (scaledInflow > WATER_SURFACE_EPS) {
+			if (
+				spillCapacity <= WATER_SURFACE_EPS ||
+				scaledInflow >= spillCapacity - WATER_SURFACE_EPS
+			) {
+				waterSurfaceH = mergeH;
+			} else {
+				waterSurfaceH = solvePartialWaterSurface(
+					h,
+					basinTiles,
+					scaledInflow,
+					mergeH,
+				);
+			}
+		}
 		const overflowExcess = Math.max(0, scaledInflow - spillCapacity);
 		const isOrdinaryRoot = basin.parentId === null && basin.mergeH === null;
 		if (
@@ -345,7 +396,11 @@ export const deriveLakeAccounting = (
 			fillRatio,
 			isFilled,
 			overflowExcess,
-			role: canOverflow ? "overflow_carrier" : isFilled ? "terminal_lake" : "sink",
+			role: canOverflow
+				? "overflow_carrier"
+				: isFilled
+					? "terminal_lake"
+					: "sink",
 			mergeH: typeof basin.mergeH === "number" ? basin.mergeH : null,
 			childSpillFromTileId,
 			parentContactTileId,
@@ -354,7 +409,7 @@ export const deriveLakeAccounting = (
 				Number.isInteger(basin.spillOutTileId)
 					? basin.spillOutTileId
 					: null,
-			});
+		});
 	}
 
 	const tileLakeDepth = new Float32Array(shape.size);
