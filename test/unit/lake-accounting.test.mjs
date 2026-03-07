@@ -171,6 +171,8 @@ describe("lake accounting from production hydrology pipeline", () => {
 		expect(child.totalInflow).toBe(1);
 		expect(child.spillCapacity).toBeCloseTo(0.2, 6);
 		expect(child.isFilled).toBe(true);
+		expect(child.allocatedVolume).toBeCloseTo(child.spillCapacity, 6);
+		expect(child.fillRatio).toBeCloseTo(1, 6);
 		expect(child.role).toBe("overflow_carrier");
 		expect(child.overflowExcess).toBeCloseTo(0.8, 6);
 		expect(parent.externalInflow).toBe(0);
@@ -329,5 +331,119 @@ describe("lake accounting from production hydrology pipeline", () => {
 		expect(parentAtConnect.externalInflow).toBeGreaterThan(0);
 		// Child-connect invariant: parent remains dry at the exact threshold.
 		expect(parentAtConnect.fillRatio).toBe(0);
+	});
+
+	it("starts parent volume from strict excess beyond child-connect threshold", () => {
+		const shape = createGridShape(2, 2);
+		const h = new Float32Array([
+			0.6, 0.6, // y=0
+			0.1, 0.2, // y=1
+		]);
+		const basinFeatures = [
+			makeBasinNode({
+				id: "b_child",
+				kind: "leaf",
+				parentId: "b_parent",
+				childIds: [],
+				birthH: 0.1,
+				mergeH: 0.3,
+				persistence: 0.2,
+				spillOutTileId: 3,
+				childSpillFromTileId: 2,
+				parentContactTileId: 3,
+				minH: 0.1,
+				maxH: 0.1,
+				size: 1,
+				bbox: { minX: 0, minY: 1, maxX: 0, maxY: 1 },
+				tileIds: [2],
+			}),
+			makeBasinNode({
+				id: "b_parent",
+				kind: "composite",
+				parentId: null,
+				childIds: ["b_child"],
+				birthH: 0.3,
+				mergeH: 0.6,
+				persistence: null,
+				spillOutTileId: null,
+				minH: 0.1,
+				maxH: 0.2,
+				size: 2,
+				bbox: { minX: 0, minY: 1, maxX: 1, maxY: 1 },
+				tileIds: [3],
+			}),
+		];
+		const fdBase = new Uint8Array([
+			DIR8_CODE.s,
+			DIR8_CODE.s,
+			DIR8_NONE,
+			DIR8_NONE,
+		]);
+		const faBase = new Uint32Array([1, 1, 1, 1]);
+		const calibration = deriveLakeAccounting(
+			shape,
+			h,
+			fdBase,
+			faBase,
+			basinFeatures,
+			{ wetnessScale: 1 },
+		);
+		const childCalibration = calibration.byId.get("b_child");
+		expect(childCalibration).toBeDefined();
+		const kAtConnect =
+			childCalibration.spillCapacity / childCalibration.externalInflow;
+		const kAboveConnect = kAtConnect + 0.01;
+		const out = deriveLakeAccounting(shape, h, fdBase, faBase, basinFeatures, {
+			wetnessScale: kAboveConnect,
+		});
+		const child = out.byId.get("b_child");
+		const parent = out.byId.get("b_parent");
+		expect(child).toBeDefined();
+		expect(parent).toBeDefined();
+		const deltaK = kAboveConnect - kAtConnect;
+		// In this fixture, parent upward rate is parent external (2) + child external (1).
+		const expectedParentV = deltaK * (parent.externalInflow + child.externalInflow);
+		expect(parent.allocatedVolume).toBeCloseTo(expectedParentV, 6);
+		const legacyFullOnsetVolume =
+			kAboveConnect * parent.externalInflow + child.overflowExcess;
+		expect(parent.allocatedVolume).toBeLessThan(legacyFullOnsetVolume);
+		expect(parent.allocatedVolume).toBeGreaterThan(0);
+		// Child remains capped at capacity while excess propagates upward.
+		expect(child.allocatedVolume).toBeCloseTo(child.spillCapacity, 6);
+		expect(parent.totalInflow).toBeCloseTo(
+			parent.externalInflow + child.overflowExcess,
+			6,
+		);
+	});
+
+	it("keeps retained basin volume capped while overflow tracks excess", () => {
+		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
+		const result = deriveHydrology(
+			shape,
+			h,
+			{ basinFeatures, tileFeatureIds },
+			{
+				hydrology: {
+					sinkMode: "strict_local",
+					lakeFill: { wetnessScale: 1.0 },
+				},
+			},
+		);
+		result.lakeAccounting.basins.forEach((basin) => {
+			expect(basin.allocatedVolume).toBeGreaterThanOrEqual(0);
+			expect(basin.allocatedVolume).toBeLessThanOrEqual(basin.spillCapacity + 1e-9);
+			expect(basin.fillRatio).toBeGreaterThanOrEqual(0);
+			expect(basin.fillRatio).toBeLessThanOrEqual(1 + 1e-9);
+			if (basin.spillCapacity > 0) {
+				expect(basin.fillRatio).toBeCloseTo(
+					basin.allocatedVolume / basin.spillCapacity,
+					6,
+				);
+			}
+			if (basin.overflowExcess > 0) {
+				expect(basin.allocatedVolume).toBeCloseTo(basin.spillCapacity, 6);
+			}
+			expect(basin.overflowExcess).toBeGreaterThanOrEqual(0);
+		});
 	});
 });

@@ -10,8 +10,10 @@ export interface BasinLakeAccounting {
 	id: string;
 	parentId: string | null;
 	childIds: string[];
+	waterSurfaceH?: number;
 	externalInflow: number;
 	totalInflow: number;
+	allocatedVolume: number;
 	spillCapacity: number;
 	fillRatio: number;
 	isFilled: boolean;
@@ -32,6 +34,8 @@ export interface LakeAccountingResult {
 }
 
 const CHILD_CONNECT_EPS = 1e-9;
+const WATER_SURFACE_EPS = 1e-9;
+const WATER_SURFACE_SOLVE_STEPS = 60;
 
 const DIR_TO_DELTA = new Map<number, readonly [number, number]>([
 	[DIR8_CODE.e, [1, 0]],
@@ -95,7 +99,9 @@ const collectExpandedTileSets = (
 					)
 				: [],
 		);
-		for (const childId of Array.isArray(basin?.childIds) ? basin.childIds : []) {
+		for (const childId of Array.isArray(basin?.childIds)
+			? basin.childIds
+			: []) {
 			if (typeof childId !== "string") {
 				continue;
 			}
@@ -167,16 +173,49 @@ const computeExternalInflow = (
 	return externalInflowById;
 };
 
-const computeSpillCapacity = (
+const computeSubmergedStorageAtLevel = (
 	h: Float32Array,
 	tiles: Set<number>,
-	mergeH: number,
+	level: number,
 ): number => {
 	let sum = 0;
 	for (const tileId of tiles) {
-		sum += Math.max(0, mergeH - (h[tileId] ?? 0));
+		sum += Math.max(0, level - (h[tileId] ?? 0));
 	}
 	return sum;
+};
+
+const computeSpillCapacity = (
+	h: Float32Array,
+	tiles: Set<number>,
+	spillSurfaceH: number,
+): number => computeSubmergedStorageAtLevel(h, tiles, spillSurfaceH);
+
+const solvePartialWaterSurface = (
+	h: Float32Array,
+	tiles: Set<number>,
+	targetVolume: number,
+	spillSurfaceH: number,
+): number => {
+	let minTileH = Number.POSITIVE_INFINITY;
+	for (const tileId of tiles) {
+		minTileH = Math.min(minTileH, h[tileId] ?? 0);
+	}
+	if (!Number.isFinite(minTileH)) {
+		return spillSurfaceH;
+	}
+	let lo = minTileH;
+	let hi = spillSurfaceH;
+	for (let i = 0; i < WATER_SURFACE_SOLVE_STEPS; i += 1) {
+		const mid = (lo + hi) / 2;
+		const storageAtMid = computeSubmergedStorageAtLevel(h, tiles, mid);
+		if (storageAtMid >= targetVolume) {
+			hi = mid;
+		} else {
+			lo = mid;
+		}
+	}
+	return hi;
 };
 
 const sortBasinIdsPostorder = (
@@ -195,7 +234,9 @@ const sortBasinIdsPostorder = (
 		}
 		inPath.add(basinId);
 		const basin = basinsById.get(basinId);
-		for (const childId of Array.isArray(basin?.childIds) ? basin.childIds : []) {
+		for (const childId of Array.isArray(basin?.childIds)
+			? basin.childIds
+			: []) {
 			if (typeof childId === "string" && basinsById.has(childId)) {
 				visit(childId);
 			}
@@ -210,6 +251,37 @@ const sortBasinIdsPostorder = (
 		visit(basinId);
 	}
 	return order;
+};
+
+const computeBasinSpecificityDepths = (
+	basinsById: Map<string, TopographicFeatureNode>,
+): Map<string, number> => {
+	const depthById = new Map<string, number>();
+	const inPath = new Set<string>();
+	const resolveDepth = (basinId: string): number => {
+		const cached = depthById.get(basinId);
+		if (cached !== undefined) {
+			return cached;
+		}
+		if (inPath.has(basinId)) {
+			return 0;
+		}
+		inPath.add(basinId);
+		const basin = basinsById.get(basinId);
+		const parentId =
+			typeof basin?.parentId === "string" ? basin.parentId : null;
+		const depth =
+			parentId !== null && basinsById.has(parentId)
+				? resolveDepth(parentId) + 1
+				: 0;
+		inPath.delete(basinId);
+		depthById.set(basinId, depth);
+		return depth;
+	};
+	for (const basinId of basinsById.keys()) {
+		resolveDepth(basinId);
+	}
+	return depthById;
 };
 
 export const deriveLakeAccounting = (
@@ -237,7 +309,7 @@ export const deriveLakeAccounting = (
 		for (const childId of childIds) {
 			if (!basinsById.has(childId)) {
 				throw new Error(
-					`Lake accounting topology error: basin \"${basin.id}\" references missing child basin \"${childId}\".`,
+					`Lake accounting topology error: basin "${basin.id}" references missing child basin "${childId}".`,
 				);
 			}
 		}
@@ -256,7 +328,10 @@ export const deriveLakeAccounting = (
 		membershipSet,
 	);
 	const postorder = sortBasinIdsPostorder(basinsById);
+	const specificityDepthById = computeBasinSpecificityDepths(basinsById);
 	const byId = new Map<string, BasinLakeAccounting>();
+	const spillWetnessById = new Map<string, number>();
+	const upwardRateById = new Map<string, number>();
 
 	for (const basinId of postorder) {
 		const basin = basinsById.get(basinId);
@@ -274,41 +349,70 @@ export const deriveLakeAccounting = (
 			return sum + (child?.overflowExcess ?? 0);
 		}, 0);
 		const totalInflow = externalInflow + childOverflow;
-		// Parent remains dry at exact child-connect threshold; parent inflow
-		// starts only after all direct children are strictly beyond connect.
-		const allChildrenBeyondConnect = childIds.every((childId) => {
-			const child = byId.get(childId);
-			if (!child || child.isFilled !== true) {
-				return false;
-			}
-			if (child.spillCapacity <= 0) {
-				return true;
-			}
-			return child.fillRatio > 1 + CHILD_CONNECT_EPS;
-		});
-		const effectiveInflow =
-			childIds.length === 0 || allChildrenBeyondConnect ? totalInflow : 0;
+		// V(B) is the basin-allocated water volume after child-first allocation.
+		// Parent onset is strict excess over child-connect threshold.
+		const gateOpenWetness =
+			childIds.length === 0
+				? 0
+				: childIds.reduce((maxScale, childId) => {
+						const childSpillWetness =
+							spillWetnessById.get(childId) ?? Number.POSITIVE_INFINITY;
+						return Math.max(maxScale, childSpillWetness);
+					}, 0);
+		const childUpwardRate = childIds.reduce(
+			(sum, childId) => sum + (upwardRateById.get(childId) ?? 0),
+			0,
+		);
+		const upwardRate = externalInflow + childUpwardRate;
+		const excessWetnessScale = Math.max(0, wetnessScale - gateOpenWetness);
+		// presentedVolume is the incoming/pre-spill volume that reaches this basin
+		// once strict child-connect gating is applied.
+		const presentedVolume =
+			excessWetnessScale > CHILD_CONNECT_EPS ? excessWetnessScale * upwardRate : 0;
 		const mergeH =
 			typeof basin.mergeH === "number" && Number.isFinite(basin.mergeH)
 				? basin.mergeH
 				: 1;
-		const spillCapacity = computeSpillCapacity(
-			h,
-			expandedTileSets.get(basinId) ?? new Set<number>(),
-			mergeH,
+		const basinTiles = expandedTileSets.get(basinId) ?? new Set<number>();
+		const spillCapacity = computeSpillCapacity(h, basinTiles, mergeH);
+		// allocatedVolume is retained/capped basin volume only.
+		const allocatedVolume = Math.min(
+			presentedVolume,
+			Math.max(0, spillCapacity),
 		);
-		const scaledInflow = wetnessScale * effectiveInflow;
-		const fillRatio =
-			spillCapacity > 0
-				? scaledInflow / spillCapacity
-				: Number.POSITIVE_INFINITY;
-		const isFilled = scaledInflow >= spillCapacity;
-		const overflowExcess = Math.max(0, scaledInflow - spillCapacity);
+		const fillRatio = spillCapacity > 0 ? allocatedVolume / spillCapacity : 0;
+		const isFilled = allocatedVolume >= spillCapacity;
+		let waterSurfaceH: number | undefined;
+		if (allocatedVolume > WATER_SURFACE_EPS) {
+			if (
+				spillCapacity <= WATER_SURFACE_EPS ||
+				allocatedVolume >= spillCapacity - WATER_SURFACE_EPS
+			) {
+				waterSurfaceH = mergeH;
+			} else {
+				waterSurfaceH = solvePartialWaterSurface(
+					h,
+					basinTiles,
+					allocatedVolume,
+					mergeH,
+				);
+			}
+		}
+		// overflowExcess carries all water that does not remain retained in this basin.
+		const overflowExcess = Math.max(0, presentedVolume - spillCapacity);
+		const spillWetness =
+			spillCapacity <= WATER_SURFACE_EPS
+				? gateOpenWetness
+				: upwardRate > WATER_SURFACE_EPS
+					? gateOpenWetness + spillCapacity / upwardRate
+					: Number.POSITIVE_INFINITY;
+		spillWetnessById.set(basinId, spillWetness);
+		upwardRateById.set(basinId, upwardRate);
 		const isOrdinaryRoot = basin.parentId === null && basin.mergeH === null;
 		if (
 			isOrdinaryRoot &&
 			spillCapacity <= CHILD_CONNECT_EPS &&
-			scaledInflow > CHILD_CONNECT_EPS
+			presentedVolume > CHILD_CONNECT_EPS
 		) {
 			throw new Error(
 				`Lake accounting invariant error: root basin "${basinId}" reaches impossible full-map fill state.`,
@@ -334,15 +438,22 @@ export const deriveLakeAccounting = (
 			id: basinId,
 			parentId: basin.parentId ?? null,
 			childIds,
+			...(typeof waterSurfaceH === "number" ? { waterSurfaceH } : {}),
 			externalInflow,
 			// totalInflow remains raw (external + child overflow); child gating applies
-			// through effectiveInflow for fill and overflow computations.
+			// only through presentedVolume for fill/overflow computations.
 			totalInflow,
+			// allocatedVolume is retained basin volume after spill capping.
+			allocatedVolume,
 			spillCapacity,
 			fillRatio,
 			isFilled,
 			overflowExcess,
-			role: canOverflow ? "overflow_carrier" : isFilled ? "terminal_lake" : "sink",
+			role: canOverflow
+				? "overflow_carrier"
+				: isFilled
+					? "terminal_lake"
+					: "sink",
 			mergeH: typeof basin.mergeH === "number" ? basin.mergeH : null,
 			childSpillFromTileId,
 			parentContactTileId,
@@ -356,35 +467,42 @@ export const deriveLakeAccounting = (
 
 	const tileLakeDepth = new Float32Array(shape.size);
 	const tileLakeBasinId = new Array<string>(shape.size).fill("");
-	let lakeTileCount = 0;
-	for (const [basinId, accounting] of byId) {
-		if (!accounting.isFilled) {
-			continue;
-		}
-		const level =
-			typeof accounting.mergeH === "number" && Number.isFinite(accounting.mergeH)
-				? accounting.mergeH
-				: 1;
-		const tiles = expandedTileSets.get(basinId);
-		if (!tiles) {
-			continue;
-		}
-		for (const tileId of tiles) {
-			const depth = Math.max(0, level - (h[tileId] ?? 0));
-			if (depth <= 0) {
+	const hasTileWaterSurface = new Uint8Array(shape.size);
+	for (let tileId = 0; tileId < shape.size; tileId += 1) {
+		const candidateIds = membershipList[tileId] ?? [];
+		let governingBasinId = "";
+		let governingSpecificity = Number.NEGATIVE_INFINITY;
+		for (const basinId of candidateIds) {
+			const accounting = byId.get(basinId);
+			const level = accounting?.waterSurfaceH;
+			if (typeof level !== "number" || !Number.isFinite(level)) {
 				continue;
 			}
+			const specificity = specificityDepthById.get(basinId) ?? 0;
 			if (
-				depth > tileLakeDepth[tileId] ||
-				(depth === tileLakeDepth[tileId] &&
-					(tileLakeBasinId[tileId] === "" || basinId < tileLakeBasinId[tileId]))
+				governingBasinId === "" ||
+				specificity > governingSpecificity ||
+				(specificity === governingSpecificity && basinId < governingBasinId)
 			) {
-				if (tileLakeDepth[tileId] <= 0) {
-					lakeTileCount += 1;
-				}
-				tileLakeDepth[tileId] = depth;
-				tileLakeBasinId[tileId] = basinId;
+				governingBasinId = basinId;
+				governingSpecificity = specificity;
 			}
+		}
+		if (governingBasinId === "") {
+			continue;
+		}
+		const governingLevel = byId.get(governingBasinId)?.waterSurfaceH;
+		if (typeof governingLevel !== "number" || !Number.isFinite(governingLevel)) {
+			continue;
+		}
+		tileLakeDepth[tileId] = governingLevel - (h[tileId] ?? 0);
+		tileLakeBasinId[tileId] = governingBasinId;
+		hasTileWaterSurface[tileId] = 1;
+	}
+	let lakeTileCount = 0;
+	for (let tileId = 0; tileId < shape.size; tileId += 1) {
+		if (hasTileWaterSurface[tileId] === 1 && tileLakeDepth[tileId] > 0) {
+			lakeTileCount += 1;
 		}
 	}
 

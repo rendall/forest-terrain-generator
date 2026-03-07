@@ -76,8 +76,8 @@ function buildPhaseTiles(
 	return envelope.tiles.map((tile, fallbackIndex) => ({
 		index:
 			typeof tile.index === "number" &&
-				Number.isInteger(tile.index) &&
-				tile.index >= 0
+			Number.isInteger(tile.index) &&
+			tile.index >= 0
 				? tile.index
 				: fallbackIndex,
 		x: tile.x,
@@ -98,15 +98,21 @@ function buildHydrologyDebugTiles(
 	return envelope.tiles.map((tile, fallbackIndex) => {
 		const index =
 			typeof tile.index === "number" &&
-				Number.isInteger(tile.index) &&
-				tile.index >= 0
+			Number.isInteger(tile.index) &&
+			tile.index >= 0
 				? tile.index
 				: fallbackIndex;
 		const inRange = index >= 0 && index < shape.size;
 		const lakeMask = inRange ? hydrologyMaps.lakeMask[index] === 1 : false;
+		const lakeBasinId =
+			inRange && lakeAccounting
+				? lakeAccounting.tileLakeBasinId[index] || null
+				: null;
 		const waterDepth =
-			inRange && lakeAccounting ? (lakeAccounting.tileLakeDepth[index] ?? 0) : 0;
-		const hasWaterSurface = inRange && lakeMask;
+			inRange && lakeAccounting
+				? (lakeAccounting.tileLakeDepth[index] ?? 0)
+				: 0;
+		const hasWaterSurface = inRange && lakeBasinId !== null;
 		const hydrology = {
 			fd: inRange ? hydrologyMaps.fd[index] : null,
 			fa: inRange ? hydrologyMaps.fa[index] : null,
@@ -118,9 +124,7 @@ function buildHydrologyDebugTiles(
 				? { waterSurfaceH: hydrologyMaps.waterSurfaceH[index] }
 				: {}),
 			...(hasWaterSurface ? { waterDepth } : {}),
-			...(inRange && lakeAccounting
-				? { lakeBasinId: lakeAccounting.tileLakeBasinId[index] || null }
-				: { lakeBasinId: null }),
+			lakeBasinId,
 		};
 		return {
 			index,
@@ -142,8 +146,8 @@ function buildHydrologyFieldTiles(
 		return envelope.tiles.map((tile, fallbackIndex) => {
 			const index =
 				typeof tile.index === "number" &&
-					Number.isInteger(tile.index) &&
-					tile.index >= 0
+				Number.isInteger(tile.index) &&
+				tile.index >= 0
 					? tile.index
 					: fallbackIndex;
 			const hydrology = asObject(tile.hydrology) ?? {};
@@ -170,8 +174,8 @@ function buildHydrologyFieldTiles(
 	return envelope.tiles.map((tile, fallbackIndex) => {
 		const index =
 			typeof tile.index === "number" &&
-				Number.isInteger(tile.index) &&
-				tile.index >= 0
+			Number.isInteger(tile.index) &&
+			tile.index >= 0
 				? tile.index
 				: fallbackIndex;
 		const inRange = index >= 0 && index < shape.size;
@@ -223,8 +227,8 @@ function buildTopographyDebugTiles(
 		const topography = asObject(tile.topography) ?? {};
 		const tileIndex =
 			typeof tile.index === "number" &&
-				Number.isInteger(tile.index) &&
-				tile.index >= 0
+			Number.isInteger(tile.index) &&
+			tile.index >= 0
 				? tile.index
 				: index;
 		const featureIds = Array.isArray(tile.featureIds)
@@ -397,10 +401,10 @@ async function writeDebugArtifacts(
 		{
 			...(lakeAccounting
 				? {
-					lakeAccounting: {
-						basins: lakeAccounting.basins,
-					},
-				}
+						lakeAccounting: {
+							basins: lakeAccounting.basins,
+						},
+					}
 				: {}),
 			tiles: buildHydrologyDebugTiles(envelope, hydrologyMaps, lakeAccounting),
 		},

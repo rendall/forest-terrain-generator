@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -60,16 +60,16 @@ describe("hydrology debug artifacts", () => {
 			outDir,
 		]);
 		expect(result.code).toBe(0);
-			const hydrologyRaw = await readFile(join(outDir, "hydrology.json"), "utf8");
-			const hydrology = JSON.parse(hydrologyRaw);
-			expect(hydrology.lakeAccounting).toBeDefined();
-			expect(Array.isArray(hydrology.lakeAccounting.basins)).toBe(true);
-			expect(Array.isArray(hydrology.tiles)).toBe(true);
-			expect(hydrology.tiles[0].hydrology).toHaveProperty("fd");
-			expect(hydrology.tiles[0].hydrology).toHaveProperty("fa");
-			expect(hydrology.tiles[0].hydrology).toHaveProperty("faN");
-			expect(hydrology.tiles[0].hydrology).toHaveProperty("isStream");
-			expect(hydrology.tiles[0].hydrology).toHaveProperty("lakeBasinId");
+		const hydrologyRaw = await readFile(join(outDir, "hydrology.json"), "utf8");
+		const hydrology = JSON.parse(hydrologyRaw);
+		expect(hydrology.lakeAccounting).toBeDefined();
+		expect(Array.isArray(hydrology.lakeAccounting.basins)).toBe(true);
+		expect(Array.isArray(hydrology.tiles)).toBe(true);
+		expect(hydrology.tiles[0].hydrology).toHaveProperty("fd");
+		expect(hydrology.tiles[0].hydrology).toHaveProperty("fa");
+		expect(hydrology.tiles[0].hydrology).toHaveProperty("faN");
+		expect(hydrology.tiles[0].hydrology).toHaveProperty("isStream");
+		expect(hydrology.tiles[0].hydrology).toHaveProperty("lakeBasinId");
 
 		await expect(stat(join(outDir, "fd.json"))).resolves.toBeDefined();
 		await expect(stat(join(outDir, "fa.json"))).resolves.toBeDefined();
@@ -92,9 +92,25 @@ describe("hydrology debug artifacts", () => {
 		expect(streamMask.tiles[0]).toHaveProperty("isStream");
 	});
 
-	it("omits waterSurfaceH and waterDepth on dry tiles", async () => {
+	it("omits waterSurfaceH and waterDepth when no basin water surface is present", async () => {
 		const dir = await makeTempDir();
 		const outDir = join(dir, "debug");
+		const paramsFile = join(dir, "params.json");
+		await writeFile(
+			paramsFile,
+			`${JSON.stringify(
+				{
+					hydrology: {
+						lakeFill: {
+							wetnessScale: 0,
+						},
+					},
+				},
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
 		const result = await runCli([
 			"debug",
 			"--seed",
@@ -103,19 +119,144 @@ describe("hydrology debug artifacts", () => {
 			"4",
 			"--height",
 			"4",
+			"--params",
+			paramsFile,
 			"--output-dir",
 			outDir,
 		]);
 		expect(result.code).toBe(0);
 		const hydrologyRaw = await readFile(join(outDir, "hydrology.json"), "utf8");
 		const hydrology = JSON.parse(hydrologyRaw);
-		const dryTiles = hydrology.tiles.filter(
-			(tile) => tile?.hydrology?.lakeMask === false,
+		const tilesWithoutSurface = hydrology.tiles.filter(
+			(tile) => tile?.hydrology?.lakeBasinId === null,
 		);
-		expect(dryTiles.length).toBeGreaterThan(0);
-		dryTiles.forEach((tile) => {
+		expect(tilesWithoutSurface.length).toBeGreaterThan(0);
+		tilesWithoutSurface.forEach((tile) => {
 			expect(tile.hydrology).not.toHaveProperty("waterSurfaceH");
 			expect(tile.hydrology).not.toHaveProperty("waterDepth");
 		});
+	});
+
+	it("omits basin-level waterSurfaceH for dry basins in both features and lake accounting", async () => {
+		const dir = await makeTempDir();
+		const outDir = join(dir, "debug");
+		const paramsFile = join(dir, "params.json");
+		await writeFile(
+			paramsFile,
+			`${JSON.stringify(
+				{
+					hydrology: {
+						lakeFill: {
+							wetnessScale: 0,
+						},
+					},
+				},
+				null,
+				2,
+			)}\n`,
+			"utf8",
+		);
+		const result = await runCli([
+			"debug",
+			"--seed",
+			"42",
+			"--width",
+			"16",
+			"--height",
+			"16",
+			"--params",
+			paramsFile,
+			"--output-dir",
+			outDir,
+		]);
+		expect(result.code).toBe(0);
+
+		const topography = JSON.parse(
+			await readFile(join(outDir, "topography.json"), "utf8"),
+		);
+		const hydrology = JSON.parse(await readFile(join(outDir, "hydrology.json"), "utf8"));
+		const featureBasins = topography.features.basins;
+		const accountingBasins = hydrology.lakeAccounting.basins;
+		expect(featureBasins.length).toBeGreaterThan(0);
+		expect(accountingBasins.length).toBeGreaterThan(0);
+
+		const featureById = new Map(featureBasins.map((basin) => [basin.id, basin]));
+		accountingBasins.forEach((basin) => {
+			const featureBasin = featureById.get(basin.id);
+			expect(featureBasin).toBeDefined();
+			expect(Object.hasOwn(featureBasin, "waterSurfaceH")).toBe(false);
+			expect(Object.hasOwn(basin, "waterSurfaceH")).toBe(false);
+		});
+	});
+
+	it("emits waterSurfaceH and waterDepth on tiles with basin surface even when lakeMask is false", async () => {
+		const dir = await makeTempDir();
+		const outDir = join(dir, "debug");
+		const result = await runCli([
+			"debug",
+			"--seed",
+			"42",
+			"--width",
+			"16",
+			"--height",
+			"16",
+			"--output-dir",
+			outDir,
+		]);
+		expect(result.code).toBe(0);
+		const hydrologyRaw = await readFile(join(outDir, "hydrology.json"), "utf8");
+		const hydrology = JSON.parse(hydrologyRaw);
+		const subsurfaceTiles = hydrology.tiles.filter(
+			(tile) =>
+				tile?.hydrology?.lakeMask === false &&
+				tile?.hydrology?.lakeBasinId !== null &&
+				Object.hasOwn(tile.hydrology, "waterSurfaceH"),
+		);
+		expect(subsurfaceTiles.length).toBeGreaterThan(0);
+		subsurfaceTiles.forEach((tile) => {
+			expect(tile.hydrology).toHaveProperty("waterDepth");
+		});
+	});
+
+	it("emits basin-level waterSurfaceH for wet basins without drift between features and lake accounting", async () => {
+		const dir = await makeTempDir();
+		const outDir = join(dir, "debug");
+		const result = await runCli([
+			"debug",
+			"--seed",
+			"42",
+			"--width",
+			"16",
+			"--height",
+			"16",
+			"--output-dir",
+			outDir,
+		]);
+		expect(result.code).toBe(0);
+
+		const topography = JSON.parse(
+			await readFile(join(outDir, "topography.json"), "utf8"),
+		);
+		const hydrology = JSON.parse(await readFile(join(outDir, "hydrology.json"), "utf8"));
+		const featureBasins = topography.features.basins;
+		const accountingBasins = hydrology.lakeAccounting.basins;
+		expect(featureBasins.length).toBeGreaterThan(0);
+		expect(accountingBasins.length).toBeGreaterThan(0);
+
+		const featureById = new Map(featureBasins.map((basin) => [basin.id, basin]));
+		let wetBasinCount = 0;
+		accountingBasins.forEach((basin) => {
+			const featureBasin = featureById.get(basin.id);
+			expect(featureBasin).toBeDefined();
+			const featureHas = Object.hasOwn(featureBasin, "waterSurfaceH");
+			const accountingHas = Object.hasOwn(basin, "waterSurfaceH");
+			expect(accountingHas).toBe(featureHas);
+			if (accountingHas) {
+				wetBasinCount += 1;
+				expect(typeof basin.waterSurfaceH).toBe("number");
+				expect(typeof featureBasin.waterSurfaceH).toBe("number");
+			}
+		});
+		expect(wetBasinCount).toBeGreaterThan(0);
 	});
 });

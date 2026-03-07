@@ -152,6 +152,20 @@ function assertFeatureNodesShape(
 				`Invalid feature node at index ${i} in "${inputFilePath}" under "features.${kind}". Expected string values in "childIds".`,
 			);
 		}
+		if (
+			kind === "basins" &&
+			Object.prototype.hasOwnProperty.call(node, "waterSurfaceH")
+		) {
+			const waterSurfaceH = node.waterSurfaceH;
+			const validWaterSurface =
+				waterSurfaceH === null ||
+				(typeof waterSurfaceH === "number" && Number.isFinite(waterSurfaceH));
+			if (!validWaterSurface) {
+				throw new InputValidationError(
+					`Invalid feature node at index ${i} in "${inputFilePath}" under "features.${kind}". Expected finite numeric or null "waterSurfaceH" when present.`,
+				);
+			}
+		}
 	}
 }
 

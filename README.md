@@ -204,6 +204,7 @@ Each feature node includes:
 - `kind` (`leaf` or `composite`)
 - `parentId`
 - `childIds`
+- `waterSurfaceH` (basins only; present when basin-level water surface is available)
 - `birthH`
 - `mergeH` (`null` when unresolved in-map)
 - `persistence`
