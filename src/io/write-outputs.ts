@@ -117,7 +117,7 @@ function buildHydrologyDebugTiles(
 			...(hasWaterSurface
 				? { waterSurfaceH: hydrologyMaps.waterSurfaceH[index] }
 				: {}),
-			...(waterDepth > 0 ? { waterDepth } : {}),
+			...(hasWaterSurface ? { waterDepth } : {}),
 			...(inRange && lakeAccounting
 				? { lakeBasinId: lakeAccounting.tileLakeBasinId[index] || null }
 				: { lakeBasinId: null }),

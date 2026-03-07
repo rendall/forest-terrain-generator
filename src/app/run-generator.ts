@@ -230,7 +230,7 @@ function buildTileHydrologyPayload(
 		...(hasWaterSurface
 			? { waterSurfaceH: hydrology.maps.waterSurfaceH[index] }
 			: {}),
-		...(waterDepth > 0 ? { waterDepth } : {}),
+		...(hasWaterSurface ? { waterDepth } : {}),
 	};
 }
 
