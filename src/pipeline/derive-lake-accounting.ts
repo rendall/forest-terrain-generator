@@ -365,7 +365,9 @@ export const deriveLakeAccounting = (
 		);
 		const upwardRate = externalInflow + childUpwardRate;
 		const excessWetnessScale = Math.max(0, wetnessScale - gateOpenWetness);
-		const allocatedVolume =
+		// presentedVolume is the incoming/pre-spill volume that reaches this basin
+		// once strict child-connect gating is applied.
+		const presentedVolume =
 			excessWetnessScale > CHILD_CONNECT_EPS ? excessWetnessScale * upwardRate : 0;
 		const mergeH =
 			typeof basin.mergeH === "number" && Number.isFinite(basin.mergeH)
@@ -373,10 +375,12 @@ export const deriveLakeAccounting = (
 				: 1;
 		const basinTiles = expandedTileSets.get(basinId) ?? new Set<number>();
 		const spillCapacity = computeSpillCapacity(h, basinTiles, mergeH);
-		const fillRatio =
-			spillCapacity > 0
-				? allocatedVolume / spillCapacity
-				: Number.POSITIVE_INFINITY;
+		// allocatedVolume is retained/capped basin volume only.
+		const allocatedVolume = Math.min(
+			presentedVolume,
+			Math.max(0, spillCapacity),
+		);
+		const fillRatio = spillCapacity > 0 ? allocatedVolume / spillCapacity : 0;
 		const isFilled = allocatedVolume >= spillCapacity;
 		let waterSurfaceH: number | null = null;
 		if (allocatedVolume > WATER_SURFACE_EPS) {
@@ -394,7 +398,8 @@ export const deriveLakeAccounting = (
 				);
 			}
 		}
-		const overflowExcess = Math.max(0, allocatedVolume - spillCapacity);
+		// overflowExcess carries all water that does not remain retained in this basin.
+		const overflowExcess = Math.max(0, presentedVolume - spillCapacity);
 		const spillWetness =
 			spillCapacity <= WATER_SURFACE_EPS
 				? gateOpenWetness
@@ -407,7 +412,7 @@ export const deriveLakeAccounting = (
 		if (
 			isOrdinaryRoot &&
 			spillCapacity <= CHILD_CONNECT_EPS &&
-			allocatedVolume > CHILD_CONNECT_EPS
+			presentedVolume > CHILD_CONNECT_EPS
 		) {
 			throw new Error(
 				`Lake accounting invariant error: root basin "${basinId}" reaches impossible full-map fill state.`,
@@ -436,8 +441,9 @@ export const deriveLakeAccounting = (
 			waterSurfaceH,
 			externalInflow,
 			// totalInflow remains raw (external + child overflow); child gating applies
-			// only through allocatedVolume V(B) for fill and overflow computations.
+			// only through presentedVolume for fill/overflow computations.
 			totalInflow,
+			// allocatedVolume is retained basin volume after spill capping.
 			allocatedVolume,
 			spillCapacity,
 			fillRatio,

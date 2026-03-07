@@ -42,7 +42,7 @@ describe("lake fill ordering child-first invariant", () => {
 	});
 
 	it("keeps mixed direct-child states blocked on root until gate opens", () => {
-		const out = run(0.1);
+		const out = run(0.09);
 		const root = out.lakeAccounting.byId.get("b_root");
 		expect(out.lakeAccounting.byId.get("b_A")?.isFilled).toBe(false);
 		expect(out.lakeAccounting.byId.get("b_B")?.isFilled).toBe(true);

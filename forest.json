@@ -3794,11 +3794,11 @@
         "fa": 8,
         "faN": 0.05000000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.10658800601959229
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.008635610342025757
       }
     },
     {
@@ -3830,11 +3830,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.07704681158065796
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.03817680478096008
       }
     },
     {
@@ -3866,11 +3866,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.08077043294906616
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.03445318341255188
       }
     },
     {
@@ -3902,11 +3902,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.09945309162139893
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.015770524740219116
       }
     },
     {
@@ -5045,11 +5045,11 @@
         "fa": 6,
         "faN": 0.03750000149011612,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.020468533039093018
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.09475508332252502
       }
     },
     {
@@ -5080,11 +5080,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.026108384132385254
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -5116,11 +5114,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.00805366039276123
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -5152,11 +5148,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.0016629695892333984
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.11356064677238464
       }
     },
     {
@@ -5188,11 +5184,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.08137738704681396
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.03384622931480408
       }
     },
     {
@@ -6297,11 +6293,9 @@
         "fa": 3,
         "faN": 0.01875000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.03249061107635498
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -6426,11 +6420,11 @@
         "fa": 3,
         "faN": 0.01875000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.004498839378356934
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.11072477698326111
       }
     },
     {
@@ -6462,11 +6456,11 @@
         "fa": 4,
         "faN": 0.02500000037252903,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.05184495449066162
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.06337866187095642
       }
     },
     {
@@ -6498,11 +6492,11 @@
         "fa": 3,
         "faN": 0.01875000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.06635838747024536
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.04886522889137268
       }
     },
     {
@@ -7660,11 +7654,9 @@
         "fa": 3,
         "faN": 0.01875000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.025195598602294922
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -7696,11 +7688,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.011135637760162354
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.10408797860145569
       }
     },
     {
@@ -7732,11 +7724,11 @@
         "fa": 3,
         "faN": 0.01875000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.024928271770477295
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.09029534459114075
       }
     },
     {
@@ -7768,11 +7760,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.07455772161483765
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.040665894746780396
       }
     },
     {
@@ -8955,11 +8947,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.023804128170013428
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.09141948819160461
       }
     },
     {
@@ -8991,11 +8983,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.09405744075775146
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.021166175603866577
       }
     },
     {
@@ -10186,11 +10178,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.0010241270065307617
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.11419948935508728
       }
     },
     {
@@ -10222,11 +10214,11 @@
         "fa": 8,
         "faN": 0.05000000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.10997706651687622
+        "waterSurfaceH": 0.6689737439155579,
+        "waterDepth": -0.005246550310403109
       }
     },
     {
@@ -11420,11 +11412,11 @@
         "fa": 5,
         "faN": 0.03125,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.04438924789428711
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.07083436846733093
       }
     },
     {
@@ -11456,11 +11448,11 @@
         "fa": 5,
         "faN": 0.03125,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.08677244186401367
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.02845117449760437
       }
     },
     {
@@ -12635,11 +12627,9 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.0423353910446167
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -12671,11 +12661,11 @@
         "fa": 4,
         "faN": 0.02500000037252903,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.019990086555480957
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.09523352980613708
       }
     },
     {
@@ -12706,11 +12696,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.050218284130096436
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -12742,11 +12730,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.0194094181060791
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.09581419825553894
       }
     },
     {
@@ -12778,11 +12766,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.039486706256866455
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.07573691010475159
       }
     },
     {
@@ -13802,11 +13790,9 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.012182891368865967
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -13873,11 +13859,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.03264355659484863
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -13908,11 +13892,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.05485498905181885
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -13943,11 +13925,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.021125495433807373
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -13978,11 +13958,9 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.01808851957321167
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -14013,11 +13991,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.014119744300842285
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -14049,9 +14025,7 @@
         "isStream": false,
         "lakeMask": false,
         "waterClass": 0,
-        "lakeBasinId": "b_00055",
-        "waterSurfaceH": 0.43260979652404785,
-        "waterDepth": -0.41395020484924316
+        "lakeBasinId": null
       }
     },
     {
@@ -14083,11 +14057,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.005299687385559082
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.10992392897605896
       }
     },
     {
@@ -15001,9 +14975,7 @@
         "isStream": false,
         "lakeMask": false,
         "waterClass": 0,
-        "lakeBasinId": "b_00055",
-        "waterSurfaceH": 0.43260979652404785,
-        "waterDepth": -0.4064425826072693
+        "lakeBasinId": null
       }
     },
     {
@@ -15036,9 +15008,7 @@
         "isStream": false,
         "lakeMask": false,
         "waterClass": 0,
-        "lakeBasinId": "b_00055",
-        "waterSurfaceH": 0.43260979652404785,
-        "waterDepth": -0.40986478328704834
+        "lakeBasinId": null
       }
     },
     {
@@ -15069,11 +15039,9 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.02744579315185547
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -15212,11 +15180,9 @@
         "fa": 4,
         "faN": 0.02500000037252903,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.02633225917816162
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -15370,11 +15336,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.017841219902038574
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.09738239645957947
       }
     },
     {
@@ -16241,11 +16207,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.015803635120391846
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -16276,11 +16240,9 @@
         "fa": 4,
         "faN": 0.02500000037252903,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.029993414878845215
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -16311,11 +16273,9 @@
         "fa": 9,
         "faN": 0.05624999850988388,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.04198956489562988
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -16346,11 +16306,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.03699225187301636
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -16453,11 +16411,9 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.022496700286865234
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -16608,11 +16564,9 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.022144615650177002
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -16644,11 +16598,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.08788782358169556
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.027335792779922485
       }
     },
     {
@@ -17538,11 +17492,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.0036367177963256836
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -17573,11 +17525,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.025111794471740723
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -17680,11 +17630,9 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.005078911781311035
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -17837,9 +17785,7 @@
         "isStream": false,
         "lakeMask": false,
         "waterClass": 0,
-        "lakeBasinId": "b_00055",
-        "waterSurfaceH": 0.43260979652404785,
-        "waterDepth": -0.40828967094421387
+        "lakeBasinId": null
       }
     },
     {
@@ -17871,11 +17817,11 @@
         "fa": 4,
         "faN": 0.02500000037252903,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.02387380599975586
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.09134981036186218
       }
     },
     {
@@ -17907,11 +17853,11 @@
         "fa": 7,
         "faN": 0.04374999925494194,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.054718077182769775
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.06050553917884827
       }
     },
     {
@@ -18761,11 +18707,9 @@
         "fa": 3,
         "faN": 0.01875000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.021271228790283203
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -18796,11 +18740,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.036436259746551514
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -19057,11 +18999,9 @@
         "fa": 3,
         "faN": 0.01875000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.005754649639129639
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -19092,11 +19032,9 @@
         "fa": 6,
         "faN": 0.03750000149011612,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.03432649374008179
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -19127,11 +19065,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.025121212005615234
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -19162,11 +19098,9 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.04545176029205322
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -19198,11 +19132,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.07833230495452881
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.03689131140708923
       }
     },
     {
@@ -19975,11 +19909,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.008601784706115723
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -20082,11 +20014,9 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.0331113338470459
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -20389,11 +20319,11 @@
         "fa": 5,
         "faN": 0.03125,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.0008211731910705566
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.11440244317054749
       }
     },
     {
@@ -20425,11 +20355,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.10054945945739746
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.014674156904220581
       }
     },
     {
@@ -21165,11 +21095,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.017885923385620117
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -21200,11 +21128,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.04428321123123169
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -21235,11 +21161,9 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.0183374285697937
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -21545,9 +21469,7 @@
         "isStream": false,
         "lakeMask": false,
         "waterClass": 0,
-        "lakeBasinId": "b_00055",
-        "waterSurfaceH": 0.43260979652404785,
-        "waterDepth": -0.4097718596458435
+        "lakeBasinId": null
       }
     },
     {
@@ -21578,11 +21500,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.009149372577667236
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -21614,11 +21534,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.029712915420532227
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.08551070094108582
       }
     },
     {
@@ -22306,9 +22226,7 @@
         "isStream": false,
         "lakeMask": false,
         "waterClass": 0,
-        "lakeBasinId": "b_00055",
-        "waterSurfaceH": 0.43260979652404785,
-        "waterDepth": -0.4116215109825134
+        "lakeBasinId": null
       }
     },
     {
@@ -22339,11 +22257,9 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.03634375333786011
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -22375,11 +22291,11 @@
         "fa": 5,
         "faN": 0.03125,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.047801077365875244
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.0674225389957428
       }
     },
     {
@@ -22410,11 +22326,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.053824663162231445
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -22446,9 +22360,7 @@
         "isStream": false,
         "lakeMask": false,
         "waterClass": 0,
-        "lakeBasinId": "b_00055",
-        "waterSurfaceH": 0.43260979652404785,
-        "waterDepth": -0.41456717252731323
+        "lakeBasinId": null
       }
     },
     {
@@ -22814,11 +22726,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.03818619251251221
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.07703742384910583
       }
     },
     {
@@ -23511,11 +23423,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.05201476812362671
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -23547,11 +23457,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.07014364004135132
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.045079976320266724
       }
     },
     {
@@ -23583,11 +23493,11 @@
         "fa": 12,
         "faN": 0.07500000298023224,
         "isStream": true,
-        "lakeMask": true,
+        "lakeMask": false,
         "waterClass": 2,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.07432568073272705
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.04089793562889099
       }
     },
     {
@@ -23619,11 +23529,11 @@
         "fa": 3,
         "faN": 0.01875000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.004149913787841797
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.11107370257377625
       }
     },
     {
@@ -23776,9 +23686,7 @@
         "isStream": false,
         "lakeMask": false,
         "waterClass": 0,
-        "lakeBasinId": "b_00055",
-        "waterSurfaceH": 0.43260979652404785,
-        "waterDepth": -0.41299331188201904
+        "lakeBasinId": null
       }
     },
     {
@@ -23809,11 +23717,9 @@
         "fa": 6,
         "faN": 0.03750000149011612,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.013393044471740723
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -23996,11 +23902,9 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.026868581771850586
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -24032,11 +23936,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.04124253988265991
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.07398107647895813
       }
     },
     {
@@ -24735,11 +24639,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.03575336933135986
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.07947024703025818
       }
     },
     {
@@ -24771,11 +24675,11 @@
         "fa": 17,
         "faN": 0.10625000298023224,
         "isStream": true,
-        "lakeMask": true,
+        "lakeMask": false,
         "waterClass": 2,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.08620673418045044
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.029016882181167603
       }
     },
     {
@@ -24807,11 +24711,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.06646531820297241
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.04875829815864563
       }
     },
     {
@@ -24843,11 +24747,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.024472355842590332
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.09075126051902771
       }
     },
     {
@@ -24879,9 +24783,7 @@
         "isStream": false,
         "lakeMask": false,
         "waterClass": 0,
-        "lakeBasinId": "b_00055",
-        "waterSurfaceH": 0.43260979652404785,
-        "waterDepth": -0.4146931767463684
+        "lakeBasinId": null
       }
     },
     {
@@ -25003,9 +24905,7 @@
         "isStream": false,
         "lakeMask": false,
         "waterClass": 0,
-        "lakeBasinId": "b_00055",
-        "waterSurfaceH": 0.43260979652404785,
-        "waterDepth": -0.4172285795211792
+        "lakeBasinId": null
       }
     },
     {
@@ -25036,11 +24936,9 @@
         "fa": 5,
         "faN": 0.03125,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.019534766674041748
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -25071,11 +24969,9 @@
         "fa": 10,
         "faN": 0.0625,
         "isStream": true,
-        "lakeMask": true,
+        "lakeMask": false,
         "waterClass": 2,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.019704878330230713
+        "lakeBasinId": null
       }
     },
     {
@@ -25197,9 +25093,7 @@
         "isStream": false,
         "lakeMask": false,
         "waterClass": 0,
-        "lakeBasinId": "b_00055",
-        "waterSurfaceH": 0.43260979652404785,
-        "waterDepth": -0.4076877236366272
+        "lakeBasinId": null
       }
     },
     {
@@ -25231,11 +25125,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.017017245292663574
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.09820637106895447
       }
     },
     {
@@ -25267,11 +25161,11 @@
         "fa": 3,
         "faN": 0.01875000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.09560465812683105
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.019618958234786987
       }
     },
     {
@@ -25959,11 +25853,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.058063626289367676
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.057159990072250366
       }
     },
     {
@@ -25995,11 +25889,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.08501660823822021
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.030207008123397827
       }
     },
     {
@@ -26031,11 +25925,11 @@
         "fa": 21,
         "faN": 0.13124999403953552,
         "isStream": true,
-        "lakeMask": true,
+        "lakeMask": false,
         "waterClass": 2,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.10622745752334595
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.008996158838272095
       }
     },
     {
@@ -26067,11 +25961,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.08294874429702759
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.032274872064590454
       }
     },
     {
@@ -26103,11 +25997,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.016779601573944092
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.09844401478767395
       }
     },
     {
@@ -26138,11 +26032,9 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.03466391563415527
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -26173,11 +26065,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.024645566940307617
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -26208,11 +26098,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.021263420581817627
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -26244,11 +26132,11 @@
         "fa": 3,
         "faN": 0.01875000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.013656318187713623
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.10156729817390442
       }
     },
     {
@@ -26280,11 +26168,11 @@
         "fa": 17,
         "faN": 0.10625000298023224,
         "isStream": true,
-        "lakeMask": true,
+        "lakeMask": false,
         "waterClass": 2,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.022717773914337158
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.09250584244728088
       }
     },
     {
@@ -26316,11 +26204,11 @@
         "fa": 3,
         "faN": 0.01875000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.019096076488494873
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.09612753987312317
       }
     },
     {
@@ -26351,11 +26239,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.012609362602233887
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -26416,11 +26302,9 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.013274848461151123
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -26451,11 +26335,9 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.05260390043258667
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -26487,11 +26369,11 @@
         "fa": 3,
         "faN": 0.01875000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.045060932636260986
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.07016268372535706
       }
     },
     {
@@ -27208,11 +27090,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.061074018478393555
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.05414959788322449
       }
     },
     {
@@ -27356,11 +27238,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.060608744621276855
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.054614871740341187
       }
     },
     {
@@ -27392,11 +27274,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.052163004875183105
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.06306061148643494
       }
     },
     {
@@ -27428,11 +27310,11 @@
         "fa": 3,
         "faN": 0.01875000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.06554847955703735
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.04967513680458069
       }
     },
     {
@@ -27464,11 +27346,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.10031962394714355
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.014903992414474487
       }
     },
     {
@@ -27538,11 +27420,11 @@
         "fa": 4,
         "faN": 0.02500000037252903,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.09576791524887085
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.019455701112747192
       }
     },
     {
@@ -27574,11 +27456,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.06524169445037842
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.049981921911239624
       }
     },
     {
@@ -27610,11 +27492,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.00746607780456543
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.10775753855705261
       }
     },
     {
@@ -27645,11 +27527,9 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
-        "lakeBasinId": "b_00052",
-        "waterSurfaceH": 0.8390523791313171,
-        "waterDepth": 0.007079899311065674
+        "lakeMask": false,
+        "waterClass": 0,
+        "lakeBasinId": null
       }
     },
     {
@@ -27681,11 +27561,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.011739790439605713
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.10348382592201233
       }
     },
     {
@@ -27717,11 +27597,11 @@
         "fa": 3,
         "faN": 0.01875000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.04548710584640503
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.06973651051521301
       }
     },
     {
@@ -27753,11 +27633,11 @@
         "fa": 3,
         "faN": 0.01875000074505806,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.08128893375396729
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.03393468260765076
       }
     },
     {
@@ -28846,11 +28726,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.08216100931167603
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.03306260704994202
       }
     },
     {
@@ -28882,11 +28762,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.0592159628868103
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.05600765347480774
       }
     },
     {
@@ -28918,11 +28798,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.014706075191497803
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.10051754117012024
       }
     },
     {
@@ -28954,11 +28834,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.06779336929321289
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.04743024706840515
       }
     },
     {
@@ -28990,11 +28870,11 @@
         "fa": 5,
         "faN": 0.03125,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.09800529479980469
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.017218321561813354
       }
     },
     {
@@ -29026,11 +28906,11 @@
         "fa": 9,
         "faN": 0.05624999850988388,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.11342895030975342
+        "waterSurfaceH": 0.6689737439155579,
+        "waterDepth": -0.0017946665175259113
       }
     },
     {
@@ -30112,11 +29992,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.10791760683059692
+        "waterSurfaceH": 0.6689737439155579,
+        "waterDepth": -0.0073060099966824055
       }
     },
     {
@@ -30148,11 +30028,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.0817873477935791
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.03343626856803894
       }
     },
     {
@@ -30184,11 +30064,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.047621309757232666
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.06760230660438538
       }
     },
     {
@@ -30220,11 +30100,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.09243136644363403
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.02279224991798401
       }
     },
     {
@@ -30256,11 +30136,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.09759879112243652
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.01762482523918152
       }
     },
     {
@@ -30293,11 +30173,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.08032393455505371
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.03489968180656433
       }
     },
     {
@@ -31372,8 +31252,8 @@
         "lakeMask": true,
         "waterClass": 1,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.11534303426742554
+        "waterSurfaceH": 0.6689737439155579,
+        "waterDepth": 0.00011941746925003827
       }
     },
     {
@@ -31405,11 +31285,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.06520074605941772
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.05002287030220032
       }
     },
     {
@@ -31441,11 +31321,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.05903613567352295
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.05618748068809509
       }
     },
     {
@@ -31551,11 +31431,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.09493863582611084
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.020284980535507202
       }
     },
     {
@@ -31587,11 +31467,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.1127973198890686
+        "waterSurfaceH": 0.6689737439155579,
+        "waterDepth": -0.002426296938210726
       }
     },
     {
@@ -32529,11 +32409,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.10489881038665771
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.010324805974960327
       }
     },
     {
@@ -32565,11 +32445,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.09002763032913208
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.025195986032485962
       }
     },
     {
@@ -32601,11 +32481,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.08633184432983398
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.028891772031784058
       }
     },
     {
@@ -32637,11 +32517,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.04520601034164429
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.07001760601997375
       }
     },
     {
@@ -32673,11 +32553,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.053521037101745605
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.061702579259872437
       }
     },
     {
@@ -32784,11 +32664,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.09281164407730103
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.022411972284317017
       }
     },
     {
@@ -32820,11 +32700,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.11066591739654541
+        "waterSurfaceH": 0.6689737439155579,
+        "waterDepth": -0.004557699430733919
       }
     },
     {
@@ -32859,8 +32739,8 @@
         "lakeMask": true,
         "waterClass": 1,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.1172783374786377
+        "waterSurfaceH": 0.6689737439155579,
+        "waterDepth": 0.002054720651358366
       }
     },
     {
@@ -33758,11 +33638,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.04930830001831055
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.0659153163433075
       }
     },
     {
@@ -33795,11 +33675,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.008211255073547363
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.10701236128807068
       }
     },
     {
@@ -33831,11 +33711,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.020770251750946045
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.094453364610672
       }
     },
     {
@@ -33868,11 +33748,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.00005036592483520508
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.11517325043678284
       }
     },
     {
@@ -33904,11 +33784,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.03706324100494385
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.0781603753566742
       }
     },
     {
@@ -34015,11 +33895,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.08856046199798584
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.026663154363632202
       }
     },
     {
@@ -34052,11 +33932,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.08917427062988281
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.02604934573173523
       }
     },
     {
@@ -34995,11 +34875,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.09039980173110962
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.024823814630508423
       }
     },
     {
@@ -35031,11 +34911,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.05190092325210571
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.06332269310951233
       }
     },
     {
@@ -35067,11 +34947,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.06597405672073364
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.0492495596408844
       }
     },
     {
@@ -35103,11 +34983,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.08588814735412598
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.029335469007492065
       }
     },
     {
@@ -35139,11 +35019,11 @@
         "fa": 2,
         "faN": 0.012500000186264515,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.11334580183029175
+        "waterSurfaceH": 0.6689737439155579,
+        "waterDepth": -0.0018778149969875813
       }
     },
     {
@@ -35178,8 +35058,8 @@
         "lakeMask": true,
         "waterClass": 1,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.11569136381149292
+        "waterSurfaceH": 0.6689737439155579,
+        "waterDepth": 0.0004677470133174211
       }
     },
     {
@@ -35214,8 +35094,8 @@
         "lakeMask": true,
         "waterClass": 1,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.11537367105484009
+        "waterSurfaceH": 0.6689737439155579,
+        "waterDepth": 0.00015005425666458905
       }
     },
     {
@@ -35250,8 +35130,8 @@
         "lakeMask": true,
         "waterClass": 1,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.1183740496635437
+        "waterSurfaceH": 0.6689737439155579,
+        "waterDepth": 0.003150432836264372
       }
     },
     {
@@ -35284,11 +35164,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.08057188987731934
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.034651726484298706
       }
     },
     {
@@ -35320,11 +35200,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.10141122341156006
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.013812392950057983
       }
     },
     {
@@ -36267,8 +36147,8 @@
         "lakeMask": true,
         "waterClass": 1,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.11536300182342529
+        "waterSurfaceH": 0.6689737439155579,
+        "waterDepth": 0.00013938502524979413
       }
     },
     {
@@ -36303,8 +36183,8 @@
         "lakeMask": true,
         "waterClass": 1,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.11809980869293213
+        "waterSurfaceH": 0.6689737439155579,
+        "waterDepth": 0.0028761918656527996
       }
     },
     {
@@ -36413,11 +36293,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.10783696174621582
+        "waterSurfaceH": 0.6689737439155579,
+        "waterDepth": -0.007386655081063509
       }
     },
     {
@@ -36450,11 +36330,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.10368990898132324
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.0115337073802948
       }
     },
     {
@@ -36523,11 +36403,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.11308783292770386
+        "waterSurfaceH": 0.6689737439155579,
+        "waterDepth": -0.002135783899575472
       }
     },
     {
@@ -36559,11 +36439,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.11521792411804199
+        "waterSurfaceH": 0.6689737439155579,
+        "waterDepth": -0.000005692680133506656
       }
     },
     {
@@ -37775,11 +37655,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.09493488073348999
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.020288735628128052
       }
     },
     {
@@ -37812,11 +37692,11 @@
         "fa": 1,
         "faN": 0.0062500000931322575,
         "isStream": false,
-        "lakeMask": true,
-        "waterClass": 1,
+        "lakeMask": false,
+        "waterClass": 0,
         "lakeBasinId": "b_00050",
-        "waterSurfaceH": 0.7841973900794983,
-        "waterDepth": 0.08685219287872314
+        "waterSurfaceH": 0.6689738035202026,
+        "waterDepth": -0.028371423482894897
       }
     },
     {
@@ -41766,7 +41646,7 @@
         ],
         "childSpillFromTileId": 326,
         "parentContactTileId": 357,
-        "waterSurfaceH": 0.7841973900794983
+        "waterSurfaceH": 0.668973773281536
       },
       {
         "id": "b_00051",
@@ -41877,8 +41757,7 @@
           450
         ],
         "childSpillFromTileId": 416,
-        "parentContactTileId": 384,
-        "waterSurfaceH": 0.8390523791313171
+        "parentContactTileId": 384
       },
       {
         "id": "b_00053",
@@ -41966,8 +41845,7 @@
           648
         ],
         "childSpillFromTileId": 160,
-        "parentContactTileId": 192,
-        "waterSurfaceH": 0.4326098084567574
+        "parentContactTileId": 192
       },
       {
         "id": "b_00056",
@@ -43495,7 +43373,7 @@
   "paramOverrides": {
     "hydrology": {
       "lakeFill": {
-        "wetnessScale": 0.5
+        "wetnessScale": 0.4
       }
     }
   }
