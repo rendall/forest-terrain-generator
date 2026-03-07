@@ -12,6 +12,7 @@ export interface TopographicFeatureNode {
   kind: TopographicFeatureKind;
   parentId: string | null;
   childIds: string[];
+  waterSurfaceH?: number | null;
   birthH: number;
   mergeH: number | null;
   persistence: number | null;

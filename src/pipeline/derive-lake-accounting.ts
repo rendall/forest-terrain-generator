@@ -10,6 +10,7 @@ export interface BasinLakeAccounting {
 	id: string;
 	parentId: string | null;
 	childIds: string[];
+	waterSurfaceH: number | null;
 	externalInflow: number;
 	totalInflow: number;
 	spillCapacity: number;
@@ -303,6 +304,7 @@ export const deriveLakeAccounting = (
 				? scaledInflow / spillCapacity
 				: Number.POSITIVE_INFINITY;
 		const isFilled = scaledInflow >= spillCapacity;
+		const waterSurfaceH = isFilled ? mergeH : null;
 		const overflowExcess = Math.max(0, scaledInflow - spillCapacity);
 		const isOrdinaryRoot = basin.parentId === null && basin.mergeH === null;
 		if (
@@ -334,6 +336,7 @@ export const deriveLakeAccounting = (
 			id: basinId,
 			parentId: basin.parentId ?? null,
 			childIds,
+			waterSurfaceH,
 			externalInflow,
 			// totalInflow remains raw (external + child overflow); child gating applies
 			// through effectiveInflow for fill and overflow computations.
@@ -351,7 +354,7 @@ export const deriveLakeAccounting = (
 				Number.isInteger(basin.spillOutTileId)
 					? basin.spillOutTileId
 					: null,
-		});
+			});
 	}
 
 	const tileLakeDepth = new Float32Array(shape.size);
@@ -361,10 +364,10 @@ export const deriveLakeAccounting = (
 		if (!accounting.isFilled) {
 			continue;
 		}
-		const level =
-			typeof accounting.mergeH === "number" && Number.isFinite(accounting.mergeH)
-				? accounting.mergeH
-				: 1;
+		const level = accounting.waterSurfaceH;
+		if (typeof level !== "number" || !Number.isFinite(level)) {
+			continue;
+		}
 		const tiles = expandedTileSets.get(basinId);
 		if (!tiles) {
 			continue;

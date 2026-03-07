@@ -234,6 +234,20 @@ function buildTileHydrologyPayload(
 	};
 }
 
+function attachBasinWaterSurface(
+	basinFeatures: ReturnType<typeof deriveTopographicStructure>["basinFeatures"],
+	hydrology: ReturnType<typeof deriveHydrology>,
+): ReturnType<typeof deriveTopographicStructure>["basinFeatures"] {
+	const lakeAccountingById = hydrology.lakeAccounting.byId;
+	return basinFeatures.map((basin) => {
+		const waterSurfaceH = lakeAccountingById.get(basin.id)?.waterSurfaceH;
+		if (typeof waterSurfaceH === "number" && Number.isFinite(waterSurfaceH)) {
+			return { ...basin, waterSurfaceH };
+		}
+		return basin;
+	});
+}
+
 function buildReplayEnvelope(
 	sourceEnvelope: TerrainEnvelope,
 	sourceTilesByIndex: JsonObject[],
@@ -343,12 +357,20 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			},
 			replayParams,
 		);
+		const basinFeaturesWithWaterSurface = attachBasinWaterSurface(
+			topographyStructure.basinFeatures,
+			hydrology,
+		);
+		const outputTopographyStructure = {
+			...topographyStructure,
+			basinFeatures: basinFeaturesWithWaterSurface,
+		};
 		const replayEnvelope = buildReplayEnvelope(
 			envelope,
 			replayGrid.tilesByIndex,
 			replayGrid.h,
 			replayParams,
-			topographyStructure,
+			outputTopographyStructure,
 			hydrology,
 		);
 		await writeModeOutputs(
@@ -360,7 +382,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			validated.force,
 			hydrology.streamCoherence,
 			hydrology.lakeCoherence,
-			topographyStructure,
+			outputTopographyStructure,
 			hydrology.diagnostics,
 			hydrology.maps,
 			hydrology.lakeAccounting,
@@ -397,12 +419,20 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		},
 		validated.params,
 	);
+	const basinFeaturesWithWaterSurface = attachBasinWaterSurface(
+		topographyStructure.basinFeatures,
+		hydrology,
+	);
+	const outputTopographyStructure = {
+		...topographyStructure,
+		basinFeatures: basinFeaturesWithWaterSurface,
+	};
 	const elevation = buildElevationParams(validated.params);
 	const elevationSpan = elevation.h1 - elevation.h0;
 
 	const envelope: TerrainEnvelope = buildEnvelopeSkeleton();
 	envelope.features = {
-		basins: topographyStructure.basinFeatures,
+		basins: outputTopographyStructure.basinFeatures,
 		peaks: topographyStructure.peakFeatures,
 	};
 
@@ -446,7 +476,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		validated.force,
 		hydrology.streamCoherence,
 		hydrology.lakeCoherence,
-		topographyStructure,
+		outputTopographyStructure,
 		hydrology.diagnostics,
 		hydrology.maps,
 		hydrology.lakeAccounting,
