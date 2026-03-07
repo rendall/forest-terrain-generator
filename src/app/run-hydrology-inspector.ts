@@ -7,12 +7,12 @@ import {
 	type HydrologyMapsSoA,
 	WATER_CLASS_CODE,
 } from "../domain/hydrology.js";
-import type { JsonObject } from "../domain/types.js";
 import { createGridShape, type GridShape } from "../domain/topography.js";
+import type { JsonObject } from "../domain/types.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
 import { normalizeAndValidateParamsObject } from "../io/read-params.js";
-import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
 import { deepMerge } from "../lib/deep-merge.js";
+import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
 import { validateReplayTopographyGrid } from "../lib/validate-replay-tiles.js";
 import { deriveHydrology } from "../pipeline/derive-hydrology.js";
 import type { BasinLakeAccounting } from "../pipeline/derive-lake-accounting.js";
@@ -47,6 +47,9 @@ interface HydrologyContext {
 	maps: HydrologyMapsSoA;
 	lakeAccountingBasins: BasinLakeAccounting[];
 	tileLakeBasinId: string[];
+	tileWaterDepth: Float32Array;
+	tileHasWaterDepth: Uint8Array;
+	tileHasWaterSurface: Uint8Array;
 }
 
 interface VisualizationNeeds {
@@ -62,10 +65,26 @@ export interface HydrologyInspectorStats {
 	tileCount: number;
 	sinkCount: number;
 	streamTileCount: number;
+	/** Count of tiles where resolved waterDepth is > 0 (standing surface water). */
+	standingSurfaceWaterTileCount: number;
+	/** Count of tiles with basin-governed water state (`lakeBasinId` present or `waterSurfaceH` present). */
+	waterGovernedTileCount: number;
+	/** Count of tiles where resolved waterDepth is < 0 (subsurface influence). */
+	subsurfaceInfluenceTileCount: number;
+	/** Count of tiles where inspector derived waterDepth from `waterSurfaceH - h` because explicit `waterDepth` was absent. */
+	depthDerivedFromSurfaceCount: number;
 	lakeTileCount: number;
 	lakeDepth: {
 		max: number;
 		mean: number;
+	};
+	waterClassCounts: {
+		none: number;
+		lake: number;
+		stream: number;
+		marsh: number;
+		pool: number;
+		other: number;
 	};
 	basins: {
 		total: number;
@@ -337,6 +356,9 @@ const loadContextFromDebugArtifacts = async (
 
 	const maps = createHydrologyMaps(shape);
 	const tileLakeBasinId = new Array<string>(shape.size).fill("");
+	const tileWaterDepth = new Float32Array(shape.size);
+	const tileHasWaterDepth = new Uint8Array(shape.size);
+	const tileHasWaterSurface = new Uint8Array(shape.size);
 	const requiredFiles = new Set<string>();
 	if (needs.needFd) {
 		requiredFiles.add("fd.json");
@@ -425,12 +447,19 @@ const loadContextFromDebugArtifacts = async (
 			maps.isStream[index] =
 				streamFromRoot === true || streamFromHydrology === true ? 1 : 0;
 			const lakeMask = readBoolean(hydrology?.lakeMask);
+			// Legacy compatibility only: inspector semantics are driven by waterDepth/waterSurfaceH/lakeBasinId.
 			if (lakeMask !== null) {
 				maps.lakeMask[index] = lakeMask ? 1 : 0;
 			}
 			const waterSurfaceH = readFiniteNumber(hydrology?.waterSurfaceH);
 			if (waterSurfaceH !== null) {
 				maps.waterSurfaceH[index] = waterSurfaceH;
+				tileHasWaterSurface[index] = 1;
+			}
+			const waterDepth = readFiniteNumber(hydrology?.waterDepth);
+			if (waterDepth !== null) {
+				tileWaterDepth[index] = waterDepth;
+				tileHasWaterDepth[index] = 1;
 			}
 			const waterClass = readFiniteNumber(hydrology?.waterClass);
 			if (
@@ -459,9 +488,7 @@ const loadContextFromDebugArtifacts = async (
 				maps.faN[index] = faN;
 			}
 			const lakeBasinId =
-				typeof hydrology?.lakeBasinId === "string"
-					? hydrology.lakeBasinId
-					: "";
+				typeof hydrology?.lakeBasinId === "string" ? hydrology.lakeBasinId : "";
 			tileLakeBasinId[index] = lakeBasinId;
 		});
 
@@ -479,6 +506,9 @@ const loadContextFromDebugArtifacts = async (
 			maps,
 			lakeAccountingBasins,
 			tileLakeBasinId,
+			tileWaterDepth,
+			tileHasWaterDepth,
+			tileHasWaterSurface,
 		};
 	}
 
@@ -489,6 +519,9 @@ const loadContextFromDebugArtifacts = async (
 		maps,
 		lakeAccountingBasins: [],
 		tileLakeBasinId,
+		tileWaterDepth,
+		tileHasWaterDepth,
+		tileHasWaterSurface,
 	};
 };
 
@@ -505,9 +538,9 @@ const buildContextFromEnvelope = async (
 	const envelope = await readTerrainEnvelopeFile(inputPath);
 	const envelopeParamOverrides = isObject(envelope.paramOverrides)
 		? normalizeAndValidateParamsObject(
-			deepMerge({}, envelope.paramOverrides as JsonObject),
-			"envelope.paramOverrides",
-		)
+				deepMerge({}, envelope.paramOverrides as JsonObject),
+				"envelope.paramOverrides",
+			)
 		: undefined;
 	const hasEnvelopeHydrologyFields =
 		envelope.tiles.length > 0 &&
@@ -552,6 +585,15 @@ const buildContextFromEnvelope = async (
 			maps: derived.maps,
 			lakeAccountingBasins: derived.lakeAccounting.basins,
 			tileLakeBasinId: derived.lakeAccounting.tileLakeBasinId,
+			tileWaterDepth: Float32Array.from(derived.lakeAccounting.tileLakeDepth),
+			tileHasWaterDepth: Uint8Array.from(
+				derived.lakeAccounting.tileLakeBasinId,
+				(id) => (id.length > 0 ? 1 : 0),
+			),
+			tileHasWaterSurface: Uint8Array.from(
+				derived.lakeAccounting.tileLakeBasinId,
+				(id) => (id.length > 0 ? 1 : 0),
+			),
 		};
 	}
 
@@ -600,6 +642,9 @@ const buildContextFromEnvelope = async (
 
 	const maps = createHydrologyMaps(shape);
 	const tileLakeBasinId = new Array<string>(shape.size).fill("");
+	const tileWaterDepth = new Float32Array(shape.size);
+	const tileHasWaterDepth = new Uint8Array(shape.size);
+	const tileHasWaterSurface = new Uint8Array(shape.size);
 	for (const tile of envelope.tiles) {
 		if (
 			typeof tile.x !== "number" ||
@@ -621,6 +666,7 @@ const buildContextFromEnvelope = async (
 		const isStream = readBoolean(hydrology?.isStream);
 		const lakeMask = readBoolean(hydrology?.lakeMask);
 		const waterSurfaceH = readFiniteNumber(hydrology?.waterSurfaceH);
+		const waterDepth = readFiniteNumber(hydrology?.waterDepth);
 		const waterClass = readFiniteNumber(hydrology?.waterClass);
 		if (fd !== null && Number.isInteger(fd) && fd >= 0 && fd <= 255) {
 			maps.fd[index] = fd;
@@ -632,11 +678,17 @@ const buildContextFromEnvelope = async (
 			maps.faN[index] = faN;
 		}
 		maps.isStream[index] = isStream === true ? 1 : 0;
+		// Legacy compatibility only: inspector semantics are driven by waterDepth/waterSurfaceH/lakeBasinId.
 		if (lakeMask !== null) {
 			maps.lakeMask[index] = lakeMask ? 1 : 0;
 		}
 		if (waterSurfaceH !== null) {
 			maps.waterSurfaceH[index] = waterSurfaceH;
+			tileHasWaterSurface[index] = 1;
+		}
+		if (waterDepth !== null) {
+			tileWaterDepth[index] = waterDepth;
+			tileHasWaterDepth[index] = 1;
 		}
 		if (
 			waterClass !== null &&
@@ -655,6 +707,9 @@ const buildContextFromEnvelope = async (
 		maps,
 		lakeAccountingBasins: [],
 		tileLakeBasinId,
+		tileWaterDepth,
+		tileHasWaterDepth,
+		tileHasWaterSurface,
 	};
 };
 
@@ -820,6 +875,27 @@ const quantileFromSorted = (sortedValues: number[], q: number): number => {
 	return sortedValues[index] ?? 0;
 };
 
+const resolveTileWaterDepth = (
+	context: HydrologyContext,
+	index: number,
+): number | null => {
+	// Precedence is strict by contract:
+	// 1) explicit waterDepth (authoritative output),
+	// 2) derived depth from waterSurfaceH - h,
+	// 3) undefined when neither signal exists.
+	if ((context.tileHasWaterDepth[index] ?? 0) === 1) {
+		const value = context.tileWaterDepth[index];
+		return Number.isFinite(value) ? value : null;
+	}
+	if ((context.tileHasWaterSurface[index] ?? 0) === 1) {
+		const waterSurfaceH = context.maps.waterSurfaceH[index] ?? 0;
+		const tileH = context.h[index] ?? 0;
+		const derived = waterSurfaceH - tileH;
+		return Number.isFinite(derived) ? derived : null;
+	}
+	return null;
+};
+
 const computeStats = (
 	context: HydrologyContext,
 	topN: number,
@@ -832,9 +908,21 @@ const computeStats = (
 	const faNSum = faNValues.reduce((sum, value) => sum + value, 0);
 	let sinkCount = 0;
 	let streamTileCount = 0;
+	let standingSurfaceWaterTileCount = 0;
+	let waterGovernedTileCount = 0;
+	let subsurfaceInfluenceTileCount = 0;
+	let depthDerivedFromSurfaceCount = 0;
 	let lakeTileCount = 0;
 	let lakeDepthSum = 0;
 	let lakeDepthMax = 0;
+	const waterClassCounts = {
+		none: 0,
+		lake: 0,
+		stream: 0,
+		marsh: 0,
+		pool: 0,
+		other: 0,
+	};
 	const fdHistogram: Record<string, number> = {};
 	for (let i = 0; i < context.shape.size; i += 1) {
 		const fd = context.maps.fd[i] ?? DIR8_NONE;
@@ -846,12 +934,42 @@ const computeStats = (
 		if ((context.maps.isStream[i] ?? 0) === 1) {
 			streamTileCount += 1;
 		}
-		if ((context.maps.lakeMask[i] ?? 0) === 1) {
+		const waterClass = context.maps.waterClass[i] ?? WATER_CLASS_CODE.none;
+		switch (waterClass) {
+			case WATER_CLASS_CODE.none:
+				waterClassCounts.none += 1;
+				break;
+			case WATER_CLASS_CODE.lake:
+				waterClassCounts.lake += 1;
+				break;
+			case WATER_CLASS_CODE.stream:
+				waterClassCounts.stream += 1;
+				break;
+			case WATER_CLASS_CODE.marsh:
+				waterClassCounts.marsh += 1;
+				break;
+			case WATER_CLASS_CODE.pool:
+				waterClassCounts.pool += 1;
+				break;
+			default:
+				waterClassCounts.other += 1;
+				break;
+		}
+		const hasGoverningBasin = (context.tileLakeBasinId[i] ?? "").length > 0;
+		const hasWaterSurface = (context.tileHasWaterSurface[i] ?? 0) === 1;
+		if (hasGoverningBasin || hasWaterSurface) {
+			waterGovernedTileCount += 1;
+		}
+		const depth = resolveTileWaterDepth(context, i);
+		if (depth !== null && (context.tileHasWaterDepth[i] ?? 0) === 0) {
+			depthDerivedFromSurfaceCount += 1;
+		}
+		if (depth !== null && depth < 0) {
+			subsurfaceInfluenceTileCount += 1;
+		}
+		if (depth !== null && depth > 0) {
+			standingSurfaceWaterTileCount += 1;
 			lakeTileCount += 1;
-			const depth = Math.max(
-				0,
-				(context.maps.waterSurfaceH[i] ?? 0) - (context.h[i] ?? 0),
-			);
 			lakeDepthSum += depth;
 			lakeDepthMax = Math.max(lakeDepthMax, depth);
 		}
@@ -894,11 +1012,16 @@ const computeStats = (
 		tileCount: context.shape.size,
 		sinkCount,
 		streamTileCount,
+		standingSurfaceWaterTileCount,
+		waterGovernedTileCount,
+		subsurfaceInfluenceTileCount,
+		depthDerivedFromSurfaceCount,
 		lakeTileCount,
 		lakeDepth: {
 			max: lakeDepthMax,
 			mean: lakeTileCount > 0 ? lakeDepthSum / lakeTileCount : 0,
 		},
+		waterClassCounts,
 		basins: {
 			total: context.lakeAccountingBasins.length,
 			sink: sinkBasinCount,
