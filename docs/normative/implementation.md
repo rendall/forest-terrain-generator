@@ -1,35 +1,59 @@
-# Checklist implementation
+# Implementation Conventions
 
-You have a checklist and have been tasked with following it. These are those instructions:
+Use this as a practical execution guide when implementing an approved checklist.
 
-## Setup
+## Start State
 
-Run `npm test` and ensure that everything runs green. If tests fail, stop and ask for instructions, unless those failures are already known and explicitly accepted for this implementation.
+- Run relevant tests to understand baseline behavior.
+- Check `git status`.
+- If unrelated files are dirty and scope is unclear, pause and confirm before proceeding.
+- Checkout a new branch with a descriptive name `<verb>-<optional adjective>-<noun>`
 
-Check git status. If the git working tree is dirty, stop and ask what to do. The instruction very well may be to continue with the dirty tree.
+## Working Loop
 
-If the working tree is dirty and you are instructed to continue, do not stage or commit unrelated changes. Only stage files required for the checklist item being implemented.
+1. Take the first incomplete checklist item (or its required prerequisite).
+2. If the item is not covered by any previous behavior slice or test item, write a light-weight fail-first test.
+3. Implement that single atomic item.
+4. Run targeted tests for touched scope.
+5. Run broader/full tests at natural checkpoints.
+6. Ensure tests run green. Do not change tests. If the test is bad, then stop.
+7. Mark completed checklist item.
+8. You MUST commit this change with a short, imperative message.
+9. Return to step 1 until all items are checked.
 
-Check out a new git branch with a name that reflects the goal of the implementation, in the form `<verb>-<noun>` or possibly `<verb>-<adjective>-<noun>`.
+## Commit Granularity (Agent-Critical)
 
-## Loop
+- Default rule: **one commit per atomic checklist item**.
+- Do not batch multiple checklist items into one commit by default.
+- If two or more checklist items must be implemented together due to a hard technical dependency, treat them as one explicit slice and list the item IDs in the commit message body.
+- If bundling is based on convenience (not hard dependency), stop and ask for confirmation before proceeding.
 
-Stop with any questions, or if implementing the task requires expanding beyond the scope of what was agreed in the checklist.
+Required commit message structure for checklist-driven work:
 
-- Choose the first unchecked item of the checklist.
-- If the first unchecked item depends on another unchecked item, complete the prerequisite item first.
-- If the item involves a behavioral or code change, then:
-  - Write a unit test that assumes the code has been changed. This test is expected to fail.
-  - Commit that change with the message `Test <item copy>`, but edit for clarity and length. The message must be no more than 50 characters. If longer explanation is needed, you may add a git body.
-- If the item is a pure refactor with no behavior change, you may skip the failing-test step for that item.
-- If the item is docs-only or non-code, skip the failing-test step for that item.
-- Implement the checklist item as written.
-- Run tests after implementation.
-  - You may run a targeted test command for the touched scope first.
-  - Run full `npm test` at the end of the loop iteration or at the next natural checkpoint.
-- If a test does not pass, avoid changing the test, particularly if it is a regression elsewhere.
-  - Continue implementing the checklist item until tests run green.
-  - If it is necessary to change the test, print an acknowledgement and continue.
-- Check off the item with `[x]`.
-- Commit all changes with an imperative message `<item copy>` edited for clarity and length less than 50 characters. You may add a git body.
-- Continue with the loop until all items are completed.
+- Subject: imperative summary.
+- Body:
+  - `Checklist:` `<ITEM-ID>`
+  - or `Checklist:` `<ITEM-ID-1>, <ITEM-ID-2>` (hard-dependency slice only)
+
+## Commit Hygiene
+
+- Keep commits scoped to the current atomic item (or approved hard-dependency slice).
+- Avoid bundling unrelated file changes.
+- Keep message lines concise and descriptive.
+
+## Hydrology Reset Track Note
+
+For work explicitly scoped to hydrology reset:
+
+- Legacy hydrology parity is not required.
+- Legacy hydrology golden failures can be expected during transition.
+- Do not add compatibility patches only to satisfy legacy baselines.
+- Treat non-hydrology regressions as blockers unless explicitly accepted.
+
+## Stop Conditions
+
+Pause and confirm direction when:
+
+- Proposed changes exceed checklist scope.
+- Governance or contract references conflict.
+- You find unexpected repo state that could risk unrelated work.

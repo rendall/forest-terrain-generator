@@ -1,3 +1,8 @@
+import type {
+  TerrainFeatureCollection,
+  TopographicFeatureNode
+} from "./topographic-features.js";
+
 export interface GridShape {
   width: number;
   height: number;
@@ -11,21 +16,33 @@ export interface BaseMapsSoA {
   v: Float32Array;
 }
 
-export interface TopographyMapsSoA extends BaseMapsSoA {
-  slopeMag: Float32Array;
-  aspectDeg: Float32Array;
-  landform: Uint8Array;
+export type TopographyMapsSoA = BaseMapsSoA;
+
+export interface TopographicStructureMapsSoA {
+  shape: GridShape;
+  basinMinIdx: Int32Array;
+  basinMinH: Float32Array;
+  basinSpillH: Float32Array;
+  basinPersistence: Float32Array;
+  basinDepthLike: Float32Array;
+  peakMaxIdx: Int32Array;
+  peakMaxH: Float32Array;
+  peakSaddleH: Float32Array;
+  peakPersistence: Float32Array;
+  peakRiseLike: Float32Array;
+  basinLike: Uint8Array;
+  ridgeLike: Uint8Array;
+  basinFeatures: TopographicFeatureNode[];
+  peakFeatures: TopographicFeatureNode[];
+  tileFeatureIds: string[][];
+  tileActiveFeatureIds: string[][];
 }
 
-export const LANDFORM_CODE = {
-  flat: 0,
-  slope: 1,
-  ridge: 2,
-  valley: 3,
-  basin: 4
-} as const;
-
-export type LandformCode = (typeof LANDFORM_CODE)[keyof typeof LANDFORM_CODE];
+export interface TopographicFeatureOutputMaps {
+  features: TerrainFeatureCollection;
+  tileFeatureIds: string[][];
+  tileActiveFeatureIds: string[][];
+}
 
 export function createGridShape(width: number, height: number): GridShape {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
@@ -58,10 +75,27 @@ export function createBaseMaps(shape: GridShape): BaseMapsSoA {
 }
 
 export function createTopographyMaps(shape: GridShape): TopographyMapsSoA {
+  return createBaseMaps(shape);
+}
+
+export function createTopographicStructureMaps(shape: GridShape): TopographicStructureMapsSoA {
   return {
-    ...createBaseMaps(shape),
-    slopeMag: new Float32Array(shape.size),
-    aspectDeg: new Float32Array(shape.size),
-    landform: new Uint8Array(shape.size)
+    shape,
+    basinMinIdx: new Int32Array(shape.size).fill(-1),
+    basinMinH: new Float32Array(shape.size).fill(Number.NaN),
+    basinSpillH: new Float32Array(shape.size).fill(Number.NaN),
+    basinPersistence: new Float32Array(shape.size).fill(Number.NaN),
+    basinDepthLike: new Float32Array(shape.size).fill(Number.NaN),
+    peakMaxIdx: new Int32Array(shape.size).fill(-1),
+    peakMaxH: new Float32Array(shape.size).fill(Number.NaN),
+    peakSaddleH: new Float32Array(shape.size).fill(Number.NaN),
+    peakPersistence: new Float32Array(shape.size).fill(Number.NaN),
+    peakRiseLike: new Float32Array(shape.size).fill(Number.NaN),
+    basinLike: new Uint8Array(shape.size),
+    ridgeLike: new Uint8Array(shape.size),
+    basinFeatures: [],
+    peakFeatures: [],
+    tileFeatureIds: Array.from({ length: shape.size }, () => [] as string[]),
+    tileActiveFeatureIds: Array.from({ length: shape.size }, () => [] as string[])
   };
 }

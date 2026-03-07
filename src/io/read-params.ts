@@ -50,6 +50,429 @@ function validateUnknownKeys(
   }
 }
 
+function finiteNumberOrUndefined(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function lakeCoherencePath(key: string): string {
+  return `params.hydrology.lakeCoherence.${key}`;
+}
+
+function expectOptionalBoolean(value: unknown, path: string): void {
+  if (value !== undefined && typeof value !== "boolean") {
+    throw new InputValidationError(
+      `Invalid params value "${path}". Expected a boolean.`
+    );
+  }
+}
+
+function expectOptionalEnum(value: unknown, path: string, allowed: string[]): void {
+  if (value === undefined) {
+    return;
+  }
+  if (typeof value !== "string" || !allowed.includes(value)) {
+    throw new InputValidationError(
+      `Invalid params value "${path}". Expected one of: ${allowed.join(", ")}.`
+    );
+  }
+}
+
+function expectOptionalNonNegativeInteger(value: unknown, path: string): void {
+  if (value === undefined) {
+    return;
+  }
+  if (typeof value !== "number" || !Number.isFinite(value) || !Number.isInteger(value) || value < 0) {
+    throw new InputValidationError(
+      `Invalid params value "${path}". Expected a non-negative integer.`
+    );
+  }
+}
+
+function expectOptionalNonNegativeNumber(value: unknown, path: string): void {
+  if (value === undefined) {
+    return;
+  }
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    throw new InputValidationError(
+      `Invalid params value "${path}". Expected a non-negative number.`
+    );
+  }
+}
+
+function expectOptionalRangeNumber(
+  value: unknown,
+  path: string,
+  min: number,
+  max: number
+): void {
+  if (value === undefined) {
+    return;
+  }
+  if (typeof value !== "number" || !Number.isFinite(value) || value < min || value > max) {
+    throw new InputValidationError(
+      `Invalid params value "${path}". Expected a number in [${min}, ${max}].`
+    );
+  }
+}
+
+function noisePath(noiseKey: "heightNoise" | "roughnessNoise" | "vegVarianceNoise", key: string): string {
+  return `params.${noiseKey}.${key}`;
+}
+
+function validateNoiseNormalizeParams(
+  params: JsonObject,
+  noiseKey: "heightNoise" | "roughnessNoise" | "vegVarianceNoise"
+): void {
+  if (!isObject(params[noiseKey])) {
+    return;
+  }
+
+  const noise = params[noiseKey] as JsonObject;
+  const normalize = noise.normalize;
+  if (normalize === undefined) {
+    return;
+  }
+
+  if (!isObject(normalize)) {
+    throw new InputValidationError(
+      `Invalid params value "params.${noiseKey}.normalize". Expected an object.`
+    );
+  }
+
+  const value = normalize as JsonObject;
+  expectOptionalBoolean(value.enabled, noisePath(noiseKey, "normalize.enabled"));
+  expectOptionalEnum(
+    value.mode,
+    noisePath(noiseKey, "normalize.mode"),
+    ["minmax", "quantile"]
+  );
+  expectOptionalRangeNumber(
+    value.lowerQ,
+    noisePath(noiseKey, "normalize.lowerQ"),
+    0,
+    1
+  );
+  expectOptionalRangeNumber(
+    value.upperQ,
+    noisePath(noiseKey, "normalize.upperQ"),
+    0,
+    1
+  );
+  const lowerQ = finiteNumberOrUndefined(value.lowerQ);
+  const upperQ = finiteNumberOrUndefined(value.upperQ);
+  if (
+    lowerQ !== undefined &&
+    upperQ !== undefined &&
+    lowerQ >= upperQ
+  ) {
+    throw new InputValidationError(
+      `Invalid params value "${noisePath(noiseKey, "normalize.lowerQ")}/${noisePath(noiseKey, "normalize.upperQ")}". Expected lowerQ < upperQ.`
+    );
+  }
+}
+
+function validateLakeCoherenceParams(params: JsonObject): void {
+  if (!isObject(params.hydrology)) {
+    return;
+  }
+
+  const hydrology = params.hydrology as JsonObject;
+  const lakeCoherence = hydrology.lakeCoherence;
+  if (lakeCoherence === undefined) {
+    return;
+  }
+
+  if (!isObject(lakeCoherence)) {
+    throw new InputValidationError(
+      'Invalid params value "params.hydrology.lakeCoherence". Expected an object.'
+    );
+  }
+
+  const value = lakeCoherence as JsonObject;
+  expectOptionalBoolean(value.enabled, lakeCoherencePath("enabled"));
+  expectOptionalNonNegativeInteger(
+    value.microLakeMaxSize,
+    lakeCoherencePath("microLakeMaxSize")
+  );
+  expectOptionalEnum(
+    value.microLakeMode,
+    lakeCoherencePath("microLakeMode"),
+    ["merge", "remove", "leave"]
+  );
+  expectOptionalBoolean(value.bridgeEnabled, lakeCoherencePath("bridgeEnabled"));
+  expectOptionalNonNegativeInteger(
+    value.maxBridgeDistance,
+    lakeCoherencePath("maxBridgeDistance")
+  );
+  expectOptionalBoolean(value.repairSingletons, lakeCoherencePath("repairSingletons"));
+  expectOptionalBoolean(
+    value.enforceBoundaryRealism,
+    lakeCoherencePath("enforceBoundaryRealism")
+  );
+  expectOptionalNonNegativeNumber(value.boundaryEps, lakeCoherencePath("boundaryEps"));
+  expectOptionalEnum(
+    value.boundaryRepairMode,
+    lakeCoherencePath("boundaryRepairMode"),
+    ["trim_first"]
+  );
+}
+
+function hydrologyStructurePath(key: string): string {
+  return `params.hydrology.structure.${key}`;
+}
+
+function validateHydrologyStructureParams(params: JsonObject): void {
+  if (!isObject(params.hydrology)) {
+    return;
+  }
+
+  const hydrology = params.hydrology as JsonObject;
+  const structure = hydrology.structure;
+  if (structure === undefined) {
+    return;
+  }
+  if (!isObject(structure)) {
+    throw new InputValidationError(
+      'Invalid params value "params.hydrology.structure". Expected an object.'
+    );
+  }
+
+  const value = structure as JsonObject;
+  expectOptionalBoolean(value.enabled, hydrologyStructurePath("enabled"));
+  expectOptionalRangeNumber(
+    value.sinkPersistenceRouteMax,
+    hydrologyStructurePath("sinkPersistenceRouteMax"),
+    0,
+    1
+  );
+  expectOptionalRangeNumber(
+    value.sinkPersistenceLakeMin,
+    hydrologyStructurePath("sinkPersistenceLakeMin"),
+    0,
+    1
+  );
+  expectOptionalNonNegativeInteger(
+    value.basinTileCountMinLake,
+    hydrologyStructurePath("basinTileCountMinLake")
+  );
+  expectOptionalBoolean(
+    value.inflowGateEnabled,
+    hydrologyStructurePath("inflowGateEnabled")
+  );
+  expectOptionalRangeNumber(
+    value.lakeInflowMin,
+    hydrologyStructurePath("lakeInflowMin"),
+    0,
+    1
+  );
+  expectOptionalEnum(
+    value.unresolvedLakePolicy,
+    hydrologyStructurePath("unresolvedLakePolicy"),
+    ["deny", "allow_with_strict_gates", "allow"]
+  );
+  expectOptionalBoolean(
+    value.spillAwareRouteThroughEnabled,
+    hydrologyStructurePath("spillAwareRouteThroughEnabled")
+  );
+  expectOptionalRangeNumber(
+    value.retentionWeight,
+    hydrologyStructurePath("retentionWeight"),
+    0,
+    1
+  );
+  expectOptionalEnum(
+    value.retentionNormalization,
+    hydrologyStructurePath("retentionNormalization"),
+    ["quantile", "minmax", "raw"]
+  );
+}
+
+function topographyStructurePath(key: string): string {
+  return `params.topography.structure.${key}`;
+}
+
+function validateTopographyStructureParams(params: JsonObject): void {
+  if (params.topography === undefined) {
+    return;
+  }
+  if (!isObject(params.topography)) {
+    throw new InputValidationError(
+      'Invalid params value "params.topography". Expected an object.'
+    );
+  }
+  const topography = params.topography as JsonObject;
+  const structure = topography.structure;
+  if (structure === undefined) {
+    return;
+  }
+
+  if (!isObject(structure)) {
+    throw new InputValidationError(
+      'Invalid params value "params.topography.structure". Expected an object.'
+    );
+  }
+
+  const value = structure as JsonObject;
+  expectOptionalBoolean(value.enabled, topographyStructurePath("enabled"));
+  expectOptionalEnum(
+    value.connectivity,
+    topographyStructurePath("connectivity"),
+    ["dir8"]
+  );
+  expectOptionalNonNegativeNumber(value.hEps, topographyStructurePath("hEps"));
+  expectOptionalNonNegativeNumber(
+    value.persistenceMin,
+    topographyStructurePath("persistenceMin")
+  );
+  expectOptionalEnum(
+    value.unresolvedPolicy,
+    topographyStructurePath("unresolvedPolicy"),
+    ["nan", "max_h"]
+  );
+}
+
+function validateElevationParams(params: JsonObject): void {
+  if (params.elevation === undefined) {
+    return;
+  }
+  if (!isObject(params.elevation)) {
+    throw new InputValidationError(
+      'Invalid params value "params.elevation". Expected an object.'
+    );
+  }
+
+  const elevation = params.elevation as JsonObject;
+  const h0 = elevation.h0;
+  const h1 = elevation.h1;
+  if (h0 !== undefined && !(typeof h0 === "number" && Number.isFinite(h0))) {
+    throw new InputValidationError(
+      'Invalid params value "params.elevation.h0". Expected a finite number.'
+    );
+  }
+  if (h1 !== undefined && !(typeof h1 === "number" && Number.isFinite(h1))) {
+    throw new InputValidationError(
+      'Invalid params value "params.elevation.h1". Expected a finite number.'
+    );
+  }
+  if (
+    typeof h0 === "number" &&
+    typeof h1 === "number" &&
+    Number.isFinite(h0) &&
+    Number.isFinite(h1) &&
+    h1 <= h0
+  ) {
+    throw new InputValidationError(
+      'Invalid params value "params.elevation.h0/h1". Expected h1 > h0.'
+    );
+  }
+}
+
+function normalizeLegacyHydrologyAliases(params: JsonObject): void {
+  if (!isObject(params.hydrology)) {
+    return;
+  }
+
+  const hydrology = params.hydrology as JsonObject;
+  const legacyAccum = hydrology.streamAccumThreshold;
+  const legacySlope = hydrology.streamMinSlopeThreshold;
+
+  if (
+    legacyAccum !== undefined &&
+    !(typeof legacyAccum === "number" && Number.isFinite(legacyAccum))
+  ) {
+    throw new InputValidationError(
+      'Invalid params value "params.hydrology.streamAccumThreshold". Expected a finite number.'
+    );
+  }
+  if (
+    legacySlope !== undefined &&
+    !(typeof legacySlope === "number" && Number.isFinite(legacySlope))
+  ) {
+    throw new InputValidationError(
+      'Invalid params value "params.hydrology.streamMinSlopeThreshold". Expected a finite number.'
+    );
+  }
+
+  const streamThresholds = isObject(hydrology.streamThresholds)
+    ? (hydrology.streamThresholds as JsonObject)
+    : {};
+
+  const sourceAccumMin = finiteNumberOrUndefined(streamThresholds.sourceAccumMin);
+  if (sourceAccumMin === undefined && legacyAccum !== undefined) {
+    streamThresholds.sourceAccumMin = legacyAccum;
+  }
+
+  const minSlope = finiteNumberOrUndefined(streamThresholds.minSlope);
+  if (minSlope === undefined && legacySlope !== undefined) {
+    streamThresholds.minSlope = legacySlope;
+  }
+
+  if (Object.keys(streamThresholds).length > 0) {
+    hydrology.streamThresholds = streamThresholds;
+  }
+
+  delete hydrology.streamAccumThreshold;
+  delete hydrology.streamMinSlopeThreshold;
+}
+
+
+function hydrologyPath(key: string): string {
+  return `params.hydrology.${key}`;
+}
+
+function hydrologyLakeFillPath(key: string): string {
+  return `params.hydrology.lakeFill.${key}`;
+}
+
+function validateHydrologyLakeFillParams(params: JsonObject): void {
+  if (!isObject(params.hydrology)) {
+    return;
+  }
+  const hydrology = params.hydrology as JsonObject;
+  const lakeFill = hydrology.lakeFill;
+  if (lakeFill === undefined) {
+    return;
+  }
+  if (!isObject(lakeFill)) {
+    throw new InputValidationError(
+      'Invalid params value "params.hydrology.lakeFill". Expected an object.'
+    );
+  }
+  const value = lakeFill as JsonObject;
+  expectOptionalNonNegativeNumber(
+    value.wetnessScale,
+    hydrologyLakeFillPath("wetnessScale")
+  );
+}
+
+function validateHydrologyPipelineParams(params: JsonObject): void {
+  if (!isObject(params.hydrology)) {
+    return;
+  }
+  const hydrology = params.hydrology as JsonObject;
+  expectOptionalEnum(hydrology.sinkMode, hydrologyPath("sinkMode"), ["strict_local", "overflow_guided"]);
+  expectOptionalNonNegativeInteger(hydrology.faThreshold, hydrologyPath("faThreshold"));
+  expectOptionalRangeNumber(hydrology.faQuantileThreshold, hydrologyPath("faQuantileThreshold"), 0, 1);
+}
+
+export function normalizeAndValidateParamsObject(
+  params: JsonObject,
+  pathPrefix: string = "params"
+): JsonObject {
+  normalizeLegacyHydrologyAliases(params);
+  validateUnknownKeys(params, PARAMS_VALIDATION_SCHEMA, pathPrefix);
+  validateNoiseNormalizeParams(params, "heightNoise");
+  validateNoiseNormalizeParams(params, "roughnessNoise");
+  validateNoiseNormalizeParams(params, "vegVarianceNoise");
+  validateLakeCoherenceParams(params);
+  validateHydrologyStructureParams(params);
+  validateHydrologyLakeFillParams(params);
+  validateHydrologyPipelineParams(params);
+  validateTopographyStructureParams(params);
+  validateElevationParams(params);
+  return params;
+}
+
 export async function readParamsFile(
   paramsPath: string | undefined,
   cwd: string
@@ -135,7 +558,7 @@ export async function readParamsFile(
       : undefined;
   const force = typeof parsed.force === "boolean" ? parsed.force : undefined;
   const params = isObject(parsed.params) ? parsed.params : parsed;
-  validateUnknownKeys(params, PARAMS_VALIDATION_SCHEMA, "params");
+  normalizeAndValidateParamsObject(params, "params");
 
   return {
     seed,

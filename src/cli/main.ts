@@ -1,7 +1,16 @@
 #!/usr/bin/env node
 import { Command, CommanderError } from "commander";
 import { runGenerator } from "../app/run-generator.js";
-import { exitCodeForCategory, normalizeCliError } from "../domain/errors.js";
+import {
+	type HydrologyVizMode,
+	runHydrologyInspectorVisualization,
+} from "../app/run-hydrology-inspector.js";
+import { runSee } from "../app/run-see.js";
+import {
+	exitCodeForCategory,
+	InputValidationError,
+	normalizeCliError,
+} from "../domain/errors.js";
 import type { CliArgs, Mode } from "../domain/types.js";
 import { validateArgv } from "./argv-validation.js";
 
@@ -72,6 +81,53 @@ async function runMode(mode: Mode, options: CliArgs): Promise<void> {
 	});
 }
 
+interface SeeOptions {
+	inputFile?: string;
+	outputFile?: string;
+	layer?: "h" | "r" | "v" | "landforms" | "landscape";
+	landforms?: boolean;
+	landscape?: boolean;
+	force?: boolean;
+}
+
+interface DebugOptions {
+	seed?: string;
+	width?: number;
+	height?: number;
+	params?: string;
+	inputFile?: string;
+	mapH?: string;
+	mapR?: string;
+	mapV?: string;
+	outputFile?: string;
+	outputDir?: string;
+	debugOutputFile?: string;
+	force?: boolean;
+	hydrologyViz?: string;
+	hydrologyInspectorStats?: boolean;
+	hydrologyInspectorStatsFile?: string;
+}
+
+const assertHydrologyVizMode = (
+	raw: string | undefined,
+): HydrologyVizMode | undefined => {
+	if (typeof raw === "undefined") {
+		return undefined;
+	}
+	if (
+		raw !== "fa" &&
+		raw !== "fd" &&
+		raw !== "fa-normalized" &&
+		raw !== "hydrology" &&
+		raw !== "all"
+	) {
+		throw new InputValidationError(
+			`Invalid --hydrology-viz mode "${raw}". Expected one of: fa|fd|fa-normalized|hydrology|all.`,
+		);
+	}
+	return raw;
+};
+
 const program = new Command();
 program
 	.name("forest-terrain-generator")
@@ -91,7 +147,85 @@ addCommonInputOptions(
 
 addCommonInputOptions(
 	program.command("debug").description("Emit debug artifacts"),
-).action(async (options) => runMode("debug", toArgs(options)));
+)
+	.option(
+		"--hydrology-viz <mode>",
+		"Write hydrology visualization(s) into --output-dir after debug artifacts are generated",
+	)
+	.option(
+		"--hydrology-inspector-stats",
+		"Write hydrology inspector stats JSON after debug artifacts are generated",
+		false,
+	)
+	.option(
+		"--hydrology-inspector-stats-file <path>",
+		"Optional hydrology inspector stats output path override",
+	)
+	.action(async (options: DebugOptions) => {
+		const hydrologyViz = assertHydrologyVizMode(options.hydrologyViz);
+		const statsEnabled = options.hydrologyInspectorStats === true;
+		if (options.hydrologyInspectorStatsFile && !statsEnabled) {
+			throw new InputValidationError(
+				"--hydrology-inspector-stats-file requires --hydrology-inspector-stats.",
+			);
+		}
+		await runMode("debug", toArgs(options));
+		const vizEnabled = typeof hydrologyViz === "string";
+		if (!vizEnabled && !statsEnabled) {
+			return;
+		}
+		if (!options.outputDir) {
+			throw new InputValidationError(
+				"Missing --output-dir for hydrology visualization/stat output in debug mode.",
+			);
+		}
+		await runHydrologyInspectorVisualization({
+			cwd: process.cwd(),
+			args: {
+				inputJsonPath: options.debugOutputFile,
+				sinkMode: "strict_local",
+				viz: hydrologyViz,
+				debugDirPath: options.outputDir,
+				stats: statsEnabled,
+				statsFilePath: options.hydrologyInspectorStatsFile,
+				force: options.force ?? false,
+			},
+		});
+	});
+
+program
+	.command("see")
+	.description(
+		"Render a grayscale topography image from terrain envelope JSON (PGM output)",
+	)
+	.requiredOption("--input-file <path>", "Path to source terrain envelope JSON")
+	.requiredOption("--output-file <path>", "Path to output image file (.pgm)")
+	.option(
+		"--layer <layer>",
+		"Topography layer to render (h|r|v|landforms)",
+		"h",
+	)
+	.option(
+		"--landforms",
+		"Render topography structure classes as uniform grayscale values",
+		false,
+	)
+	.option("--landscape", "Alias for --landforms", false)
+	.option("--force", "Allow replacing existing output file", false)
+	.action(async (options: SeeOptions) =>
+		runSee({
+			cwd: process.cwd(),
+			args: {
+				inputFilePath: options.inputFile,
+				outputFile: options.outputFile,
+				layer:
+					options.landforms === true || options.landscape === true
+						? "landforms"
+						: (options.layer ?? "h"),
+				force: options.force ?? false,
+			},
+		}),
+	);
 
 try {
 	const argv = process.argv.slice(2);

@@ -10,6 +10,13 @@ interface NoiseParams {
   persistence: number;
 }
 
+interface NormalizeParams {
+  enabled: boolean;
+  mode: "minmax" | "quantile";
+  lowerQ: number;
+  upperQ: number;
+}
+
 const NOISE_PARAM_KEYS = {
   H: "heightNoise",
   R: "roughnessNoise",
@@ -54,6 +61,81 @@ function readNoiseParams(params: JsonObject, mapId: BaseMapId): NoiseParams {
   };
 }
 
+function readNormalizeParams(params: JsonObject, mapId: BaseMapId): NormalizeParams {
+  const key = NOISE_PARAM_KEYS[mapId];
+  const noiseParams = expectObject(params[key], key);
+  const normalizeNode = noiseParams.normalize;
+  if (normalizeNode === undefined) {
+    return {
+      enabled: false,
+      mode: "quantile",
+      lowerQ: 0.02,
+      upperQ: 0.98
+    };
+  }
+
+  const normalize = expectObject(normalizeNode, `${key}.normalize`);
+  const enabledRaw = normalize.enabled;
+  const modeRaw = normalize.mode;
+  const lowerQRaw = normalize.lowerQ;
+  const upperQRaw = normalize.upperQ;
+
+  if (typeof enabledRaw !== "boolean") {
+    throw new Error(`Missing or invalid boolean params value "${key}.normalize.enabled".`);
+  }
+  if (modeRaw !== "minmax" && modeRaw !== "quantile") {
+    throw new Error(
+      `Missing or invalid params value "${key}.normalize.mode". Expected "minmax" or "quantile".`
+    );
+  }
+
+  const lowerQ = lowerQRaw === undefined ? 0.02 : expectNumber(lowerQRaw, `${key}.normalize.lowerQ`);
+  const upperQ = upperQRaw === undefined ? 0.98 : expectNumber(upperQRaw, `${key}.normalize.upperQ`);
+  if (lowerQ < 0 || lowerQ > 1 || upperQ < 0 || upperQ > 1 || lowerQ >= upperQ) {
+    throw new Error(
+      `Invalid quantile bounds for "${key}.normalize.lowerQ/upperQ". Require 0 <= lowerQ < upperQ <= 1.`
+    );
+  }
+
+  return {
+    enabled: enabledRaw,
+    mode: modeRaw,
+    lowerQ,
+    upperQ
+  };
+}
+
+function quantile(sortedValues: readonly number[], q: number): number {
+  const size = sortedValues.length;
+  const index = Math.floor((size - 1) * q);
+  return sortedValues[index];
+}
+
+function normalizeMapInPlace(map: Float32Array, normalizeParams: NormalizeParams): void {
+  if (!normalizeParams.enabled || map.length === 0) {
+    return;
+  }
+
+  const sorted = Array.from(map).sort((a, b) => a - b);
+  const lo =
+    normalizeParams.mode === "minmax"
+      ? sorted[0]
+      : quantile(sorted, normalizeParams.lowerQ);
+  const hi =
+    normalizeParams.mode === "minmax"
+      ? sorted[sorted.length - 1]
+      : quantile(sorted, normalizeParams.upperQ);
+
+  const span = hi - lo;
+  if (!Number.isFinite(span) || span <= 0) {
+    return;
+  }
+
+  for (let i = 0; i < map.length; i += 1) {
+    map[i] = clamp((map[i] - lo) / span, 0, 1);
+  }
+}
+
 function generateSingleBaseMap(
   mapId: BaseMapId,
   seed: bigint,
@@ -91,7 +173,10 @@ function generateSingleBaseMap(
 export function generateBaseMaps(shape: GridShape, seed: bigint, params: JsonObject): BaseMapsSoA {
   const out = createBaseMaps(shape);
   out.h = generateSingleBaseMap("H", seed, shape, readNoiseParams(params, "H"));
+  normalizeMapInPlace(out.h, readNormalizeParams(params, "H"));
   out.r = generateSingleBaseMap("R", seed, shape, readNoiseParams(params, "R"));
+  normalizeMapInPlace(out.r, readNormalizeParams(params, "R"));
   out.v = generateSingleBaseMap("V", seed, shape, readNoiseParams(params, "V"));
+  normalizeMapInPlace(out.v, readNormalizeParams(params, "V"));
   return out;
 }

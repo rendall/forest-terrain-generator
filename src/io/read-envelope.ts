@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { extname } from "node:path";
 import { InputValidationError } from "../domain/errors.js";
+import type { TerrainFeatureCollection } from "../domain/topographic-features.js";
 import type { JsonObject, RegionSummary, TerrainEnvelope } from "../domain/types.js";
 
 function isJsonObject(value: unknown): value is JsonObject {
@@ -25,24 +26,28 @@ function assertTileShape(
 		);
 	}
 
-	if (!isJsonObject(tile.topography)) {
+	const maybeTopography = tile.topography;
+	if (maybeTopography !== undefined && !isJsonObject(maybeTopography)) {
 		throw new InputValidationError(
-			`Invalid tile at index ${index} in "${inputFilePath}". Missing object "topography".`,
+			`Invalid tile at index ${index} in "${inputFilePath}". Expected object "topography" when present.`,
 		);
 	}
-	if (!isJsonObject(tile.hydrology)) {
+	const maybeHydrology = tile.hydrology;
+	if (maybeHydrology !== undefined && !isJsonObject(maybeHydrology)) {
 		throw new InputValidationError(
-			`Invalid tile at index ${index} in "${inputFilePath}". Missing object "hydrology".`,
+			`Invalid tile at index ${index} in "${inputFilePath}". Expected object "hydrology" when present.`,
 		);
 	}
-	if (!isJsonObject(tile.ecology)) {
+	const maybeEcology = tile.ecology;
+	if (maybeEcology !== undefined && !isJsonObject(maybeEcology)) {
 		throw new InputValidationError(
-			`Invalid tile at index ${index} in "${inputFilePath}". Missing object "ecology".`,
+			`Invalid tile at index ${index} in "${inputFilePath}". Expected object "ecology" when present.`,
 		);
 	}
-	if (!isJsonObject(tile.navigation)) {
+	const maybeNavigation = tile.navigation;
+	if (maybeNavigation !== undefined && !isJsonObject(maybeNavigation)) {
 		throw new InputValidationError(
-			`Invalid tile at index ${index} in "${inputFilePath}". Missing object "navigation".`,
+			`Invalid tile at index ${index} in "${inputFilePath}". Expected object "navigation" when present.`,
 		);
 	}
 }
@@ -115,6 +120,68 @@ function assertRegionsShape(
 	}
 }
 
+function assertFeatureNodesShape(
+	nodes: unknown,
+	inputFilePath: string,
+	kind: "basins" | "peaks",
+): void {
+	if (!Array.isArray(nodes)) {
+		throw new InputValidationError(
+			`Invalid envelope "features.${kind}" in "${inputFilePath}". Expected an array.`,
+		);
+	}
+	for (let i = 0; i < nodes.length; i += 1) {
+		const node = nodes[i];
+		if (!isJsonObject(node)) {
+			throw new InputValidationError(
+				`Invalid feature node at index ${i} in "${inputFilePath}" under "features.${kind}". Expected a JSON object.`,
+			);
+		}
+		if (typeof node.id !== "string") {
+			throw new InputValidationError(
+				`Invalid feature node at index ${i} in "${inputFilePath}" under "features.${kind}". Expected string "id".`,
+			);
+		}
+		if (!Array.isArray(node.childIds)) {
+			throw new InputValidationError(
+				`Invalid feature node at index ${i} in "${inputFilePath}" under "features.${kind}". Expected array "childIds".`,
+			);
+		}
+		if (!node.childIds.every((value) => typeof value === "string")) {
+			throw new InputValidationError(
+				`Invalid feature node at index ${i} in "${inputFilePath}" under "features.${kind}". Expected string values in "childIds".`,
+			);
+		}
+		if (
+			kind === "basins" &&
+			Object.prototype.hasOwnProperty.call(node, "waterSurfaceH")
+		) {
+			const waterSurfaceH = node.waterSurfaceH;
+			const validWaterSurface =
+				waterSurfaceH === null ||
+				(typeof waterSurfaceH === "number" && Number.isFinite(waterSurfaceH));
+			if (!validWaterSurface) {
+				throw new InputValidationError(
+					`Invalid feature node at index ${i} in "${inputFilePath}" under "features.${kind}". Expected finite numeric or null "waterSurfaceH" when present.`,
+				);
+			}
+		}
+	}
+}
+
+function assertFeaturesShape(
+	features: unknown,
+	inputFilePath: string,
+): asserts features is TerrainFeatureCollection {
+	if (!isJsonObject(features)) {
+		throw new InputValidationError(
+			`Invalid envelope "features" in "${inputFilePath}". Expected an object when present.`,
+		);
+	}
+	assertFeatureNodesShape(features.basins, inputFilePath, "basins");
+	assertFeatureNodesShape(features.peaks, inputFilePath, "peaks");
+}
+
 export async function readTerrainEnvelopeFile(
 	inputFilePath: string,
 ): Promise<TerrainEnvelope> {
@@ -159,6 +226,23 @@ export async function readTerrainEnvelopeFile(
 	if (hasRegions) {
 		assertRegionsShape(parsedRegions, inputFilePath);
 	}
+	const hasFeatures = Object.prototype.hasOwnProperty.call(parsed, "features");
+	const parsedFeatures = hasFeatures ? parsed.features : undefined;
+	if (hasFeatures) {
+		assertFeaturesShape(parsedFeatures, inputFilePath);
+	}
+	const hasParamOverrides = Object.prototype.hasOwnProperty.call(
+		parsed,
+		"paramOverrides",
+	);
+	const parsedParamOverrides = hasParamOverrides
+		? parsed.paramOverrides
+		: undefined;
+	if (hasParamOverrides && !isJsonObject(parsedParamOverrides)) {
+		throw new InputValidationError(
+			`Invalid envelope "paramOverrides" in "${inputFilePath}". Expected an object when present.`,
+		);
+	}
 
 	for (let i = 0; i < parsed.tiles.length; i += 1) {
 		const tile = parsed.tiles[i];
@@ -177,6 +261,12 @@ export async function readTerrainEnvelopeFile(
 		...(hasRegions
 			? { regions: parsedRegions as unknown as RegionSummary[] }
 			: {}),
+		...(hasFeatures
+			? { features: parsedFeatures as unknown as TerrainFeatureCollection }
+			: {}),
 		tiles: parsed.tiles as JsonObject[],
+		...(hasParamOverrides
+			? { paramOverrides: parsedParamOverrides as JsonObject }
+			: {}),
 	};
 }

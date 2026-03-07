@@ -1,3 +1,5 @@
+import type { TerrainFeatureCollection } from "./topographic-features.js";
+
 export type Mode = "generate" | "derive" | "debug";
 
 export type JsonValue =
@@ -51,6 +53,7 @@ export interface ResolvedInputs {
 	width?: number;
 	height?: number;
 	params: JsonObject;
+	paramsFromFile: JsonObject;
 	paramsPath?: string;
 	inputFilePath?: string;
 	mapHPath?: string;
@@ -88,5 +91,7 @@ export interface RegionTileAttachment {
 export interface TerrainEnvelope {
 	meta: TerrainEnvelopeMeta;
 	regions?: RegionSummary[];
+	features?: TerrainFeatureCollection;
 	tiles: JsonObject[];
+	paramOverrides?: JsonObject;
 }

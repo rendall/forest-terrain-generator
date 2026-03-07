@@ -4,37 +4,23 @@ import { createGridShape } from "../domain/topography.js";
 import type {
 	CliArgs,
 	JsonObject,
+	JsonValue,
 	ResolvedInputs,
 	RunRequest,
 	TerrainEnvelope,
 } from "../domain/types.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
-import { readParamsFile } from "../io/read-params.js";
+import {
+	normalizeAndValidateParamsObject,
+	readParamsFile,
+} from "../io/read-params.js";
 import { writeModeOutputs } from "../io/write-outputs.js";
 import { deepMerge } from "../lib/deep-merge.js";
 import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
+import { validateReplayTopographyGrid } from "../lib/validate-replay-tiles.js";
+import { deriveHydrology } from "../pipeline/derive-hydrology.js";
+import { deriveTopographicStructure } from "../pipeline/derive-topographic-structure.js";
 import { deriveTopographyFromBaseMaps } from "../pipeline/derive-topography.js";
-import {
-	biomeCodeToName,
-	deriveEcology,
-	dominantSlotsToOrderedList,
-	featureFlagsToOrderedList,
-	soilTypeCodeToName,
-	surfaceFlagsToOrderedList,
-} from "../pipeline/ecology.js";
-import { deriveHydrology } from "../pipeline/hydrology.js";
-import {
-	assertPostProcessingDisabled,
-	buildTrailPlan,
-	deriveDirectionalPassability,
-	deriveFollowableFlags,
-	deriveMoveCost,
-	deriveTrailPreferenceCost,
-	executeTrailRouteRequests,
-	markTrailPaths,
-	navigationTilePayloadAt,
-	validateNavigationMaps,
-} from "../pipeline/navigation.js";
 import { resolveBaseMaps } from "../pipeline/resolve-base-maps.js";
 import { buildEnvelopeSkeleton } from "./build-envelope.js";
 import {
@@ -42,35 +28,13 @@ import {
 	validateResolvedInputs,
 } from "./validate-input.js";
 
-const LANDFORM_NAME_BY_CODE: Record<number, string> = {
-	0: "flat",
-	1: "slope",
-	2: "ridge",
-	3: "valley",
-	4: "basin",
-};
-
-const WATER_CLASS_NAME_BY_CODE: Record<number, string> = {
-	0: "none",
-	1: "lake",
-	2: "stream",
-	3: "marsh",
-};
-
-type HydrologyParams = Parameters<typeof deriveHydrology>[5];
-type EcologyParams = Parameters<typeof deriveEcology>[2];
-type TrailCostParams = Parameters<typeof deriveTrailPreferenceCost>[2];
-type TrailPlanParams = Parameters<typeof buildTrailPlan>[2];
-type TrailRoutingParams = Parameters<typeof executeTrailRouteRequests>[3];
-type MoveCostParams = Parameters<typeof deriveMoveCost>[2];
-type DirectionalPassabilityParams = Parameters<
-	typeof deriveDirectionalPassability
+type TopographicStructureParams = Parameters<
+	typeof deriveTopographicStructure
 >[2];
 const DEBUG_INPUT_FILE_EXCLUSIVE_FLAGS = [
 	{ valueKey: "seed", flag: "--seed" },
 	{ valueKey: "width", flag: "--width" },
 	{ valueKey: "height", flag: "--height" },
-	{ valueKey: "paramsPath", flag: "--params" },
 	{ valueKey: "mapHPath", flag: "--map-h" },
 	{ valueKey: "mapRPath", flag: "--map-r" },
 	{ valueKey: "mapVPath", flag: "--map-v" },
@@ -90,6 +54,37 @@ function resolveFromCwd(
 
 function isJsonObject(value: unknown): value is JsonObject {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function deriveParamOverrideValue(
+	value: JsonValue | undefined,
+	defaultValue: JsonValue | undefined,
+): JsonValue | undefined {
+	if (value === undefined) {
+		return undefined;
+	}
+	if (isJsonObject(value) && isJsonObject(defaultValue)) {
+		const nested = deriveParamOverrides(value, defaultValue);
+		return nested && Object.keys(nested).length > 0 ? nested : undefined;
+	}
+	if (value === defaultValue) {
+		return undefined;
+	}
+	return value;
+}
+
+function deriveParamOverrides(
+	params: JsonObject,
+	defaults: JsonObject,
+): JsonObject | undefined {
+	const overrides: JsonObject = {};
+	for (const [key, value] of Object.entries(params)) {
+		const overrideValue = deriveParamOverrideValue(value, defaults[key]);
+		if (overrideValue !== undefined) {
+			overrides[key] = overrideValue;
+		}
+	}
+	return Object.keys(overrides).length > 0 ? overrides : undefined;
 }
 
 function hasExplicitNestedVegVarianceStrength(params: JsonObject): boolean {
@@ -124,6 +119,38 @@ function applyLegacyVegVarianceStrengthOverride(
 	};
 }
 
+function buildTopographyStructureParams(
+	params: JsonObject,
+): TopographicStructureParams {
+	const topography = isJsonObject(params.topography)
+		? (params.topography as Record<string, unknown>)
+		: {};
+	const structure = isJsonObject(topography.structure)
+		? (topography.structure as Record<string, unknown>)
+		: {};
+	return structure as unknown as TopographicStructureParams;
+}
+
+interface ElevationParams {
+	h0: number;
+	h1: number;
+}
+
+function buildElevationParams(params: JsonObject): ElevationParams {
+	const elevation = isJsonObject(params.elevation)
+		? (params.elevation as Record<string, unknown>)
+		: {};
+	const h0 =
+		typeof elevation.h0 === "number" && Number.isFinite(elevation.h0)
+			? elevation.h0
+			: 0;
+	const h1 =
+		typeof elevation.h1 === "number" && Number.isFinite(elevation.h1)
+			? elevation.h1
+			: 300;
+	return { h0, h1 };
+}
+
 export async function resolveInputs(
 	request: RunRequest,
 ): Promise<ResolvedInputs> {
@@ -147,12 +174,15 @@ export async function resolveInputs(
 	const fileParams = (fromFile.params ?? {}) as JsonObject;
 	const mergedParams = deepMerge(baseParams, fileParams);
 	applyLegacyVegVarianceStrengthOverride(mergedParams, fileParams);
+	const paramsFromFile = deepMerge({}, fileParams);
+	applyLegacyVegVarianceStrengthOverride(paramsFromFile, fileParams);
 
 	return {
 		seed: request.args.seed ?? fromFile.seed,
 		width: request.args.width ?? fromFile.width,
 		height: request.args.height ?? fromFile.height,
 		params: mergedParams,
+		paramsFromFile,
 		paramsPath: cliParamsPath,
 		inputFilePath: cliInputFilePath,
 		mapHPath: cliMapHPath ?? fromFile.mapHPath,
@@ -184,19 +214,187 @@ function assertDebugInputFileArgs(args: CliArgs): void {
 	}
 }
 
+function buildTileHydrologyPayload(
+	hydrology: ReturnType<typeof deriveHydrology>,
+	index: number,
+): JsonObject {
+	const lakeMask = hydrology.maps.lakeMask[index] === 1;
+	const lakeBasinId = hydrology.lakeAccounting.tileLakeBasinId[index] || null;
+	const waterDepth = hydrology.lakeAccounting.tileLakeDepth[index] ?? 0;
+	const hasWaterSurface = lakeBasinId !== null;
+	return {
+		fd: hydrology.maps.fd[index],
+		fa: hydrology.maps.fa[index],
+		faN: hydrology.maps.faN[index],
+		isStream: hydrology.maps.isStream[index] === 1,
+		lakeMask,
+		waterClass: hydrology.maps.waterClass[index],
+		lakeBasinId,
+		...(hasWaterSurface
+			? { waterSurfaceH: hydrology.maps.waterSurfaceH[index] }
+			: {}),
+		...(hasWaterSurface ? { waterDepth } : {}),
+	};
+}
+
+function attachBasinWaterSurface(
+	basinFeatures: ReturnType<typeof deriveTopographicStructure>["basinFeatures"],
+	hydrology: ReturnType<typeof deriveHydrology>,
+): ReturnType<typeof deriveTopographicStructure>["basinFeatures"] {
+	const lakeAccountingById = hydrology.lakeAccounting.byId;
+	return basinFeatures.map((basin) => {
+		const waterSurfaceH = lakeAccountingById.get(basin.id)?.waterSurfaceH;
+		if (typeof waterSurfaceH === "number" && Number.isFinite(waterSurfaceH)) {
+			return { ...basin, waterSurfaceH };
+		}
+		return basin;
+	});
+}
+
+function buildReplayEnvelope(
+	sourceEnvelope: TerrainEnvelope,
+	sourceTilesByIndex: JsonObject[],
+	replayH: Float32Array,
+	replayParams: JsonObject,
+	topographyStructure: ReturnType<typeof deriveTopographicStructure>,
+	hydrology: ReturnType<typeof deriveHydrology>,
+): TerrainEnvelope {
+	const elevation = buildElevationParams(replayParams);
+	const elevationSpan = elevation.h1 - elevation.h0;
+	const tiles: JsonObject[] = [];
+	const shape = hydrology.maps.shape;
+
+	for (let index = 0; index < shape.size; index += 1) {
+		const sourceTile = sourceTilesByIndex[index] ?? {};
+		const x = index % shape.width;
+		const y = Math.floor(index / shape.width);
+		const sourceTopography = isJsonObject(sourceTile.topography)
+			? sourceTile.topography
+			: {};
+		const sourceStructure = isJsonObject(sourceTopography.structure)
+			? sourceTopography.structure
+			: {};
+		const tileHydrology = buildTileHydrologyPayload(hydrology, index);
+		tiles.push({
+			...sourceTile,
+			index,
+			x,
+			y,
+			featureIds: topographyStructure.tileFeatureIds[index],
+			activeFeatureIds: topographyStructure.tileActiveFeatureIds[index],
+			topography: {
+				...sourceTopography,
+				h: replayH[index],
+				elevationMeters: elevation.h0 + replayH[index] * elevationSpan,
+				structure: {
+					...sourceStructure,
+					basinPersistence: topographyStructure.basinPersistence[index],
+					peakPersistence: topographyStructure.peakPersistence[index],
+					basinLike: topographyStructure.basinLike[index] === 1,
+					ridgeLike: topographyStructure.ridgeLike[index] === 1,
+				},
+			},
+			hydrology: tileHydrology,
+		});
+	}
+
+	const paramOverrides = deriveParamOverrides(
+		replayParams,
+		APPENDIX_A_DEFAULTS,
+	);
+	return {
+		meta: {
+			specVersion: sourceEnvelope.meta.specVersion,
+		},
+		...(sourceEnvelope.regions ? { regions: sourceEnvelope.regions } : {}),
+		features: {
+			basins: topographyStructure.basinFeatures,
+			peaks: topographyStructure.peakFeatures,
+		},
+		tiles,
+		...(paramOverrides ? { paramOverrides } : {}),
+	};
+}
+
 export async function runGenerator(request: RunRequest): Promise<void> {
 	const resolved = await resolveInputs(request);
 	if (request.mode === "debug" && resolved.inputFilePath) {
 		assertDebugInputFileArgs(request.args);
 		const validated = validateDebugInputFileInputs(resolved);
 		const envelope = await readTerrainEnvelopeFile(validated.inputFilePath);
+		const envelopeParamOverrides = isJsonObject(envelope.paramOverrides)
+			? normalizeAndValidateParamsObject(
+					deepMerge({}, envelope.paramOverrides),
+					"envelope.paramOverrides",
+				)
+			: undefined;
+		const replayBase = deepMerge(
+			APPENDIX_A_DEFAULTS,
+			envelopeParamOverrides ?? {},
+		);
+		applyLegacyVegVarianceStrengthOverride(
+			replayBase,
+			envelopeParamOverrides ?? {},
+		);
+		const replayParams = deepMerge(replayBase, validated.paramsFromFile);
+		applyLegacyVegVarianceStrengthOverride(
+			replayParams,
+			validated.paramsFromFile,
+		);
+
+		if (validated.paramsPath) {
+			console.warn(
+				`debug --input-file replay: --params overrides are active from "${validated.paramsPath}" (precedence: defaults -> envelope.paramOverrides -> --params <file>).`,
+			);
+		}
+
+		const replayGrid = validateReplayTopographyGrid(
+			envelope.tiles,
+			validated.inputFilePath,
+		);
+		const topographyStructure = deriveTopographicStructure(
+			replayGrid.shape,
+			replayGrid.h,
+			buildTopographyStructureParams(replayParams),
+		);
+		const hydrology = deriveHydrology(
+			replayGrid.shape,
+			replayGrid.h,
+			{
+				basinFeatures: topographyStructure.basinFeatures,
+				tileFeatureIds: topographyStructure.tileFeatureIds,
+			},
+			replayParams,
+		);
+		const basinFeaturesWithWaterSurface = attachBasinWaterSurface(
+			topographyStructure.basinFeatures,
+			hydrology,
+		);
+		const outputTopographyStructure = {
+			...topographyStructure,
+			basinFeatures: basinFeaturesWithWaterSurface,
+		};
+		const replayEnvelope = buildReplayEnvelope(
+			envelope,
+			replayGrid.tilesByIndex,
+			replayGrid.h,
+			replayParams,
+			outputTopographyStructure,
+			hydrology,
+		);
 		await writeModeOutputs(
 			request.mode,
 			validated.outputFile,
 			validated.outputDir,
 			validated.debugOutputFile,
-			envelope,
+			replayEnvelope,
 			validated.force,
+			hydrology.streamCoherence,
+			hydrology.lakeCoherence,
+			outputTopographyStructure,
+			hydrology.diagnostics,
+			hydrology.maps,
+			hydrology.lakeAccounting,
 		);
 		return;
 	}
@@ -212,227 +410,71 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		mapRPath: validated.mapRPath,
 		mapVPath: validated.mapVPath,
 	});
-	const topography = deriveTopographyFromBaseMaps(
+	const topography = deriveTopographyFromBaseMaps(shape, baseMaps);
+	const topographyStructure = deriveTopographicStructure(
 		shape,
-		baseMaps,
-		validated.params,
+		topography.h,
+		buildTopographyStructureParams(validated.params),
 	);
-	const hydrologyParams = {
-		...(validated.params.hydrology as Record<string, unknown>),
-		streamProxMaxDist: (validated.params.gameTrails as Record<string, unknown>)
-			?.streamProxMaxDist,
-	} as unknown as HydrologyParams;
 	const hydrology = deriveHydrology(
 		shape,
 		topography.h,
-		topography.slopeMag,
-		topography.landform,
-		validated.seed,
-		hydrologyParams,
-	);
-	const ecologyParams = {
-		vegVarianceNoise: validated.params.vegVarianceNoise as
-			| { strength?: number }
-			| undefined,
-		vegVarianceStrength:
-			typeof validated.params.vegVarianceStrength === "number"
-				? validated.params.vegVarianceStrength
-				: undefined,
-		ground: validated.params.ground as unknown,
-		roughnessFeatures: validated.params.roughnessFeatures as unknown,
-	} as EcologyParams;
-	const ecology = deriveEcology(
-		shape,
 		{
-			waterClass: hydrology.waterClass,
-			h: topography.h,
-			r: topography.r,
-			v: topography.v,
-			moisture: hydrology.moisture,
-			slopeMag: topography.slopeMag,
-			landform: topography.landform,
+			basinFeatures: topographyStructure.basinFeatures,
+			tileFeatureIds: topographyStructure.tileFeatureIds,
 		},
-		ecologyParams,
+		validated.params,
 	);
-	const gameTrails = validated.params.gameTrails as Record<string, unknown>;
-	const movement = validated.params.movement as Record<string, unknown>;
-	const grid = validated.params.grid as Record<string, unknown>;
-	const hydrologyParamsRaw = validated.params.hydrology as Record<
-		string,
-		unknown
-	>;
-
-	assertPostProcessingDisabled(
-		gameTrails.postProcessEnabled === true ||
-			gameTrails.enablePostProcess === true,
+	const basinFeaturesWithWaterSurface = attachBasinWaterSurface(
+		topographyStructure.basinFeatures,
+		hydrology,
 	);
-
-	const trailCost = deriveTrailPreferenceCost(
-		shape,
-		{
-			slopeMag: topography.slopeMag,
-			moisture: hydrology.moisture,
-			obstruction: ecology.obstruction,
-			landform: topography.landform,
-			waterClass: hydrology.waterClass,
-			isStream: hydrology.isStream,
-		},
-		{
-			playableInset: Number(grid.playableInset),
-			inf: Number(gameTrails.inf),
-			wSlope: Number(gameTrails.wSlope),
-			slopeScale: Number(gameTrails.slopeScale),
-			wMoist: Number(gameTrails.wMoist),
-			moistStart: Number(gameTrails.moistStart),
-			wObs: Number(gameTrails.wObs),
-			wRidge: Number(gameTrails.wRidge),
-			wStreamProx: Number(gameTrails.wStreamProx),
-			streamProxMaxDist: Number(gameTrails.streamProxMaxDist),
-			wCross: Number(gameTrails.wCross),
-			wMarsh: Number(gameTrails.wMarsh),
-		} as TrailCostParams,
-	);
-	const trailPlan = buildTrailPlan(
-		shape,
-		{
-			seed: {
-				firmness: ecology.firmness,
-				moisture: hydrology.moisture,
-				slopeMag: topography.slopeMag,
-				waterClass: hydrology.waterClass,
-			},
-			endpoint: {
-				waterClass: hydrology.waterClass,
-				faN: hydrology.faN,
-				landform: topography.landform,
-				slopeMag: topography.slopeMag,
-			},
-		},
-		{
-			seed: {
-				playableInset: Number(grid.playableInset),
-				waterSeedMaxDist: Number(gameTrails.waterSeedMaxDist),
-				seedTilesPerTrail: Number(gameTrails.seedTilesPerTrail),
-			},
-			endpoint: {
-				streamEndpointAccumThreshold: Number(
-					gameTrails.streamEndpointAccumThreshold,
-				),
-				ridgeEndpointMaxSlope: Number(gameTrails.ridgeEndpointMaxSlope),
-			},
-		} as TrailPlanParams,
-	);
-	const routed = executeTrailRouteRequests(
-		shape,
-		trailCost,
-		trailPlan.routeRequests,
-		{
-			inf: Number(gameTrails.inf),
-			diagWeight: Number(gameTrails.diagWeight),
-			tieEps: Number(hydrologyParamsRaw.tieEps),
-		} as TrailRoutingParams,
-	);
-	const trailMarked = markTrailPaths(shape, routed.successfulPaths);
-	const moveCost = deriveMoveCost(
-		shape,
-		{
-			obstruction: ecology.obstruction,
-			moisture: hydrology.moisture,
-			waterClass: hydrology.waterClass,
-			biome: ecology.biome,
-			gameTrail: trailMarked.gameTrail,
-		},
-		{
-			moveCostObstructionMax: Number(movement.moveCostObstructionMax),
-			moveCostMoistureMax: Number(movement.moveCostMoistureMax),
-			marshMoveCostMultiplier: Number(movement.marshMoveCostMultiplier),
-			openBogMoveCostMultiplier: Number(movement.openBogMoveCostMultiplier),
-			gameTrailMoveCostMultiplier: Number(
-				gameTrails.gameTrailMoveCostMultiplier,
-			),
-		} as MoveCostParams,
-	);
-	const directionalPassability = deriveDirectionalPassability(
-		shape,
-		{
-			h: topography.h,
-			moisture: hydrology.moisture,
-			slopeMag: topography.slopeMag,
-			waterClass: hydrology.waterClass,
-			playableInset: Number(grid.playableInset),
-		},
-		{
-			steepBlockDelta: Number(movement.steepBlockDelta),
-			steepDifficultDelta: Number(movement.steepDifficultDelta),
-			cliffSlopeMin: Number(movement.cliffSlopeMin),
-		} as DirectionalPassabilityParams,
-	);
-	const followableFlags = deriveFollowableFlags(shape, {
-		waterClass: hydrology.waterClass,
-		landform: topography.landform,
-		gameTrail: trailMarked.gameTrail,
-	});
-	const navigationMaps = {
-		moveCost,
-		passabilityPacked: directionalPassability.passabilityPacked,
-		followableFlags,
-		gameTrailId: trailMarked.gameTrailId,
+	const outputTopographyStructure = {
+		...topographyStructure,
+		basinFeatures: basinFeaturesWithWaterSurface,
 	};
-	validateNavigationMaps(shape, navigationMaps);
+	const elevation = buildElevationParams(validated.params);
+	const elevationSpan = elevation.h1 - elevation.h0;
 
 	const envelope: TerrainEnvelope = buildEnvelopeSkeleton();
+	envelope.features = {
+		basins: outputTopographyStructure.basinFeatures,
+		peaks: topographyStructure.peakFeatures,
+	};
 
 	const tiles: JsonObject[] = [];
 	for (let i = 0; i < shape.size; i += 1) {
 		const x = i % shape.width;
 		const y = Math.floor(i / shape.width);
-		const landform = LANDFORM_NAME_BY_CODE[topography.landform[i]] ?? "unknown";
-		const waterClass =
-			WATER_CLASS_NAME_BY_CODE[hydrology.waterClass[i]] ?? "unknown";
-
 		tiles.push({
+			index: i,
 			x,
 			y,
+			featureIds: topographyStructure.tileFeatureIds[i],
+			activeFeatureIds: topographyStructure.tileActiveFeatureIds[i],
 			topography: {
 				h: topography.h[i],
+				elevationMeters: elevation.h0 + topography.h[i] * elevationSpan,
 				r: topography.r[i],
 				v: topography.v[i],
-				slopeMag: topography.slopeMag[i],
-				aspectDeg: topography.aspectDeg[i],
-				landform,
-			},
-			hydrology: {
-				fd: hydrology.fd[i],
-				fa: hydrology.fa[i],
-				faN: hydrology.faN[i],
-				lakeMask: hydrology.lakeMask[i] === 1,
-				isStream: hydrology.isStream[i] === 1,
-				distWater: hydrology.distWater[i],
-				moisture: hydrology.moisture[i],
-				waterClass,
-			},
-			ecology: {
-				biome: biomeCodeToName(ecology.biome[i]),
-				treeDensity: ecology.treeDensity[i],
-				canopyCover: ecology.canopyCover[i],
-				dominant: dominantSlotsToOrderedList(
-					ecology.dominantPrimary[i],
-					ecology.dominantSecondary[i],
-				),
-				ground: {
-					soil: soilTypeCodeToName(ecology.soilType[i]),
-					firmness: ecology.firmness[i],
-					surfaceFlags: surfaceFlagsToOrderedList(ecology.surfaceFlags[i]),
-				},
-				roughness: {
-					obstruction: ecology.obstruction[i],
-					featureFlags: featureFlagsToOrderedList(ecology.featureFlags[i]),
+				structure: {
+					basinPersistence: topographyStructure.basinPersistence[i],
+					peakPersistence: topographyStructure.peakPersistence[i],
+					basinLike: topographyStructure.basinLike[i] === 1,
+					ridgeLike: topographyStructure.ridgeLike[i] === 1,
 				},
 			},
-			navigation: navigationTilePayloadAt(i, navigationMaps) as JsonObject,
+			hydrology: buildTileHydrologyPayload(hydrology, i),
 		});
 	}
 	envelope.tiles = tiles;
+	const paramOverrides = deriveParamOverrides(
+		validated.params,
+		APPENDIX_A_DEFAULTS,
+	);
+	if (paramOverrides) {
+		envelope.paramOverrides = paramOverrides;
+	}
 
 	await writeModeOutputs(
 		request.mode,
@@ -441,5 +483,11 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		validated.debugOutputFile,
 		envelope,
 		validated.force,
+		hydrology.streamCoherence,
+		hydrology.lakeCoherence,
+		outputTopographyStructure,
+		hydrology.diagnostics,
+		hydrology.maps,
+		hydrology.lakeAccounting,
 	);
 }
