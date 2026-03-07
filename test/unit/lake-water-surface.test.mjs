@@ -37,7 +37,7 @@ describe("lake accounting basin waterSurfaceH", () => {
 
 		const dry = run(0);
 		expect(dry).toBeDefined();
-		expect(dry.waterSurfaceH).toBeNull();
+		expect(Object.hasOwn(dry, "waterSurfaceH")).toBe(false);
 		expect(dry.isFilled).toBe(false);
 
 		const partial = run(0.2);

@@ -10,7 +10,7 @@ export interface BasinLakeAccounting {
 	id: string;
 	parentId: string | null;
 	childIds: string[];
-	waterSurfaceH: number | null;
+	waterSurfaceH?: number;
 	externalInflow: number;
 	totalInflow: number;
 	allocatedVolume: number;
@@ -382,7 +382,7 @@ export const deriveLakeAccounting = (
 		);
 		const fillRatio = spillCapacity > 0 ? allocatedVolume / spillCapacity : 0;
 		const isFilled = allocatedVolume >= spillCapacity;
-		let waterSurfaceH: number | null = null;
+		let waterSurfaceH: number | undefined;
 		if (allocatedVolume > WATER_SURFACE_EPS) {
 			if (
 				spillCapacity <= WATER_SURFACE_EPS ||
@@ -438,7 +438,7 @@ export const deriveLakeAccounting = (
 			id: basinId,
 			parentId: basin.parentId ?? null,
 			childIds,
-			waterSurfaceH,
+			...(typeof waterSurfaceH === "number" ? { waterSurfaceH } : {}),
 			externalInflow,
 			// totalInflow remains raw (external + child overflow); child gating applies
 			// only through presentedVolume for fill/overflow computations.
