@@ -31,6 +31,8 @@ export interface LakeAccountingResult {
 	lakeTileCount: number;
 }
 
+const CHILD_CONNECT_EPS = 1e-9;
+
 const DIR_TO_DELTA = new Map<number, readonly [number, number]>([
 	[DIR8_CODE.e, [1, 0]],
 	[DIR8_CODE.se, [1, 1]],
@@ -272,10 +274,20 @@ export const deriveLakeAccounting = (
 			return sum + (child?.overflowExcess ?? 0);
 		}, 0);
 		const totalInflow = externalInflow + childOverflow;
-		const allChildrenFilled = childIds.every(
-			(childId) => byId.get(childId)?.isFilled === true,
-		);
-		const effectiveInflow = allChildrenFilled ? totalInflow : 0;
+		// Parent remains dry at exact child-connect threshold; parent inflow
+		// starts only after all direct children are strictly beyond connect.
+		const allChildrenBeyondConnect = childIds.every((childId) => {
+			const child = byId.get(childId);
+			if (!child || child.isFilled !== true) {
+				return false;
+			}
+			if (child.spillCapacity <= 0) {
+				return true;
+			}
+			return child.fillRatio > 1 + CHILD_CONNECT_EPS;
+		});
+		const effectiveInflow =
+			childIds.length === 0 || allChildrenBeyondConnect ? totalInflow : 0;
 		const mergeH =
 			typeof basin.mergeH === "number" && Number.isFinite(basin.mergeH)
 				? basin.mergeH
@@ -285,15 +297,23 @@ export const deriveLakeAccounting = (
 			expandedTileSets.get(basinId) ?? new Set<number>(),
 			mergeH,
 		);
+		const scaledInflow = wetnessScale * effectiveInflow;
 		const fillRatio =
 			spillCapacity > 0
-				? (wetnessScale * effectiveInflow) / spillCapacity
+				? scaledInflow / spillCapacity
 				: Number.POSITIVE_INFINITY;
-		const isFilled = wetnessScale * effectiveInflow >= spillCapacity;
-		const overflowExcess = Math.max(
-			0,
-			wetnessScale * effectiveInflow - spillCapacity,
-		);
+		const isFilled = scaledInflow >= spillCapacity;
+		const overflowExcess = Math.max(0, scaledInflow - spillCapacity);
+		const isOrdinaryRoot = basin.parentId === null && basin.mergeH === null;
+		if (
+			isOrdinaryRoot &&
+			spillCapacity <= CHILD_CONNECT_EPS &&
+			scaledInflow > CHILD_CONNECT_EPS
+		) {
+			throw new Error(
+				`Lake accounting invariant error: root basin "${basinId}" reaches impossible full-map fill state.`,
+			);
+		}
 		const childSpillFromTileId =
 			typeof basin.childSpillFromTileId === "number" &&
 			Number.isInteger(basin.childSpillFromTileId)

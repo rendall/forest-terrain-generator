@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { DIR8_CODE, DIR8_NONE } from "../../src/domain/hydrology.js";
 import { createGridShape } from "../../src/domain/topography.js";
 import { deriveHydrology } from "../../src/pipeline/derive-hydrology.js";
+import { deriveLakeAccounting } from "../../src/pipeline/derive-lake-accounting.js";
 import { makeBasinNode } from "./helpers/lake-fixtures.mjs";
 
 const buildSyntheticLakeCase = () => {
@@ -217,5 +219,115 @@ describe("lake accounting from production hydrology pipeline", () => {
 		).toThrow(
 			'Lake accounting topology error: basin "b_parent" references missing child basin "b_missing".',
 		);
+	});
+
+	it("throws on impossible ordinary-root full-map fill state", () => {
+		const shape = createGridShape(2, 1);
+		const h = new Float32Array([0.9, 1.0]);
+		const basinFeatures = [
+			makeBasinNode({
+				id: "b_root",
+				kind: "leaf",
+				parentId: null,
+				childIds: [],
+				birthH: 0.1,
+				mergeH: null,
+				persistence: 0.1,
+				spillOutTileId: null,
+				childSpillFromTileId: null,
+				parentContactTileId: null,
+				minH: 0.1,
+				maxH: 0.1,
+				size: 1,
+				bbox: { minX: 1, minY: 0, maxX: 1, maxY: 0 },
+				tileIds: [1],
+			}),
+		];
+		const fdBase = new Uint8Array([DIR8_CODE.e, DIR8_NONE]);
+		const faBase = new Uint32Array([1, 1]);
+
+		expect(() =>
+			deriveLakeAccounting(shape, h, fdBase, faBase, basinFeatures, {
+				wetnessScale: 1,
+			}),
+		).toThrow(/root basin "b_root" reaches impossible full-map fill state/i);
+	});
+
+	it("keeps parent dry at child-connect threshold even with parent external inflow", () => {
+		const shape = createGridShape(2, 2);
+		const h = new Float32Array([
+			0.6, 0.6, // y=0
+			0.1, 0.2, // y=1
+		]);
+		const basinFeatures = [
+			makeBasinNode({
+				id: "b_child",
+				kind: "leaf",
+				parentId: "b_parent",
+				childIds: [],
+				birthH: 0.1,
+				mergeH: 0.3,
+				persistence: 0.2,
+				spillOutTileId: 3,
+				childSpillFromTileId: 2,
+				parentContactTileId: 3,
+				minH: 0.1,
+				maxH: 0.1,
+				size: 1,
+				bbox: { minX: 0, minY: 1, maxX: 0, maxY: 1 },
+				tileIds: [2],
+			}),
+			makeBasinNode({
+				id: "b_parent",
+				kind: "composite",
+				parentId: null,
+				childIds: ["b_child"],
+				birthH: 0.3,
+				mergeH: 0.6,
+				persistence: null,
+				spillOutTileId: null,
+				minH: 0.1,
+				maxH: 0.2,
+				size: 2,
+				bbox: { minX: 0, minY: 1, maxX: 1, maxY: 1 },
+				tileIds: [3],
+			}),
+		];
+		const fdBase = new Uint8Array([
+			DIR8_CODE.s,
+			DIR8_CODE.s,
+			DIR8_NONE,
+			DIR8_NONE,
+		]);
+		const faBase = new Uint32Array([1, 1, 1, 1]);
+		const calibration = deriveLakeAccounting(
+			shape,
+			h,
+			fdBase,
+			faBase,
+			basinFeatures,
+			{ wetnessScale: 1 },
+		);
+		const childCalibration = calibration.byId.get("b_child");
+		expect(childCalibration).toBeDefined();
+		const kAtConnect =
+			childCalibration.spillCapacity / childCalibration.externalInflow;
+
+		const atConnect = deriveLakeAccounting(
+			shape,
+			h,
+			fdBase,
+			faBase,
+			basinFeatures,
+			{ wetnessScale: kAtConnect },
+		);
+		const childAtConnect = atConnect.byId.get("b_child");
+		const parentAtConnect = atConnect.byId.get("b_parent");
+		expect(childAtConnect).toBeDefined();
+		expect(parentAtConnect).toBeDefined();
+		expect(childAtConnect.isFilled).toBe(true);
+		expect(parentAtConnect.externalInflow).toBeGreaterThan(0);
+		// Child-connect invariant: parent remains dry at the exact threshold.
+		expect(parentAtConnect.fillRatio).toBe(0);
 	});
 });

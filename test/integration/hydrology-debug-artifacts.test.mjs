@@ -69,7 +69,6 @@ describe("hydrology debug artifacts", () => {
 			expect(hydrology.tiles[0].hydrology).toHaveProperty("fa");
 			expect(hydrology.tiles[0].hydrology).toHaveProperty("faN");
 			expect(hydrology.tiles[0].hydrology).toHaveProperty("isStream");
-			expect(hydrology.tiles[0].hydrology).toHaveProperty("lakeDepth");
 			expect(hydrology.tiles[0].hydrology).toHaveProperty("lakeBasinId");
 
 		await expect(stat(join(outDir, "fd.json"))).resolves.toBeDefined();
@@ -91,5 +90,32 @@ describe("hydrology debug artifacts", () => {
 		expect(fa.tiles[0]).toHaveProperty("fa");
 		expect(faNormalized.tiles[0]).toHaveProperty("faN");
 		expect(streamMask.tiles[0]).toHaveProperty("isStream");
+	});
+
+	it("omits waterSurfaceH and waterDepth on dry tiles", async () => {
+		const dir = await makeTempDir();
+		const outDir = join(dir, "debug");
+		const result = await runCli([
+			"debug",
+			"--seed",
+			"42",
+			"--width",
+			"4",
+			"--height",
+			"4",
+			"--output-dir",
+			outDir,
+		]);
+		expect(result.code).toBe(0);
+		const hydrologyRaw = await readFile(join(outDir, "hydrology.json"), "utf8");
+		const hydrology = JSON.parse(hydrologyRaw);
+		const dryTiles = hydrology.tiles.filter(
+			(tile) => tile?.hydrology?.lakeMask === false,
+		);
+		expect(dryTiles.length).toBeGreaterThan(0);
+		dryTiles.forEach((tile) => {
+			expect(tile.hydrology).not.toHaveProperty("waterSurfaceH");
+			expect(tile.hydrology).not.toHaveProperty("waterDepth");
+		});
 	});
 });

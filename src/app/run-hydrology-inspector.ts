@@ -428,9 +428,9 @@ const loadContextFromDebugArtifacts = async (
 			if (lakeMask !== null) {
 				maps.lakeMask[index] = lakeMask ? 1 : 0;
 			}
-			const lakeSurfaceH = readFiniteNumber(hydrology?.lakeSurfaceH);
-			if (lakeSurfaceH !== null) {
-				maps.lakeSurfaceH[index] = lakeSurfaceH;
+			const waterSurfaceH = readFiniteNumber(hydrology?.waterSurfaceH);
+			if (waterSurfaceH !== null) {
+				maps.waterSurfaceH[index] = waterSurfaceH;
 			}
 			const waterClass = readFiniteNumber(hydrology?.waterClass);
 			if (
@@ -472,15 +472,15 @@ const loadContextFromDebugArtifacts = async (
 			? (lakeAccountingRaw.basins as BasinLakeAccounting[])
 			: [];
 
-			return {
-				source: "debug_artifacts",
-				shape,
-				h,
-				maps,
-				lakeAccountingBasins,
-				tileLakeBasinId,
-			};
-		}
+		return {
+			source: "debug_artifacts",
+			shape,
+			h,
+			maps,
+			lakeAccountingBasins,
+			tileLakeBasinId,
+		};
+	}
 
 	return {
 		source: "debug_artifacts",
@@ -505,8 +505,8 @@ const buildContextFromEnvelope = async (
 	const envelope = await readTerrainEnvelopeFile(inputPath);
 	const envelopeParamOverrides = isObject(envelope.paramOverrides)
 		? normalizeAndValidateParamsObject(
-				deepMerge({}, envelope.paramOverrides as JsonObject),
-				"envelope.paramOverrides",
+			deepMerge({}, envelope.paramOverrides as JsonObject),
+			"envelope.paramOverrides",
 		)
 		: undefined;
 	const hasEnvelopeHydrologyFields =
@@ -620,7 +620,7 @@ const buildContextFromEnvelope = async (
 		const faN = readFiniteNumber(hydrology?.faN);
 		const isStream = readBoolean(hydrology?.isStream);
 		const lakeMask = readBoolean(hydrology?.lakeMask);
-		const lakeSurfaceH = readFiniteNumber(hydrology?.lakeSurfaceH);
+		const waterSurfaceH = readFiniteNumber(hydrology?.waterSurfaceH);
 		const waterClass = readFiniteNumber(hydrology?.waterClass);
 		if (fd !== null && Number.isInteger(fd) && fd >= 0 && fd <= 255) {
 			maps.fd[index] = fd;
@@ -635,8 +635,8 @@ const buildContextFromEnvelope = async (
 		if (lakeMask !== null) {
 			maps.lakeMask[index] = lakeMask ? 1 : 0;
 		}
-		if (lakeSurfaceH !== null) {
-			maps.lakeSurfaceH[index] = lakeSurfaceH;
+		if (waterSurfaceH !== null) {
+			maps.waterSurfaceH[index] = waterSurfaceH;
 		}
 		if (
 			waterClass !== null &&
@@ -850,7 +850,7 @@ const computeStats = (
 			lakeTileCount += 1;
 			const depth = Math.max(
 				0,
-				(context.maps.lakeSurfaceH[i] ?? 0) - (context.h[i] ?? 0),
+				(context.maps.waterSurfaceH[i] ?? 0) - (context.h[i] ?? 0),
 			);
 			lakeDepthSum += depth;
 			lakeDepthMax = Math.max(lakeDepthMax, depth);
@@ -891,21 +891,21 @@ const computeStats = (
 
 	return {
 		hydrologyMapsSource: context.source,
-			tileCount: context.shape.size,
-			sinkCount,
-			streamTileCount,
-			lakeTileCount,
-			lakeDepth: {
-				max: lakeDepthMax,
-				mean: lakeTileCount > 0 ? lakeDepthSum / lakeTileCount : 0,
-			},
-			basins: {
-				total: context.lakeAccountingBasins.length,
-				sink: sinkBasinCount,
-				overflowCarrier: overflowCarrierBasinCount,
-				terminalLake: terminalLakeBasinCount,
-			},
-			fa: {
+		tileCount: context.shape.size,
+		sinkCount,
+		streamTileCount,
+		lakeTileCount,
+		lakeDepth: {
+			max: lakeDepthMax,
+			mean: lakeTileCount > 0 ? lakeDepthSum / lakeTileCount : 0,
+		},
+		basins: {
+			total: context.lakeAccountingBasins.length,
+			sink: sinkBasinCount,
+			overflowCarrier: overflowCarrierBasinCount,
+			terminalLake: terminalLakeBasinCount,
+		},
+		fa: {
 			min: faSorted[0] ?? 0,
 			max: faSorted[faSorted.length - 1] ?? 0,
 			mean: faValues.length > 0 ? faSum / faValues.length : 0,

@@ -15,9 +15,21 @@ The terrain model should represent water in a way that is physically intuitive f
 
 Basins are nested.
 
-- Leaf/child basins can accumulate water first.
-- A parent basin should not begin filling until its children are filled to their connecting/spill condition.
-- After children connect, additional water raises the parent-level connected water surface.
+### Child-connect threshold invariant
+
+For a parent basin `P` with required child basins `C1..Cn`, define `T_connect(P)` as the first moment when every required child reaches its connecting/spill condition.
+
+At `T_connect(P)`:
+
+- each required child basin is full to its connection level;
+- parent basin `P` has zero water volume;
+- parent basin `P` has no emitted water-surface field (`waterSurfaceH` absent).
+
+Allocation rule:
+
+- Inflow up to and including `T_connect(P)` is consumed by child fill only.
+- Only inflow strictly beyond `T_connect(P)` contributes to parent fill.
+- Therefore parent fill onset is strict (`> T_connect(P)`), not inclusive (`>= T_connect(P)`).
 
 This is intended to match intuitive behavior in small examples (for example, a 3×3 case with two low side dips and a shallower middle connector):
 
@@ -33,7 +45,8 @@ The previous name `lakeSurfaceH` is replaced with **`waterSurfaceH`**.
 - `waterSurfaceH` is a basin-level trait (one surface level per basin state).
 - A dry basin has no water and should not emit a `waterSurfaceH` value.
 - A partially filled basin has `waterSurfaceH` below its spill surface.
-- A fully filled basin has `waterSurfaceH` at spill surface.
+- A fully filled non-root basin has `waterSurfaceH` at spill surface.
+- In ordinary map operation, root full-map saturation is an error condition (root spill capacity effectively zero while positive inflow still exists).
 
 ## Tile water depth
 
@@ -42,6 +55,8 @@ Tile depth is computed directly from basin water surface and terrain elevation.
 ```text
 waterDepth = waterSurfaceH - h_tile
 ```
+
+`waterDepth` is defined only when `waterSurfaceH` is present.
 
 No clamp is applied.
 
@@ -57,5 +72,6 @@ This gives one continuous hydrologic variable that supports both open-water clas
 
 - `waterSurfaceH` is authored/owned at basin level.
 - Per-tile water quantity is `waterDepth`, derived from `waterSurfaceH` and tile `h`.
+- If `waterSurfaceH` is absent, `waterDepth` is also absent.
 - Basin membership alone must not imply that a tile has positive surface water.
 - Positive, zero, and negative `waterDepth` are all meaningful and intentional.
