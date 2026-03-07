@@ -18,9 +18,9 @@ import { writeModeOutputs } from "../io/write-outputs.js";
 import { deepMerge } from "../lib/deep-merge.js";
 import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
 import { validateReplayTopographyGrid } from "../lib/validate-replay-tiles.js";
+import { deriveHydrology } from "../pipeline/derive-hydrology.js";
 import { deriveTopographicStructure } from "../pipeline/derive-topographic-structure.js";
 import { deriveTopographyFromBaseMaps } from "../pipeline/derive-topography.js";
-import { deriveHydrology } from "../pipeline/derive-hydrology.js";
 import { resolveBaseMaps } from "../pipeline/resolve-base-maps.js";
 import { buildEnvelopeSkeleton } from "./build-envelope.js";
 import {
@@ -140,12 +140,14 @@ function buildElevationParams(params: JsonObject): ElevationParams {
 	const elevation = isJsonObject(params.elevation)
 		? (params.elevation as Record<string, unknown>)
 		: {};
-	const h0 = typeof elevation.h0 === "number" && Number.isFinite(elevation.h0)
-		? elevation.h0
-		: 0;
-	const h1 = typeof elevation.h1 === "number" && Number.isFinite(elevation.h1)
-		? elevation.h1
-		: 300;
+	const h0 =
+		typeof elevation.h0 === "number" && Number.isFinite(elevation.h0)
+			? elevation.h0
+			: 0;
+	const h1 =
+		typeof elevation.h1 === "number" && Number.isFinite(elevation.h1)
+			? elevation.h1
+			: 300;
 	return { h0, h1 };
 }
 
@@ -217,8 +219,9 @@ function buildTileHydrologyPayload(
 	index: number,
 ): JsonObject {
 	const lakeMask = hydrology.maps.lakeMask[index] === 1;
+	const lakeBasinId = hydrology.lakeAccounting.tileLakeBasinId[index] || null;
 	const waterDepth = hydrology.lakeAccounting.tileLakeDepth[index] ?? 0;
-	const hasWaterSurface = lakeMask;
+	const hasWaterSurface = lakeBasinId !== null;
 	return {
 		fd: hydrology.maps.fd[index],
 		fa: hydrology.maps.fa[index],
@@ -226,7 +229,7 @@ function buildTileHydrologyPayload(
 		isStream: hydrology.maps.isStream[index] === 1,
 		lakeMask,
 		waterClass: hydrology.maps.waterClass[index],
-		lakeBasinId: hydrology.lakeAccounting.tileLakeBasinId[index] || null,
+		lakeBasinId,
 		...(hasWaterSurface
 			? { waterSurfaceH: hydrology.maps.waterSurfaceH[index] }
 			: {}),
@@ -295,7 +298,10 @@ function buildReplayEnvelope(
 		});
 	}
 
-	const paramOverrides = deriveParamOverrides(replayParams, APPENDIX_A_DEFAULTS);
+	const paramOverrides = deriveParamOverrides(
+		replayParams,
+		APPENDIX_A_DEFAULTS,
+	);
 	return {
 		meta: {
 			specVersion: sourceEnvelope.meta.specVersion,
@@ -318,9 +324,9 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		const envelope = await readTerrainEnvelopeFile(validated.inputFilePath);
 		const envelopeParamOverrides = isJsonObject(envelope.paramOverrides)
 			? normalizeAndValidateParamsObject(
-				deepMerge({}, envelope.paramOverrides),
-				"envelope.paramOverrides",
-			)
+					deepMerge({}, envelope.paramOverrides),
+					"envelope.paramOverrides",
+				)
 			: undefined;
 		const replayBase = deepMerge(
 			APPENDIX_A_DEFAULTS,
@@ -331,7 +337,10 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			envelopeParamOverrides ?? {},
 		);
 		const replayParams = deepMerge(replayBase, validated.paramsFromFile);
-		applyLegacyVegVarianceStrengthOverride(replayParams, validated.paramsFromFile);
+		applyLegacyVegVarianceStrengthOverride(
+			replayParams,
+			validated.paramsFromFile,
+		);
 
 		if (validated.paramsPath) {
 			console.warn(
@@ -401,10 +410,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		mapRPath: validated.mapRPath,
 		mapVPath: validated.mapVPath,
 	});
-	const topography = deriveTopographyFromBaseMaps(
-		shape,
-		baseMaps,
-	);
+	const topography = deriveTopographyFromBaseMaps(shape, baseMaps);
 	const topographyStructure = deriveTopographicStructure(
 		shape,
 		topography.h,
@@ -462,7 +468,10 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		});
 	}
 	envelope.tiles = tiles;
-	const paramOverrides = deriveParamOverrides(validated.params, APPENDIX_A_DEFAULTS);
+	const paramOverrides = deriveParamOverrides(
+		validated.params,
+		APPENDIX_A_DEFAULTS,
+	);
 	if (paramOverrides) {
 		envelope.paramOverrides = paramOverrides;
 	}

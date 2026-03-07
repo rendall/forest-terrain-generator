@@ -414,11 +414,8 @@ export const deriveLakeAccounting = (
 
 	const tileLakeDepth = new Float32Array(shape.size);
 	const tileLakeBasinId = new Array<string>(shape.size).fill("");
-	let lakeTileCount = 0;
+	const hasTileWaterSurface = new Uint8Array(shape.size);
 	for (const [basinId, accounting] of byId) {
-		if (!accounting.isFilled) {
-			continue;
-		}
 		const level = accounting.waterSurfaceH;
 		if (typeof level !== "number" || !Number.isFinite(level)) {
 			continue;
@@ -428,21 +425,24 @@ export const deriveLakeAccounting = (
 			continue;
 		}
 		for (const tileId of tiles) {
-			const depth = Math.max(0, level - (h[tileId] ?? 0));
-			if (depth <= 0) {
-				continue;
-			}
+			const depth = level - (h[tileId] ?? 0);
+			const noPriorSelection = hasTileWaterSurface[tileId] === 0;
 			if (
+				noPriorSelection ||
 				depth > tileLakeDepth[tileId] ||
 				(depth === tileLakeDepth[tileId] &&
 					(tileLakeBasinId[tileId] === "" || basinId < tileLakeBasinId[tileId]))
 			) {
-				if (tileLakeDepth[tileId] <= 0) {
-					lakeTileCount += 1;
-				}
 				tileLakeDepth[tileId] = depth;
 				tileLakeBasinId[tileId] = basinId;
+				hasTileWaterSurface[tileId] = 1;
 			}
+		}
+	}
+	let lakeTileCount = 0;
+	for (let tileId = 0; tileId < shape.size; tileId += 1) {
+		if (hasTileWaterSurface[tileId] === 1 && tileLakeDepth[tileId] > 0) {
+			lakeTileCount += 1;
 		}
 	}
 

@@ -21,8 +21,12 @@ describe("derive-hydrology", () => {
 	it("supports overflow_guided when configured", () => {
 		const shape = createGridShape(3, 2);
 		const h = new Float32Array([
-			0.1, 0.3, 0.05, // y=0
-			0.15, 0.35, 0.4, // y=1
+			0.1,
+			0.3,
+			0.05, // y=0
+			0.15,
+			0.35,
+			0.4, // y=1
 		]);
 		const result = deriveHydrology(
 			shape,
@@ -102,8 +106,12 @@ describe("derive-hydrology", () => {
 	it("falls back per-tile to strict_local when spill edge metadata is invalid", () => {
 		const shape = createGridShape(3, 2);
 		const h = new Float32Array([
-			0.1, 0.3, 0.05, // y=0
-			0.15, 0.35, 0.4, // y=1
+			0.1,
+			0.3,
+			0.05, // y=0
+			0.15,
+			0.35,
+			0.4, // y=1
 		]);
 		const result = deriveHydrology(
 			shape,
@@ -163,5 +171,55 @@ describe("derive-hydrology", () => {
 		expect(result.diagnostics.overflowAppliedCount).toBe(0);
 		expect(result.diagnostics.overflowFallbackCount).toBe(1);
 		expect(result.maps.fd[0]).toBe(255);
+	});
+
+	it("derives signed tile depths from basin water surface without requiring full fill", () => {
+		const shape = createGridShape(4, 1);
+		const h = new Float32Array([0.9, 0.1, 0.4, 0.5]);
+		const result = deriveHydrology(
+			shape,
+			h,
+			{
+				basinFeatures: [
+					{
+						id: "b_partial",
+						kind: "leaf",
+						parentId: null,
+						childIds: [],
+						birthH: 0.1,
+						mergeH: 0.6,
+						persistence: 0.5,
+						spillOutTileId: null,
+						minH: 0.1,
+						maxH: 0.5,
+						size: 3,
+						bbox: { minX: 1, minY: 0, maxX: 3, maxY: 0 },
+						tileIds: [1, 2, 3],
+					},
+				],
+				tileFeatureIds: [[], ["b_partial"], ["b_partial"], ["b_partial"]],
+			},
+			{
+				hydrology: {
+					sinkMode: "strict_local",
+					faThreshold: 1,
+					lakeFill: { wetnessScale: 0.35 },
+				},
+			},
+		);
+		const basin = result.lakeAccounting.byId.get("b_partial");
+		expect(basin).toBeDefined();
+		expect(basin.isFilled).toBe(false);
+		expect(basin.waterSurfaceH).toBeCloseTo(0.425, 6);
+
+		expect(result.lakeAccounting.tileLakeBasinId[1]).toBe("b_partial");
+		expect(result.lakeAccounting.tileLakeBasinId[3]).toBe("b_partial");
+		expect(result.lakeAccounting.tileLakeDepth[1]).toBeCloseTo(0.325, 6);
+		expect(result.lakeAccounting.tileLakeDepth[2]).toBeCloseTo(0.025, 6);
+		expect(result.lakeAccounting.tileLakeDepth[3]).toBeCloseTo(-0.075, 6);
+
+		expect(result.maps.waterSurfaceH[1]).toBeCloseTo(0.425, 6);
+		expect(result.maps.waterSurfaceH[3]).toBeCloseTo(0.425, 6);
+		expect(result.maps.lakeMask[3]).toBe(0);
 	});
 });
