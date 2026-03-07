@@ -86,6 +86,13 @@ function clamp01(value: number): number {
 	return value;
 }
 
+function readStringIdArray(value: unknown): string[] {
+	if (!Array.isArray(value)) {
+		return [];
+	}
+	return value.filter((entry): entry is string => typeof entry === "string");
+}
+
 export async function runSee(request: SeeRequest): Promise<void> {
 	const inputFilePath = resolveFromCwd(request.cwd, request.args.inputFilePath);
 	const outputFile = resolveFromCwd(request.cwd, request.args.outputFile);
@@ -171,16 +178,32 @@ export async function runSee(request: SeeRequest): Promise<void> {
 		}
 
 		if (layer === "landforms") {
+			const hasActiveFeatureArray = Array.isArray(tile.activeFeatureIds);
+			const hasFeatureArray = Array.isArray(tile.featureIds);
+			const activeFeatureIds = readStringIdArray(tile.activeFeatureIds);
+			const featureIds = readStringIdArray(tile.featureIds);
 			const structure = isJsonObject(topography.structure)
 				? topography.structure
 				: null;
-			if (!structure) {
+			const hasModernFeatureSignals =
+				hasActiveFeatureArray || hasFeatureArray;
+			if (!hasModernFeatureSignals && !structure) {
 				throw new InputValidationError(
-					`Tile (${x},${y}) is missing required object "topography.structure" for --layer landforms.`,
+					`Tile (${x},${y}) is missing required feature IDs for --layer landforms (expected tile.activeFeatureIds/featureIds; legacy fallback: topography.structure).`,
 				);
 			}
-			const basinLike = structure.basinLike === true;
-			const ridgeLike = structure.ridgeLike === true;
+			const basinLike =
+				hasActiveFeatureArray
+					? activeFeatureIds.some((id) => id.startsWith("b_"))
+					: hasFeatureArray
+						? featureIds.some((id) => id.startsWith("b_"))
+						: structure?.basinLike === true;
+			const ridgeLike =
+				hasActiveFeatureArray
+					? activeFeatureIds.some((id) => id.startsWith("p_"))
+					: hasFeatureArray
+						? featureIds.some((id) => id.startsWith("p_"))
+						: structure?.ridgeLike === true;
 			if (basinLike && ridgeLike) {
 				pixels[index] = 160;
 			} else if (basinLike) {

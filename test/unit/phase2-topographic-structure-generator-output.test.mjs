@@ -17,7 +17,7 @@ afterEach(async () => {
 });
 
 describe("Phase 2 topographic structure tile payload", () => {
-  it("emits minimal topography.structure fields and excludes internals", async () => {
+  it("omits topography.structure from emitted tiles", async () => {
     const cwd = await makeTempDir();
     const outputFile = join(cwd, "out.json");
 
@@ -47,28 +47,19 @@ describe("Phase 2 topographic structure tile payload", () => {
     expect(Array.isArray(firstTile.featureIds)).toBe(true);
     expect(Array.isArray(firstTile.activeFeatureIds)).toBe(true);
     expect(firstTile.featureIds.length).toBeLessThanOrEqual(2);
-    expect(firstTile.topography.structure).toBeDefined();
-    expect(firstTile.topography.structure.basinPersistence === null
-      || typeof firstTile.topography.structure.basinPersistence === "number").toBe(true);
-    expect(firstTile.topography.structure.peakPersistence === null
-      || typeof firstTile.topography.structure.peakPersistence === "number").toBe(true);
-    expect(typeof firstTile.topography.structure.basinLike).toBe("boolean");
-    expect(typeof firstTile.topography.structure.ridgeLike).toBe("boolean");
-    expect(firstTile.topography.structure.basinMinIdx).toBeUndefined();
-    expect(firstTile.topography.structure.peakMaxIdx).toBeUndefined();
+    expect(firstTile.topography).toBeDefined();
+    expect(firstTile.topography.h).toEqual(expect.any(Number));
+    expect(firstTile.topography.r).toEqual(expect.any(Number));
+    expect(firstTile.topography.v).toEqual(expect.any(Number));
+    expect(firstTile.topography.elevationMeters).toEqual(expect.any(Number));
+    expect(firstTile.topography.structure).toBeUndefined();
 
     for (const tile of envelope.tiles) {
       expect(tile.index).toBe(tile.y * 8 + tile.x);
       expect(Array.isArray(tile.featureIds)).toBe(true);
       expect(tile.featureIds.length).toBeLessThanOrEqual(2);
       expect(Array.isArray(tile.activeFeatureIds)).toBe(true);
-      expect(tile.topography.structure).toBeDefined();
-      expect(Object.keys(tile.topography.structure)).toEqual([
-        "basinPersistence",
-        "peakPersistence",
-        "basinLike",
-        "ridgeLike",
-      ]);
+      expect(tile.topography.structure).toBeUndefined();
     }
   });
 });

@@ -75,18 +75,18 @@ Render topography as grayscale image (`h:0` black, `h:1` white):
 node --import tsx src/cli/main.ts see --input-file out.json --output-file h.pgm
 ```
 
-Render structure classes as uniform grayscale:
+Render landform classes as uniform grayscale:
 
 ```bash
 node --import tsx src/cli/main.ts see --input-file out.json --output-file landforms.pgm --landforms
 ```
 
-Landform grayscale mapping:
+Landform grayscale mapping (derived from tile feature IDs):
 
-- `basinLike=true`, `ridgeLike=false` -> `64`
-- `basinLike=false`, `ridgeLike=true` -> `224`
-- `basinLike=false`, `ridgeLike=false` -> `128`
-- `basinLike=true`, `ridgeLike=true` -> `160`
+- basin-only (`activeFeatureIds`/`featureIds` contains `b_*` but not `p_*`) -> `64`
+- peak-only (`activeFeatureIds`/`featureIds` contains `p_*` but not `b_*`) -> `224`
+- neither basin nor peak -> `128`
+- both basin and peak -> `160`
 
 ## Authored Map From PNG
 

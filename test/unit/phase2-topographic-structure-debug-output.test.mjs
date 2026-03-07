@@ -17,7 +17,7 @@ afterEach(async () => {
 });
 
 describe("Phase 2 topographic structure debug output", () => {
-  it("publishes full structure fields only in debug topography artifact", async () => {
+  it("omits topography.structure from debug-emitted tile payloads", async () => {
     const cwd = await makeTempDir();
     const outputDir = join(cwd, "debug");
     const debugOutputFile = join(cwd, "debug-output.json");
@@ -46,21 +46,7 @@ describe("Phase 2 topographic structure debug output", () => {
     expect(debugTopography.tiles[1].index).toBe(1);
     expect(Array.isArray(debugTopography.tiles[0].featureIds)).toBe(true);
     expect(Array.isArray(debugTopography.tiles[0].activeFeatureIds)).toBe(true);
-    const debugStructure = debugTopography.tiles[0].topography.structure;
-
-    expect(debugStructure.basinPersistence).not.toBeUndefined();
-    expect(debugStructure.peakPersistence).not.toBeUndefined();
-    expect(debugStructure.basinLike).not.toBeUndefined();
-    expect(debugStructure.ridgeLike).not.toBeUndefined();
-
-    expect(debugStructure.basinMinIdx).not.toBeUndefined();
-    expect(debugStructure.basinMinH).not.toBeUndefined();
-    expect(debugStructure.basinSpillH).not.toBeUndefined();
-    expect(debugStructure.basinDepthLike).not.toBeUndefined();
-    expect(debugStructure.peakMaxIdx).not.toBeUndefined();
-    expect(debugStructure.peakMaxH).not.toBeUndefined();
-    expect(debugStructure.peakSaddleH).not.toBeUndefined();
-    expect(debugStructure.peakRiseLike).not.toBeUndefined();
+    expect(debugTopography.tiles[0].topography.structure).toBeUndefined();
 
     const envelope = JSON.parse(await readFile(debugOutputFile, "utf8"));
     expect(envelope.tiles[0].index).toBe(0);
@@ -68,14 +54,6 @@ describe("Phase 2 topographic structure debug output", () => {
     expect(Array.isArray(envelope.features.peaks)).toBe(true);
     expect(Array.isArray(envelope.tiles[0].featureIds)).toBe(true);
     expect(Array.isArray(envelope.tiles[0].activeFeatureIds)).toBe(true);
-    const envelopeStructure = envelope.tiles[0].topography.structure;
-    expect(Object.keys(envelopeStructure)).toEqual([
-      "basinPersistence",
-      "peakPersistence",
-      "basinLike",
-      "ridgeLike",
-    ]);
-    expect(envelopeStructure.basinMinIdx).toBeUndefined();
-    expect(envelopeStructure.peakMaxIdx).toBeUndefined();
+    expect(envelope.tiles[0].topography.structure).toBeUndefined();
   });
 });

@@ -271,9 +271,6 @@ function buildReplayEnvelope(
 		const sourceTopography = isJsonObject(sourceTile.topography)
 			? sourceTile.topography
 			: {};
-		const sourceStructure = isJsonObject(sourceTopography.structure)
-			? sourceTopography.structure
-			: {};
 		const tileHydrology = buildTileHydrologyPayload(hydrology, index);
 		tiles.push({
 			...sourceTile,
@@ -286,13 +283,6 @@ function buildReplayEnvelope(
 				...sourceTopography,
 				h: replayH[index],
 				elevationMeters: elevation.h0 + replayH[index] * elevationSpan,
-				structure: {
-					...sourceStructure,
-					basinPersistence: topographyStructure.basinPersistence[index],
-					peakPersistence: topographyStructure.peakPersistence[index],
-					basinLike: topographyStructure.basinLike[index] === 1,
-					ridgeLike: topographyStructure.ridgeLike[index] === 1,
-				},
 			},
 			hydrology: tileHydrology,
 		});
@@ -457,12 +447,6 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 				elevationMeters: elevation.h0 + topography.h[i] * elevationSpan,
 				r: topography.r[i],
 				v: topography.v[i],
-				structure: {
-					basinPersistence: topographyStructure.basinPersistence[i],
-					peakPersistence: topographyStructure.peakPersistence[i],
-					basinLike: topographyStructure.basinLike[i] === 1,
-					ridgeLike: topographyStructure.ridgeLike[i] === 1,
-				},
 			},
 			hydrology: buildTileHydrologyPayload(hydrology, i),
 		});
