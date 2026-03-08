@@ -1,131 +1,372 @@
-# Stream Contract: Explicit Origins + Traced Paths
+# Stream Network Model
 
-Status: Proposed
+This document defines the stream network model used by the terrain generator.
 
-This document defines the stream contract as deterministic traced stream objects.
-It explicitly replaces old stream-mask semantics and does not reintroduce `waterClass` or `isStream`.
+Streams are deterministic traced paths derived from hydrology truth.  
+The goal is to produce stream geometry that behaves plausibly, remains deterministic, and integrates cleanly with the terrain and basin systems.
 
-## 1) Proposed stream contract
+---
 
-A stream network is produced in four deterministic stages:
+# 1. Separation of Concerns
 
-1. Select origin tiles using a predicate.
-2. Sort origin tiles with a fixed ordering rule.
-3. Trace each origin downstream using existing routing truth (`fd` + basin context).
-4. De-duplicate overlapping downstream geometry into one unique network.
+The stream system has two levels of representation.
 
-Output shape (conceptual):
+## Tile-level stream geometry
 
-- `origins`: ordered origin tile ids
-- `streams`: one traced path per origin
-- `uniqueEdges`: de-duplicated directed downstream edges
-- `tileStream`: per-tile derived stream fields
+Each tile may contain local information describing how stream flow passes through it.
 
-## 2) Origin predicate interface
-
-Origin selection is intentionally simple.
+The tile representation contains **only local geometry**, not network bookkeeping.
 
 ```ts
-export type StreamOriginPredicate = (tile: {
-  tileId: number;
-  x: number;
-  y: number;
-  h: number;
-  fa: number;
-}) => boolean;
-
-const streamOriginTiles = tiles.filter(predicate);
+tile.hydrology.stream = {
+  outgoingDirection: StreamDirection | null,
+  incomingDirections: StreamDirection[]
+}
 ```
 
-Bootstrap predicate (initial default):
+Semantics:
+
+- `outgoingDirection`
+  - direction the stream exits this tile
+  - `null` if the tile is a terminal stream tile
+
+- `incomingDirections`
+  - array of directions from which stream flow enters the tile
+  - empty array for headwater tiles
+  - multiple entries for confluences
+
+### Invariants
+
+- A tile may have multiple incoming directions.
+- A tile may have **at most one outgoing direction**.
+- If `outgoingDirection === null`, the tile is terminal.
+
+The `incomingDirections` array must be emitted using the repository's **canonical direction order**.
+
+---
+
+## Feature-level stream objects
+
+Stream paths themselves are represented as feature objects.
+
+These live under:
 
 ```ts
-const bootstrapPredicate: StreamOriginPredicate = (tile) =>
-  tile.h > 0.5 && tile.fa > 5;
+features.streams
 ```
 
-No predicate id/version/expression metadata is required by this contract.
+Minimal structure:
 
-## 3) Deterministic origin ordering rule
+```ts
+type StreamFeature = {
+  id: string
+  originTileId: number
+  pathTileIds: number[]
+  terminalTileId: number
+  terminalState: StreamTerminalState
+}
+```
 
-After filtering, sort origins by:
+Field meanings:
 
-1. `h` descending
-2. `fa` descending
-3. `y` ascending
-4. `x` ascending
-5. `tileId` ascending
+- `id`
+  - deterministic stream identifier
 
-This ordering is total and deterministic.
+- `originTileId`
+  - tile where this stream begins
 
-## 4) Path tracing semantics
+- `pathTileIds`
+  - ordered list of tiles visited by the stream
 
-For each ordered origin:
+- `terminalTileId`
+  - final tile in the path
 
-- Start path at origin tile.
-- Step downstream using current routing truth (`fd`, basin linkage/spill context).
-- Append each visited tile in order.
-- Stop when a termination state is reached (Section 5).
-- If the next downstream edge already exists in `uniqueEdges`, stop extension and mark a merge (Section 6).
-- Detect cycles; cycles terminate explicitly.
+- `terminalState`
+  - reason the stream terminated
 
-No heuristic rerouting and no threshold-mask reconstruction.
+### StreamFeature invariants
 
-## 5) Termination states
+- `pathTileIds.length >= 1`
+- `originTileId === pathTileIds[0]`
+- `terminalTileId === pathTileIds[pathTileIds.length - 1]`
 
-Each stream ends in exactly one named state:
+Streams must be emitted in deterministic order.
 
-- `leaf_basin`: reached a leaf basin terminal.
-- `entered_active_basin`: reached a tile inside an active basin.
-- `entered_lake_basin`: reached a tile inside a lake basin.
-- `local_sink`: no valid downhill continuation at a sink tile.
-- `no_downstream`: routing truth provides no downstream target.
-- `cycle_detected`: downstream traversal revisited a tile in the same trace.
-- `max_steps_reached`: optional safety limit reached.
-- `boundary_exit`: downstream exits available domain bounds.
+---
 
-Required by settled direction:
+# 2. Stream Direction System
 
-- terminate at leaf basin, or
-- at a tile inside active/lake basin, or
-- another explicitly named terminal condition.
+Streams use the repository's **canonical 8-direction system**.
 
-## 6) Overlap / confluence uniqueness rule
+The implementation must reuse the existing direction definitions already present in the codebase.
 
-Uniqueness key: directed edge `(fromTileId, toTileId)`.
+Directions are represented as:
 
-- First stream to add an edge materializes it in `uniqueEdges`.
-- Later streams do not duplicate an existing edge.
-- Later streams terminate extension at first already-existing edge and record merge target stream.
+```ts
+type StreamDirection =
+  | "n"
+  | "ne"
+  | "e"
+  | "se"
+  | "s"
+  | "sw"
+  | "w"
+  | "nw"
+```
 
-This preserves per-origin traces while keeping downstream shared geometry unique.
+All direction comparisons, ordering, and emission must follow the repository’s canonical direction ordering.
 
-## 7) Proposed per-tile emitted stream fields
+No new direction conventions may be introduced.
 
-Derived per tile from traced streams + unique edge set:
+---
 
-- `isOrigin: boolean`
-- `originIds: string[]` (sorted stream ids whose traces include the tile)
-- `upstreamOriginCount: number`
-- `inUniqueNetwork: boolean`
-- `enterEdgeCount: number` (unique-edge in-degree)
-- `exitEdgeCount: number` (unique-edge out-degree)
-- `terminalStates: string[]` (sorted unique terminal states ending at tile)
+# 3. Stream Origin Selection
 
-These are derived outputs only; they do not define hydrology truth.
+Streams begin at tiles selected by a predicate.
 
-## 8) What remains deferred
+Example bootstrap predicate:
 
-1. Exact serialized schema for CLI/artifact outputs.
-2. Exact stream id string format (must remain deterministic).
-3. Exact definition source for "active basin".
-4. Exact definition source for "leaf basin".
-5. Normalization rule between `local_sink` vs `no_downstream` where `fd` is undefined/flat.
-6. Performance strategy for very dense origin sets.
-7. Test fixture set for deterministic regression of this contract.
+```ts
+(tile.h > 0.5 && tile.fa > 5)
+```
 
-## Explicit ambiguities
+Origins must be sorted deterministically before tracing.
 
-- "Active basin" is still ambiguous until tied to one existing hydrology field contract.
-- "Leaf basin" is still ambiguous until tied to one basin-graph rule.
-- Domain-boundary behavior may be run-mode dependent (`boundary_exit` may be unreachable in some envelopes).
+Ordering rule:
+
+1. height descending
+2. flow accumulation descending
+3. y coordinate ascending
+4. x coordinate ascending
+5. tile id ascending
+
+This guarantees deterministic stream ordering.
+
+---
+
+# 4. Stream Path Tracing
+
+Streams are traced downstream from each origin tile.
+
+Tracing uses deterministic candidate selection with cycle avoidance.
+
+The tracer constructs a stream path by repeatedly selecting the best downstream candidate neighbor.
+
+---
+
+# 5. Downstream Candidate Selection
+
+For the current tile, the algorithm builds a list of candidate neighbors.
+
+Candidates must satisfy the downstream admissibility rule.
+
+Typical admissibility rule:
+
+- neighbor elevation must be lower than the current tile
+
+Equivalent forms may allow an epsilon for equal heights.
+
+Each candidate neighbor is assigned a ranking tuple.
+
+Ranking priority:
+
+1. lower elevation
+2. directional continuation
+3. smallest angular deviation
+4. canonical direction order
+5. tile id
+
+Conceptually:
+
+```ts
+rank = (
+  h(next),
+  turnCost(previousDirection, direction(current,next)),
+  canonicalDirectionIndex(direction(current,next)),
+  tileId(next)
+)
+```
+
+Lower tuples rank higher.
+
+---
+
+# 6. Directional Inertia
+
+When multiple candidates have equal elevation, streams prefer to continue in the same direction they were already traveling.
+
+Tie-breaking behavior:
+
+1. same direction
+2. smallest angular deviation
+3. canonical direction order
+
+Turn costs:
+
+| Turn | Cost |
+|-----|-----|
+| same direction | 0 |
+| 45° | 1 |
+| 90° | 2 |
+| 135° | 3 |
+| reverse | 4 |
+
+The incoming direction to the tile determines the current travel direction.
+
+---
+
+# 7. Origin Step Behavior
+
+At the origin tile there is no previous direction.
+
+In that case candidate ordering becomes:
+
+1. lowest elevation
+2. canonical direction order
+3. tile id
+
+---
+
+# 8. Cycle Handling
+
+Streams must never terminate immediately upon encountering a cycle.
+
+Instead the tracer performs deterministic backtracking.
+
+If the next candidate would revisit a tile already in the current path:
+
+- reject that candidate
+- attempt the next ranked candidate
+
+If all candidates for a tile are exhausted:
+
+- backtrack to the previous tile
+- continue searching from the next untried candidate there
+
+The search continues until either:
+
+- a valid terminal state is reached
+- all reachable downstream candidates have been exhausted
+
+Cycles therefore trigger **backtracking**, not termination.
+
+---
+
+# 9. Backtracking Algorithm
+
+Conceptually the tracer performs a depth-first search with deterministic candidate ordering.
+
+```ts
+traceStream(origin):
+
+  push origin
+  mark origin visited
+
+  while stack not empty:
+
+    current = top of stack
+
+    if terminal(current):
+        return path
+
+    for nextCandidate in orderedCandidates(current):
+
+        if nextCandidate not yet tried:
+
+            mark candidate tried
+
+            if nextCandidate not in path:
+                push nextCandidate
+                mark visited
+                continue search
+
+    # no candidates left
+
+    pop current
+    unmark visited
+```
+
+The search ends only when:
+
+- a valid terminal condition is reached
+- the search space is exhausted
+
+---
+
+# 10. Terminal States
+
+Streams terminate when a valid hydrologic stopping condition is reached.
+
+Possible terminal states include:
+
+```ts
+type StreamTerminalState =
+  | "leaf_basin"
+  | "entered_active_basin"
+  | "entered_lake_basin"
+  | "local_sink"
+  | "no_downstream"
+  | "max_steps_reached"
+  | "boundary_exit"
+```
+
+Cycle encounters do **not** produce terminal states.
+
+They are internal search events.
+
+---
+
+# 11. Tile Stream Geometry Derivation
+
+After all stream paths are computed, tile-level stream geometry is derived.
+
+For each stream edge:
+
+```text
+(fromTile → toTile)
+```
+
+Derive:
+
+- `outgoingDirection` for `fromTile`
+- `incomingDirections` entry for `toTile`
+
+Incoming directions must be sorted using canonical direction order.
+
+If a tile has no outgoing edge it receives:
+
+```ts
+outgoingDirection = null
+```
+
+---
+
+# 12. Design Goals
+
+This model enforces several core properties:
+
+### Determinism
+
+All stream results must be reproducible given the same terrain.
+
+### Plausible flow
+
+Directional inertia encourages natural stream shapes.
+
+### Robustness
+
+Backtracking prevents artificial cycle termination.
+
+### Clean data model
+
+Tile-level geometry remains minimal.
+
+Network-level structure lives in `features.streams`.
+
+### Integration
+
+Streams remain consistent with terrain topology and hydrology systems.
+
+---
+
+# End of Stream Network Model
