@@ -2,88 +2,53 @@
 
 Status: Proposed
 
-This document defines the **new stream contract** as deterministic traced stream objects.
-It replaces threshold-mask semantics and does not use `isStream` or `waterClass`.
-
-## Binding Invariants
-
-1. Stream existence is decided by an explicit origin predicate, not by a per-tile stream mask.
-2. For a fixed terrain envelope and fixed predicate parameters, emitted stream objects are deterministic.
-3. Each emitted stream has one origin tile and one ordered downstream path.
-4. Termination for each stream is explicit and encoded as a named terminal state.
-5. Overlapping downstream segments are represented once in the unique segment set (no duplicated segment geometry).
+This document defines the stream contract as deterministic traced stream objects.
+It explicitly replaces old stream-mask semantics and does not reintroduce `waterClass` or `isStream`.
 
 ## 1) Proposed stream contract
 
-The stream system emits **stream traces** built from:
+A stream network is produced in four deterministic stages:
 
-- a deterministic set of origins,
-- routed downstream paths over existing routing truth (`fd`, basin context),
-- explicit terminal states,
-- unique segment topology for overlaps/confluences.
+1. Select origin tiles using a predicate.
+2. Sort origin tiles with a fixed ordering rule.
+3. Trace each origin downstream using existing routing truth (`fd` + basin context).
+4. De-duplicate overlapping downstream geometry into one unique network.
 
-### Canonical output objects
+Output shape (conceptual):
 
-```ts
-export interface StreamNetwork {
-  contractVersion: "stream-contract-v1";
-  originPredicate: StreamOriginPredicateSpec;
-  originOrdering: "h_desc_fa_desc_y_asc_x_asc_tileId_asc";
-  streams: StreamTrace[];
-  uniqueSegments: StreamSegment[];
-  tiles: StreamTileEmission[];
-}
-```
-
-`streams` preserves per-origin trace identity. `uniqueSegments` de-duplicates shared downstream geometry.
+- `origins`: ordered origin tile ids
+- `streams`: one traced path per origin
+- `uniqueEdges`: de-duplicated directed downstream edges
+- `tileStream`: per-tile derived stream fields
 
 ## 2) Origin predicate interface
 
-Origins are selected by a **named, explicit, replaceable predicate**.
+Origin selection is intentionally simple.
 
 ```ts
-export interface StreamOriginPredicateSpec {
-  id: string; // e.g. "bootstrap-h-gt-0.5-fa-gt-5"
-  version: string; // semantic version for predicate definition
-  params: Record<string, number | string | boolean>;
-  expression: string; // machine-readable expression string
-}
-
-export interface OriginCandidateContext {
+export type StreamOriginPredicate = (tile: {
   tileId: number;
   x: number;
   y: number;
   h: number;
   fa: number;
-}
+}) => boolean;
 
-export type StreamOriginPredicate = (
-  tile: OriginCandidateContext,
-  spec: StreamOriginPredicateSpec,
-) => boolean;
+const streamOriginTiles = tiles.filter(predicate);
 ```
 
-### Bootstrap predicate (initial default)
+Bootstrap predicate (initial default):
 
-A tile is an origin iff both conditions are true:
-
-- `h > 0.5`
-- `fa > 5`
-
-Named bootstrap spec:
-
-```json
-{
-  "id": "bootstrap-h-gt-0.5-fa-gt-5",
-  "version": "1.0.0",
-  "params": { "hMinExclusive": 0.5, "faMinExclusive": 5 },
-  "expression": "tile.h > hMinExclusive && tile.fa > faMinExclusive"
-}
+```ts
+const bootstrapPredicate: StreamOriginPredicate = (tile) =>
+  tile.h > 0.5 && tile.fa > 5;
 ```
+
+No predicate id/version/expression metadata is required by this contract.
 
 ## 3) Deterministic origin ordering rule
 
-After predicate filtering, origins are sorted by this strict key tuple:
+After filtering, sort origins by:
 
 1. `h` descending
 2. `fa` descending
@@ -93,108 +58,74 @@ After predicate filtering, origins are sorted by this strict key tuple:
 
 This ordering is total and deterministic.
 
-If future predicates add/omit fields, sorting keys remain unchanged unless contract version changes.
-
 ## 4) Path tracing semantics
 
-Each origin creates one `StreamTrace`:
+For each ordered origin:
 
-```ts
-export interface StreamTrace {
-  streamId: string; // deterministic: "s-<originTileId>"
-  originTileId: number;
-  origin: { x: number; y: number; h: number; fa: number };
-  orderedTilePath: number[]; // includes origin, includes terminal tile when tile-based
-  orderedEdges: Array<{ fromTileId: number; toTileId: number }>;
-  terminal: StreamTerminalState;
-  mergedIntoStreamId: string | null;
-}
-```
+- Start path at origin tile.
+- Step downstream using current routing truth (`fd`, basin linkage/spill context).
+- Append each visited tile in order.
+- Stop when a termination state is reached (Section 5).
+- If the next downstream edge already exists in `uniqueEdges`, stop extension and mark a merge (Section 6).
+- Detect cycles; cycles terminate explicitly.
 
-Routing rules:
-
-- Use existing downstream routing truth (`fd`, basin hierarchy/metadata, and basin spill context).
-- Advance one downstream step at a time according to routing truth.
-- If downstream step enters already-known geometry, stop path extension and mark merge (see Section 6).
-- Cycle detection is mandatory. Any detected cycle terminates with an explicit cycle terminal state.
-
-Non-goals:
-
-- No fallback re-routing heuristics.
-- No threshold-mask reconstruction.
+No heuristic rerouting and no threshold-mask reconstruction.
 
 ## 5) Termination states
 
-Every stream must end in exactly one explicit state:
+Each stream ends in exactly one named state:
 
-```ts
-export type StreamTerminalState =
-  | { type: "leaf_basin"; basinId: string }
-  | { type: "entered_active_basin"; basinId: string }
-  | { type: "entered_lake_basin"; basinId: string }
-  | { type: "boundary_exit" }
-  | { type: "local_sink"; tileId: number }
-  | { type: "cycle_detected"; tileId: number }
-  | { type: "max_steps_reached"; stepLimit: number }
-  | { type: "no_downstream"; tileId: number };
-```
+- `leaf_basin`: reached a leaf basin terminal.
+- `entered_active_basin`: reached a tile inside an active basin.
+- `entered_lake_basin`: reached a tile inside a lake basin.
+- `local_sink`: no valid downhill continuation at a sink tile.
+- `no_downstream`: routing truth provides no downstream target.
+- `cycle_detected`: downstream traversal revisited a tile in the same trace.
+- `max_steps_reached`: optional safety limit reached.
+- `boundary_exit`: downstream exits available domain bounds.
 
-Required semantics from settled direction:
+Required by settled direction:
 
-- terminate at leaf basin,
-- or when reaching a tile inside an active basin/lake basin,
-- or another **named** terminal condition.
-
-`boundary_exit`, `local_sink`, `cycle_detected`, `max_steps_reached`, and `no_downstream` are the explicit additional terminal conditions in this proposal.
+- terminate at leaf basin, or
+- at a tile inside active/lake basin, or
+- another explicitly named terminal condition.
 
 ## 6) Overlap / confluence uniqueness rule
 
-Rule: downstream geometry is unique by directed edge key `fromTileId -> toTileId`.
+Uniqueness key: directed edge `(fromTileId, toTileId)`.
 
-- First stream to claim a directed edge owns its materialization in `uniqueSegments`.
-- Later streams that reach an already-claimed edge do not duplicate geometry.
-- Later streams terminate extension at first claimed edge and set `mergedIntoStreamId` to owning stream.
+- First stream to add an edge materializes it in `uniqueEdges`.
+- Later streams do not duplicate an existing edge.
+- Later streams terminate extension at first already-existing edge and record merge target stream.
 
-This yields:
-
-- unique shared downstream representation,
-- per-origin trace identity,
-- deterministic confluence handling.
+This preserves per-origin traces while keeping downstream shared geometry unique.
 
 ## 7) Proposed per-tile emitted stream fields
 
-Per-tile stream emissions are derived from traced streams and unique edges.
+Derived per tile from traced streams + unique edge set:
 
-```ts
-export interface StreamTileEmission {
-  tileId: number;
-  streamOriginIds: string[]; // sorted; origins whose traces include tile
-  upstreamOriginCount: number;
-  isOrigin: boolean;
-  inUniqueNetwork: boolean; // tile appears in uniqueSegments
-  enterEdgeCount: number; // in-degree within unique directed stream graph
-  exitEdgeCount: number; // out-degree within unique directed stream graph
-  terminalTypes: StreamTerminalState["type"][]; // sorted unique set for streams terminating here
-}
-```
+- `isOrigin: boolean`
+- `originIds: string[]` (sorted stream ids whose traces include the tile)
+- `upstreamOriginCount: number`
+- `inUniqueNetwork: boolean`
+- `enterEdgeCount: number` (unique-edge in-degree)
+- `exitEdgeCount: number` (unique-edge out-degree)
+- `terminalStates: string[]` (sorted unique terminal states ending at tile)
 
-Notes:
-
-- These fields are for debug/consumers and must remain derivations from stream traces.
-- This section intentionally does not introduce `isStream`.
+These are derived outputs only; they do not define hydrology truth.
 
 ## 8) What remains deferred
 
-1. **Predicate plug-in mechanism shape** (CLI arg shape/config file schema/runtime registration).
-2. **Exact stream ID encoding** beyond deterministic origin-derived identity string.
-3. **Whether `boundary_exit` is representable in current envelopes** or only future tiled-world runs.
-4. **How to represent basin-entry terminal tile when basin metadata is present but tile-level attribution is partial.**
-5. **Storage format split** between debug artifact vs stable public output contract.
-6. **Performance constraints** for very dense origin sets (batching/indexing), while preserving determinism.
-7. **Golden regression fixtures** for invariants listed above.
+1. Exact serialized schema for CLI/artifact outputs.
+2. Exact stream id string format (must remain deterministic).
+3. Exact definition source for "active basin".
+4. Exact definition source for "leaf basin".
+5. Normalization rule between `local_sink` vs `no_downstream` where `fd` is undefined/flat.
+6. Performance strategy for very dense origin sets.
+7. Test fixture set for deterministic regression of this contract.
 
-## Ambiguities called out explicitly
+## Explicit ambiguities
 
-- "Active basin" needs a strict implementation-level boolean definition sourced from current hydrology truth outputs.
-- "Leaf basin" needs a strict definition in terms of basin graph metadata available at trace time.
-- `fd` behavior at flats/undefined direction must be normalized into terminal-state behavior (likely `no_downstream` vs `local_sink`) in implementation notes.
+- "Active basin" is still ambiguous until tied to one existing hydrology field contract.
+- "Leaf basin" is still ambiguous until tied to one basin-graph rule.
+- Domain-boundary behavior may be run-mode dependent (`boundary_exit` may be unreachable in some envelopes).
