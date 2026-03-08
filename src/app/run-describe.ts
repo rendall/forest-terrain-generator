@@ -180,7 +180,7 @@ function deriveLandform(
 	if (facts.topology.peakLeafId !== null) {
 		return "ridge";
 	}
-	if (facts.hydrology.waterClass === "lake" || standingWater) {
+	if (standingWater) {
 		return "basin";
 	}
 	if (
@@ -203,26 +203,30 @@ function deriveFollowable(facts: DescriptionFactsTile): string[] {
 	if (facts.topology.peakLeafId !== null) {
 		tokens.push("ridge");
 	}
-	if (facts.hydrology.waterClass === "stream") {
-		tokens.push("stream");
-	}
 	return tokens;
 }
 
 function deriveMoisture(
-	facts: DescriptionFactsTile,
+	_facts: DescriptionFactsTile,
 	standingWater: boolean,
 ): number {
-	if (standingWater || facts.hydrology.waterClass === "lake") {
+	if (standingWater) {
 		return 1;
 	}
-	if (facts.hydrology.waterClass === "marsh") {
-		return 0.8;
-	}
-	if (facts.hydrology.waterClass === "stream") {
-		return 0.65;
-	}
 	return clamp01(0.5);
+}
+
+function deriveWaterClassFromHydrology(
+	facts: DescriptionFactsTile,
+	standingWater: boolean,
+): WaterClass {
+	if (standingWater) {
+		return "lake";
+	}
+	if (facts.hydrology.lakeBasinId !== null) {
+		return "lake";
+	}
+	return "none";
 }
 
 function toTileSignals(facts: DescriptionFactsTile): TileSignals {
@@ -231,7 +235,7 @@ function toTileSignals(facts: DescriptionFactsTile): TileSignals {
 		x: facts.coord.x,
 		y: facts.coord.y,
 		biome: facts.ecology.biome,
-		waterClass: facts.hydrology.waterClass,
+		waterClass: deriveWaterClassFromHydrology(facts, standingWater),
 		flowDirection: facts.hydrology.flowDirection,
 		elevation: facts.local.elevation,
 		treeDensity: facts.ecology.treeDensity,

@@ -65,7 +65,7 @@ function createReplaySourceEnvelope({
 				featureIds: ["stale_basin"],
 				activeFeatureIds: ["stale_basin"],
 				topography: { h: 0.1, r: 0, v: 0 },
-				hydrology: { fd: 7, fa: 1, faN: 0.1, isStream: false },
+				hydrology: { fd: 7, fa: 1, faN: 0.1 },
 			},
 			{
 				index: 1,
@@ -74,7 +74,7 @@ function createReplaySourceEnvelope({
 				featureIds: ["stale_basin"],
 				activeFeatureIds: ["stale_basin"],
 				topography: { h: 0.3, r: 0, v: 0 },
-				hydrology: { fd: 7, fa: 2, faN: 0.2, isStream: false },
+				hydrology: { fd: 7, fa: 2, faN: 0.2 },
 			},
 			{
 				index: 2,
@@ -83,7 +83,7 @@ function createReplaySourceEnvelope({
 				featureIds: ["stale_basin"],
 				activeFeatureIds: ["stale_basin"],
 				topography: { h: 0.05, r: 0, v: 0 },
-				hydrology: { fd: 7, fa: 3, faN: 0.3, isStream: false },
+				hydrology: { fd: 7, fa: 3, faN: 0.3 },
 			},
 			{
 				index: 3,
@@ -92,7 +92,7 @@ function createReplaySourceEnvelope({
 				featureIds: ["stale_basin"],
 				activeFeatureIds: ["stale_basin"],
 				topography: { h: 0.15, r: 0, v: 0 },
-				hydrology: { fd: 7, fa: 4, faN: 0.4, isStream: false },
+				hydrology: { fd: 7, fa: 4, faN: 0.4 },
 			},
 			{
 				index: 4,
@@ -101,7 +101,7 @@ function createReplaySourceEnvelope({
 				featureIds: ["stale_basin"],
 				activeFeatureIds: ["stale_basin"],
 				topography: { h: 0.35, r: 0, v: 0 },
-				hydrology: { fd: 7, fa: 5, faN: 0.5, isStream: false },
+				hydrology: { fd: 7, fa: 5, faN: 0.5 },
 			},
 			{
 				index: 5,
@@ -110,7 +110,7 @@ function createReplaySourceEnvelope({
 				featureIds: ["stale_basin"],
 				activeFeatureIds: ["stale_basin"],
 				topography: { h: 0.4, r: 0, v: 0 },
-				hydrology: { fd: 7, fa: 6, faN: 0.6, isStream: false },
+				hydrology: { fd: 7, fa: 6, faN: 0.6 },
 			},
 		],
 		paramOverrides: paramOverrides ?? {
@@ -278,10 +278,10 @@ describe("CLI command wiring and contract failures", () => {
 				fd: expect.any(Number),
 				fa: expect.any(Number),
 				faN: expect.any(Number),
-				isStream: expect.any(Boolean),
 				lakeMask: expect.any(Boolean),
-				waterClass: expect.any(Number),
 			});
+			expect(tile.hydrology).not.toHaveProperty("isStream");
+			expect(tile.hydrology).not.toHaveProperty("waterClass");
 			if ("waterSurfaceH" in tile.hydrology) {
 				expect(tile.hydrology).toHaveProperty("waterDepth");
 			} else {
@@ -416,7 +416,6 @@ describe("CLI command wiring and contract failures", () => {
 			"fd.json",
 			"fa.json",
 			"fa-normalized.json",
-			"stream-mask.json",
 			"ecology.json",
 			"navigation.json",
 		]);
@@ -576,10 +575,10 @@ describe("CLI command wiring and contract failures", () => {
 				fd: expect.any(Number),
 				fa: expect.any(Number),
 				faN: expect.any(Number),
-				isStream: expect.any(Boolean),
 				lakeMask: expect.any(Boolean),
-				waterClass: expect.any(Number),
 			});
+			expect(tile.hydrology).not.toHaveProperty("isStream");
+			expect(tile.hydrology).not.toHaveProperty("waterClass");
 			expect(tile.topography?.structure).toBeUndefined();
 			if ("waterSurfaceH" in tile.hydrology) {
 				expect(tile.hydrology).toHaveProperty("waterDepth");

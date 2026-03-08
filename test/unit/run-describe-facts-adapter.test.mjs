@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { WATER_CLASS_CODE } from "../../src/domain/hydrology.js";
 import { attachTileDescriptions } from "../../src/app/run-describe.js";
 
 const PASSABILITY_ALL_OPEN = {
@@ -27,7 +26,7 @@ describe("run-describe facts adapter", () => {
 					x: 0,
 					y: 0,
 					topography: { h: 0.9, landform: "basin" },
-					hydrology: { waterClass: WATER_CLASS_CODE.stream, fd: 0 },
+					hydrology: { fd: 0 },
 					navigation: {
 						followable: ["game_trail"],
 						passability: PASSABILITY_ALL_OPEN,
@@ -39,7 +38,7 @@ describe("run-describe facts adapter", () => {
 					x: 1,
 					y: 0,
 					topography: { h: 0.8, landform: "basin" },
-					hydrology: { waterClass: WATER_CLASS_CODE.stream, fd: 4 },
+					hydrology: { fd: 4 },
 					navigation: {
 						followable: ["game_trail"],
 						passability: PASSABILITY_ALL_OPEN,
@@ -61,7 +60,7 @@ describe("run-describe facts adapter", () => {
 		);
 		expect(landformSentence?.contributorKeys?.landform).toBe("ridge");
 		expect(structured.adjacency.ridge).toEqual(["E"]);
-		expect(structured.adjacency.stream).toEqual(["E"]);
+		expect(structured.adjacency.stream).toBeUndefined();
 		expect(structured.adjacency.game_trail).toBeUndefined();
 	});
 });

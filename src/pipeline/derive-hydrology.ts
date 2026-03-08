@@ -3,7 +3,6 @@ import {
 	DIR8_CODE,
 	DIR8_NONE,
 	type HydrologyMapsSoA,
-	WATER_CLASS_CODE,
 } from "../domain/hydrology.js";
 import type { TopographicFeatureNode } from "../domain/topographic-features.js";
 import type {
@@ -459,7 +458,6 @@ export const deriveHydrology = (
 		}
 		if (depth > 0) {
 			maps.lakeMask[i] = 1;
-			maps.waterClass[i] = WATER_CLASS_CODE.lake;
 		}
 	}
 
@@ -483,11 +481,8 @@ export const deriveHydrology = (
 	let sinkCount = 0;
 	for (let i = 0; i < shape.size; i += 1) {
 		maps.faN[i] = maxFa > 0 ? maps.fa[i] / maxFa : 0;
-		const isStream = maps.fa[i] >= threshold;
-		maps.isStream[i] = isStream ? 1 : 0;
-		if (isStream) {
+		if (maps.fa[i] >= threshold) {
 			streamTiles += 1;
-			maps.waterClass[i] = WATER_CLASS_CODE.stream;
 		}
 		if (maps.fd[i] === DIR8_NONE) {
 			sinkCount += 1;
