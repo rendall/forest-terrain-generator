@@ -106,6 +106,28 @@ Render landform classes as uniform grayscale:
 node --import tsx src/cli/main.ts see --input-file out.json --output-file landforms.pgm --landforms
 ```
 
+## Architecture Overview
+
+The system builds meaning in layers:
+
+```text
+terrain synthesis
+        ↓
+topology (basins / peaks / ridges)
+        ↓
+hydrology
+        ↓
+biome / ecological context
+        ↓
+feature prominence
+        ↓
+tile-level terrain facts
+        ↓
+location description generation
+```
+
+Each stage adds structure and interpretation, allowing the final description layer to refer both to immediate surroundings and to the larger landscape context.
+
 ## Hydrology
 
 Hydrology is one of the core terrain truth layers. Basin topology determines how water collects, connects, and produces basin-level and tile-level water state.
