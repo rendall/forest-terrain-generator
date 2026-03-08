@@ -15,7 +15,7 @@ const program = new Command();
 program
 	.name("forest-terrain-describe")
 	.description(
-		"Attach deterministic tile descriptions to an existing terrain envelope",
+		"Generate deterministic wilderness location descriptions from a terrain envelope",
 	)
 	.showSuggestionAfterError(true)
 	.showHelpAfterError()

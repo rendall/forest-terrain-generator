@@ -131,7 +131,7 @@ const assertHydrologyVizMode = (
 const program = new Command();
 program
 	.name("forest-terrain-generator")
-	.description("Procedural forest terrain generation CLI")
+	.description("Deterministic wilderness terrain and location-description pipeline CLI")
 	.version("1.0.0")
 	.showSuggestionAfterError(true)
 	.showHelpAfterError()

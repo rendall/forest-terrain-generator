@@ -1,14 +1,34 @@
-# Forest Terrain Generator
+# Wilderness Terrain Generator
 
-Procedurally generate forest data.
+The **Wilderness Terrain Generator** produces coherent, grounded descriptions of wilderness locations. Its goal is to generate terrain that can be described naturally and consistently, using deterministic models of landscape structure.
 
-The *Forest Terrain Generator* is a deterministic terrain synthesis engine for producing complete, machine-readable, procedurally generated forest landscapes. Given a seed, dimensions, and a parameter set, it generates a rectangular grid of tiles and derives a coherent physical model of that region: elevation, slope, landform, hydrology, moisture, biome classification, vegetation structure, ground conditions, roughness features, visibility, and movement semantics.
+The system builds a structured model of terrain from a seed, grid size, and parameter set. It derives elevation, slopes, basins, ridges, hydrology, biome patterns, vegetation structure, and other environmental signals for each tile in a generated region. These layers act as authoritative “truth” about the landscape.
 
-The output is a versioned JSON dataset whose `tiles` array contains one fully described record per coordinate. Each tile represents a physically consistent location within a forest environment, including both environmental attributes and navigation-related properties. The result is not prose or rendered content, but a structured terrain model designed to be deterministic, reproducible, and suitable for downstream systems that require spatially coherent forest data.
-An optional post-processing CLI can attach deterministic prose descriptions per tile.
+From that model, the generator produces natural-language descriptions that reflect the terrain’s topology, hydrology, and surrounding context.
+
+The result is a versioned JSON dataset in which each tile represents a coherent location within the wilderness environment. Because the generation process is deterministic, the same seed always produces the same terrain and the same location descriptions, allowing downstream systems to rely on stable spatial structure.
+
+## Terrain Truth Layers
+
+The Wilderness Terrain Generator builds several structural layers that together describe a landscape.  
+These layers exist to support coherent wilderness location descriptions.
+
+**Basin hydrology**  
+Models drainage systems and water surfaces. Basin topology determines where water collects, how basins connect, and how surface water depth relates to terrain elevation.
+
+**Peak and ridge topology**  
+Models the complementary system of hilltops, ridgelines, and crest structures. This layer describes the high points and ridge systems of the terrain independently of hydrology.
+
+**Tile terrain metrics**  
+Each tile records local physical properties such as elevation, slope, vegetation density, roughness, and visibility. These describe the immediate ground conditions at that location.
+
+**Description facts**  
+A normalization layer converts terrain truth into structured “location facts.” These facts feed the description engine, which produces deterministic wilderness location descriptions for each tile.
+
+Together, these layers provide a consistent model of terrain that can be used to generate natural-language descriptions, navigation cues, and other spatial interpretations of the landscape.
 
 ```bash
-node --import tsx src/cli/main.ts generate --params params.json --seed 42 --width 32 --height 32 --output-file forest.json
+node --import tsx src/cli/main.ts generate --params params.json --seed 42 --width 32 --height 32 --output-file wilderness.json
 ```
 
 ## CLI Summary
@@ -18,17 +38,25 @@ Commands:
 - `generate`: Generate terrain and write envelope JSON to `--output-file`.
 - `derive`: Derive terrain from authored maps (requires `--map-h`) and write envelope JSON to `--output-file`.
 - `debug`: Emit debug artifacts to `--output-dir` from either generation inputs or an existing envelope `--input-file`; optionally also write envelope JSON to `--debug-output-file`.
-<!-- - `describe`: Read an existing envelope from `--input-file`, write a copied envelope to `--output-file`, and attach a `description` field to each tile. -->
+- `describe` (separate CLI): Read an existing envelope from `--input-file`, write a copied envelope to `--output-file`, and attach a `description` field to each tile.
 - `see`: Render a grayscale topography image from an existing envelope (`topography.h` by default) to `--output-file` (PGM).
 
 ## Other CLIs
 
+The `describe` command intentionally remains a separate CLI (`src/cli/describe.ts`) in the current phase.
+
+Long-term developer/debug CLIs:
+
 - `hydrology-inspector`: Inspect hydrology maps via stats and visualization outputs (`fa`, `fd`, `fa-normalized`, `carry-over`, `hydrology`) from an envelope/debug dir.
+- `map`: Render terrain envelope layers as PGM maps for debugging.
+- `stream`: Trace stream routing paths from a source tile.
+- `los`: Check line-of-sight visibility between two tile coordinates.
+- `assign-regions`: Attach deterministic biome region IDs to an existing envelope.
 
 Example:
 
 ```bash
-node --import tsx src/cli/hydrology-inspector.ts --input-json forest.json --debug-dir out --viz all --stats --force
+node --import tsx src/cli/hydrology-inspector.ts --input-json wilderness.json --debug-dir out --viz all --stats --force
 ```
 
 Canonical flags:
@@ -66,7 +94,7 @@ Mode/output validation highlights:
 - Existing output files/directories fail by default and require `--force` to overwrite/replace.
 
 ```bash
-node --import tsx src/cli/main.ts debug --input-file forest.json --output-dir outdir
+node --import tsx src/cli/main.ts debug --input-file wilderness.json --output-dir outdir
 ```
 
 Render topography as grayscale image (`h:0` black, `h:1` white):

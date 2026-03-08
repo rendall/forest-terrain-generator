@@ -6,7 +6,7 @@ This file defines how contributors and agents collaborate.
 
 ## Project Deliverable
 
-The deliverable is a CLI that implements the forest terrain generation system and emits either a single file or a structured output directory (for multi-artifact modes such as debug).
+The deliverable is a deterministic CLI that models terrain truth layers and produces coherent wilderness location descriptions, with debug/developer outputs as long-term supporting surfaces.
 
 ---
 
