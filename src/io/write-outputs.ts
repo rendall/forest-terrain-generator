@@ -19,7 +19,6 @@ const DEBUG_ARTIFACT_FILES = [
 	"fd.json",
 	"fa.json",
 	"fa-normalized.json",
-	"stream-mask.json",
 	"ecology.json",
 	"navigation.json",
 ] as const;
@@ -117,9 +116,7 @@ function buildHydrologyDebugTiles(
 			fd: inRange ? hydrologyMaps.fd[index] : null,
 			fa: inRange ? hydrologyMaps.fa[index] : null,
 			faN: inRange ? hydrologyMaps.faN[index] : null,
-			isStream: inRange ? hydrologyMaps.isStream[index] === 1 : false,
 			lakeMask,
-			waterClass: inRange ? hydrologyMaps.waterClass[index] : null,
 			...(hasWaterSurface
 				? { waterSurfaceH: hydrologyMaps.waterSurfaceH[index] }
 				: {}),
@@ -135,7 +132,7 @@ function buildHydrologyDebugTiles(
 	});
 }
 
-type HydrologyDebugField = "fd" | "fa" | "faN" | "streamMask";
+type HydrologyDebugField = "fd" | "fa" | "faN";
 
 function buildHydrologyFieldTiles(
 	envelope: TerrainEnvelope,
@@ -160,13 +157,7 @@ function buildHydrologyFieldTiles(
 			if (field === "faN") {
 				return { index, x: tile.x, y: tile.y, faN: hydrology.faN ?? null };
 			}
-			return {
-				index,
-				x: tile.x,
-				y: tile.y,
-				isStream:
-					typeof hydrology.isStream === "boolean" ? hydrology.isStream : null,
-			};
+			return { index, x: tile.x, y: tile.y };
 		});
 	}
 
@@ -203,12 +194,7 @@ function buildHydrologyFieldTiles(
 				faN: inRange ? hydrologyMaps.faN[index] : null,
 			};
 		}
-		return {
-			index,
-			x: tile.x,
-			y: tile.y,
-			isStream: inRange ? hydrologyMaps.isStream[index] === 1 : null,
-		};
+		return { index, x: tile.x, y: tile.y };
 	});
 }
 
@@ -405,11 +391,6 @@ async function writeDebugArtifacts(
 		join(targetDir, "fa-normalized.json"),
 		{ tiles: buildHydrologyFieldTiles(envelope, hydrologyMaps, "faN") },
 		"fa-normalized debug artifact write",
-	);
-	await writeJsonFile(
-		join(targetDir, "stream-mask.json"),
-		{ tiles: buildHydrologyFieldTiles(envelope, hydrologyMaps, "streamMask") },
-		"stream-mask debug artifact write",
 	);
 	await writeJsonFile(
 		join(targetDir, "ecology.json"),

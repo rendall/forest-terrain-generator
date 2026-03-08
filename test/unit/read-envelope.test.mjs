@@ -22,10 +22,8 @@ function makeValidTile() {
 			fa: 1,
 			faN: 0,
 			lakeMask: false,
-			isStream: false,
 			distWater: 0,
 			moisture: 0,
-			waterClass: "none",
 		},
 		ecology: {
 			biome: "mixed_forest",

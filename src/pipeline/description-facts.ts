@@ -1,4 +1,4 @@
-import { DIR8_CODE, DIR8_NONE, WATER_CLASS_CODE } from "../domain/hydrology.js";
+import { DIR8_CODE, DIR8_NONE } from "../domain/hydrology.js";
 import type { TopographicFeatureNode } from "../domain/topographic-features.js";
 import type { JsonObject, TerrainEnvelope } from "../domain/types.js";
 import type {
@@ -7,7 +7,6 @@ import type {
 	Passability,
 	PassabilityByDir,
 	Visibility,
-	WaterClass,
 } from "./description.js";
 
 export interface DescriptionFactsTile {
@@ -28,7 +27,6 @@ export interface DescriptionFactsTile {
 		obstacles: Obstacle[];
 	};
 	hydrology: {
-		waterClass: WaterClass;
 		flowDirection: Direction | "NONE" | null;
 		lakeBasinId: string | null;
 		waterDepth: number | null;
@@ -80,13 +78,6 @@ const DIRECTION_DELTAS: Record<Direction, { dx: number; dy: number }> = {
 	W: { dx: -1, dy: 0 },
 	NW: { dx: -1, dy: -1 },
 };
-
-const VALID_WATER_CLASSES = new Set<WaterClass>([
-	"none",
-	"marsh",
-	"stream",
-	"lake",
-]);
 
 const VALID_OBSTACLES = new Set<Obstacle>([
 	"windthrow",
@@ -275,45 +266,6 @@ const collectLeafMembershipByTile = (
 	return out;
 };
 
-const decodeWaterClass = (
-	rawWaterClass: unknown,
-	isStream: boolean,
-	waterDepth: number | null,
-	lakeBasinId: string | null,
-): WaterClass => {
-	if (
-		typeof rawWaterClass === "string" &&
-		VALID_WATER_CLASSES.has(rawWaterClass as WaterClass)
-	) {
-		return rawWaterClass as WaterClass;
-	}
-	if (typeof rawWaterClass === "number" && Number.isFinite(rawWaterClass)) {
-		if (rawWaterClass === WATER_CLASS_CODE.stream) {
-			return "stream";
-		}
-		if (rawWaterClass === WATER_CLASS_CODE.lake) {
-			return "lake";
-		}
-		if (
-			rawWaterClass === WATER_CLASS_CODE.marsh ||
-			rawWaterClass === WATER_CLASS_CODE.pool
-		) {
-			return "marsh";
-		}
-		if (rawWaterClass === WATER_CLASS_CODE.none) {
-			return "none";
-		}
-	}
-
-	if (isStream) {
-		return "stream";
-	}
-	if ((waterDepth ?? 0) > 0 || lakeBasinId !== null) {
-		return "lake";
-	}
-	return "none";
-};
-
 export const buildDescriptionFacts = (
 	envelope: TerrainEnvelope,
 ): DescriptionFactsBuildResult[] => {
@@ -433,13 +385,6 @@ export const buildDescriptionFacts = (
 			Number.isFinite(hydrology.waterSurfaceH)
 				? hydrology.waterSurfaceH
 				: null;
-		const isStream = hydrology.isStream === true;
-		const waterClass = decodeWaterClass(
-			hydrology.waterClass,
-			isStream,
-			waterDepth,
-			lakeBasinId,
-		);
 		const flowDirection = parseFlowDirection(hydrology.fd);
 
 		const treeDensity = asFiniteNumber(ecology.treeDensity, 0.5);
@@ -460,7 +405,6 @@ export const buildDescriptionFacts = (
 				obstacles: collectObstacles(roughness.featureFlags),
 			},
 			hydrology: {
-				waterClass,
 				flowDirection,
 				lakeBasinId,
 				waterDepth,

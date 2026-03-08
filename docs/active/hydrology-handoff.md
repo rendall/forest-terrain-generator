@@ -103,7 +103,6 @@ fillRatio ≤ 1
 | `lakeBasinId`   | governing basin id       |
 | `waterSurfaceH` | governing basin surface  |
 | `waterDepth`    | signed water depth       |
-| `waterClass`    | visualization classifier |
 
 ### Important note
 
@@ -261,7 +260,6 @@ Inspector should eventually support signed depth semantics.
 
 Some scripts assume outdated schemas:
 
-* string `waterClass`
 * `moisture` field
 * `fillFraction`
 * `lakeMask` semantics

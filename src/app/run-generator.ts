@@ -226,9 +226,7 @@ function buildTileHydrologyPayload(
 		fd: hydrology.maps.fd[index],
 		fa: hydrology.maps.fa[index],
 		faN: hydrology.maps.faN[index],
-		isStream: hydrology.maps.isStream[index] === 1,
 		lakeMask,
-		waterClass: hydrology.maps.waterClass[index],
 		lakeBasinId,
 		...(hasWaterSurface
 			? { waterSurfaceH: hydrology.maps.waterSurfaceH[index] }

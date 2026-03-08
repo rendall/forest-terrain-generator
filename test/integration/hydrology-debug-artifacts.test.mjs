@@ -45,7 +45,7 @@ afterEach(async () => {
 });
 
 describe("hydrology debug artifacts", () => {
-	it("emits hydrology fd/fa/faN/isStream in debug output for generated terrain", async () => {
+	it("emits hydrology fd/fa/faN and basin-water fields in debug output for generated terrain", async () => {
 		const dir = await makeTempDir();
 		const outDir = join(dir, "debug");
 		const result = await runCli([
@@ -68,7 +68,8 @@ describe("hydrology debug artifacts", () => {
 		expect(hydrology.tiles[0].hydrology).toHaveProperty("fd");
 		expect(hydrology.tiles[0].hydrology).toHaveProperty("fa");
 		expect(hydrology.tiles[0].hydrology).toHaveProperty("faN");
-		expect(hydrology.tiles[0].hydrology).toHaveProperty("isStream");
+		expect(hydrology.tiles[0].hydrology).not.toHaveProperty("isStream");
+		expect(hydrology.tiles[0].hydrology).not.toHaveProperty("waterClass");
 		expect(hydrology.tiles[0].hydrology).toHaveProperty("lakeBasinId");
 
 		await expect(stat(join(outDir, "fd.json"))).resolves.toBeDefined();
@@ -76,20 +77,16 @@ describe("hydrology debug artifacts", () => {
 		await expect(
 			stat(join(outDir, "fa-normalized.json")),
 		).resolves.toBeDefined();
-		await expect(stat(join(outDir, "stream-mask.json"))).resolves.toBeDefined();
 
 		const fd = JSON.parse(await readFile(join(outDir, "fd.json"), "utf8"));
 		const fa = JSON.parse(await readFile(join(outDir, "fa.json"), "utf8"));
 		const faNormalized = JSON.parse(
 			await readFile(join(outDir, "fa-normalized.json"), "utf8"),
 		);
-		const streamMask = JSON.parse(
-			await readFile(join(outDir, "stream-mask.json"), "utf8"),
-		);
 		expect(fd.tiles[0]).toHaveProperty("fd");
 		expect(fa.tiles[0]).toHaveProperty("fa");
 		expect(faNormalized.tiles[0]).toHaveProperty("faN");
-		expect(streamMask.tiles[0]).toHaveProperty("isStream");
+		await expect(stat(join(outDir, "stream-mask.json"))).rejects.toThrow();
 	});
 
 	it("omits waterSurfaceH and waterDepth when no basin water surface is present", async () => {
