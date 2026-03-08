@@ -271,6 +271,8 @@ function buildReplayEnvelope(
 		const sourceTopography = isJsonObject(sourceTile.topography)
 			? sourceTile.topography
 			: {};
+		const sourceTopographySansStructure = { ...sourceTopography };
+		delete sourceTopographySansStructure.structure;
 		const tileHydrology = buildTileHydrologyPayload(hydrology, index);
 		tiles.push({
 			...sourceTile,
@@ -280,7 +282,7 @@ function buildReplayEnvelope(
 			featureIds: topographyStructure.tileFeatureIds[index],
 			activeFeatureIds: topographyStructure.tileActiveFeatureIds[index],
 			topography: {
-				...sourceTopography,
+				...sourceTopographySansStructure,
 				h: replayH[index],
 				elevationMeters: elevation.h0 + replayH[index] * elevationSpan,
 			},

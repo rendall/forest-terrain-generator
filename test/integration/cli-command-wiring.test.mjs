@@ -524,9 +524,20 @@ describe("CLI command wiring and contract failures", () => {
 		const sourceFile = join(dir, "source-envelope.json");
 		const outputDir = join(dir, "debug");
 		const debugOutputFile = join(dir, "debug-envelope.json");
+		const sourceEnvelope = createReplaySourceEnvelope();
+		sourceEnvelope.tiles = sourceEnvelope.tiles.map((tile) => ({
+			...tile,
+			topography: {
+				...tile.topography,
+				structure: {
+					basinLike: false,
+					ridgeLike: true,
+				},
+			},
+		}));
 		await writeFile(
 			sourceFile,
-			`${JSON.stringify(createReplaySourceEnvelope(), null, 2)}\n`,
+			`${JSON.stringify(sourceEnvelope, null, 2)}\n`,
 			"utf8",
 		);
 
@@ -569,6 +580,7 @@ describe("CLI command wiring and contract failures", () => {
 				lakeMask: expect.any(Boolean),
 				waterClass: expect.any(Number),
 			});
+			expect(tile.topography?.structure).toBeUndefined();
 			if ("waterSurfaceH" in tile.hydrology) {
 				expect(tile.hydrology).toHaveProperty("waterDepth");
 			} else {
@@ -582,6 +594,9 @@ describe("CLI command wiring and contract failures", () => {
 		expect(
 			debugTopography.features.basins.some((basin) => basin.id === "stale_basin"),
 		).toBe(false);
+		expect(
+			debugTopography.tiles.every((tile) => tile.topography?.structure === undefined),
+		).toBe(true);
 	});
 
 	it("applies --params over envelope paramOverrides in debug --input-file mode and warns once", async () => {
