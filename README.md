@@ -320,3 +320,13 @@ Storage rules:
 
 - leaf nodes include `tileIds`
 - composite nodes do not include `tileIds`
+
+## Project North Star
+
+The goal of the Wilderness Terrain Generator is to produce **coherent wilderness location descriptions**.
+
+Terrain synthesis, basin hydrology, ridge topology, biome modeling, and other environmental layers exist to provide deterministic structural truth about the landscape. These truth layers feed the description pipeline, which generates grounded, spatially consistent descriptions of locations within the generated wilderness.
+
+Terrain generation is therefore a **supporting system**, not the end product.
+
+
