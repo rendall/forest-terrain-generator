@@ -1,31 +1,32 @@
 # Wilderness Terrain Generator
 
-The **Wilderness Terrain Generator** produces coherent, grounded descriptions of wilderness locations. Its goal is to generate terrain that can be described naturally and consistently, using deterministic models of landscape structure.
+The **Wilderness Terrain Generator** exists to produce coherent, grounded wilderness location descriptions as its primary product. Terrain generation, hydrology, biome modeling, and feature analysis are supporting truth layers whose purpose is to feed deterministic, high-quality description and spatial orientation, rather than being ends in themselves.
 
-The system builds a structured model of terrain from a seed, grid size, and parameter set. It derives elevation, slopes, basins, ridges, hydrology, biome patterns, vegetation structure, and other environmental signals for each tile in a generated region. These layers act as authoritative “truth” about the landscape.
+The system builds a structured, machine-readable model of a wilderness landscape from a seed, grid size, and parameter set. It derives the large-scale structure of the terrain, models water behavior, assigns ecological context, and records local tile conditions. From these layers it produces deterministic location descriptions that reflect both the immediate surroundings and the broader landscape context.
 
-From that model, the generator produces natural-language descriptions that reflect the terrain’s topology, hydrology, and surrounding context.
+The result is a versioned JSON dataset in which each tile represents a coherent location within the generated wilderness. Because the generation process is deterministic, the same seed always produces the same terrain and the same location descriptions, allowing downstream systems to rely on stable spatial structure.
 
-The result is a versioned JSON dataset in which each tile represents a coherent location within the wilderness environment. Because the generation process is deterministic, the same seed always produces the same terrain and the same location descriptions, allowing downstream systems to rely on stable spatial structure.
+## Terrain Interpretation Pipeline
 
-## Terrain Truth Layers
+The Wilderness Terrain Generator builds a landscape in stages. Each stage adds a layer of meaning that supports coherent wilderness location descriptions.
 
-The Wilderness Terrain Generator builds several structural layers that together describe a landscape.  
-These layers exist to support coherent wilderness location descriptions.
+**Topology**  
+The terrain is first analyzed as a topological system of basins, ridges, peaks, and connections. This identifies the fundamental structure of the landscape: valleys, hills, ridgelines, and drainage divides.
 
-**Basin hydrology**  
-Models drainage systems and water surfaces. Basin topology determines where water collects, how basins connect, and how surface water depth relates to terrain elevation.
+**Hydrology**  
+Basin topology is used to derive water behavior. This determines drainage networks, basin water surfaces, and how water depth relates to terrain elevation.
 
-**Peak and ridge topology**  
-Models the complementary system of hilltops, ridgelines, and crest structures. This layer describes the high points and ridge systems of the terrain independently of hydrology.
+**Biome and ecological context**  
+Climate parameters and terrain conditions determine vegetation patterns and biome types across the landscape.
 
-**Tile terrain metrics**  
-Each tile records local physical properties such as elevation, slope, vegetation density, roughness, and visibility. These describe the immediate ground conditions at that location.
+**Feature prominence**  
+Large-scale terrain features such as valleys, lakes, ridgelines, and hilltops are analyzed to identify prominent landmarks. These support descriptions that refer to the broader environment, such as looking down toward a lake, across a valley, or toward a distant hilltop.
 
-**Description facts**  
-A normalization layer converts terrain truth into structured “location facts.” These facts feed the description engine, which produces deterministic wilderness location descriptions for each tile.
+**Tile-level terrain facts**  
+Each tile records local facts about the environment, including elevation, slope, hydrology, biome, vegetation density, roughness, visibility, and movement constraints.
 
-Together, these layers provide a consistent model of terrain that can be used to generate natural-language descriptions, navigation cues, and other spatial interpretations of the landscape.
+**Location description generation**  
+These facts are combined to produce deterministic wilderness location descriptions. The system can describe both immediate surroundings and the larger landscape context visible from that location.
 
 ```bash
 node --import tsx src/cli/main.ts generate --params params.json --seed 42 --width 32 --height 32 --output-file wilderness.json
@@ -35,20 +36,20 @@ node --import tsx src/cli/main.ts generate --params params.json --seed 42 --widt
 
 Commands:
 
-- `generate`: Generate terrain and write envelope JSON to `--output-file`.
-- `derive`: Derive terrain from authored maps (requires `--map-h`) and write envelope JSON to `--output-file`.
-- `debug`: Emit debug artifacts to `--output-dir` from either generation inputs or an existing envelope `--input-file`; optionally also write envelope JSON to `--debug-output-file`.
-- `describe` (separate CLI): Read an existing envelope from `--input-file`, write a copied envelope to `--output-file`, and attach a `description` field to each tile.
-- `see`: Render a grayscale topography image from an existing envelope (`topography.h` by default) to `--output-file` (PGM).
+- `generate`: Generate terrain truth layers and write an envelope JSON to `--output-file`.
+- `derive`: Derive terrain truth layers from authored maps and write an envelope JSON to `--output-file`.
+- `debug`: Emit debug artifacts from either generation inputs or an existing envelope; optionally also write a recomputed envelope JSON.
+- `describe` (separate CLI): Read an existing envelope and attach deterministic wilderness location descriptions to each tile.
+- `see`: Render grayscale debug views from an existing envelope.
 
 ## Other CLIs
 
 The `describe` command intentionally remains a separate CLI (`src/cli/describe.ts`) in the current phase.
 
-Long-term developer/debug CLIs:
+The following CLIs are long-term developer and debugging surfaces rather than the primary product:
 
-- `hydrology-inspector`: Inspect hydrology maps via stats and visualization outputs (`fa`, `fd`, `fa-normalized`, `carry-over`, `hydrology`) from an envelope/debug dir.
-- `map`: Render terrain envelope layers as PGM maps for debugging.
+- `hydrology-inspector`: Inspect and validate hydrology truth layers.
+- `map`: Render terrain truth layers as PGM maps for debugging.
 - `stream`: Trace stream routing paths from a source tile.
 - `los`: Check line-of-sight visibility between two tile coordinates.
 - `assign-regions`: Attach deterministic biome region IDs to an existing envelope.
@@ -86,13 +87,82 @@ Mode/output validation highlights:
 - In `debug --input-file`, replay recompute param precedence is:
   `defaults < envelope paramOverrides < --params <file>`.
 - In `debug --input-file`, replay recompute derives topographic structure + hydrology from tile `topography.h`; envelope `features`, tile `featureIds`, and tile `hydrology` are ignored as replay inputs.
-- In `debug --input-file`, `--debug-output-file` writes the recomputed replay envelope (recomputed `features`, tile memberships, tile hydrology, and effective `paramOverrides` delta).
-- In `debug --input-file` with `--params <file>`, CLI emits a replay warning to `stderr` noting active override precedence.
-- Replay-grid validation for both `debug --input-file` and hydrology-inspector recompute includes an allocation cap guard; pathological coordinates that imply oversized replay grids fail fast with input-validation errors before map allocation.
-- In `hydrology-inspector` recompute mode, effective hydrology params follow `defaults < envelope paramOverrides < explicit --sink-mode` (sink-mode override only), and recompute uses the full effective hydrology param block (for parity with debug replay hydrology behavior).
-- In `hydrology-inspector` recompute mode, tile geometry must be a dense rectangular grid with finite tile `topography.h`; sparse coverage, duplicate coordinates, or missing/invalid `topography.h` fail fast with input-validation errors.
+- In `debug --input-file`, `--debug-output-file` writes the recomputed replay envelope.
 - Existing output files/directories fail by default and require `--force` to overwrite/replace.
 
+```bash
+node --import tsx src/cli/main.ts debug --input-file wilderness.json --output-dir outdir
+```
+
+Render topography as grayscale image (`h:0` black, `h:1` white):
+
+```bash
+node --import tsx src/cli/main.ts see --input-file out.json --output-file h.pgm
+```
+
+Render landform classes as uniform grayscale:
+
+```bash
+node --import tsx src/cli/main.ts see --input-file out.json --output-file landforms.pgm --landforms
+```
+
+## Hydrology
+
+Hydrology is one of the core terrain truth layers. Basin topology determines how water collects, connects, and produces basin-level and tile-level water state.
+
+For the current hydrology model, output contracts, and debugging guidance, see:
+
+- `docs/active/hydrology-handoff.md`
+
+## Topology
+
+The generator derives structural basin and peak/ridge topology from the terrain surface. These topological layers identify valleys, basins, hilltops, ridges, and drainage divides, and serve as upstream truth for hydrology, biome interpretation, feature prominence, and description generation.
+
+## Noise
+
+- `octaves` is how many layers of noise are stacked. Low values create broad, simple terrain; higher values add smaller details on top.
+- `baseFrequency` indicates how much detail or variation appears in the output.
+- `lacunarity` controls how rapidly detail frequency increases between octaves.
+- `persistence` controls how strongly each octave contributes relative to the previous.
+
+All noise maps also support **normalization**, which remaps generated noise values into a useful range after generation.
+
+## Noise Maps
+
+- `heightNoise` controls elevation (`topography.h`).
+- `roughnessNoise` controls terrain roughness (`topography.r`).
+- `vegVarianceNoise` controls vegetation variance (`topography.v`).
+
+## Feature Trees
+
+Generated envelopes include structural feature trees:
+
+- `features.basins`
+- `features.peaks`
+
+Each feature node includes:
+
+- `id`
+- `kind`
+- `parentId`
+- `childIds`
+- `birthH`
+- `mergeH`
+- `persistence`
+- `minH`
+- `maxH`
+- `size`
+- `bbox`
+
+Tile membership:
+
+- each tile includes `featureIds` (leaf basin + leaf peak IDs)
+- each tile includes `activeFeatureIds` (composite IDs selected by persistence cut)
+
+Storage rules:
+
+- leaf nodes include `tileIds`
+- composite nodes do not include `tileIds`
 ```bash
 node --import tsx src/cli/main.ts debug --input-file wilderness.json --output-dir outdir
 ```
