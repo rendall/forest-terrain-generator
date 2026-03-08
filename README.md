@@ -278,38 +278,139 @@ Debug hydrology outputs (`debug/hydrology.json`) include:
 
 - `lakeAccounting.basins` (per-basin accounting + role)
 - per-tile hydrology fields:
-  - `fd`, `fa`, `faN`, `isStream`
-  - `lakeMask`, `waterClass`, `lakeBasinId`
+  - `fd`, `fa`, `faN`
+  - `lakeMask`, `lakeBasinId`
   - `waterSurfaceH` (present on wet/lake tiles)
   - `waterDepth` (present when `waterSurfaceH` is present)
 
-## Wetness Sweep Workflow
+## Feature Trees
 
-Run a replay sweep over `hydrology.lakeFill.wetnessScale` (`k`) and collect basin/lake summary metrics:
+Generated envelopes include structural feature trees:
 
+- `features.basins`
+- `features.peaks`
+
+Each feature node includes:
+
+- `id`
+- `kind`
+- `parentId`
+- `childIds`
+- `birthH`
+- `mergeH`
+- `persistence`
+- `minH`
+- `maxH`
+- `size`
+- `bbox`
+
+Tile membership:
+
+- each tile includes `featureIds` (leaf basin + leaf peak IDs)
+- each tile includes `activeFeatureIds` (composite IDs selected by persistence cut)
+
+Storage rules:
+
+- leaf nodes include `tileIds`
+- composite nodes do not include `tileIds`
 ```bash
-bash scripts/sweep-wetness.sh --seed 1187 --width 128 --height 128 --force
+node --import tsx src/cli/main.ts debug --input-file wilderness.json --output-dir outdir
 ```
 
-By default, outputs are written under `<project-root>/out/wetness-sweep`.
-
-Or replay from an existing envelope:
+Render topography as grayscale image (`h:0` black, `h:1` white):
 
 ```bash
-bash scripts/sweep-wetness.sh --base-envelope runs/base/terrain.json --k-values "0.03 0.1 0.3 1.0" --force
+node --import tsx src/cli/main.ts see --input-file out.json --output-file h.pgm
 ```
 
-Outputs:
+Render landform classes as uniform grayscale:
 
-- per-k debug artifacts: `<runs-dir>/k-<k>/debug/*`
-- per-k replay envelope: `<runs-dir>/k-<k>/replay.json`
-- summary table: `<runs-dir>/summary.tsv`
+```bash
+node --import tsx src/cli/main.ts see --input-file out.json --output-file landforms.pgm --landforms
+```
 
-`summary.tsv` columns:
+Landform grayscale mapping (derived from tile feature IDs):
 
-- `k`, `basinTotal`, `sink`, `overflowCarrier`, `terminalLake`
-- `fillZero`, `fillPartial`, `fillFull`
-- `lakeTiles`, `streamTiles`, `fillFractionMean`
+- basin-only (`activeFeatureIds`/`featureIds` contains `b_*` but not `p_*`) -> `64`
+- peak-only (`activeFeatureIds`/`featureIds` contains `p_*` but not `b_*`) -> `224`
+- neither basin nor peak -> `128`
+- both basin and peak -> `160`
+
+## Authored Map From PNG
+
+Convert a grayscale image into authored-map JSON compatible with `--map-h`:
+
+```bash
+bash scripts/png-to-authored-map.sh --input input.png --output map-h.json --expect-size 64x64
+```
+
+The script writes JSON with the required schema:
+`{ "width": number, "height": number, "data": number[] }`
+where `data` is row-major and normalized to `[0,1]`.
+
+## Noise
+
+- `octaves` is how many layers of noise are stacked. Low values create broad, simple terrain; higher values add smaller details on top.
+- `baseFrequency` is an indication of how much detail or variety the output has. Low values for 1 or 2 major features, higher values for many features.
+- `lacunarity` is a measure of "smoothness" or blurriness. Low values for smooth hills, high values for a more pixelated, "stepped" look.
+- `persistence` controls how strongly each smaller octave contributes. Low values keep terrain smoother and dominated by large shapes; high values make fine detail more prominent.
+
+All three noise maps (`heightNoise`, `roughnessNoise`, `vegVarianceNoise`) also support *normalization*, which is a post-processing remap that stretches map values into a fuller, more useful range (usually `[0,1]`) after noise is generated:
+
+- `normalize.enabled` turns post-generation remapping on/off.
+  - `normalize.mode` chooses remap strategy (`minmax` or `quantile`).
+    - `minmax` stretches current map min/max to `[0,1]`.
+    - `quantile` stretches between `lowerQ` and `upperQ` (more robust against outliers).
+      - `normalize.lowerQ` and `normalize.upperQ` set quantile bounds when mode is `quantile` (for example `0.02` and `0.98`).
+
+## Noise Maps
+
+- `heightNoise` controls `topography.h` (elevation). `0` is lowest (black in grayscale), `1` is highest (white).
+- `roughnessNoise` controls `topography.r` (terrain roughness signal). Low values are smoother ground; high values are rougher, more broken ground.
+- `vegVarianceNoise` controls `topography.v` (vegetation variance signal). It is a stable variation map used to create patchiness instead of uniform vegetation everywhere.
+
+## Envelope Param Overrides
+
+Generated/derived envelopes may include top-level `paramOverrides` with only non-default parameter values. This is used for replay/debug context (especially `debug --input-file` structure+hydrology recompute).
+
+## Topography Structure
+
+`topography.structure` controls structural basin/peak labeling:
+
+- `enabled` turns structure derivation on/off.
+- `connectivity` chooses neighborhood mode (currently `dir8`).
+- `hEps` groups near-equal heights in sweep passes.
+- `persistenceMin` is the minimum persistence to mark `basinLike`/`ridgeLike`.
+- `unresolvedPolicy` controls unresolved spill handling (`nan` or `max_h`).
+
+## Hydrology Lake Fill
+
+`hydrology.lakeFill` controls basin fill classification before overflow-guided routing:
+
+- `wetnessScale` is the global fill calibration factor (default `1.0`).
+  - higher values fill/overflow more basins
+  - lower values leave more basins as sinks
+
+Inflow accounting uses strict-local `FD/FA` as a fixed basis, then applies basin accounting:
+
+- `externalInflow`: sum of boundary FD crossings into basin tile set
+- `totalInflow`: `externalInflow + child overflowExcess`
+- `spillCapacity`: `sum(max(0, mergeH - h(tile)))`
+- `fillRatio`: `(wetnessScale * totalInflow) / spillCapacity`
+- basin role:
+  - `sink`
+  - `overflow_carrier` (routes via `childSpillFromTileId -> parentContactTileId`)
+  - `terminal_lake` (filled root/no parent spill edge)
+
+Debug hydrology outputs (`debug/hydrology.json`) include:
+
+- `lakeAccounting.basins` (per-basin accounting + role)
+- per-tile hydrology fields:
+  - `fd`, `fa`, `faN`
+  - `lakeMask`, `lakeBasinId`
+  - `waterSurfaceH` (present on wet/lake tiles)
+  - `waterDepth` (present when `waterSurfaceH` is present)
+
 
 ## Feature Trees
 
@@ -350,5 +451,4 @@ The goal of the Wilderness Terrain Generator is to produce **coherent wilderness
 Terrain synthesis, basin hydrology, ridge topology, biome modeling, and other environmental layers exist to provide deterministic structural truth about the landscape. These truth layers feed the description pipeline, which generates grounded, spatially consistent descriptions of locations within the generated wilderness.
 
 Terrain generation is therefore a **supporting system**, not the end product.
-
 

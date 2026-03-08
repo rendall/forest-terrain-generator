@@ -15,7 +15,7 @@ describe("derive-hydrology", () => {
 		expect(result.maps.fa[0]).toBe(1);
 		expect(result.maps.fa[1]).toBe(2);
 		expect(result.maps.fa[2]).toBe(3);
-		expect(result.maps.isStream[2]).toBe(0);
+		expect(result.streamCoherence.streamTiles).toBe(0);
 	});
 
 	it("supports overflow_guided when configured", () => {

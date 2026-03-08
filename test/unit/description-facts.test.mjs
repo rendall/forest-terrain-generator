@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { WATER_CLASS_CODE } from "../../src/domain/hydrology.js";
 import { buildDescriptionFacts } from "../../src/pipeline/description-facts.js";
 
 const PASSABILITY_ALL_OPEN = {
@@ -27,7 +26,7 @@ describe("description facts normalization", () => {
 					x: 0,
 					y: 0,
 					topography: { h: 0.8, landform: "basin" },
-					hydrology: { waterClass: WATER_CLASS_CODE.stream, fd: 0 },
+					hydrology: { fd: 0 },
 					navigation: {
 						followable: ["game_trail"],
 						passability: PASSABILITY_ALL_OPEN,
@@ -38,7 +37,7 @@ describe("description facts normalization", () => {
 					x: 1,
 					y: 0,
 					topography: { h: 0.7, landform: "basin" },
-					hydrology: { waterClass: WATER_CLASS_CODE.stream, fd: 4 },
+					hydrology: { fd: 4 },
 					navigation: {
 						followable: ["game_trail"],
 						passability: PASSABILITY_ALL_OPEN,
@@ -60,10 +59,11 @@ describe("description facts normalization", () => {
 		expect(Object.hasOwn(facts.local, "slopeStrength")).toBe(false);
 		expect(Object.hasOwn(facts.ecology, "moisture")).toBe(false);
 		expect(Object.hasOwn(facts.hydrology, "standingWater")).toBe(false);
+		expect(Object.hasOwn(facts.hydrology, "waterClass")).toBe(false);
 		expect(Object.hasOwn(facts, "derived")).toBe(false);
 	});
 
-	it("normalizes numeric hydrology waterClass from authoritative hydrology fields", () => {
+	it("preserves authoritative basin-water hydrology fields", () => {
 		const envelope = {
 			meta: { specVersion: "forest-terrain-v1" },
 			features: {
@@ -77,7 +77,6 @@ describe("description facts normalization", () => {
 					y: 0,
 					topography: { h: 0.2 },
 					hydrology: {
-						waterClass: WATER_CLASS_CODE.lake,
 						lakeBasinId: "b_00000",
 						waterDepth: 0.15,
 						waterSurfaceH: 0.35,
@@ -93,7 +92,9 @@ describe("description facts normalization", () => {
 			throw new Error("expected normalized facts for tile 0");
 		}
 
-		expect(out[0].facts.hydrology.waterClass).toBe("lake");
+		expect(out[0].facts.hydrology.lakeBasinId).toBe("b_00000");
+		expect(out[0].facts.hydrology.waterDepth).toBe(0.15);
+		expect(out[0].facts.hydrology.waterSurfaceH).toBe(0.35);
 		expect(out[0].facts.topology.basinLeafId).toBe("b_00000");
 	});
 });

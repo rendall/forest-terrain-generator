@@ -85,13 +85,13 @@ describe("hydrology-inspector CLI", () => {
 						x: 0,
 						y: 0,
 						topography: { h: 0.8, r: 0, v: 0 },
-						hydrology: { fd: 3, fa: 11, faN: 0.25, isStream: true },
+						hydrology: { fd: 3, fa: 11, faN: 0.25 },
 					},
 					{
 						x: 1,
 						y: 0,
 						topography: { h: 0.5, r: 0, v: 0 },
-						hydrology: { fd: 255, fa: 2, faN: 0.05, isStream: false },
+						hydrology: { fd: 255, fa: 2, faN: 0.05 },
 					},
 				],
 				features: { basins: [], peaks: [] },
@@ -142,7 +142,6 @@ describe("hydrology-inspector CLI", () => {
 		expect(payload.hydrologyMapsSource).toBe("recomputed");
 		expect(payload.stats).toMatchObject({
 			sinkCount: expect.any(Number),
-			streamTileCount: expect.any(Number),
 			lakeTileCount: expect.any(Number),
 			lakeDepth: {
 				max: expect.any(Number),
@@ -191,7 +190,7 @@ describe("hydrology-inspector CLI", () => {
 		expect(result.code).toBe(0);
 		const payload = JSON.parse(result.stdout.trim());
 		expect(payload.hydrologyMapsSource).toBe("recomputed");
-		expect(payload.stats.streamTileCount).toBe(1);
+		expect(payload.stats.fa.max).toBe(4);
 	});
 
 	it("uses waterDepth as standing-water authority even when lakeMask is false", async () => {
@@ -211,11 +210,9 @@ describe("hydrology-inspector CLI", () => {
 							fd: 255,
 							fa: 1,
 							faN: 0,
-							isStream: false,
 							lakeMask: false,
 							waterSurfaceH: 0.5,
 							waterDepth: 0.1,
-							waterClass: 1,
 							lakeBasinId: "b1",
 						},
 					},
@@ -227,11 +224,9 @@ describe("hydrology-inspector CLI", () => {
 							fd: 255,
 							fa: 1,
 							faN: 0,
-							isStream: false,
 							lakeMask: true,
 							waterSurfaceH: 0.4,
 							waterDepth: -0.2,
-							waterClass: 0,
 							lakeBasinId: "b1",
 						},
 					},
@@ -276,9 +271,7 @@ describe("hydrology-inspector CLI", () => {
 							fd: 255,
 							fa: 1,
 							faN: 0,
-							isStream: false,
 							waterSurfaceH: 0.7,
-							waterClass: 3,
 							lakeBasinId: "",
 						},
 					},
@@ -290,8 +283,6 @@ describe("hydrology-inspector CLI", () => {
 							fd: 255,
 							fa: 1,
 							faN: 0,
-							isStream: false,
-							waterClass: 4,
 							lakeBasinId: "b2",
 						},
 					},
@@ -314,14 +305,7 @@ describe("hydrology-inspector CLI", () => {
 		expect(payload.stats.standingSurfaceWaterTileCount).toBe(0);
 		expect(payload.stats.subsurfaceInfluenceTileCount).toBe(1);
 		expect(payload.stats.depthDerivedFromSurfaceCount).toBe(1);
-		expect(payload.stats.waterClassCounts).toMatchObject({
-			none: 0,
-			lake: 0,
-			stream: 0,
-			marsh: 1,
-			pool: 1,
-			other: 0,
-		});
+		expect(payload.stats.fa.max).toBe(1);
 	});
 
 	it("treats --sink-mode as an explicit override only", async () => {
@@ -372,9 +356,7 @@ describe("hydrology-inspector CLI", () => {
 		expect(defaultPayload.stats.sinkCount).toBe(
 			overflowPayload.stats.sinkCount,
 		);
-		expect(defaultPayload.stats.streamTileCount).toBe(
-			overflowPayload.stats.streamTileCount,
-		);
+		expect(defaultPayload.stats.fa.max).toBe(overflowPayload.stats.fa.max);
 		expect(defaultPayload.stats.sinkCount).not.toBe(
 			strictPayload.stats.sinkCount,
 		);
@@ -608,25 +590,25 @@ describe("hydrology-inspector CLI", () => {
 						index: 0,
 						x: 0,
 						y: 0,
-						hydrology: { fd: 1, fa: 1, faN: 0.08, isStream: false },
+						hydrology: { fd: 1, fa: 1, faN: 0.08 },
 					},
 					{
 						index: 1,
 						x: 1,
 						y: 0,
-						hydrology: { fd: 2, fa: 3, faN: 0.25, isStream: false },
+						hydrology: { fd: 2, fa: 3, faN: 0.25 },
 					},
 					{
 						index: 2,
 						x: 0,
 						y: 1,
-						hydrology: { fd: 0, fa: 8, faN: 0.66, isStream: true },
+						hydrology: { fd: 0, fa: 8, faN: 0.66 },
 					},
 					{
 						index: 3,
 						x: 1,
 						y: 1,
-						hydrology: { fd: 255, fa: 12, faN: 1, isStream: true },
+						hydrology: { fd: 255, fa: 12, faN: 1 },
 					},
 				],
 			})}\n`,
