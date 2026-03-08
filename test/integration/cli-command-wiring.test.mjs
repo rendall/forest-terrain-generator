@@ -169,7 +169,7 @@ describe("CLI command wiring and contract failures", () => {
 		expect(pixelBytes).toBe(16);
 	});
 
-	it("wires see --landforms to render structure classes", async () => {
+	it("wires see --landforms to render classes from feature IDs", async () => {
 		const dir = await makeTempDir();
 		const sourceFile = join(dir, "source-landforms.json");
 		const imageFile = join(dir, "landforms.pgm");
@@ -179,46 +179,46 @@ describe("CLI command wiring and contract failures", () => {
 				{
 					meta: { specVersion: "forest-terrain-v1" },
 					tiles: [
-						{
-							x: 0,
-							y: 0,
-							topography: {
-								h: 0.1,
-								r: 0.2,
-								v: 0.3,
-								structure: { basinLike: true, ridgeLike: false },
+							{
+								x: 0,
+								y: 0,
+								activeFeatureIds: ["b_00001"],
+								topography: {
+									h: 0.1,
+									r: 0.2,
+									v: 0.3,
+								},
 							},
-						},
-						{
-							x: 1,
-							y: 0,
-							topography: {
-								h: 0.2,
-								r: 0.3,
-								v: 0.4,
-								structure: { basinLike: false, ridgeLike: true },
+							{
+								x: 1,
+								y: 0,
+								activeFeatureIds: ["p_00001"],
+								topography: {
+									h: 0.2,
+									r: 0.3,
+									v: 0.4,
+								},
 							},
-						},
-						{
-							x: 0,
-							y: 1,
-							topography: {
-								h: 0.3,
-								r: 0.4,
-								v: 0.5,
-								structure: { basinLike: false, ridgeLike: false },
+							{
+								x: 0,
+								y: 1,
+								activeFeatureIds: [],
+								topography: {
+									h: 0.3,
+									r: 0.4,
+									v: 0.5,
+								},
 							},
-						},
-						{
-							x: 1,
-							y: 1,
-							topography: {
-								h: 0.4,
-								r: 0.5,
-								v: 0.6,
-								structure: { basinLike: true, ridgeLike: true },
+							{
+								x: 1,
+								y: 1,
+								activeFeatureIds: ["b_00002", "p_00002"],
+								topography: {
+									h: 0.4,
+									r: 0.5,
+									v: 0.6,
+								},
 							},
-						},
 					],
 				},
 				null,

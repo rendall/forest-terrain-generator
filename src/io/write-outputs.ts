@@ -248,32 +248,13 @@ function buildTopographyDebugTiles(
 			};
 		}
 
-		const structure = {
-			...(asObject(topography.structure) ?? {}),
-			basinMinIdx: topographyStructureDebug.basinMinIdx[index],
-			basinMinH: topographyStructureDebug.basinMinH[index],
-			basinSpillH: topographyStructureDebug.basinSpillH[index],
-			basinPersistence: topographyStructureDebug.basinPersistence[index],
-			basinDepthLike: topographyStructureDebug.basinDepthLike[index],
-			peakMaxIdx: topographyStructureDebug.peakMaxIdx[index],
-			peakMaxH: topographyStructureDebug.peakMaxH[index],
-			peakSaddleH: topographyStructureDebug.peakSaddleH[index],
-			peakPersistence: topographyStructureDebug.peakPersistence[index],
-			peakRiseLike: topographyStructureDebug.peakRiseLike[index],
-			basinLike: topographyStructureDebug.basinLike[index] === 1,
-			ridgeLike: topographyStructureDebug.ridgeLike[index] === 1,
-		};
-
 		return {
 			index: tileIndex,
 			x: tile.x,
 			y: tile.y,
 			featureIds,
 			activeFeatureIds,
-			topography: {
-				...topography,
-				structure,
-			},
+			topography,
 		};
 	});
 }
