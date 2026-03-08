@@ -38,12 +38,20 @@ Commands:
 - `generate`: Generate terrain and write envelope JSON to `--output-file`.
 - `derive`: Derive terrain from authored maps (requires `--map-h`) and write envelope JSON to `--output-file`.
 - `debug`: Emit debug artifacts to `--output-dir` from either generation inputs or an existing envelope `--input-file`; optionally also write envelope JSON to `--debug-output-file`.
-<!-- - `describe`: Read an existing envelope from `--input-file`, write a copied envelope to `--output-file`, and attach a `description` field to each tile. -->
+- `describe` (separate CLI): Read an existing envelope from `--input-file`, write a copied envelope to `--output-file`, and attach a `description` field to each tile.
 - `see`: Render a grayscale topography image from an existing envelope (`topography.h` by default) to `--output-file` (PGM).
 
 ## Other CLIs
 
+The `describe` command intentionally remains a separate CLI (`src/cli/describe.ts`) in the current phase.
+
+Long-term developer/debug CLIs:
+
 - `hydrology-inspector`: Inspect hydrology maps via stats and visualization outputs (`fa`, `fd`, `fa-normalized`, `carry-over`, `hydrology`) from an envelope/debug dir.
+- `map`: Render terrain envelope layers as PGM maps for debugging.
+- `stream`: Trace stream routing paths from a source tile.
+- `los`: Check line-of-sight visibility between two tile coordinates.
+- `assign-regions`: Attach deterministic biome region IDs to an existing envelope.
 
 Example:
 
