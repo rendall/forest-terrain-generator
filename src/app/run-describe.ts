@@ -11,11 +11,14 @@ import {
 	isKnownDescriptionLandform,
 	type NeighborSignal,
 	type Obstacle,
-	type Passability,
 	type PassabilityByDir,
 	type Visibility,
 	type WaterClass,
 } from "../pipeline/description.js";
+import {
+	buildDescriptionFacts,
+	type DescriptionFactsTile,
+} from "../pipeline/description-facts.js";
 
 export interface DescribeCliArgs {
 	inputFilePath?: string;
@@ -64,11 +67,6 @@ interface TileSignals {
 	followable: string[];
 }
 
-type TileSignalBuildResult =
-	| { kind: "ok"; signals: TileSignals }
-	| { kind: "description_input_invalid"; x: number | null; y: number | null }
-	| { kind: "malformed_passability"; x: number | null; y: number | null };
-
 const DIRECTION_ORDER: readonly Direction[] = [
 	"N",
 	"NE",
@@ -91,51 +89,6 @@ const DIRECTION_DELTAS: Record<Direction, { dx: number; dy: number }> = {
 	NW: { dx: -1, dy: -1 },
 };
 
-const ASPECT_DIRECTION_ORDER: readonly Direction[] = [
-	"E",
-	"SE",
-	"S",
-	"SW",
-	"W",
-	"NW",
-	"N",
-	"NE",
-];
-
-const VALID_WATER_CLASSES = new Set<WaterClass>([
-	"none",
-	"marsh",
-	"stream",
-	"lake",
-]);
-
-const VALID_OBSTACLES = new Set<Obstacle>([
-	"windthrow",
-	"deadfall",
-	"boulder",
-	"fallen_log",
-	"root_tangle",
-	"brush_blockage",
-]);
-
-const VALID_PASSABILITY = new Set<Passability>([
-	"passable",
-	"difficult",
-	"blocked",
-]);
-
-const FLOW_DIRECTION_BY_FD: Partial<Record<number, Direction | "NONE">> = {
-	0: "E",
-	1: "SE",
-	2: "S",
-	3: "SW",
-	4: "W",
-	5: "NW",
-	6: "N",
-	7: "NE",
-	255: "NONE",
-};
-
 function resolveFromCwd(
 	cwd: string,
 	maybeRelativePath: string | undefined,
@@ -153,18 +106,6 @@ function isJsonObject(value: unknown): value is JsonObject {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function asFiniteNumber(value: unknown, fallback: number): number {
-	return typeof value === "number" && Number.isFinite(value) ? value : fallback;
-}
-
-function asInteger(value: unknown): number | null {
-	return typeof value === "number" && Number.isInteger(value) ? value : null;
-}
-
-function asString(value: unknown, fallback: string): string {
-	return typeof value === "string" && value.length > 0 ? value : fallback;
-}
-
 function clamp01(value: number): number {
 	if (value <= 0) {
 		return 0;
@@ -173,83 +114,6 @@ function clamp01(value: number): number {
 		return 1;
 	}
 	return value;
-}
-
-function normalizeWaterClass(value: unknown): WaterClass {
-	return typeof value === "string" &&
-		VALID_WATER_CLASSES.has(value as WaterClass)
-		? (value as WaterClass)
-		: "none";
-}
-
-function normalizeSlopeDirection(aspectDeg: number): Direction {
-	const normalized = ((aspectDeg % 360) + 360) % 360;
-	const sector = Math.round(normalized / 45) % 8;
-	return ASPECT_DIRECTION_ORDER[sector] as Direction;
-}
-
-function deriveVisibility(
-	treeDensity: number,
-	canopyCover: number,
-	obstruction: number,
-): Visibility {
-	const densityScore =
-		clamp01(treeDensity) * 0.5 +
-		clamp01(canopyCover) * 0.3 +
-		clamp01(obstruction) * 0.2;
-
-	if (densityScore >= 0.62) {
-		return "short";
-	}
-	if (densityScore <= 0.32) {
-		return "long";
-	}
-	return "medium";
-}
-
-function collectObstacles(featureFlags: unknown): Obstacle[] {
-	if (!Array.isArray(featureFlags)) {
-		return [];
-	}
-
-	const out: Obstacle[] = [];
-	for (const entry of featureFlags) {
-		if (typeof entry === "string" && VALID_OBSTACLES.has(entry as Obstacle)) {
-			out.push(entry as Obstacle);
-		}
-	}
-	return out;
-}
-
-function hasStandingWater(surfaceFlags: unknown): boolean {
-	return Array.isArray(surfaceFlags) && surfaceFlags.includes("standing_water");
-}
-
-function parsePassability(value: unknown): PassabilityByDir | null {
-	if (!isJsonObject(value)) {
-		return null;
-	}
-
-	const out: Partial<PassabilityByDir> = {};
-	for (const direction of DIRECTION_ORDER) {
-		const state = value[direction];
-		if (
-			typeof state !== "string" ||
-			!VALID_PASSABILITY.has(state as Passability)
-		) {
-			return null;
-		}
-		out[direction] = state as Passability;
-	}
-	return out as PassabilityByDir;
-}
-
-function parseFlowDirection(value: unknown): Direction | "NONE" | null {
-	const code = asInteger(value);
-	if (code === null) {
-		return null;
-	}
-	return FLOW_DIRECTION_BY_FD[code] ?? null;
 }
 
 function tileKey(x: number, y: number): string {
@@ -297,50 +161,89 @@ function buildFailureTile(
 	return out;
 }
 
-function buildTileSignals(tile: JsonObject): TileSignalBuildResult {
-	const x = asInteger(tile.x);
-	const y = asInteger(tile.y);
-	if (x === null || y === null) {
-		return { kind: "description_input_invalid", x, y };
+function deriveStandingWater(facts: DescriptionFactsTile): boolean {
+	const waterDepth = facts.hydrology.waterDepth;
+	if (typeof waterDepth === "number") {
+		return waterDepth > 0;
 	}
-
-	const topography = isJsonObject(tile.topography) ? tile.topography : {};
-	const hydrology = isJsonObject(tile.hydrology) ? tile.hydrology : {};
-	const ecology = isJsonObject(tile.ecology) ? tile.ecology : {};
-	const navigation = isJsonObject(tile.navigation) ? tile.navigation : {};
-	const roughness = isJsonObject(ecology.roughness) ? ecology.roughness : {};
-	const ground = isJsonObject(ecology.ground) ? ecology.ground : {};
-	const passability = parsePassability(navigation.passability);
-	if (!passability) {
-		return { kind: "malformed_passability", x, y };
+	const waterSurfaceH = facts.hydrology.waterSurfaceH;
+	if (typeof waterSurfaceH === "number") {
+		return waterSurfaceH > facts.local.elevation;
 	}
+	return false;
+}
 
-	const treeDensity = asFiniteNumber(ecology.treeDensity, 0.5);
-	const canopyCover = asFiniteNumber(ecology.canopyCover, treeDensity);
-	const obstruction = asFiniteNumber(roughness.obstruction, 0.35);
+function deriveLandform(
+	facts: DescriptionFactsTile,
+	standingWater: boolean,
+): string {
+	if (facts.topology.peakLeafId !== null) {
+		return "ridge";
+	}
+	if (facts.hydrology.waterClass === "lake" || standingWater) {
+		return "basin";
+	}
+	if (
+		facts.topology.basinLeafId !== null &&
+		facts.local.slopeMagnitude < 0.03
+	) {
+		return "valley";
+	}
+	if (facts.local.slopeMagnitude < 0.015) {
+		return "flat";
+	}
+	if (facts.local.slopeMagnitude < 0.05) {
+		return "low_rise";
+	}
+	return "slope";
+}
 
+function deriveFollowable(facts: DescriptionFactsTile): string[] {
+	const tokens: string[] = [];
+	if (facts.topology.peakLeafId !== null) {
+		tokens.push("ridge");
+	}
+	if (facts.hydrology.waterClass === "stream") {
+		tokens.push("stream");
+	}
+	return tokens;
+}
+
+function deriveMoisture(
+	facts: DescriptionFactsTile,
+	standingWater: boolean,
+): number {
+	if (standingWater || facts.hydrology.waterClass === "lake") {
+		return 1;
+	}
+	if (facts.hydrology.waterClass === "marsh") {
+		return 0.8;
+	}
+	if (facts.hydrology.waterClass === "stream") {
+		return 0.65;
+	}
+	return clamp01(0.5);
+}
+
+function toTileSignals(facts: DescriptionFactsTile): TileSignals {
+	const standingWater = deriveStandingWater(facts);
 	return {
-		kind: "ok",
-		signals: {
-			x,
-			y,
-			biome: asString(ecology.biome, "mixed_forest"),
-			waterClass: normalizeWaterClass(hydrology.waterClass),
-			flowDirection: parseFlowDirection(hydrology.fd),
-			elevation: asFiniteNumber(topography.h, 0),
-			treeDensity,
-			moisture: clamp01(asFiniteNumber(hydrology.moisture, 0.5)),
-			standingWater: hasStandingWater(ground.surfaceFlags),
-			landform: asString(topography.landform, "flat"),
-			slopeStrength: Math.max(0, asFiniteNumber(topography.slopeMag, 0)),
-			slopeDirection: normalizeSlopeDirection(
-				asFiniteNumber(topography.aspectDeg, 0),
-			),
-			obstacles: collectObstacles(roughness.featureFlags),
-			visibility: deriveVisibility(treeDensity, canopyCover, obstruction),
-			passability,
-			followable: navigation.followable as string[],
-		},
+		x: facts.coord.x,
+		y: facts.coord.y,
+		biome: facts.ecology.biome,
+		waterClass: facts.hydrology.waterClass,
+		flowDirection: facts.hydrology.flowDirection,
+		elevation: facts.local.elevation,
+		treeDensity: facts.ecology.treeDensity,
+		moisture: deriveMoisture(facts, standingWater),
+		standingWater,
+		landform: deriveLandform(facts, standingWater),
+		slopeStrength: facts.local.slopeMagnitude,
+		slopeDirection: facts.local.slopeDirection,
+		obstacles: [...facts.ecology.obstacles],
+		visibility: facts.ecology.visibility,
+		passability: facts.movement.passability,
+		followable: deriveFollowable(facts),
 	};
 }
 
@@ -375,20 +278,31 @@ export function attachTileDescriptions(
 	includeStructured: boolean,
 	strict = false,
 ): TerrainEnvelope {
+	const factResults = buildDescriptionFacts(envelope);
 	const byCoord = new Map<string, TileSignals>();
 
-	for (const tile of envelope.tiles) {
-		const signalResult = buildTileSignals(tile);
+	for (const signalResult of factResults) {
 		if (signalResult.kind === "ok") {
-			byCoord.set(
-				tileKey(signalResult.signals.x, signalResult.signals.y),
-				signalResult.signals,
-			);
+			const signals = toTileSignals(signalResult.facts);
+			byCoord.set(tileKey(signals.x, signals.y), signals);
 		}
 	}
 
-	const tiles = envelope.tiles.map((tile) => {
-		const signalResult = buildTileSignals(tile);
+	const tiles = envelope.tiles.map((tile, tileIndex) => {
+		const signalResult = factResults[tileIndex];
+		if (!signalResult) {
+			return buildFailureTile(
+				tile,
+				{
+					code: "description_input_invalid",
+					message:
+						"Tile is missing normalized description facts for description generation.",
+					x: null,
+					y: null,
+				},
+				includeStructured,
+			);
+		}
 		if (signalResult.kind === "description_input_invalid") {
 			return buildFailureTile(
 				tile,
@@ -416,7 +330,7 @@ export function attachTileDescriptions(
 				includeStructured,
 			);
 		}
-		const signals = signalResult.signals;
+		const signals = toTileSignals(signalResult.facts);
 
 		const unknownBiome = isKnownDescriptionBiome(signals.biome)
 			? undefined
@@ -441,100 +355,100 @@ export function attachTileDescriptions(
 			);
 		}
 
-			try {
-				const description = generateRawDescription(
-					{
-						biome: signals.biome,
-						landform: signals.landform,
-						moisture: signals.moisture,
-						standingWater: signals.standingWater,
-						passability: signals.passability,
-						flowDirection: signals.flowDirection,
-						slopeDirection: signals.slopeDirection,
-						slopeStrength: signals.slopeStrength,
-						obstacles: signals.obstacles,
-						followable: signals.followable,
-						visibility: signals.visibility,
-						neighbors: buildNeighborSignals(signals, byCoord),
-					},
-					describeSeedKey(signals),
-					{ strict },
-				);
+		try {
+			const description = generateRawDescription(
+				{
+					biome: signals.biome,
+					landform: signals.landform,
+					moisture: signals.moisture,
+					standingWater: signals.standingWater,
+					passability: signals.passability,
+					flowDirection: signals.flowDirection,
+					slopeDirection: signals.slopeDirection,
+					slopeStrength: signals.slopeStrength,
+					obstacles: signals.obstacles,
+					followable: signals.followable,
+					visibility: signals.visibility,
+					neighbors: buildNeighborSignals(signals, byCoord),
+				},
+				describeSeedKey(signals),
+				{ strict },
+			);
 
-				const outputTile: JsonObject = {
-					...tile,
-					description: description.text,
-				};
+			const outputTile: JsonObject = {
+				...tile,
+				description: description.text,
+			};
 
-				if (includeStructured) {
-					const adjacencyByToken = signals.followable.reduce<
-						Record<string, Direction[]>
-					>((obj, token) => {
-						const directionsForToken = DIRECTION_ORDER.filter((direction) => {
-							const delta = DIRECTION_DELTAS[direction];
-							const nx = signals.x + delta.dx;
-							const ny = signals.y + delta.dy;
-							const neighbor = byCoord.get(tileKey(nx, ny));
-							if (!neighbor) {
-								return false;
-							}
-							return neighbor.followable.includes(token);
-						});
-						return {
-							...obj,
-							[token]: directionsForToken,
-						};
-					}, {});
-					const adjacency: JsonObject = {};
-					for (const [token, directions] of Object.entries(adjacencyByToken)) {
-						adjacency[token] = directions;
-					}
-					if (
-						Object.prototype.hasOwnProperty.call(adjacencyByToken, "stream") &&
-						signals.flowDirection !== null
-					) {
-						adjacency.streamFlow = signals.flowDirection;
-					}
-
-						outputTile.descriptionStructured = {
-							sentences: description.sentences.map((sentence) => {
-								const out: JsonObject = {
-									slot: sentence.slot,
-									contributorKeys: { ...sentence.contributorKeys },
-								};
-								if (typeof sentence.basicText === "string") {
-									out.basicText = sentence.basicText;
-								}
-								if (sentence.contributors) {
-									out.contributors = sentence.contributors;
-								}
-									const structuredText =
-										typeof sentence.text === "string"
-											? sentence.text
-											: typeof sentence.basicText === "string"
-												? sentence.basicText
-												: null;
-								if (structuredText !== null) {
-									out.text = structuredText;
-								}
-								if (sentence.movement) {
-									out.movement = sentence.movement.map((run) => ({
-										type: run.type,
-										directions: [...run.directions],
-										...(run.type === "blockage" &&
-										typeof run.blockedBy === "string"
-											? { blockedBy: run.blockedBy }
-											: {}),
-									}));
-								}
-							return out;
-						}),
-						adjacency,
+			if (includeStructured) {
+				const adjacencyByToken = signals.followable.reduce<
+					Record<string, Direction[]>
+				>((obj, token) => {
+					const directionsForToken = DIRECTION_ORDER.filter((direction) => {
+						const delta = DIRECTION_DELTAS[direction];
+						const nx = signals.x + delta.dx;
+						const ny = signals.y + delta.dy;
+						const neighbor = byCoord.get(tileKey(nx, ny));
+						if (!neighbor) {
+							return false;
+						}
+						return neighbor.followable.includes(token);
+					});
+					return {
+						...obj,
+						[token]: directionsForToken,
 					};
+				}, {});
+				const adjacency: JsonObject = {};
+				for (const [token, directions] of Object.entries(adjacencyByToken)) {
+					adjacency[token] = directions;
+				}
+				if (
+					Object.prototype.hasOwnProperty.call(adjacencyByToken, "stream") &&
+					signals.flowDirection !== null
+				) {
+					adjacency.streamFlow = signals.flowDirection;
 				}
 
-				return outputTile;
-			} catch (error) {
+				outputTile.descriptionStructured = {
+					sentences: description.sentences.map((sentence) => {
+						const out: JsonObject = {
+							slot: sentence.slot,
+							contributorKeys: { ...sentence.contributorKeys },
+						};
+						if (typeof sentence.basicText === "string") {
+							out.basicText = sentence.basicText;
+						}
+						if (sentence.contributors && isJsonObject(sentence.contributors)) {
+							out.contributors = sentence.contributors;
+						}
+						const structuredText =
+							typeof sentence.text === "string"
+								? sentence.text
+								: typeof sentence.basicText === "string"
+									? sentence.basicText
+									: null;
+						if (structuredText !== null) {
+							out.text = structuredText;
+						}
+						if (sentence.movement) {
+							out.movement = sentence.movement.map((run) => ({
+								type: run.type,
+								directions: [...run.directions],
+								...(run.type === "blockage" &&
+								typeof run.blockedBy === "string"
+									? { blockedBy: run.blockedBy }
+									: {}),
+							}));
+						}
+						return out;
+					}),
+					adjacency,
+				};
+			}
+
+			return outputTile;
+		} catch (error) {
 			if (error instanceof DescriptionPhraseError) {
 				return buildFailureTile(
 					tile,
