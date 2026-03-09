@@ -9,12 +9,19 @@ const confluenceFixture = createStreamFixture({
 	faValues: [10, 9, 8, 8, 7, 6, 7, 6, 5],
 });
 
+const eastEdgeFixture = createStreamFixture({
+	width: 2,
+	height: 2,
+	hValues: [0.92, 0.82, 1.0, 1.0],
+	faValues: [10, 9, 8, 7],
+});
+
 const includeAllOrigins = () => true;
 
 describe("derive-stream-network tile geometry", () => {
 	it("derives outgoing and incoming tile directions from traced stream edges", () => {
 		const result = deriveStreamNetwork({
-			...confluenceFixture,
+			...eastEdgeFixture,
 			originPredicate: includeAllOrigins,
 		});
 		const tile0 = result.tileGeometry[0];
