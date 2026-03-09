@@ -245,10 +245,13 @@ If all candidates for a tile are exhausted:
 
 The search continues until either:
 
-- a valid terminal state is reached
+- a valid terminal outcome is reached (`confluence` or `sink`)
 - all reachable downstream candidates have been exhausted
 
-Cycles therefore trigger **backtracking**, not termination.
+Cycles therefore trigger **backtracking**, not immediate termination.
+
+Cycle detection normally causes candidate rejection and backtracking.
+Only failure of that deterministic resolution process should end in `terminalKind: "error"`.
 
 ---
 
@@ -288,8 +291,8 @@ traceStream(origin):
 
 The search ends only when:
 
-- a valid terminal condition is reached
-- the search space is exhausted
+- a valid terminal outcome is reached
+- the search space is exhausted (which yields `terminalKind: "error"`)
 
 ---
 
@@ -303,12 +306,14 @@ They do not encode stop reasons, tracing artifacts, or lake-specific semantics.
 type StreamTerminalKind =
   | "confluence"
   | "sink"
+  | "error"
 ```
 
 Semantics:
 
 - `confluence` means the traced path joins an already-established downstream stream path.
 - `sink` means the traced path terminates without joining an already-established downstream stream path.
+- `error` means the tracer failed to resolve a valid terminal outcome despite deterministic search/backtracking. This is not a normal hydrologic outcome; it is an unresolved tracing failure or contract-level error condition.
 
 Lake semantics are deferred for now.
 
@@ -317,9 +322,13 @@ Lake semantics are deferred for now.
 - Streams continue through submerged/underwater tiles and terminate at the terminal leaf basin under the current model.
 - "leaf basin" is treated as the current implementation interpretation of `sink`, not as a public terminal kind.
 
-Cycle encounters do **not** produce terminal kinds.
+Cycle encounters do **not** normally produce terminal kinds; they are internal search events handled by deterministic backtracking.
 
-They are internal search events.
+`error` is only for unresolved failure cases, such as:
+
+- a circuit/cycle that cannot be resolved by the backtracking search
+- search exhaustion without producing a valid `confluence` or `sink`
+- any equivalent unresolved internal failure where the stream cannot be assigned a valid hydrologic ending
 
 ---
 
