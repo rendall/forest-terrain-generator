@@ -19,6 +19,7 @@ import { deepMerge } from "../lib/deep-merge.js";
 import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
 import { validateReplayTopographyGrid } from "../lib/validate-replay-tiles.js";
 import { deriveHydrology } from "../pipeline/derive-hydrology.js";
+import { deriveStreamNetwork } from "../pipeline/derive-stream-network.js";
 import { deriveTopographicStructure } from "../pipeline/derive-topographic-structure.js";
 import { deriveTopographyFromBaseMaps } from "../pipeline/derive-topography.js";
 import { resolveBaseMaps } from "../pipeline/resolve-base-maps.js";
@@ -216,6 +217,7 @@ function assertDebugInputFileArgs(args: CliArgs): void {
 
 function buildTileHydrologyPayload(
 	hydrology: ReturnType<typeof deriveHydrology>,
+	streamNetwork: ReturnType<typeof deriveStreamNetwork>,
 	index: number,
 ): JsonObject {
 	const lakeMask = hydrology.maps.lakeMask[index] === 1;
@@ -232,6 +234,12 @@ function buildTileHydrologyPayload(
 			? { waterSurfaceH: hydrology.maps.waterSurfaceH[index] }
 			: {}),
 		...(hasWaterSurface ? { waterDepth } : {}),
+		stream: {
+			outgoingDirection: streamNetwork.tileGeometry[index].outgoingDirection,
+			incomingDirections: [
+				...streamNetwork.tileGeometry[index].incomingDirections,
+			],
+		},
 	};
 }
 
@@ -256,6 +264,7 @@ function buildReplayEnvelope(
 	replayParams: JsonObject,
 	topographyStructure: ReturnType<typeof deriveTopographicStructure>,
 	hydrology: ReturnType<typeof deriveHydrology>,
+	streamNetwork: ReturnType<typeof deriveStreamNetwork>,
 ): TerrainEnvelope {
 	const elevation = buildElevationParams(replayParams);
 	const elevationSpan = elevation.h1 - elevation.h0;
@@ -271,7 +280,11 @@ function buildReplayEnvelope(
 			: {};
 		const sourceTopographySansStructure = { ...sourceTopography };
 		delete sourceTopographySansStructure.structure;
-		const tileHydrology = buildTileHydrologyPayload(hydrology, index);
+		const tileHydrology = buildTileHydrologyPayload(
+			hydrology,
+			streamNetwork,
+			index,
+		);
 		tiles.push({
 			...sourceTile,
 			index,
@@ -300,6 +313,7 @@ function buildReplayEnvelope(
 		features: {
 			basins: topographyStructure.basinFeatures,
 			peaks: topographyStructure.peakFeatures,
+			streams: streamNetwork.streams,
 		},
 		tiles,
 		...(paramOverrides ? { paramOverrides } : {}),
@@ -356,6 +370,11 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			},
 			replayParams,
 		);
+		const streamNetwork = deriveStreamNetwork({
+			shape: replayGrid.shape,
+			h: replayGrid.h,
+			fa: hydrology.maps.fa,
+		});
 		const basinFeaturesWithWaterSurface = attachBasinWaterSurface(
 			topographyStructure.basinFeatures,
 			hydrology,
@@ -371,6 +390,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			replayParams,
 			outputTopographyStructure,
 			hydrology,
+			streamNetwork,
 		);
 		await writeModeOutputs(
 			request.mode,
@@ -415,6 +435,11 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		},
 		validated.params,
 	);
+	const streamNetwork = deriveStreamNetwork({
+		shape,
+		h: topography.h,
+		fa: hydrology.maps.fa,
+	});
 	const basinFeaturesWithWaterSurface = attachBasinWaterSurface(
 		topographyStructure.basinFeatures,
 		hydrology,
@@ -430,6 +455,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 	envelope.features = {
 		basins: outputTopographyStructure.basinFeatures,
 		peaks: topographyStructure.peakFeatures,
+		streams: streamNetwork.streams,
 	};
 
 	const tiles: JsonObject[] = [];
@@ -448,7 +474,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 				r: topography.r[i],
 				v: topography.v[i],
 			},
-			hydrology: buildTileHydrologyPayload(hydrology, i),
+			hydrology: buildTileHydrologyPayload(hydrology, streamNetwork, i),
 		});
 	}
 	envelope.tiles = tiles;
