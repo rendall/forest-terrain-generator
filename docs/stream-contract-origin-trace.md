@@ -142,6 +142,15 @@ Ordering rule:
 
 This guarantees deterministic stream ordering.
 
+Origin eligibility rule (required):
+
+- Before evaluating a candidate origin, the generator must check whether that tile already appears in `pathTileIds` of any already-created `StreamFeature`.
+- If the tile is already present in an existing stream path, the generator must not evaluate a new stream from that tile.
+- In that case the generator must skip the candidate and continue to the next origin in deterministic order.
+- No new `StreamFeature` is created for that skipped candidate.
+- This is an origin-elimination/deduplication rule, not a terminal outcome.
+- It must not be represented as `terminalKind: "confluence"`, `terminalKind: "sink"`, or `terminalKind: "error"`.
+
 ---
 
 # 4. Stream Path Tracing
@@ -311,8 +320,10 @@ type StreamTerminalKind =
 
 Semantics:
 
-- `confluence` means the traced path joins an already-established downstream stream path.
+- `confluence` means the traced path joins an already-established downstream stream path during evaluation.
 - `sink` means the traced path terminates without joining an already-established downstream stream path.
+
+A candidate origin that is already on an existing stream path before evaluation begins is not a confluence. It is a redundant origin candidate and must be discarded by the origin eligibility rule without tracing.
 - `error` means the tracer failed to resolve a valid terminal outcome despite deterministic search/backtracking. This is not a normal hydrologic outcome; it is an unresolved tracing failure or contract-level error condition.
 
 Lake semantics are deferred for now.
