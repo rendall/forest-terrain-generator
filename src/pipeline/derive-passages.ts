@@ -55,17 +55,28 @@ export const evaluatePassageBlockReason = (
 };
 
 export const derivePassages = (shape: GridShape, h: Float32Array): TilePassages[] =>
-	Array.from({ length: shape.size }, (_, tileIndex) =>
-		DIRECTION8_ORDER.reduce<TilePassages>((passages, direction) => {
+	Array.from({ length: shape.size }, (_, tileIndex) => {
+		const allReasons = DIRECTION8_ORDER.reduce<TilePassages>((passages, direction) => {
 			const reason = evaluatePassageBlockReason({
 				shape,
 				h,
 				tileIndex,
 				direction,
 			});
-			if (reason !== null && reason !== "out_of_bounds") {
+			if (reason !== null) {
 				passages[direction] = reason;
 			}
 			return passages;
-		}, {}),
-	);
+		}, {});
+
+		const hasNonOutOfBoundsReason = Object.values(allReasons).some(
+			(reason) => reason !== "out_of_bounds",
+		);
+		if (!hasNonOutOfBoundsReason) {
+			return allReasons;
+		}
+
+		return Object.fromEntries(
+			Object.entries(allReasons).filter(([, reason]) => reason !== "out_of_bounds"),
+		) as TilePassages;
+	});
