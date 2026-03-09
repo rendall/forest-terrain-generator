@@ -63,7 +63,7 @@ type StreamFeature = {
   originTileId: number
   pathTileIds: number[]
   terminalTileId: number
-  terminalState: StreamTerminalState
+  terminalKind: StreamTerminalKind
 }
 ```
 
@@ -81,8 +81,8 @@ Field meanings:
 - `terminalTileId`
   - final tile in the path
 
-- `terminalState`
-  - reason the stream terminated
+- `terminalKind`
+  - kind of path ending (`confluence` or `sink`)
 
 ### StreamFeature invariants
 
@@ -293,24 +293,31 @@ The search ends only when:
 
 ---
 
-# 10. Terminal States
+# 10. Terminal Kinds
 
-Streams terminate when a valid hydrologic stopping condition is reached.
+Terminal kinds describe only the kind of ending.
 
-Possible terminal states include:
+They do not encode stop reasons, tracing artifacts, or lake-specific semantics.
 
 ```ts
-type StreamTerminalState =
-  | "leaf_basin"
-  | "entered_active_basin"
-  | "entered_lake_basin"
-  | "local_sink"
-  | "no_downstream"
-  | "max_steps_reached"
-  | "boundary_exit"
+type StreamTerminalKind =
+  | "confluence"
+  | "sink"
 ```
 
-Cycle encounters do **not** produce terminal states.
+Semantics:
+
+- `confluence` means the traced path joins an already-established downstream stream path.
+- `sink` means the traced path terminates without joining an already-established downstream stream path.
+
+Lake semantics are deferred for now.
+
+- Do not introduce a lake-specific terminal kind.
+- Do not terminate merely because a tile is underwater.
+- Streams continue through submerged/underwater tiles and terminate at the terminal leaf basin under the current model.
+- "leaf basin" is treated as the current implementation interpretation of `sink`, not as a public terminal kind.
+
+Cycle encounters do **not** produce terminal kinds.
 
 They are internal search events.
 
