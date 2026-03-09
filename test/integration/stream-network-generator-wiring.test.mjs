@@ -84,6 +84,14 @@ describe("stream-network generator wiring", () => {
 				nonNullOutgoingCount += 1;
 			}
 		}
+		if (nonNullOutgoingCount === 0) {
+			const observedSummary = envelope.tiles
+				.map((tile) => tile.hydrology.stream.outgoingDirection)
+				.join(", ");
+			throw new Error(
+				`expected at least one non-null outgoing stream direction, observed outgoingDirection values: [${observedSummary}]`,
+			);
+		}
 		expect(nonNullOutgoingCount).toBeGreaterThan(0);
 	});
 
