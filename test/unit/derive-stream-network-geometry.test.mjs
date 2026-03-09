@@ -40,14 +40,16 @@ describe("derive-stream-network tile geometry", () => {
 		expect(confluenceTile.incomingDirections).toEqual(["w", "nw", "n"]);
 	});
 
-	it("sets outgoingDirection to null for terminal stream tiles", () => {
+	it("sets outgoingDirection to null for sink terminal stream tiles", () => {
 		const result = deriveStreamNetwork({
 			...confluenceFixture,
 			originPredicate: includeAllOrigins,
 		});
-		const terminalIds = result.streams.map((stream) => stream.terminalTileId);
-		expect(terminalIds.length).toBeGreaterThan(0);
-		for (const tileId of terminalIds) {
+		const sinkTerminalIds = result.streams
+			.filter((stream) => stream.terminalKind === "sink")
+			.map((stream) => stream.terminalTileId);
+		expect(sinkTerminalIds.length).toBeGreaterThan(0);
+		for (const tileId of sinkTerminalIds) {
 			expect(result.tileGeometry[tileId].outgoingDirection).toBeNull();
 		}
 	});
