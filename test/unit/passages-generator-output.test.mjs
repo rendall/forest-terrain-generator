@@ -46,7 +46,7 @@ describe("runGenerator passages output", () => {
 
 	it("derives asymmetric block reasons from height deltas", () => {
 		const shape = createGridShape(2, 1);
-		const h = new Float32Array([0.2, 0.202]);
+		const h = new Float32Array([0.2, 0.204]);
 		const passages = derivePassages(shape, h);
 		expect(passages[0]).toEqual({ E: "elevation_up_too_steep" });
 		expect(passages[1]).toEqual({ W: "elevation_down_too_far" });

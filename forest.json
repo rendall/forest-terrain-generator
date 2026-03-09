@@ -281,7 +281,6 @@
         "E": "elevation_up_too_steep",
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
-        "SW": "elevation_down_too_far",
         "W": "elevation_up_too_steep"
       }
     },
@@ -892,8 +891,7 @@
         "E": "elevation_up_too_steep",
         "SE": "elevation_up_too_steep",
         "S": "elevation_down_too_far",
-        "SW": "elevation_down_too_far",
-        "W": "elevation_down_too_far"
+        "SW": "elevation_down_too_far"
       }
     },
     {
@@ -3045,7 +3043,6 @@
       "passages": {
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
-        "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
@@ -3134,7 +3131,6 @@
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
-        "W": "elevation_down_too_far",
         "NW": "elevation_up_too_steep",
         "N": "elevation_up_too_steep",
         "NE": "elevation_up_too_steep"
@@ -3709,7 +3705,6 @@
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
-        "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
@@ -3750,7 +3745,6 @@
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
-        "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
@@ -4101,7 +4095,6 @@
         "waterDepth": 0.16011115908622742
       },
       "passages": {
-        "E": "elevation_up_too_steep",
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
@@ -4145,7 +4138,6 @@
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
-        "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
@@ -4352,7 +4344,6 @@
         "SW": "elevation_down_too_far",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
       }
     },
@@ -5059,7 +5050,6 @@
         "waterDepth": 0.11588740348815918
       },
       "passages": {
-        "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
@@ -5329,7 +5319,6 @@
       },
       "passages": {
         "E": "elevation_down_too_far",
-        "SE": "elevation_down_too_far",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
@@ -5569,7 +5558,6 @@
       "passages": {
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
-        "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
@@ -5702,7 +5690,6 @@
       "passages": {
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
-        "S": "elevation_up_too_steep",
         "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
@@ -6048,7 +6035,6 @@
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
-        "W": "elevation_up_too_steep",
         "NW": "elevation_down_too_far",
         "N": "elevation_up_too_steep",
         "NE": "elevation_up_too_steep"
@@ -6563,7 +6549,6 @@
         "E": "elevation_up_too_steep",
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
-        "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
@@ -6595,7 +6580,6 @@
       "passages": {
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
-        "S": "elevation_up_too_steep",
         "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
@@ -6627,7 +6611,6 @@
       "passages": {
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
-        "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_down_too_far",
@@ -6864,7 +6847,6 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
       }
     },
@@ -7078,7 +7060,6 @@
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
-        "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
@@ -7252,7 +7233,6 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_down_too_far",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
       }
     },
@@ -7713,7 +7693,6 @@
         "waterDepth": 0.1523924469947815
       },
       "passages": {
-        "E": "elevation_up_too_steep",
         "SE": "elevation_down_too_far",
         "S": "elevation_up_too_steep",
         "W": "elevation_down_too_far",
@@ -7826,8 +7805,7 @@
         "E": "elevation_up_too_steep",
         "SE": "elevation_up_too_steep",
         "S": "elevation_down_too_far",
-        "N": "elevation_down_too_far",
-        "NE": "elevation_up_too_steep"
+        "N": "elevation_down_too_far"
       }
     },
     {
@@ -7853,7 +7831,6 @@
         "lakeBasinId": null
       },
       "passages": {
-        "E": "elevation_up_too_steep",
         "SE": "elevation_up_too_steep",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
@@ -7889,7 +7866,6 @@
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_down_too_far",
-        "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
       }
@@ -7923,7 +7899,6 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
       }
     },
@@ -8030,7 +8005,6 @@
       "passages": {
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
-        "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_down_too_far",
@@ -8153,7 +8127,6 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_up_too_steep",
         "NE": "elevation_down_too_far"
       }
     },
@@ -8280,7 +8253,6 @@
       "passages": {
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
-        "S": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
         "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
@@ -8536,7 +8508,6 @@
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
-        "SW": "elevation_up_too_steep",
         "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
@@ -8713,7 +8684,6 @@
         "S": "elevation_up_too_steep",
         "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
-        "NW": "elevation_down_too_far",
         "N": "elevation_up_too_steep",
         "NE": "elevation_up_too_steep"
       }
@@ -9574,7 +9544,6 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_down_too_far",
-        "N": "elevation_up_too_steep",
         "NE": "elevation_down_too_far"
       }
     },
@@ -9656,7 +9625,6 @@
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
-        "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
         "NW": "elevation_up_too_steep",
         "N": "elevation_up_too_steep",
@@ -9786,8 +9754,7 @@
         "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_down_too_far",
-        "NE": "elevation_down_too_far"
+        "N": "elevation_down_too_far"
       }
     },
     {
@@ -9869,7 +9836,6 @@
       "passages": {
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
-        "S": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
@@ -10049,7 +10015,6 @@
         "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
-        "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
       }
     },
@@ -10545,7 +10510,6 @@
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
-        "SW": "elevation_down_too_far",
         "W": "elevation_up_too_steep",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
@@ -10706,7 +10670,6 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_up_too_steep",
         "NE": "elevation_down_too_far"
       }
     },
@@ -10829,7 +10792,6 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
       }
     },
@@ -10948,7 +10910,6 @@
         "waterDepth": 0.02626734972000122
       },
       "passages": {
-        "E": "elevation_down_too_far",
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
@@ -11034,7 +10995,6 @@
         "waterDepth": 0.004286050796508789
       },
       "passages": {
-        "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
@@ -11081,7 +11041,6 @@
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
-        "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
         "N": "elevation_up_too_steep",
         "NE": "elevation_up_too_steep"
@@ -11815,8 +11774,7 @@
         "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
-        "N": "elevation_up_too_steep",
-        "NE": "elevation_up_too_steep"
+        "N": "elevation_up_too_steep"
       }
     },
     {
@@ -12237,7 +12195,6 @@
         "waterDepth": 0.0383857786655426
       },
       "passages": {
-        "E": "elevation_up_too_steep",
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_down_too_far",
@@ -12281,7 +12238,6 @@
         "E": "elevation_down_too_far",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
-        "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
@@ -12545,7 +12501,6 @@
         "E": "elevation_up_too_steep",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
-        "SW": "elevation_down_too_far",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
         "N": "elevation_up_too_steep",
@@ -12588,7 +12543,6 @@
         "waterDepth": 0.008707016706466675
       },
       "passages": {
-        "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
@@ -13043,7 +12997,6 @@
         "lakeBasinId": null
       },
       "passages": {
-        "E": "elevation_up_too_steep",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
@@ -13145,7 +13098,6 @@
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
-        "W": "elevation_down_too_far",
         "NW": "elevation_up_too_steep",
         "N": "elevation_up_too_steep",
         "NE": "elevation_up_too_steep"
@@ -14736,7 +14688,6 @@
       },
       "passages": {
         "E": "elevation_down_too_far",
-        "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
@@ -15338,8 +15289,7 @@
         "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
-        "N": "elevation_down_too_far",
-        "NE": "elevation_down_too_far"
+        "N": "elevation_down_too_far"
       }
     },
     {
@@ -15559,7 +15509,6 @@
         "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
-        "N": "elevation_up_too_steep",
         "NE": "elevation_up_too_steep"
       }
     },
@@ -15742,7 +15691,6 @@
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
-        "SW": "elevation_down_too_far",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
         "N": "elevation_up_too_steep",
@@ -15865,7 +15813,6 @@
       "passages": {
         "E": "elevation_up_too_steep",
         "SE": "elevation_up_too_steep",
-        "S": "elevation_up_too_steep",
         "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
         "NW": "elevation_up_too_steep",
@@ -16273,7 +16220,6 @@
         "waterDepth": 0.026947349309921265
       },
       "passages": {
-        "E": "elevation_down_too_far",
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
@@ -17614,7 +17560,6 @@
       "passages": {
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
-        "S": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
         "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
@@ -18428,7 +18373,6 @@
       "passages": {
         "E": "elevation_up_too_steep",
         "SE": "elevation_up_too_steep",
-        "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
@@ -18570,7 +18514,6 @@
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
-        "W": "elevation_up_too_steep",
         "NW": "elevation_down_too_far",
         "N": "elevation_up_too_steep",
         "NE": "elevation_up_too_steep"
@@ -18604,8 +18547,7 @@
         "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
-        "N": "elevation_up_too_steep",
-        "NE": "elevation_down_too_far"
+        "N": "elevation_up_too_steep"
       }
     },
     {
@@ -19183,7 +19125,6 @@
         "waterDepth": 0.045879215002059937
       },
       "passages": {
-        "E": "elevation_down_too_far",
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
@@ -19237,7 +19178,6 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_down_too_far",
         "NE": "elevation_up_too_steep"
       }
     },
@@ -19415,7 +19355,6 @@
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
-        "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
         "N": "elevation_up_too_steep",
         "NE": "elevation_up_too_steep"
@@ -20189,7 +20128,6 @@
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
-        "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
       }
@@ -20406,7 +20344,6 @@
         "SE": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
-        "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
       }
@@ -20774,7 +20711,6 @@
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
         "W": "elevation_up_too_steep",
-        "NW": "elevation_down_too_far",
         "N": "elevation_up_too_steep",
         "NE": "elevation_up_too_steep"
       }
@@ -21087,7 +21023,6 @@
       },
       "passages": {
         "E": "elevation_down_too_far",
-        "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
         "W": "elevation_down_too_far",
@@ -21470,7 +21405,6 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
       }
     },
@@ -21688,7 +21622,6 @@
         "E": "elevation_up_too_steep",
         "SE": "elevation_up_too_steep",
         "S": "elevation_down_too_far",
-        "SW": "elevation_down_too_far",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
         "N": "elevation_down_too_far",
@@ -22287,7 +22220,6 @@
       "passages": {
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
-        "S": "elevation_up_too_steep",
         "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
@@ -22317,7 +22249,6 @@
         "lakeBasinId": null
       },
       "passages": {
-        "E": "elevation_up_too_steep",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
@@ -22384,7 +22315,6 @@
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
-        "W": "elevation_up_too_steep",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
@@ -22511,7 +22441,6 @@
       },
       "passages": {
         "E": "elevation_down_too_far",
-        "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
@@ -22875,7 +22804,6 @@
       "passages": {
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
-        "S": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
@@ -22970,7 +22898,6 @@
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
-        "NW": "elevation_down_too_far",
         "N": "elevation_up_too_steep",
         "NE": "elevation_up_too_steep"
       }
@@ -23791,11 +23718,9 @@
         "lakeBasinId": null
       },
       "passages": {
-        "E": "elevation_up_too_steep",
         "SE": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
-        "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
       }
@@ -23826,7 +23751,6 @@
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
-        "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
@@ -24028,7 +23952,6 @@
       "passages": {
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
-        "S": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
@@ -24124,8 +24047,7 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_up_too_steep",
-        "NE": "elevation_down_too_far"
+        "N": "elevation_up_too_steep"
       }
     },
     {
@@ -24168,7 +24090,6 @@
       "passages": {
         "E": "elevation_up_too_steep",
         "SE": "elevation_up_too_steep",
-        "S": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
@@ -24403,13 +24324,11 @@
         "waterDepth": 0.016393207013607025
       },
       "passages": {
-        "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_up_too_steep",
         "NE": "elevation_up_too_steep"
       }
     },
@@ -25444,7 +25363,6 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_up_too_steep",
         "NE": "elevation_up_too_steep"
       }
     },
@@ -25902,7 +25820,6 @@
       "passages": {
         "E": "elevation_up_too_steep",
         "SE": "elevation_down_too_far",
-        "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
@@ -26112,7 +26029,6 @@
         "SW": "elevation_down_too_far",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_up_too_steep",
         "NE": "elevation_down_too_far"
       }
     },
@@ -27790,8 +27706,7 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_up_too_steep",
-        "NE": "elevation_down_too_far"
+        "N": "elevation_up_too_steep"
       }
     },
     {
@@ -27869,7 +27784,6 @@
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
-        "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
         "N": "elevation_down_too_far",
@@ -28057,8 +27971,7 @@
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
-        "N": "elevation_down_too_far",
-        "NE": "elevation_down_too_far"
+        "N": "elevation_down_too_far"
       }
     },
     {
@@ -28187,7 +28100,6 @@
       "passages": {
         "E": "elevation_up_too_steep",
         "SE": "elevation_up_too_steep",
-        "SW": "elevation_down_too_far",
         "W": "elevation_up_too_steep",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
@@ -28497,7 +28409,6 @@
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
-        "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
         "N": "elevation_up_too_steep",
@@ -28966,7 +28877,6 @@
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
-        "SW": "elevation_down_too_far",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
         "N": "elevation_up_too_steep",
@@ -29168,12 +29078,10 @@
       "passages": {
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
-        "S": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_up_too_steep",
-        "NE": "elevation_down_too_far"
+        "N": "elevation_up_too_steep"
       }
     },
     {
@@ -30442,7 +30350,6 @@
       },
       "passages": {
         "E": "elevation_down_too_far",
-        "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
@@ -30535,7 +30442,6 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_up_too_steep",
         "NE": "elevation_down_too_far"
       }
     },
@@ -31394,14 +31300,12 @@
         "waterDepth": 0.042250633239746094
       },
       "passages": {
-        "E": "elevation_up_too_steep",
         "SE": "elevation_up_too_steep",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_up_too_steep",
-        "NE": "elevation_down_too_far"
+        "N": "elevation_up_too_steep"
       }
     },
     {
@@ -32161,7 +32065,6 @@
         "waterDepth": 0.025764554738998413
       },
       "passages": {
-        "E": "elevation_down_too_far",
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
@@ -32376,7 +32279,6 @@
         "waterDepth": 0.02087843418121338
       },
       "passages": {
-        "E": "elevation_up_too_steep",
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
@@ -32422,7 +32324,6 @@
       "passages": {
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
-        "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far"
       }
@@ -32631,7 +32532,6 @@
       },
       "passages": {
         "E": "elevation_up_too_steep",
-        "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
         "W": "elevation_up_too_steep",
@@ -33070,7 +32970,6 @@
         "S": "elevation_up_too_steep",
         "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
-        "NW": "elevation_down_too_far",
         "N": "elevation_up_too_steep",
         "NE": "elevation_down_too_far"
       }
@@ -33594,7 +33493,6 @@
       "passages": {
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
-        "S": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_down_too_far",
@@ -34367,7 +34265,6 @@
         "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
-        "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
       }
     },
@@ -34405,7 +34302,6 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
       }
     },
@@ -34637,7 +34533,6 @@
         "waterDepth": 0.03512433171272278
       },
       "passages": {
-        "E": "elevation_up_too_steep",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
@@ -34882,13 +34777,11 @@
         "waterDepth": 0.0023536980152130127
       },
       "passages": {
-        "E": "elevation_down_too_far",
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_up_too_steep",
         "NE": "elevation_down_too_far"
       }
     },
@@ -35137,7 +35030,6 @@
       },
       "passages": {
         "SE": "elevation_down_too_far",
-        "S": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
@@ -35179,7 +35071,6 @@
       "passages": {
         "E": "elevation_down_too_far",
         "S": "elevation_down_too_far",
-        "SW": "elevation_down_too_far",
         "NW": "elevation_up_too_steep",
         "N": "elevation_up_too_steep",
         "NE": "elevation_up_too_steep"
@@ -35380,7 +35271,6 @@
       },
       "passages": {
         "E": "elevation_up_too_steep",
-        "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
         "W": "elevation_down_too_far",
@@ -35733,8 +35623,7 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_up_too_steep",
-        "NE": "elevation_down_too_far"
+        "N": "elevation_up_too_steep"
       }
     },
     {
@@ -35892,7 +35781,6 @@
         "SW": "elevation_down_too_far",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_up_too_steep",
         "NE": "elevation_down_too_far"
       }
     },
@@ -36260,7 +36148,6 @@
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
         "S": "elevation_up_too_steep",
-        "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
@@ -36827,7 +36714,6 @@
         "waterDepth": -0.0018778149969875813
       },
       "passages": {
-        "E": "elevation_down_too_far",
         "SE": "elevation_up_too_steep",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
@@ -37436,7 +37322,6 @@
         "waterDepth": 0.020662695169448853
       },
       "passages": {
-        "E": "elevation_up_too_steep",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_up_too_steep",
@@ -37681,8 +37566,6 @@
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
-        "SW": "elevation_up_too_steep",
-        "W": "elevation_up_too_steep",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"
@@ -38015,7 +37898,6 @@
         "waterDepth": 0.00013938502524979413
       },
       "passages": {
-        "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
@@ -38288,7 +38170,6 @@
         "waterDepth": -0.002135783899575472
       },
       "passages": {
-        "E": "elevation_down_too_far",
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_down_too_far",
@@ -38507,7 +38388,6 @@
       "passages": {
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
-        "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
@@ -38958,8 +38838,7 @@
       "passages": {
         "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
-        "S": "elevation_down_too_far",
-        "NE": "elevation_down_too_far"
+        "S": "elevation_down_too_far"
       }
     },
     {
@@ -39171,7 +39050,6 @@
         "SE": "elevation_up_too_steep",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
-        "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
         "N": "elevation_up_too_steep",
         "NE": "elevation_up_too_steep"
@@ -39501,7 +39379,6 @@
         "waterDepth": 0.03981214761734009
       },
       "passages": {
-        "E": "elevation_down_too_far",
         "SE": "elevation_down_too_far",
         "S": "elevation_down_too_far",
         "SW": "elevation_down_too_far",
@@ -39866,7 +39743,6 @@
         "waterDepth": 0.012516975402832031
       },
       "passages": {
-        "E": "elevation_up_too_steep",
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
@@ -39912,7 +39788,6 @@
         "SE": "elevation_up_too_steep",
         "S": "elevation_up_too_steep",
         "SW": "elevation_up_too_steep",
-        "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
         "NE": "elevation_up_too_steep"
@@ -39954,8 +39829,7 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
-        "N": "elevation_down_too_far",
-        "NE": "elevation_up_too_steep"
+        "N": "elevation_down_too_far"
       }
     },
     {
@@ -40117,8 +39991,7 @@
         "SW": "elevation_up_too_steep",
         "W": "elevation_up_too_steep",
         "NW": "elevation_up_too_steep",
-        "N": "elevation_up_too_steep",
-        "NE": "elevation_down_too_far"
+        "N": "elevation_up_too_steep"
       }
     },
     {
@@ -40513,7 +40386,6 @@
       "passages": {
         "E": "elevation_up_too_steep",
         "W": "elevation_down_too_far",
-        "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
         "NE": "elevation_up_too_steep"
       }
@@ -40943,7 +40815,6 @@
       },
       "passages": {
         "E": "elevation_down_too_far",
-        "W": "elevation_down_too_far",
         "NW": "elevation_up_too_steep",
         "N": "elevation_up_too_steep",
         "NE": "elevation_down_too_far"
@@ -41243,7 +41114,6 @@
         "waterDepth": 0.10626709461212158
       },
       "passages": {
-        "E": "elevation_up_too_steep",
         "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
@@ -41282,7 +41152,6 @@
       },
       "passages": {
         "E": "elevation_down_too_far",
-        "W": "elevation_down_too_far",
         "NW": "elevation_down_too_far",
         "N": "elevation_down_too_far",
         "NE": "elevation_down_too_far"

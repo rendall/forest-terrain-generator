@@ -6,8 +6,8 @@ import {
 } from "../domain/passages.js";
 import type { GridShape } from "../domain/topography.js";
 
-export const PASSAGE_MAX_STEP_UP = 0.001;
-export const PASSAGE_MAX_DROP_DOWN = 0.0015;
+export const PASSAGE_MAX_STEP_UP = 0.002;
+export const PASSAGE_MAX_DROP_DOWN = 0.003;
 
 export interface PassageContext {
 	shape: GridShape;

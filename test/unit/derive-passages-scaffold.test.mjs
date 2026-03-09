@@ -16,8 +16,8 @@ describe("derive-passages scaffolding", () => {
 		expect(DIRECTION8_ORDER).toEqual(["E", "SE", "S", "SW", "W", "NW", "N", "NE"]);
 		expect(DIRECTION8_DELTAS.N).toEqual({ dx: 0, dy: -1 });
 		expect(DIRECTION8_DELTAS.SE).toEqual({ dx: 1, dy: 1 });
-		expect(PASSAGE_MAX_STEP_UP).toBe(0.001);
-		expect(PASSAGE_MAX_DROP_DOWN).toBe(0.0015);
+		expect(PASSAGE_MAX_STEP_UP).toBe(0.002);
+		expect(PASSAGE_MAX_DROP_DOWN).toBe(0.003);
 	});
 
 	it("blocks out-of-bounds directions", () => {
@@ -34,7 +34,7 @@ describe("derive-passages scaffolding", () => {
 
 	it("derives asymmetric elevation-blocking reasons", () => {
 		const shape = createGridShape(2, 1);
-		const h = new Float32Array([0.2, 0.202]);
+		const h = new Float32Array([0.2, 0.204]);
 		const passages = derivePassages(shape, h);
 		expect(passages[0]).toEqual({ E: "elevation_up_too_steep" });
 		expect(passages[1]).toEqual({ W: "elevation_down_too_far" });
