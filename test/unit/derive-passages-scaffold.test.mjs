@@ -39,4 +39,20 @@ describe("derive-passages scaffolding", () => {
 		expect(passages[0]).toEqual({ E: "elevation_up_too_steep" });
 		expect(passages[1]).toEqual({ W: "elevation_down_too_far" });
 	});
+	it("includes out_of_bounds reasons in tile passages output", () => {
+		const shape = createGridShape(1, 1);
+		const h = new Float32Array([0.2]);
+		const passages = derivePassages(shape, h);
+		expect(passages[0]).toEqual({
+			E: "out_of_bounds",
+			SE: "out_of_bounds",
+			S: "out_of_bounds",
+			SW: "out_of_bounds",
+			W: "out_of_bounds",
+			NW: "out_of_bounds",
+			N: "out_of_bounds",
+			NE: "out_of_bounds",
+		});
+	});
+
 });
