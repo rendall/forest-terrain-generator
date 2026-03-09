@@ -21,7 +21,7 @@ afterEach(async () => {
 });
 
 describe("stream-network generator wiring", () => {
-	it("C1 includes features.streams payload with stream feature schema", async () => {
+	it("writes features.streams in generator output using the stream feature schema fields", async () => {
 		const cwd = await makeTempDir();
 		const outputFile = join(cwd, "out.json");
 
@@ -51,7 +51,7 @@ describe("stream-network generator wiring", () => {
 		);
 	});
 
-	it("C2 includes tile hydrology stream geometry payload", async () => {
+	it("adds hydrology.stream geometry to each output tile with valid direction values", async () => {
 		const cwd = await makeTempDir();
 		const outputFile = join(cwd, "out.json");
 
@@ -87,7 +87,7 @@ describe("stream-network generator wiring", () => {
 		expect(nonNullOutgoingCount).toBeGreaterThan(0);
 	});
 
-	it("C3 repeat runs produce identical stream outputs", async () => {
+	it("produces identical stream feature and tile stream geometry outputs across repeat runs", async () => {
 		const firstCwd = await makeTempDir();
 		const secondCwd = await makeTempDir();
 		const firstOutput = join(firstCwd, "out.json");

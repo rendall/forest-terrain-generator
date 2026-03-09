@@ -12,7 +12,7 @@ const confluenceFixture = createStreamFixture({
 const includeAllOrigins = () => true;
 
 describe("derive-stream-network tile geometry", () => {
-	it("B1 derives outgoing and incoming directions from stream edges", () => {
+	it("derives outgoing and incoming tile directions from traced stream edges", () => {
 		const result = deriveStreamNetwork({
 			...confluenceFixture,
 			originPredicate: includeAllOrigins,
@@ -23,7 +23,7 @@ describe("derive-stream-network tile geometry", () => {
 		expect(tile1.incomingDirections).toContain("w");
 	});
 
-	it("B2 sorts incoming directions canonically at confluences", () => {
+	it("stores multiple incoming directions in canonical order at confluence tiles", () => {
 		const result = deriveStreamNetwork({
 			...confluenceFixture,
 			originPredicate: includeAllOrigins,
@@ -33,7 +33,7 @@ describe("derive-stream-network tile geometry", () => {
 		expect(confluenceTile.incomingDirections).toEqual(["n", "w"]);
 	});
 
-	it("B3 assigns null outgoing direction on terminal tiles", () => {
+	it("sets outgoingDirection to null for terminal stream tiles", () => {
 		const result = deriveStreamNetwork({
 			...confluenceFixture,
 			originPredicate: includeAllOrigins,
@@ -45,7 +45,7 @@ describe("derive-stream-network tile geometry", () => {
 		}
 	});
 
-	it("B4 never emits more than one outgoing direction per tile", () => {
+	it("emits at most one outgoingDirection value per tile geometry record", () => {
 		const result = deriveStreamNetwork({
 			...confluenceFixture,
 			originPredicate: includeAllOrigins,

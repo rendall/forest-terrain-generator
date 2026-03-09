@@ -15,7 +15,7 @@ const fixture = createStreamFixture({
 const includeAllOrigins = () => true;
 
 describe("derive-stream-network behavior slices", () => {
-	it("A1 orders origins deterministically by h/fa/y/x/id", () => {
+	it("orders origin processing by height, flow, y, x, then tile id", () => {
 		const result = deriveStreamNetwork({
 			...fixture,
 			originPredicate: includeAllOrigins,
@@ -26,7 +26,7 @@ describe("derive-stream-network behavior slices", () => {
 		).toEqual([0, 1, 4, 2, 8]);
 	});
 
-	it("A2 skips origin if already covered by prior stream path", () => {
+	it("skips creating a new stream when an origin tile is already on a traced path", () => {
 		const result = deriveStreamNetwork({
 			...fixture,
 			originPredicate: includeAllOrigins,
@@ -42,7 +42,7 @@ describe("derive-stream-network behavior slices", () => {
 		expect(result.streams.length).toBeLessThan(16);
 	});
 
-	it("A3 ranks origin-step candidates by elevation/canonical/tile-id", () => {
+	it("chooses the first downstream step from an origin by elevation then canonical direction", () => {
 		const result = deriveStreamNetwork({
 			...fixture,
 			originPredicate: includeAllOrigins,
@@ -54,7 +54,7 @@ describe("derive-stream-network behavior slices", () => {
 		expect(originZero.pathTileIds[1]).toBe(1);
 	});
 
-	it("A4 ranks non-origin steps with directional inertia and tie breaks", () => {
+	it("prefers continuing direction on non-origin steps when downhill candidates tie", () => {
 		const result = deriveStreamNetwork({
 			...fixture,
 			originPredicate: includeAllOrigins,
@@ -64,7 +64,7 @@ describe("derive-stream-network behavior slices", () => {
 		expect(trunk.pathTileIds.slice(0, 4)).toEqual([0, 1, 2, 3]);
 	});
 
-	it("A5 classifies confluence when joining existing stream", () => {
+	it("classifies terminal as confluence when a traced path joins an existing stream tile", () => {
 		const result = deriveStreamNetwork({
 			...fixture,
 			originPredicate: includeAllOrigins,
@@ -74,7 +74,7 @@ describe("derive-stream-network behavior slices", () => {
 		).toBe(true);
 	});
 
-	it("A6 classifies sink when terminating without joining", () => {
+	it("classifies terminal as sink when a traced path ends without joining an existing stream", () => {
 		const result = deriveStreamNetwork({
 			...fixture,
 			originPredicate: includeAllOrigins,
@@ -84,7 +84,7 @@ describe("derive-stream-network behavior slices", () => {
 		).toBe(true);
 	});
 
-	it("A7 backtracks on cycle encounters instead of immediate error", () => {
+	it("avoids immediate error when a revisited tile is encountered during tracing", () => {
 		const cycleFixture = createStreamFixture({
 			width: 3,
 			height: 3,
@@ -101,7 +101,7 @@ describe("derive-stream-network behavior slices", () => {
 		).toBe(false);
 	});
 
-	it("A8 emits error only when deterministic search is exhausted", () => {
+	it("classifies terminal as error when no valid downstream continuation can be resolved", () => {
 		const exhaustedFixture = createStreamFixture({
 			width: 2,
 			height: 2,
@@ -117,7 +117,7 @@ describe("derive-stream-network behavior slices", () => {
 		).toBe(true);
 	});
 
-	it("A9 enforces stream feature contract invariants", () => {
+	it("emits stream features with origin/path/terminal field consistency", () => {
 		const result = deriveStreamNetwork({
 			...fixture,
 			originPredicate: includeAllOrigins,
@@ -132,7 +132,7 @@ describe("derive-stream-network behavior slices", () => {
 		}
 	});
 
-	it("A10 is deterministic across repeated runs", () => {
+	it("returns identical stream outputs for repeated runs on the same input", () => {
 		const resultA = deriveStreamNetwork({
 			...fixture,
 			originPredicate: includeAllOrigins,
