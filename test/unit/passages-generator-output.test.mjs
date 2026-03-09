@@ -1,0 +1,54 @@
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { afterEach, describe, expect, it } from "vitest";
+import { runGenerator } from "../../src/app/run-generator.js";
+import { createGridShape } from "../../src/domain/topography.js";
+import { derivePassages } from "../../src/pipeline/derive-passages.js";
+
+const tempDirs = [];
+
+const makeTempDir = async () => {
+	const dir = await mkdtemp(join(tmpdir(), "forest-terrain-generator-passages-"));
+	tempDirs.push(dir);
+	return dir;
+};
+
+afterEach(async () => {
+	await Promise.all(
+		tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })),
+	);
+});
+
+describe("runGenerator passages output", () => {
+	it("adds passages only when at least one direction is blocked", async () => {
+		const cwd = await makeTempDir();
+		const outputFile = join(cwd, "out.json");
+
+		await runGenerator({
+			mode: "generate",
+			cwd,
+			args: {
+				seed: "123",
+				width: 1,
+				height: 1,
+				outputFile,
+				force: false,
+			},
+		});
+
+		const envelope = JSON.parse(await readFile(outputFile, "utf8"));
+		expect(envelope.tiles).toHaveLength(1);
+		expect(envelope.tiles[0]).not.toHaveProperty("passages");
+		expect(envelope.tiles[0]).toHaveProperty("topography");
+		expect(envelope.tiles[0]).toHaveProperty("hydrology");
+	});
+
+	it("derives asymmetric block reasons from height deltas", () => {
+		const shape = createGridShape(2, 1);
+		const h = new Float32Array([0.2, 0.202]);
+		const passages = derivePassages(shape, h);
+		expect(passages[0]).toEqual({ E: "elevation_up_too_steep" });
+		expect(passages[1]).toEqual({ W: "elevation_down_too_far" });
+	});
+});
