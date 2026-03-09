@@ -51,7 +51,7 @@ describe("stream-network generator wiring", () => {
 		);
 	});
 
-	it("adds hydrology.stream geometry to each output tile with valid direction values", async () => {
+	it("emits hydrology.stream geometry only for output tiles with stream directions", async () => {
 		const cwd = await makeTempDir();
 		const outputFile = join(cwd, "out.json");
 
@@ -70,26 +70,43 @@ describe("stream-network generator wiring", () => {
 		const envelope = JSON.parse(await readFile(outputFile, "utf8"));
 		expect(Array.isArray(envelope.tiles)).toBe(true);
 		expect(envelope.tiles.length).toBe(64);
+		let emittedStreamCount = 0;
+		let omittedStreamCount = 0;
 		let nonNullOutgoingCount = 0;
 		for (const tile of envelope.tiles) {
-			expect(tile.hydrology.stream).toEqual(
+			const stream = tile.hydrology.stream;
+			if (typeof stream === "undefined") {
+				omittedStreamCount += 1;
+				continue;
+			}
+			emittedStreamCount += 1;
+			expect(stream).toEqual(
 				expect.objectContaining({
 					incomingDirections: expect.any(Array),
 				}),
 			);
 			expect([null, "n", "ne", "e", "se", "s", "sw", "w", "nw"]).toContain(
-				tile.hydrology.stream.outgoingDirection,
+				stream.outgoingDirection,
 			);
-			if (tile.hydrology.stream.outgoingDirection !== null) {
+			if (
+				stream.outgoingDirection === null &&
+				stream.incomingDirections.length === 0
+			) {
+				throw new Error(
+					`tile ${tile.index} emitted hydrology.stream despite empty stream geometry`,
+				);
+			}
+			if (stream.outgoingDirection !== null) {
 				nonNullOutgoingCount += 1;
 			}
 		}
+		expect(emittedStreamCount).toBeGreaterThan(0);
+		expect(omittedStreamCount).toBeGreaterThan(0);
 		if (nonNullOutgoingCount === 0) {
 			const observedSummary = envelope.tiles
-				.map((tile) => tile.hydrology.stream.outgoingDirection)
-				.join(", ");
+				.map((tile) => tile.hydrology.stream?.outgoingDirection ?? null);
 			throw new Error(
-				`expected at least one non-null outgoing stream direction, observed outgoingDirection values: [${observedSummary}]`,
+				`expected at least one non-null outgoing stream direction, observed outgoingDirection values: ${JSON.stringify(observedSummary)}`,
 			);
 		}
 		expect(nonNullOutgoingCount).toBeGreaterThan(0);

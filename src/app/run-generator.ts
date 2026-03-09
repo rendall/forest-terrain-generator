@@ -220,6 +220,10 @@ function buildTileHydrologyPayload(
 	streamNetwork: ReturnType<typeof deriveStreamNetwork>,
 	index: number,
 ): JsonObject {
+	const tileStreamGeometry = streamNetwork.tileGeometry[index];
+	const hasStreamGeometry =
+		tileStreamGeometry.outgoingDirection !== null ||
+		tileStreamGeometry.incomingDirections.length > 0;
 	const lakeMask = hydrology.maps.lakeMask[index] === 1;
 	const lakeBasinId = hydrology.lakeAccounting.tileLakeBasinId[index] || null;
 	const waterDepth = hydrology.lakeAccounting.tileLakeDepth[index] ?? 0;
@@ -234,12 +238,14 @@ function buildTileHydrologyPayload(
 			? { waterSurfaceH: hydrology.maps.waterSurfaceH[index] }
 			: {}),
 		...(hasWaterSurface ? { waterDepth } : {}),
-		stream: {
-			outgoingDirection: streamNetwork.tileGeometry[index].outgoingDirection,
-			incomingDirections: [
-				...streamNetwork.tileGeometry[index].incomingDirections,
-			],
-		},
+		...(hasStreamGeometry
+			? {
+					stream: {
+						outgoingDirection: tileStreamGeometry.outgoingDirection,
+						incomingDirections: [...tileStreamGeometry.incomingDirections],
+					},
+				}
+			: {}),
 	};
 }
 
