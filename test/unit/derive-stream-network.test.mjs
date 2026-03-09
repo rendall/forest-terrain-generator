@@ -12,7 +12,22 @@ const fixture = createStreamFixture({
 	faValues: [16, 14, 12, 10, 13, 11, 9, 8, 12, 10, 7, 5, 9, 7, 4, 2],
 });
 
+const originTieFixture = createStreamFixture({
+	width: 2,
+	height: 2,
+	hValues: [1.0, 0.5, 0.7, 0.5],
+	faValues: [10, 9, 8, 7],
+});
+
+const nonOriginTieFixture = createStreamFixture({
+	width: 3,
+	height: 2,
+	hValues: [1.0, 0.8, 0.6, 0.95, 0.9, 0.6],
+	faValues: [10, 9, 8, 7, 6, 5],
+});
+
 const includeAllOrigins = () => true;
+const onlyOriginZero = (tile) => tile.tileId === 0;
 
 describe("derive-stream-network behavior slices", () => {
 	it("orders origin processing by height, flow, y, x, then tile id", () => {
@@ -44,8 +59,8 @@ describe("derive-stream-network behavior slices", () => {
 
 	it("chooses the first downstream step from an origin by elevation then canonical direction", () => {
 		const result = deriveStreamNetwork({
-			...fixture,
-			originPredicate: includeAllOrigins,
+			...originTieFixture,
+			originPredicate: onlyOriginZero,
 		});
 		const originZero = result.streams.find(
 			(stream) => stream.originTileId === 0,
@@ -56,12 +71,12 @@ describe("derive-stream-network behavior slices", () => {
 
 	it("prefers continuing direction on non-origin steps when downhill candidates tie", () => {
 		const result = deriveStreamNetwork({
-			...fixture,
-			originPredicate: includeAllOrigins,
+			...nonOriginTieFixture,
+			originPredicate: onlyOriginZero,
 		});
 		const trunk = result.streams.find((stream) => stream.originTileId === 0);
 		expect(trunk).toBeDefined();
-		expect(trunk.pathTileIds.slice(0, 4)).toEqual([0, 1, 2, 3]);
+		expect(trunk.pathTileIds.slice(0, 3)).toEqual([0, 1, 2]);
 	});
 
 	it("classifies terminal as confluence when a traced path joins an existing stream tile", () => {

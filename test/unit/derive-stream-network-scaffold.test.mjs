@@ -15,7 +15,7 @@ describe("derive-stream-network scaffolding", () => {
 			width: 3,
 			height: 2,
 			hValues: [0.9, 0.7, 0.6, 0.4, 0.2, 0.1],
-			faValues: [10, 8, 7, 4, 2, 1],
+			faValues: [5, 5, 5, 4, 2, 1],
 		});
 
 		const resultA = deriveStreamNetwork(fixture);
