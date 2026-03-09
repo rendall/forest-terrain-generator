@@ -35,9 +35,9 @@ describe("derive-stream-network tile geometry", () => {
 			...confluenceFixture,
 			originPredicate: includeAllOrigins,
 		});
-		const confluenceTile = result.tileGeometry[4];
+		const confluenceTile = result.tileGeometry[8];
 		expect(confluenceTile.incomingDirections.length).toBeGreaterThan(1);
-		expect(confluenceTile.incomingDirections).toEqual(["n", "w"]);
+		expect(confluenceTile.incomingDirections).toEqual(["w", "nw", "n"]);
 	});
 
 	it("sets outgoingDirection to null for terminal stream tiles", () => {
