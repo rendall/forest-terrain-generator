@@ -59,7 +59,7 @@ describe("stream-network generator wiring", () => {
 			mode: "generate",
 			cwd,
 			args: {
-				seed: "102",
+				seed: "200",
 				width: 8,
 				height: 8,
 				outputFile,
