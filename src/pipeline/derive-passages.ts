@@ -33,6 +33,14 @@ type PassagePredicate = (
 	tiles: readonly Tile[],
 ) => PassageBlockReason | null;
 
+const TILE_GRID_DIMENSIONS = new WeakMap<
+	readonly Tile[],
+	{
+		width: number;
+		height: number;
+	}
+>();
+
 const buildTiles = (shape: GridShape, h: Float32Array): Tile[] =>
 	Array.from({ length: shape.size }, (_, index) => ({
 		index,
@@ -43,19 +51,39 @@ const buildTiles = (shape: GridShape, h: Float32Array): Tile[] =>
 		},
 	}));
 
-const getNeighborTile = (
+export const getNeighborTile = (
 	tile: Tile,
 	direction: Direction8,
 	tiles: readonly Tile[],
 ): Tile | null => {
+	const cachedDimensions = TILE_GRID_DIMENSIONS.get(tiles);
+	const dimensions =
+		cachedDimensions ??
+		(() => {
+			const lastTile = tiles[tiles.length - 1];
+			const width = (lastTile?.x ?? -1) + 1;
+			const height = (lastTile?.y ?? -1) + 1;
+			const inferred = { width, height };
+			TILE_GRID_DIMENSIONS.set(tiles, inferred);
+			return inferred;
+		})();
 	const delta = DIRECTION8_DELTAS[direction];
 	const neighborX = tile.x + delta.dx;
 	const neighborY = tile.y + delta.dy;
-	return (
-		tiles.find(
-			(candidate) => candidate.x === neighborX && candidate.y === neighborY,
-		) ?? null
-	);
+	if (
+		neighborX < 0 ||
+		neighborY < 0 ||
+		neighborX >= dimensions.width ||
+		neighborY >= dimensions.height
+	) {
+		return null;
+	}
+	const neighborIndex = neighborY * dimensions.width + neighborX;
+	const neighbor = tiles[neighborIndex] ?? null;
+	if (neighbor?.x !== neighborX || neighbor.y !== neighborY) {
+		return null;
+	}
+	return neighbor;
 };
 
 const PASSAGE_PREDICATES: readonly PassagePredicate[] = [
