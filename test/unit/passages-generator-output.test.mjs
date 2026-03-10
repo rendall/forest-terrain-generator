@@ -1,13 +1,9 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "vitest";
 import { runGenerator } from "../../src/app/run-generator.js";
-import { createGridShape } from "../../src/domain/topography.js";
-import {
-	derivePassages,
-	PASSAGE_MAX_STEP_UP,
-} from "../../src/pipeline/derive-passages.js";
+import { PASSAGE_MAX_STEP_UP } from "../../src/pipeline/derive-passages.js";
 
 const tempDirs = [];
 
@@ -47,11 +43,37 @@ describe("runGenerator passages output", () => {
 		expect(envelope.tiles[0]).toHaveProperty("hydrology");
 	});
 
-	it("derives asymmetric block reasons from height deltas", () => {
-		const shape = createGridShape(2, 1);
-		const h = new Float32Array([0.2, 0.2 + PASSAGE_MAX_STEP_UP + 0.001]);
-		const passages = derivePassages(shape, h);
-		expect(passages[0]).toEqual({
+	it("serializes passages for tiles with non-out_of_bounds blocks", async () => {
+		const cwd = await makeTempDir();
+		const outputFile = join(cwd, "out.json");
+		const mapHPath = join(cwd, "map-h.json");
+
+		await writeFile(
+			mapHPath,
+			JSON.stringify({
+				width: 2,
+				height: 1,
+				data: [0.2, 0.2 + PASSAGE_MAX_STEP_UP + 0.001],
+			}),
+			"utf8",
+		);
+
+		await runGenerator({
+			mode: "generate",
+			cwd,
+			args: {
+				seed: "123",
+				width: 2,
+				height: 1,
+				outputFile,
+				mapHPath,
+				force: false,
+			},
+		});
+
+		const envelope = JSON.parse(await readFile(outputFile, "utf8"));
+		expect(envelope.tiles).toHaveLength(2);
+		expect(envelope.tiles[0].passages).toEqual({
 			E: "elevation_up_too_steep",
 			SE: "out_of_bounds",
 			S: "out_of_bounds",
@@ -61,7 +83,7 @@ describe("runGenerator passages output", () => {
 			N: "out_of_bounds",
 			NE: "out_of_bounds",
 		});
-		expect(passages[1]).toEqual({
+		expect(envelope.tiles[1].passages).toEqual({
 			E: "out_of_bounds",
 			SE: "out_of_bounds",
 			S: "out_of_bounds",
