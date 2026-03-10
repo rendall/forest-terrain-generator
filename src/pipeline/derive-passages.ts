@@ -1,6 +1,7 @@
 import {
 	DIRECTION8_DELTAS,
 	DIRECTION8_ORDER,
+	type Direction8,
 	type PassageBlockReason,
 	type TilePassages,
 } from "../domain/passages.js";
@@ -9,6 +10,16 @@ import type { GridShape } from "../domain/topography.js";
 export const PASSAGE_MAX_STEP_UP = 0.05;
 export const PASSAGE_MAX_DROP_DOWN = 0.05;
 
+interface Tile {
+	index: number;
+	x: number;
+	y: number;
+	topography: {
+		h: number;
+	};
+	passages?: TilePassages;
+}
+
 export interface PassageContext {
 	shape: GridShape;
 	h: Float32Array;
@@ -16,67 +27,90 @@ export interface PassageContext {
 	direction: (typeof DIRECTION8_ORDER)[number];
 }
 
-const resolveNeighborIndex = (context: PassageContext): number | null => {
-	const tileX = context.tileIndex % context.shape.width;
-	const tileY = Math.floor(context.tileIndex / context.shape.width);
-	const delta = DIRECTION8_DELTAS[context.direction];
-	const neighborX = tileX + delta.dx;
-	const neighborY = tileY + delta.dy;
-	if (
-		neighborX < 0 ||
-		neighborY < 0 ||
-		neighborX >= context.shape.width ||
-		neighborY >= context.shape.height
-	) {
-		return null;
-	}
-	return neighborY * context.shape.width + neighborX;
+type PassagePredicate = (
+	tile: Tile,
+	neighbor: Tile | null,
+	tiles: readonly Tile[],
+) => PassageBlockReason | null;
+
+const buildTiles = (shape: GridShape, h: Float32Array): Tile[] =>
+	Array.from({ length: shape.size }, (_, index) => ({
+		index,
+		x: index % shape.width,
+		y: Math.floor(index / shape.width),
+		topography: {
+			h: h[index] ?? Number.NaN,
+		},
+	}));
+
+const getNeighborTile = (
+	tile: Tile,
+	direction: Direction8,
+	tiles: readonly Tile[],
+): Tile | null => {
+	const delta = DIRECTION8_DELTAS[direction];
+	const neighborX = tile.x + delta.dx;
+	const neighborY = tile.y + delta.dy;
+	return (
+		tiles.find(
+			(candidate) => candidate.x === neighborX && candidate.y === neighborY,
+		) ?? null
+	);
+};
+
+const PASSAGE_PREDICATES: readonly PassagePredicate[] = [
+	(_tile, neighbor) => (neighbor === null ? "out_of_bounds" : null),
+	(tile, neighbor) => {
+		if (neighbor === null) {
+			return null;
+		}
+		const delta = neighbor.topography.h - tile.topography.h;
+		return delta > PASSAGE_MAX_STEP_UP ? "elevation_up_too_steep" : null;
+	},
+	(tile, neighbor) => {
+		if (neighbor === null) {
+			return null;
+		}
+		const delta = neighbor.topography.h - tile.topography.h;
+		return delta < -PASSAGE_MAX_DROP_DOWN ? "elevation_down_too_far" : null;
+	},
+];
+
+const evaluateDirectionBlockReason = (
+	tile: Tile,
+	direction: Direction8,
+	tiles: readonly Tile[],
+): PassageBlockReason | null => {
+	const neighbor = getNeighborTile(tile, direction, tiles);
+	return PASSAGE_PREDICATES.reduce<PassageBlockReason | null>((reason, predicate) => {
+		if (reason !== null) {
+			return reason;
+		}
+		return predicate(tile, neighbor, tiles);
+	}, null);
 };
 
 export const evaluatePassageBlockReason = (
 	context: PassageContext,
 ): PassageBlockReason | null => {
-	const neighborIndex = resolveNeighborIndex(context);
-	if (neighborIndex === null) {
-		return "out_of_bounds";
+	const tiles = buildTiles(context.shape, context.h);
+	const tile = tiles[context.tileIndex];
+	if (!tile) {
+		return null;
 	}
-
-	const currentHeight = context.h[context.tileIndex] ?? Number.NaN;
-	const neighborHeight = context.h[neighborIndex] ?? Number.NaN;
-	const delta = neighborHeight - currentHeight;
-
-	if (delta > PASSAGE_MAX_STEP_UP) {
-		return "elevation_up_too_steep";
-	}
-	if (delta < -PASSAGE_MAX_DROP_DOWN) {
-		return "elevation_down_too_far";
-	}
-	return null;
+	return evaluateDirectionBlockReason(tile, context.direction, tiles);
 };
 
 export const derivePassages = (shape: GridShape, h: Float32Array): TilePassages[] =>
-	Array.from({ length: shape.size }, (_, tileIndex) => {
-		const allReasons = DIRECTION8_ORDER.reduce<TilePassages>((passages, direction) => {
-			const reason = evaluatePassageBlockReason({
-				shape,
-				h,
-				tileIndex,
-				direction,
-			});
+	buildTiles(shape, h).map((tile, _tileIndex, tiles) =>
+		DIRECTION8_ORDER.reduce<TilePassages>((passages, direction) => {
+			const reason = evaluateDirectionBlockReason(tile, direction, tiles);
 			if (reason !== null) {
-				passages[direction] = reason;
+				return {
+					...passages,
+					[direction]: reason,
+				};
 			}
 			return passages;
-		}, {});
-
-		const hasNonOutOfBoundsReason = Object.values(allReasons).some(
-			(reason) => reason !== "out_of_bounds",
-		);
-		if (!hasNonOutOfBoundsReason) {
-			return allReasons;
-		}
-
-		return Object.fromEntries(
-			Object.entries(allReasons).filter(([, reason]) => reason !== "out_of_bounds"),
-		) as TilePassages;
-	});
+		}, {}),
+	);

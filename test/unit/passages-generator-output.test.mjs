@@ -4,7 +4,10 @@ import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "vitest";
 import { runGenerator } from "../../src/app/run-generator.js";
 import { createGridShape } from "../../src/domain/topography.js";
-import { derivePassages } from "../../src/pipeline/derive-passages.js";
+import {
+	derivePassages,
+	PASSAGE_MAX_STEP_UP,
+} from "../../src/pipeline/derive-passages.js";
 
 const tempDirs = [];
 
@@ -46,9 +49,27 @@ describe("runGenerator passages output", () => {
 
 	it("derives asymmetric block reasons from height deltas", () => {
 		const shape = createGridShape(2, 1);
-		const h = new Float32Array([0.2, 0.204]);
+		const h = new Float32Array([0.2, 0.2 + PASSAGE_MAX_STEP_UP + 0.001]);
 		const passages = derivePassages(shape, h);
-		expect(passages[0]).toEqual({ E: "elevation_up_too_steep" });
-		expect(passages[1]).toEqual({ W: "elevation_down_too_far" });
+		expect(passages[0]).toEqual({
+			E: "elevation_up_too_steep",
+			SE: "out_of_bounds",
+			S: "out_of_bounds",
+			SW: "out_of_bounds",
+			W: "out_of_bounds",
+			NW: "out_of_bounds",
+			N: "out_of_bounds",
+			NE: "out_of_bounds",
+		});
+		expect(passages[1]).toEqual({
+			E: "out_of_bounds",
+			SE: "out_of_bounds",
+			S: "out_of_bounds",
+			SW: "out_of_bounds",
+			W: "elevation_down_too_far",
+			NW: "out_of_bounds",
+			N: "out_of_bounds",
+			NE: "out_of_bounds",
+		});
 	});
 });

@@ -16,8 +16,8 @@ describe("derive-passages scaffolding", () => {
 		expect(DIRECTION8_ORDER).toEqual(["E", "SE", "S", "SW", "W", "NW", "N", "NE"]);
 		expect(DIRECTION8_DELTAS.N).toEqual({ dx: 0, dy: -1 });
 		expect(DIRECTION8_DELTAS.SE).toEqual({ dx: 1, dy: 1 });
-		expect(PASSAGE_MAX_STEP_UP).toBe(0.002);
-		expect(PASSAGE_MAX_DROP_DOWN).toBe(0.003);
+		expect(PASSAGE_MAX_STEP_UP).toBe(0.05);
+		expect(PASSAGE_MAX_DROP_DOWN).toBe(0.05);
 	});
 
 	it("blocks out-of-bounds directions", () => {
@@ -34,11 +34,46 @@ describe("derive-passages scaffolding", () => {
 
 	it("derives asymmetric elevation-blocking reasons", () => {
 		const shape = createGridShape(2, 1);
-		const h = new Float32Array([0.2, 0.204]);
+		const h = new Float32Array([0.2, 0.2 + PASSAGE_MAX_STEP_UP + 0.001]);
 		const passages = derivePassages(shape, h);
-		expect(passages[0]).toEqual({ E: "elevation_up_too_steep" });
-		expect(passages[1]).toEqual({ W: "elevation_down_too_far" });
+		expect(passages[0]).toEqual({
+			E: "elevation_up_too_steep",
+			SE: "out_of_bounds",
+			S: "out_of_bounds",
+			SW: "out_of_bounds",
+			W: "out_of_bounds",
+			NW: "out_of_bounds",
+			N: "out_of_bounds",
+			NE: "out_of_bounds",
+		});
+		expect(passages[1]).toEqual({
+			E: "out_of_bounds",
+			SE: "out_of_bounds",
+			S: "out_of_bounds",
+			SW: "out_of_bounds",
+			W: "elevation_down_too_far",
+			NW: "out_of_bounds",
+			N: "out_of_bounds",
+			NE: "out_of_bounds",
+		});
 	});
+
+	it("keeps out_of_bounds reasons when another direction is blocked", () => {
+		const shape = createGridShape(2, 1);
+		const h = new Float32Array([0.2, 0.2 + PASSAGE_MAX_STEP_UP + 0.001]);
+		const passages = derivePassages(shape, h);
+		expect(passages[0]).toEqual({
+			E: "elevation_up_too_steep",
+			SE: "out_of_bounds",
+			S: "out_of_bounds",
+			SW: "out_of_bounds",
+			W: "out_of_bounds",
+			NW: "out_of_bounds",
+			N: "out_of_bounds",
+			NE: "out_of_bounds",
+		});
+	});
+
 	it("includes out_of_bounds reasons in tile passages output", () => {
 		const shape = createGridShape(1, 1);
 		const h = new Float32Array([0.2]);
