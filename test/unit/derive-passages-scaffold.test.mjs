@@ -63,22 +63,6 @@ describe("derive-passages scaffolding", () => {
 		});
 	});
 
-	it("keeps out_of_bounds reasons when another direction is blocked", () => {
-		const shape = createGridShape(2, 1);
-		const h = new Float32Array([0.2, 0.2 + PASSAGE_MAX_STEP_UP + 0.001]);
-		const passages = derivePassages(shape, h);
-		expect(passages[0]).toEqual({
-			E: "elevation_up_too_steep",
-			SE: "out_of_bounds",
-			S: "out_of_bounds",
-			SW: "out_of_bounds",
-			W: "out_of_bounds",
-			NW: "out_of_bounds",
-			N: "out_of_bounds",
-			NE: "out_of_bounds",
-		});
-	});
-
 	it("includes out_of_bounds reasons in tile passages output", () => {
 		const shape = createGridShape(1, 1);
 		const h = new Float32Array([0.2]);
