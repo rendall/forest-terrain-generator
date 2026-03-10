@@ -19,6 +19,7 @@ import { deepMerge } from "../lib/deep-merge.js";
 import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
 import { validateReplayTopographyGrid } from "../lib/validate-replay-tiles.js";
 import { deriveHydrology } from "../pipeline/derive-hydrology.js";
+import { derivePassages } from "../pipeline/derive-passages.js";
 import { deriveStreamNetwork } from "../pipeline/derive-stream-network.js";
 import { deriveTopographicStructure } from "../pipeline/derive-topographic-structure.js";
 import { deriveTopographyFromBaseMaps } from "../pipeline/derive-topography.js";
@@ -270,6 +271,7 @@ function buildReplayEnvelope(
 	replayParams: JsonObject,
 	topographyStructure: ReturnType<typeof deriveTopographicStructure>,
 	hydrology: ReturnType<typeof deriveHydrology>,
+	passagesByTile: ReturnType<typeof derivePassages>,
 	streamNetwork: ReturnType<typeof deriveStreamNetwork>,
 ): TerrainEnvelope {
 	const elevation = buildElevationParams(replayParams);
@@ -304,6 +306,9 @@ function buildReplayEnvelope(
 				elevationMeters: elevation.h0 + replayH[index] * elevationSpan,
 			},
 			hydrology: tileHydrology,
+			...(Object.values(passagesByTile[index]).some((reason) => reason !== "out_of_bounds")
+				? { passages: passagesByTile[index] }
+				: {}),
 		});
 	}
 
@@ -381,6 +386,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			h: replayGrid.h,
 			fa: hydrology.maps.fa,
 		});
+		const passagesByTile = derivePassages(replayGrid.shape, replayGrid.h);
 		const basinFeaturesWithWaterSurface = attachBasinWaterSurface(
 			topographyStructure.basinFeatures,
 			hydrology,
@@ -396,6 +402,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 			replayParams,
 			outputTopographyStructure,
 			hydrology,
+			passagesByTile,
 			streamNetwork,
 		);
 		await writeModeOutputs(
@@ -456,6 +463,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 	};
 	const elevation = buildElevationParams(validated.params);
 	const elevationSpan = elevation.h1 - elevation.h0;
+	const passages = derivePassages(shape, topography.h);
 
 	const envelope: TerrainEnvelope = buildEnvelopeSkeleton();
 	envelope.features = {
@@ -481,6 +489,9 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 				v: topography.v[i],
 			},
 			hydrology: buildTileHydrologyPayload(hydrology, streamNetwork, i),
+			...(Object.values(passages[i]).some((reason) => reason !== "out_of_bounds")
+				? { passages: passages[i] }
+				: {}),
 		});
 	}
 	envelope.tiles = tiles;
