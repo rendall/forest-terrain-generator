@@ -338,6 +338,7 @@ export async function runMap(request: MapRequest): Promise<void> {
 			inputFilePath: request.args.inputJsonPath,
 			outputFile: request.args.outputPgmPath,
 			layer,
+			overlays: [],
 			force: request.args.force,
 		},
 	});

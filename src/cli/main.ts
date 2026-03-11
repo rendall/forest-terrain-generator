@@ -5,7 +5,7 @@ import {
 	type HydrologyVizMode,
 	runHydrologyInspectorVisualization,
 } from "../app/run-hydrology-inspector.js";
-import { runSee } from "../app/run-see.js";
+import { parseSeeOverlays, runSee } from "../app/run-see.js";
 import {
 	exitCodeForCategory,
 	InputValidationError,
@@ -85,6 +85,7 @@ interface SeeOptions {
 	inputFile?: string;
 	outputFile?: string;
 	layer?: "h" | "r" | "v" | "landforms" | "landscape";
+	overlay?: string;
 	landforms?: boolean;
 	landscape?: boolean;
 	force?: boolean;
@@ -196,14 +197,18 @@ addCommonInputOptions(
 program
 	.command("see")
 	.description(
-		"Render a grayscale topography image from terrain envelope JSON (PGM output)",
+		"Render a topography image from terrain envelope JSON (PGM by default; PPM when overlays are used)",
 	)
 	.requiredOption("--input-file <path>", "Path to source terrain envelope JSON")
-	.requiredOption("--output-file <path>", "Path to output image file (.pgm)")
+	.requiredOption("--output-file <path>", "Path to output image file (.pgm or .ppm)")
 	.option(
 		"--layer <layer>",
 		"Topography layer to render (h|r|v|landforms)",
 		"h",
+	)
+	.option(
+		"--overlay <overlays>",
+		"Optional overlay list for height background rendering (water,stream)",
 	)
 	.option(
 		"--landforms",
@@ -222,6 +227,7 @@ program
 					options.landforms === true || options.landscape === true
 						? "landforms"
 						: (options.layer ?? "h"),
+				overlays: parseSeeOverlays(options.overlay),
 				force: options.force ?? false,
 			},
 		}),
