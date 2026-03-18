@@ -29,7 +29,7 @@ Each tile records local facts about the environment, including elevation, slope,
 These facts are combined to produce deterministic wilderness location descriptions. The system can describe both immediate surroundings and the larger landscape context visible from that location.
 
 ```bash
-node --import tsx src/cli/main.ts generate --params params.json --seed 42 --width 32 --height 32 --output-file wilderness.json
+node --import tsx src/cli/main.ts generate --params params.json --seed 42 --width 32 --height 32 --output-file forest.json
 ```
 
 ## CLI Summary
@@ -57,7 +57,7 @@ The following CLIs are long-term developer and debugging surfaces rather than th
 Example:
 
 ```bash
-node --import tsx src/cli/hydrology-inspector.ts --input-json wilderness.json --debug-dir out --viz all --stats --force
+node --import tsx src/cli/hydrology-inspector.ts --input-json forest.json --debug-dir out --viz all --stats --force
 ```
 
 Canonical flags:
@@ -91,7 +91,7 @@ Mode/output validation highlights:
 - Existing output files/directories fail by default and require `--force` to overwrite/replace.
 
 ```bash
-node --import tsx src/cli/main.ts debug --input-file wilderness.json --output-dir outdir
+node --import tsx src/cli/main.ts debug --input-file forest.json --output-dir outdir
 ```
 
 Render topography as grayscale image (`h:0` black, `h:1` white):
@@ -104,6 +104,12 @@ Render landform classes as uniform grayscale:
 
 ```bash
 node --import tsx src/cli/main.ts see --input-file out.json --output-file landforms.pgm --landforms
+```
+
+Render terrain height as a color image with water depth tinted blue and streams overlaid in yellow:
+
+```bash
+node --import tsx src/cli/main.ts see --input-file forest.json --output-file hydro.ppm --overlay water,stream
 ```
 
 ## Architecture Overview
@@ -186,7 +192,7 @@ Storage rules:
 - leaf nodes include `tileIds`
 - composite nodes do not include `tileIds`
 ```bash
-node --import tsx src/cli/main.ts debug --input-file wilderness.json --output-dir outdir
+node --import tsx src/cli/main.ts debug --input-file forest.json --output-dir outdir
 ```
 
 Render topography as grayscale image (`h:0` black, `h:1` white):
@@ -314,7 +320,7 @@ Storage rules:
 - leaf nodes include `tileIds`
 - composite nodes do not include `tileIds`
 ```bash
-node --import tsx src/cli/main.ts debug --input-file wilderness.json --output-dir outdir
+node --import tsx src/cli/main.ts debug --input-file forest.json --output-dir outdir
 ```
 
 Render topography as grayscale image (`h:0` black, `h:1` white):

@@ -16,6 +16,7 @@ const VALUE_FLAGS = new Set<string>([
 	"--hydrology-viz",
 	"--hydrology-inspector-stats-file",
 	"--layer",
+	"--overlay",
 ]);
 
 const BOOLEAN_FLAGS = new Set<string>([

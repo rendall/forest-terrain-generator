@@ -123,6 +123,65 @@ function createReplaySourceEnvelope({
 	};
 }
 
+function createSeeOverlayEnvelope() {
+	return {
+		meta: { specVersion: "forest-terrain-v1" },
+		tiles: [
+			{
+				x: 0,
+				y: 0,
+				topography: { h: 0.2, r: 0.9, v: 0.1 },
+				hydrology: {
+					stream: {
+						outgoingDirection: "e",
+						incomingDirections: [],
+					},
+				},
+			},
+			{
+				x: 1,
+				y: 0,
+				topography: { h: 0.4, r: 0.8, v: 0.2 },
+				hydrology: {
+					waterDepth: 0.5,
+					stream: {
+						outgoingDirection: null,
+						incomingDirections: ["w"],
+					},
+				},
+			},
+			{
+				x: 0,
+				y: 1,
+				topography: { h: 0.6, r: 0.7, v: 0.3 },
+				hydrology: {
+					waterDepth: 1,
+				},
+			},
+			{
+				x: 1,
+				y: 1,
+				topography: { h: 0.8, r: 0.6, v: 0.4 },
+				hydrology: {},
+			},
+		],
+	};
+}
+
+function parseNetpbm(imageBuffer) {
+	const headerEnd = imageBuffer.indexOf("\n255\n");
+	expect(headerEnd).toBeGreaterThan(0);
+	const header = imageBuffer.subarray(0, headerEnd + 5).toString("ascii");
+	const [magic, dimensions] = header.trim().split("\n");
+	const [width, height] = dimensions.split(" ").map((raw) => Number.parseInt(raw, 10));
+	return {
+		magic,
+		width,
+		height,
+		pixels: Array.from(imageBuffer.subarray(headerEnd + 5)),
+	};
+}
+
 afterEach(async () => {
 	await Promise.all(
 		tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })),
@@ -244,6 +303,213 @@ describe("CLI command wiring and contract failures", () => {
 		const dataStart = headerEnd + 5;
 		const pixels = Array.from(pgm.subarray(dataStart));
 		expect(pixels).toEqual([64, 224, 128, 160]);
+	});
+
+	it("rejects see overlays outside water and stream", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-overlay.json");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(createSeeOverlayEnvelope(), null, 2)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"see",
+			"--input-file",
+			sourceFile,
+			"--output-file",
+			join(dir, "overlay.ppm"),
+			"--overlay",
+			"lava",
+		]);
+
+		expect(result.code).toBe(2);
+		expect(result.stderr).toContain(
+			'Invalid --overlay value "lava". Expected comma-separated values from: water, stream.',
+		);
+	});
+
+	it("renders exact grayscale bytes for see without overlays", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-overlay.json");
+		const imageFile = join(dir, "height.pgm");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(createSeeOverlayEnvelope(), null, 2)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"see",
+			"--input-file",
+			sourceFile,
+			"--output-file",
+			imageFile,
+		]);
+		expect(result.code).toBe(0);
+
+		const image = parseNetpbm(await readFile(imageFile));
+		expect(image.magic).toBe("P5");
+		expect(image.width).toBe(2);
+		expect(image.height).toBe(2);
+		expect(image.pixels).toEqual([51, 102, 153, 204]);
+	});
+
+	it("renders water overlay pixels against the height background", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-overlay.json");
+		const imageFile = join(dir, "water.ppm");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(createSeeOverlayEnvelope(), null, 2)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"see",
+			"--input-file",
+			sourceFile,
+			"--output-file",
+			imageFile,
+			"--overlay",
+			"water",
+		]);
+		expect(result.code).toBe(0);
+
+		const image = parseNetpbm(await readFile(imageFile));
+		expect(image.magic).toBe("P6");
+		expect(image.width).toBe(2);
+		expect(image.height).toBe(2);
+		expect(image.pixels).toEqual([
+			51,
+			51,
+			51,
+			51,
+			51,
+			179,
+			0,
+			0,
+			255,
+			204,
+			204,
+			204,
+		]);
+	});
+
+	it("renders stream overlay pixels as yellow at 50% alpha", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-overlay.json");
+		const imageFile = join(dir, "stream.ppm");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(createSeeOverlayEnvelope(), null, 2)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"see",
+			"--input-file",
+			sourceFile,
+			"--output-file",
+			imageFile,
+			"--overlay",
+			"stream",
+		]);
+		expect(result.code).toBe(0);
+
+		const image = parseNetpbm(await readFile(imageFile));
+		expect(image.magic).toBe("P6");
+		expect(image.pixels).toEqual([
+			153,
+			153,
+			26,
+			179,
+			179,
+			51,
+			153,
+			153,
+			153,
+			204,
+			204,
+			204,
+		]);
+	});
+
+	it("renders combined water and stream overlays with stream compositing on top", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-overlay.json");
+		const imageFile = join(dir, "combined.ppm");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(createSeeOverlayEnvelope(), null, 2)}\n`,
+			"utf8",
+		);
+
+		const result = await runCli([
+			"see",
+			"--input-file",
+			sourceFile,
+			"--output-file",
+			imageFile,
+			"--overlay",
+			"water,stream",
+		]);
+		expect(result.code).toBe(0);
+
+		const image = parseNetpbm(await readFile(imageFile));
+		expect(image.magic).toBe("P6");
+		expect(image.pixels).toEqual([
+			153,
+			153,
+			26,
+			153,
+			153,
+			90,
+			0,
+			0,
+			255,
+			204,
+			204,
+			204,
+		]);
+	});
+
+	it("produces deterministic see overlay bytes across repeat runs", async () => {
+		const dir = await makeTempDir();
+		const sourceFile = join(dir, "source-overlay.json");
+		const firstImageFile = join(dir, "combined-a.ppm");
+		const secondImageFile = join(dir, "combined-b.ppm");
+		await writeFile(
+			sourceFile,
+			`${JSON.stringify(createSeeOverlayEnvelope(), null, 2)}\n`,
+			"utf8",
+		);
+
+		const firstResult = await runCli([
+			"see",
+			"--input-file",
+			sourceFile,
+			"--output-file",
+			firstImageFile,
+			"--overlay",
+			"water,stream",
+		]);
+		const secondResult = await runCli([
+			"see",
+			"--input-file",
+			sourceFile,
+			"--output-file",
+			secondImageFile,
+			"--overlay",
+			"water,stream",
+		]);
+		expect(firstResult.code).toBe(0);
+		expect(secondResult.code).toBe(0);
+
+		const firstImage = await readFile(firstImageFile);
+		const secondImage = await readFile(secondImageFile);
+		expect(firstImage.equals(secondImage)).toBe(true);
 	});
 
 	it("wires generate to write terrain output", async () => {

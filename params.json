@@ -45,7 +45,7 @@
 		"faThreshold": 16,
 		"faQuantileThreshold": 0.9,
 		"lakeFill": {
-			"wetnessScale": 0.4
+			"wetnessScale": 0.01
 		}
 	},
 	"topography": {

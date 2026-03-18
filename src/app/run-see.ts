@@ -4,10 +4,13 @@ import { FileIoError, InputValidationError } from "../domain/errors.js";
 import type { JsonObject } from "../domain/types.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
 
+export type SeeOverlay = "water" | "stream";
+
 export interface SeeCliArgs {
 	inputFilePath?: string;
 	outputFile?: string;
 	layer: "h" | "r" | "v" | "landforms" | "landscape";
+	overlays: SeeOverlay[];
 	force: boolean;
 }
 
@@ -93,30 +96,64 @@ function readStringIdArray(value: unknown): string[] {
 	return value.filter((entry): entry is string => typeof entry === "string");
 }
 
-export async function runSee(request: SeeRequest): Promise<void> {
-	const inputFilePath = resolveFromCwd(request.cwd, request.args.inputFilePath);
-	const outputFile = resolveFromCwd(request.cwd, request.args.outputFile);
+const SEE_OVERLAY_ORDER: SeeOverlay[] = ["water", "stream"];
 
-	if (!inputFilePath) {
-		throw new InputValidationError("Missing required input: --input-file.");
+export function parseSeeOverlays(raw: string | undefined): SeeOverlay[] {
+	if (typeof raw === "undefined" || raw.trim().length === 0) {
+		return [];
 	}
-	if (!outputFile) {
-		throw new InputValidationError("Missing required output: --output-file.");
+	const requested = raw
+		.split(",")
+		.map((token) => token.trim())
+		.filter((token) => token.length > 0);
+	if (requested.length === 0) {
+		return [];
 	}
-
-	assertLayer(request.args.layer);
-	const layer = request.args.layer === "landscape" ? "landforms" : request.args.layer;
-
-	const envelope = await readTerrainEnvelopeFile(inputFilePath);
-	if (envelope.tiles.length === 0) {
-		throw new InputValidationError(
-			`Input terrain file "${inputFilePath}" has no tiles.`,
-		);
+	const seen = new Set<SeeOverlay>();
+	for (const token of requested) {
+		if (token !== "water" && token !== "stream") {
+			throw new InputValidationError(
+				`Invalid --overlay value "${token}". Expected comma-separated values from: water, stream.`,
+			);
+		}
+		seen.add(token);
 	}
+	return SEE_OVERLAY_ORDER.filter((overlay) => seen.has(overlay));
+}
 
+interface SeeGridData {
+	width: number;
+	height: number;
+	basePixels: Uint8Array;
+	heightPixels: Uint8Array;
+	waterDepthByIndex: Float64Array;
+	streamMask: Uint8Array;
+}
+
+function blendChannel(base: number, tint: number, alpha: number): number {
+	return Math.max(0, Math.min(255, Math.round(base * (1 - alpha) + tint * alpha)));
+}
+
+function hasOverlay(
+	overlays: readonly SeeOverlay[],
+	overlay: SeeOverlay,
+): boolean {
+	return overlays.includes(overlay);
+}
+
+function readFiniteNumber(value: unknown): number | null {
+	return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function buildSeeGridData(
+	inputFilePath: string,
+	tiles: JsonObject[],
+	layer: "h" | "r" | "v" | "landforms",
+	overlays: readonly SeeOverlay[],
+): SeeGridData {
 	let maxX = -1;
 	let maxY = -1;
-	for (const tile of envelope.tiles) {
+	for (const tile of tiles) {
 		const x = tile.x;
 		const y = tile.y;
 		if (
@@ -138,15 +175,19 @@ export async function runSee(request: SeeRequest): Promise<void> {
 	const width = maxX + 1;
 	const height = maxY + 1;
 	const expectedSize = width * height;
-	if (expectedSize !== envelope.tiles.length) {
+	if (expectedSize !== tiles.length) {
 		throw new InputValidationError(
-			`Input terrain file "${inputFilePath}" is not a dense ${width}x${height} grid (tileCount=${envelope.tiles.length}).`,
+			`Input terrain file "${inputFilePath}" is not a dense ${width}x${height} grid (tileCount=${tiles.length}).`,
 		);
 	}
 
 	const seen = new Uint8Array(expectedSize);
-	const pixels = new Uint8Array(expectedSize);
-	for (const tile of envelope.tiles) {
+	const basePixels = new Uint8Array(expectedSize);
+	const heightPixels = new Uint8Array(expectedSize);
+	const waterDepthByIndex = new Float64Array(expectedSize);
+	const streamMask = new Uint8Array(expectedSize);
+	const needHeightPixels = layer !== "landforms" || overlays.length > 0;
+	for (const tile of tiles) {
 		const x = tile.x;
 		const y = tile.y;
 		if (
@@ -177,6 +218,16 @@ export async function runSee(request: SeeRequest): Promise<void> {
 			);
 		}
 
+		if (needHeightPixels) {
+			const rawH = topography.h;
+			if (typeof rawH !== "number" || !Number.isFinite(rawH)) {
+				throw new InputValidationError(
+					`Tile (${x},${y}) is missing finite topography.h.`,
+				);
+			}
+			heightPixels[index] = Math.round(clamp01(rawH) * 255);
+		}
+
 		if (layer === "landforms") {
 			const hasActiveFeatureArray = Array.isArray(tile.activeFeatureIds);
 			const hasFeatureArray = Array.isArray(tile.featureIds);
@@ -205,30 +256,129 @@ export async function runSee(request: SeeRequest): Promise<void> {
 						? featureIds.some((id) => id.startsWith("p_"))
 						: structure?.ridgeLike === true;
 			if (basinLike && ridgeLike) {
-				pixels[index] = 160;
+				basePixels[index] = 160;
 			} else if (basinLike) {
-				pixels[index] = 64;
+				basePixels[index] = 64;
 			} else if (ridgeLike) {
-				pixels[index] = 224;
+				basePixels[index] = 224;
 			} else {
-				pixels[index] = 128;
+				basePixels[index] = 128;
 			}
-			continue;
+		} else {
+			const raw = topography[layer];
+			if (typeof raw !== "number" || !Number.isFinite(raw)) {
+				throw new InputValidationError(
+					`Tile (${x},${y}) is missing finite topography.${layer}.`,
+				);
+			}
+			basePixels[index] = Math.round(clamp01(raw) * 255);
 		}
 
-		const raw = topography[layer];
-		if (typeof raw !== "number" || !Number.isFinite(raw)) {
-			throw new InputValidationError(
-				`Tile (${x},${y}) is missing finite topography.${layer}.`,
-			);
+		const hydrology = isJsonObject(tile.hydrology) ? tile.hydrology : null;
+		if (hydrology && hasOverlay(overlays, "water")) {
+			waterDepthByIndex[index] = clamp01(readFiniteNumber(hydrology.waterDepth) ?? 0);
 		}
-		pixels[index] = Math.round(clamp01(raw) * 255);
+		if (hydrology && hasOverlay(overlays, "stream")) {
+			const stream = isJsonObject(hydrology.stream) ? hydrology.stream : null;
+			const outgoingDirection = stream?.outgoingDirection;
+			const incomingDirections = Array.isArray(stream?.incomingDirections)
+				? stream.incomingDirections
+				: [];
+			const hasOutgoingDirection =
+				outgoingDirection !== null &&
+				typeof outgoingDirection !== "undefined";
+			if (
+				hasOutgoingDirection ||
+				incomingDirections.length > 0
+			) {
+				streamMask[index] = 1;
+			}
+		}
 	}
+
+	return {
+		width,
+		height,
+		basePixels,
+		heightPixels,
+		waterDepthByIndex,
+		streamMask,
+	};
+}
+
+export function renderOverlayRgbPixels(
+	basePixels: Uint8Array,
+	waterDepthByIndex: Float64Array,
+	streamMask: Uint8Array,
+	overlays: readonly SeeOverlay[],
+): Uint8Array {
+	const pixels = new Uint8Array(basePixels.length * 3);
+	for (let index = 0; index < basePixels.length; index += 1) {
+		const baseGray = basePixels[index] ?? 0;
+		let r = baseGray;
+		let g = baseGray;
+		let b = baseGray;
+		if (hasOverlay(overlays, "water")) {
+			const waterAlpha = clamp01(waterDepthByIndex[index] ?? 0);
+			if (waterAlpha > 0) {
+				r = blendChannel(r, 0, waterAlpha);
+				g = blendChannel(g, 0, waterAlpha);
+				b = blendChannel(b, 255, waterAlpha);
+			}
+		}
+		if (hasOverlay(overlays, "stream") && streamMask[index] === 1) {
+			r = blendChannel(r, 255, 0.5);
+			g = blendChannel(g, 255, 0.5);
+			b = blendChannel(b, 0, 0.5);
+		}
+		const base = index * 3;
+		pixels[base] = r;
+		pixels[base + 1] = g;
+		pixels[base + 2] = b;
+	}
+	return pixels;
+}
+
+export async function runSee(request: SeeRequest): Promise<void> {
+	const inputFilePath = resolveFromCwd(request.cwd, request.args.inputFilePath);
+	const outputFile = resolveFromCwd(request.cwd, request.args.outputFile);
+
+	if (!inputFilePath) {
+		throw new InputValidationError("Missing required input: --input-file.");
+	}
+	if (!outputFile) {
+		throw new InputValidationError("Missing required output: --output-file.");
+	}
+
+	assertLayer(request.args.layer);
+	const layer = request.args.layer === "landscape" ? "landforms" : request.args.layer;
+	const overlays = request.args.overlays;
+
+	const envelope = await readTerrainEnvelopeFile(inputFilePath);
+	if (envelope.tiles.length === 0) {
+		throw new InputValidationError(
+			`Input terrain file "${inputFilePath}" has no tiles.`,
+		);
+	}
+
+	const grid = buildSeeGridData(inputFilePath, envelope.tiles, layer, overlays);
 
 	await prepareOutputFile(outputFile, request.args.force);
 
-	const header = Buffer.from(`P5\n${width} ${height}\n255\n`, "ascii");
-	const payload = Buffer.concat([header, Buffer.from(pixels)]);
+	const hasOverlays = overlays.length > 0;
+	const outputPixels = hasOverlays
+		? renderOverlayRgbPixels(
+				grid.heightPixels,
+				grid.waterDepthByIndex,
+				grid.streamMask,
+				overlays,
+			)
+		: grid.basePixels;
+	const header = Buffer.from(
+		`${hasOverlays ? "P6" : "P5"}\n${grid.width} ${grid.height}\n255\n`,
+		"ascii",
+	);
+	const payload = Buffer.concat([header, Buffer.from(outputPixels)]);
 	try {
 		await writeFile(outputFile, payload);
 	} catch (error) {
