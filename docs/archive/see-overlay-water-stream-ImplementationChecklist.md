@@ -1,6 +1,6 @@
 # `see` Water + Stream Overlay Implementation Checklist
 
-Source plan: `docs/drafts/see-overlay-water-stream-plan.md`
+Source plan: `docs/archive/see-overlay-water-stream-plan.md`
 
 - [x] `SWS-CLI-01` [cli] Add `--overlay <overlays>` parsing to `program.command("see")` in `src/cli/main.ts`, validate only `water` and `stream`, and thread normalized overlay selections through `SeeCliArgs` and `runSee` in `src/app/run-see.ts`.
   - Trace:
