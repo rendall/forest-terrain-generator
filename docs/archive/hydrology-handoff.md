@@ -1,5 +1,7 @@
 # Hydrology System Handoff
 
+Archived note: this is a historical handoff snapshot. The current hydrology contract lives in `docs/normative/water-depth-model.md`.
+
 This document captures the **current working state of the hydrology system**, the invariants that must not be broken, and the safe workflow rules for future changes.
 
 It exists so new contributors or AI agents can continue work without needing the full historical conversation that led to the current implementation.

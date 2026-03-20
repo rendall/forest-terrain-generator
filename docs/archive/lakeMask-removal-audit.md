@@ -2,12 +2,12 @@
 
 I read the repository-level instructions and the water-depth model, then searched for `lakeMask` usages with:
 
-- `cat AGENTS.md && cat docs/water-depth-model.md`
+- `cat AGENTS.md && cat docs/normative/water-depth-model.md`
 - `rg -n "lakeMask|lake mask|lake_mask|lake-mask" .`
 - `rg -n "lakeMask" src test scripts README.md docs -g '!**/*.json'`
 - targeted `nl -ba ... | sed -n ...` on each matching source/test/script file.
 
-Per the model, `waterDepth` is the continuous source for tile water state and can be positive/zero/negative; `waterSurfaceH` is basin-level truth; basin membership alone must not imply standing water. `lakeMask` is binary and therefore not the primary hydrologic variable for semantics-preserving decisions.【F:docs/water-depth-model.md†L53-L77】【F:docs/water-depth-model.md†L127-L131】【F:docs/water-depth-model.md†L157-L181】
+Per the model, `waterDepth` is the continuous source for tile water state and can be positive/zero/negative; `waterSurfaceH` is basin-level truth; basin membership alone must not imply standing water. `lakeMask` is binary and therefore not the primary hydrologic variable for semantics-preserving decisions.【F:docs/normative/water-depth-model.md†L53-L77】【F:docs/normative/water-depth-model.md†L127-L131】【F:docs/normative/water-depth-model.md†L157-L181】
 
 ---
 
@@ -68,7 +68,7 @@ Per the model, `waterDepth` is the continuous source for tile water state and ca
 
 ## Safe removal plan (no semantic drift)
 
-1. **Define equivalence invariant before removal:** legacy `lakeMask` semantics == `(waterDepth > 0)` wherever both exist. (This matches current producer logic.)【F:src/pipeline/derive-hydrology.ts†L455-L463】【F:docs/water-depth-model.md†L65-L77】  
+1. **Define equivalence invariant before removal:** legacy `lakeMask` semantics == `(waterDepth > 0)` wherever both exist. (This matches current producer logic.)【F:src/pipeline/derive-hydrology.ts†L455-L463】【F:docs/normative/water-depth-model.md†L65-L77】  
 2. **Switch consumers first, field removal last:**  
    - Inspector stats to `waterDepth`/`waterClass` gates.  
    - Output/read paths keep backward-compatible read/write temporarily.  

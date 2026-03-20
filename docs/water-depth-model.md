@@ -46,7 +46,7 @@ The previous name `lakeSurfaceH` is replaced with **`waterSurfaceH`**.
 - A dry basin has no water and should not emit a `waterSurfaceH` value.
 - A partially filled basin has `waterSurfaceH` below its spill surface.
 - A fully filled non-root basin has `waterSurfaceH` at spill surface.
-- In ordinary map operation, root full-map saturation is an error condition (root spill capacity effectively zero while positive inflow still exists).
+- In ordinary map operation, root full-map saturation is treated as an impossible state and must raise an error (root spill capacity effectively zero while positive inflow still exists).
 
 ## Tile water depth
 
@@ -114,8 +114,6 @@ waterSurfaceH(B) = spillSurfaceH(B)
 
 4. If `V(B) > S_B(spillSurfaceH(B))`, excess water must not remain assigned to basin `B`; it must propagate according to the basin hierarchy / downstream allocation rules.
 
-This section is the missing bridge between “continuous filling” and actual computed basin surface.
-
 ---
 
 ## Partial-fill emission contract
@@ -129,8 +127,6 @@ Normative rules:
 3. Implementations must not restrict tile depth emission to only fully filled basins.
 4. A binary `empty/full` interpretation is non-conformant.
 
-This is the key section that would have blocked the loophole you ran into.
-
 ---
 
 ## Basin state location contract
@@ -143,8 +139,6 @@ Normative rules:
 2. If a basin has water, `features.basins[i].waterSurfaceH` must be present.
 3. Internal accounting structures may exist, but they do not replace required basin-level output fields.
 4. Tile outputs must be derivable from emitted basin state plus tile elevation.
-
-That closes the “the state exists internally somewhere else” escape hatch.
 
 ---
 
@@ -160,8 +154,6 @@ Determinism rule:
 
 * If multiple candidate basins could govern a tile, the tie-break must be deterministic and documented.
 * The default rule is: choose the most specific nested basin first; if still ambiguous, choose by stable basin id ordering.
-
-This section matters because otherwise nested basins can create silent ambiguity about which surface applies.
 
 ---
 
@@ -179,8 +171,6 @@ Normative rules:
 2. No positive-only clamp is applied.
 3. `waterDepth > 0`, `= 0`, and `< 0` are all valid outputs.
 4. If `waterSurfaceH` is absent for the governing basin, `waterDepth` must also be absent.
-
-This is partly already in your doc, but here it becomes explicitly tied to partial fill and governed tiles. 
 
 ---
 

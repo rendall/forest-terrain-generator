@@ -1,6 +1,6 @@
 # Debug Input-File Params Precedence Implementation Checklist
 
-Status: implemented  
+Status: archived  
 Scope: `debug --input-file` replay param precedence (`#1` slice only)
 
 - [x] [app] `DIP-APP-01` Remove `--params` from debug input-file exclusivity guards in [`src/app/run-generator.ts`](/mnt/c/workspace/projects/forest-terrain-generator/src/app/run-generator.ts) so replay mode accepts a params file.

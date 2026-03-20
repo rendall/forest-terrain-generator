@@ -138,9 +138,9 @@ Each stage adds structure and interpretation, allowing the final description lay
 
 Hydrology is one of the core terrain truth layers. Basin topology determines how water collects, connects, and produces basin-level and tile-level water state.
 
-For the current hydrology model, output contracts, and debugging guidance, see:
+For the current hydrology model and output contract, see:
 
-- `docs/active/hydrology-handoff.md`
+- `docs/normative/water-depth-model.md`
 
 ## Topology
 
@@ -457,4 +457,3 @@ The goal of the Wilderness Terrain Generator is to produce **coherent wilderness
 Terrain synthesis, basin hydrology, ridge topology, biome modeling, and other environmental layers exist to provide deterministic structural truth about the landscape. These truth layers feed the description pipeline, which generates grounded, spatially consistent descriptions of locations within the generated wilderness.
 
 Terrain generation is therefore a **supporting system**, not the end product.
-

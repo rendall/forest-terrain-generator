@@ -1,6 +1,6 @@
 # Stream Network Model — Minimal Implementation Checklist
 
-Scope: implement the minimal stream-network plan co-located with `docs/stream-network-model.md`.
+Scope: implement the minimal stream-network plan co-located with `docs/normative/stream-network-model.md`.
 
 Notes:
 - This checklist is an implementation-shape mirror of the agreed minimal plan.
@@ -31,11 +31,11 @@ Notes:
 - [x] [pipeline] Implement origin-step downstream candidate ranking in `derive-stream-network.ts` exactly as: lowest elevation, canonical direction order, tile id when no previous direction exists.
 - [x] [pipeline] Implement deterministic downstream candidate ranking and traversal in `derive-stream-network.ts` for non-origin steps as: lower elevation, directional continuation, smallest angular deviation, canonical direction order, tile id.
 - [x] [pipeline] Implement cycle handling in `derive-stream-network.ts` via deterministic backtracking search; emit `terminalKind: "error"` only when deterministic tracing/backtracking search exhausts without valid `confluence` or `sink`.
-- [x] [pipeline] Implement terminal classification in `derive-stream-network.ts` exactly per `docs/stream-network-model.md`: `confluence` means joining an already-established downstream stream path during evaluation; `sink` means terminating without joining an already-established downstream stream path; no separate lake terminal kind is introduced; terminal leaf-basin/underwater termination cases remain `sink`.
+- [x] [pipeline] Implement terminal classification in `derive-stream-network.ts` exactly per `docs/normative/stream-network-model.md`: `confluence` means joining an already-established downstream stream path during evaluation; `sink` means terminating without joining an already-established downstream stream path; no separate lake terminal kind is introduced; terminal leaf-basin/underwater termination cases remain `sink`.
 - [x] [pipeline] Derive tile-local stream geometry in `derive-stream-network.ts` so each tile has at most one `outgoingDirection`, canonical-ordered `incomingDirections`, and `outgoingDirection = null` at terminals.
 - [x] [domain] Extend `src/domain/topographic-features.ts` to support optional `features.streams` payload with explicit minimal stream feature schema parity fields: `id`, `originTileId`, `pathTileIds`, `terminalTileId`, `terminalKind`.
 - [x] [app] Wire `src/app/run-generator.ts` to call `derive-stream-network.ts`, attach `features.streams` to generator/replay envelope features, and attach tile `hydrology.stream` geometry in tile payload output.
-- [x] [docs] Keep `docs/stream-network-model.md` as the behavioral contract and ensure implementation field names/terminal semantics match it exactly.
+- [x] [docs] Keep `docs/normative/stream-network-model.md` as the behavioral contract and ensure implementation field names/terminal semantics match it exactly.
 
 ## Behavior Slices
 
@@ -56,5 +56,5 @@ Notes:
 
 ### Slice D
 - Goal: preserve a single, explicit source-of-truth contract for stream behavior semantics.
-- Items: [docs] implementation parity with `docs/stream-network-model.md`.
+- Items: [docs] implementation parity with `docs/normative/stream-network-model.md`.
 - Type: mechanical

@@ -1,6 +1,6 @@
 # Hydrology Inspector Recompute Effective Params Implementation Checklist
 
-Status: implemented  
+Status: archived  
 Scope: address PR `P1` by making hydrology-inspector recompute parity match generator/debug effective hydrology params.
 
 ## Investigation Summary

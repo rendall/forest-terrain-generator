@@ -82,7 +82,11 @@ Field meanings:
   - final tile in the path
 
 - `terminalKind`
-  - kind of path ending (`confluence` or `sink`)
+  - kind of path ending (`confluence`, `sink`, or `error`)
+
+Envelope emission rule:
+
+- `tile.hydrology.stream` is emitted only when a tile has at least one incoming or outgoing stream direction.
 
 ### StreamFeature invariants
 

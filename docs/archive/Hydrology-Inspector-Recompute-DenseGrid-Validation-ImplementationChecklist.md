@@ -1,6 +1,6 @@
 # Hydrology Inspector Recompute Dense-Grid Validation Implementation Checklist
 
-Status: implemented  
+Status: archived  
 Scope: address PR `P2` by rejecting invalid tile geometry before hydrology-inspector recompute.
 
 ## Investigation Summary

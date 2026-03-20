@@ -1,6 +1,6 @@
 # Debug Structure + Hydrology Replay Implementation Checklist
 
-Status: implemented (phase current scope complete; deferred items retained)  
+Status: archived  
 Scope: expand `debug --input-file` replay from hydrology-only to structure+hydrology recompute using precedence-aware params.
 
 - [x] [app] `DSHR-APP-01` Build replay params for `debug --input-file` in [`src/app/run-generator.ts`](/mnt/c/workspace/projects/forest-terrain-generator/src/app/run-generator.ts) with precedence `defaults -> envelope.paramOverrides -> --params <file>`.

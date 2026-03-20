@@ -13,7 +13,7 @@ Scope: apply the approved water-surface/depth emission contract and root-fill sa
 - [x] [test] Add a dry-tile omission contract test in `test/integration/hydrology-debug-artifacts.test.mjs`.
 - [x] [test] Update replay hydrology contract assertions in `test/integration/cli-command-wiring.test.mjs` to validate conditional `waterSurfaceH`/`waterDepth`.
 - [x] [docs] Update hydrology output field documentation in `README.md` to list `waterDepth` and conditional emission semantics.
-- [x] [docs] Align `docs/water-depth-model.md` root error wording with the implemented impossible-root-fill guard.
+- [x] [docs] Align `docs/normative/water-depth-model.md` root error wording with the implemented impossible-root-fill guard.
 
 Dependencies:
 
