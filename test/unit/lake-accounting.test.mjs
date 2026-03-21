@@ -3,7 +3,10 @@ import { DIR8_CODE, DIR8_NONE } from "../../src/domain/hydrology.js";
 import { createGridShape } from "../../src/domain/topography.js";
 import { deriveHydrology } from "../../src/pipeline/derive-hydrology.js";
 import { deriveLakeAccounting } from "../../src/pipeline/derive-lake-accounting.js";
-import { makeBasinNode } from "./helpers/lake-fixtures.mjs";
+import {
+	buildNestedSiblingBasinFixture,
+	makeBasinNode,
+} from "./helpers/lake-fixtures.mjs";
 
 const buildSyntheticLakeCase = () => {
 	const shape = createGridShape(3, 2);
@@ -54,6 +57,25 @@ const buildSyntheticLakeCase = () => {
 		["b_parent"],
 	];
 	return { shape, h, basinFeatures, tileFeatureIds };
+};
+
+const buildSharedChildMergeFixture = () => {
+	const fixture = buildNestedSiblingBasinFixture();
+	const basinFeatures = fixture.basinFeatures.map((basin) =>
+		basin.id === "b_A1"
+			? {
+					...basin,
+					mergeH: 0.34,
+					persistence: 0.18,
+				}
+			: basin,
+	);
+	return {
+		shape: fixture.shape,
+		h: fixture.h,
+		basinFeatures,
+		tileFeatureIds: fixture.tileFeatureIds,
+	};
 };
 
 describe("lake accounting from production hydrology pipeline", () => {
@@ -444,6 +466,93 @@ describe("lake accounting from production hydrology pipeline", () => {
 				expect(basin.allocatedVolume).toBeCloseTo(basin.spillCapacity, 6);
 			}
 			expect(basin.overflowExcess).toBeGreaterThanOrEqual(0);
+		});
+	});
+
+	describe("parent basin water-surface invariant", () => {
+		it("keeps a dry parent from emitting waterSurfaceH", () => {
+			const { shape, h, basinFeatures, tileFeatureIds } =
+				buildSharedChildMergeFixture();
+			const result = deriveHydrology(
+				shape,
+				h,
+				{ basinFeatures, tileFeatureIds },
+				{
+					hydrology: {
+						sinkMode: "strict_local",
+						lakeFill: { wetnessScale: 0.04 },
+					},
+				},
+			);
+
+			const parent = result.lakeAccounting.byId.get("b_A");
+			expect(parent).toBeDefined();
+			expect(parent.isFilled).toBe(false);
+			expect(parent.fillRatio).toBe(0);
+			expect("waterSurfaceH" in parent).toBe(false);
+		});
+
+		it("keeps a partially filled parent strictly above its immediate-children shared mergeH", () => {
+			const { shape, h, basinFeatures, tileFeatureIds } =
+				buildSharedChildMergeFixture();
+			const result = deriveHydrology(
+				shape,
+				h,
+				{ basinFeatures, tileFeatureIds },
+				{
+					hydrology: {
+						sinkMode: "strict_local",
+						lakeFill: { wetnessScale: 0.06 },
+					},
+				},
+			);
+
+			const parent = result.lakeAccounting.byId.get("b_A");
+			expect(parent).toBeDefined();
+			expect(parent.isFilled).toBe(false);
+			expect(parent.waterSurfaceH).toBeGreaterThan(0.34);
+		});
+
+		it("keeps a partially filled parent strictly below its own mergeH", () => {
+			const { shape, h, basinFeatures, tileFeatureIds } =
+				buildSharedChildMergeFixture();
+			const result = deriveHydrology(
+				shape,
+				h,
+				{ basinFeatures, tileFeatureIds },
+				{
+					hydrology: {
+						sinkMode: "strict_local",
+						lakeFill: { wetnessScale: 0.06 },
+					},
+				},
+			);
+
+			const parent = result.lakeAccounting.byId.get("b_A");
+			expect(parent).toBeDefined();
+			expect(parent.isFilled).toBe(false);
+			expect(parent.waterSurfaceH).toBeLessThan(parent.mergeH);
+		});
+
+		it("keeps a fully filled parent equal to its own mergeH", () => {
+			const { shape, h, basinFeatures, tileFeatureIds } =
+				buildSharedChildMergeFixture();
+			const result = deriveHydrology(
+				shape,
+				h,
+				{ basinFeatures, tileFeatureIds },
+				{
+					hydrology: {
+						sinkMode: "strict_local",
+						lakeFill: { wetnessScale: 0.11 },
+					},
+				},
+			);
+
+			const parent = result.lakeAccounting.byId.get("b_A");
+			expect(parent).toBeDefined();
+			expect(parent.isFilled).toBe(true);
+			expect(parent.waterSurfaceH).toBeCloseTo(parent.mergeH, 6);
 		});
 	});
 });
