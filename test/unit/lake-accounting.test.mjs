@@ -863,6 +863,34 @@ describe("lake accounting from production hydrology pipeline", () => {
 			expect(fullViolations).toEqual([]);
 		});
 
+		it("omits tile waterDepth when no governing basin is resolved", () => {
+			const { snapshots } = createWetnessSweepContext();
+			const snapshot = assertDefined(
+				snapshots.find(({ wetnessScale }) => wetnessScale === 0.01),
+				"wetness sweep snapshot",
+				{ requestedWetnessScale: 0.01 },
+			);
+			const tileId = 0;
+			const governingBasinId = snapshot.tileLakeBasinId[tileId];
+			expect(governingBasinId).toBe("");
+			expect(snapshot.tileLakeDepth[tileId]).toBeUndefined();
+		});
+
+		it("keeps governed zero-or-nonzero depth distinct from absent depth", () => {
+			const { snapshots } = createWetnessSweepContext();
+			const snapshot = assertDefined(
+				snapshots.find(({ wetnessScale }) => wetnessScale === 0.01),
+				"wetness sweep snapshot",
+				{ requestedWetnessScale: 0.01 },
+			);
+			const unguidedTileId = 0;
+			const governedTileId = 16;
+			expect(snapshot.tileLakeBasinId[unguidedTileId]).toBe("");
+			expect(snapshot.tileLakeDepth[unguidedTileId]).toBeUndefined();
+			expect(snapshot.tileLakeBasinId[governedTileId]).toBe("b_A1");
+			expect(snapshot.tileLakeDepth[governedTileId]).toBeTypeOf("number");
+		});
+
 		it("keeps the partially filled shared-child parent strictly between child mergeH and its own mergeH", () => {
 			const { shape, h, basinFeatures, tileFeatureIds } =
 				buildSharedChildMergeFixture();

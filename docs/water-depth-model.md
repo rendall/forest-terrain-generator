@@ -86,6 +86,8 @@ This gives one continuous hydrologic variable that supports both open-water clas
 - `waterSurfaceH` is authored/owned at basin level.
 - Per-tile water quantity is `waterDepth`, derived from `waterSurfaceH` and tile `h`.
 - If `waterSurfaceH` is absent, `waterDepth` is also absent.
+- If a tile has no governing basin, that tile emits no `waterDepth`.
+- Numeric `0` must not be used to stand in for absent tile water state.
 - Basin membership alone must not imply that a tile has positive surface water.
 - Positive, zero, and negative `waterDepth` are all meaningful and intentional.
 
@@ -186,6 +188,7 @@ Normative rules:
 2. No positive-only clamp is applied.
 3. `waterDepth > 0`, `= 0`, and `< 0` are all valid outputs.
 4. If `waterSurfaceH` is absent for the governing basin, `waterDepth` must also be absent.
+5. If no governing basin is resolved for a tile, `waterDepth` must be absent; numeric `0` is not a substitute for absence.
 
 ---
 
