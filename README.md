@@ -184,8 +184,14 @@ Each feature node includes:
 
 Tile membership:
 
-- each tile includes `featureIds` (leaf basin + leaf peak IDs)
+- each tile includes `featureIds` (self basin ID + peak leaf ID when present)
 - each tile includes `activeFeatureIds` (composite IDs selected by persistence cut)
+
+Topology terms:
+
+- `self basin` means the tile's assigned basin topology owner
+- `self basin` is the starting basin for the tile's self-to-root parent chain
+- `self basin` is serialized on the tile as its `b_*` basin ID in `featureIds`
 
 Storage rules:
 
@@ -312,8 +318,14 @@ Each feature node includes:
 
 Tile membership:
 
-- each tile includes `featureIds` (leaf basin + leaf peak IDs)
+- each tile includes `featureIds` (self basin ID + peak leaf ID when present)
 - each tile includes `activeFeatureIds` (composite IDs selected by persistence cut)
+
+Topology terms:
+
+- `self basin` means the tile's assigned basin topology owner
+- `self basin` is the starting basin for the tile's self-to-root parent chain
+- `self basin` is serialized on the tile as its `b_*` basin ID in `featureIds`
 
 Storage rules:
 
@@ -442,8 +454,14 @@ Each feature node includes:
 
 Tile membership:
 
-- each tile includes `featureIds` (leaf basin + leaf peak IDs)
+- each tile includes `featureIds` (self basin ID + peak leaf ID when present)
 - each tile includes `activeFeatureIds` (composite IDs selected by persistence cut)
+
+Topology terms:
+
+- `self basin` means the tile's assigned basin topology owner
+- `self basin` is the starting basin for the tile's self-to-root parent chain
+- `self basin` is serialized on the tile as its `b_*` basin ID in `featureIds`
 
 Storage rules:
 

@@ -223,7 +223,76 @@ describe("derive-hydrology", () => {
 		expect(result.maps.lakeMask[3]).toBe(0);
 	});
 
-	it("uses deepest active basin as tile governor when parent and child are both active", () => {
+	it("uses the first not-fully-filled basin on the self-to-root chain as tile governor", () => {
+		const shape = createGridShape(3, 1);
+		const h = new Float32Array([0.1, 0.3, 0.9]);
+		const result = deriveHydrology(
+			shape,
+			h,
+			{
+				basinFeatures: [
+					{
+						id: "b_child",
+						kind: "leaf",
+						parentId: "b_parent",
+						childIds: [],
+						birthH: 0.1,
+						mergeH: 0.2,
+						persistence: 0.1,
+						spillOutTileId: 1,
+						childSpillFromTileId: 0,
+						parentContactTileId: 1,
+						minH: 0.1,
+						maxH: 0.1,
+						size: 1,
+						bbox: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
+						tileIds: [0],
+					},
+					{
+						id: "b_parent",
+						kind: "composite",
+						parentId: null,
+						childIds: ["b_child"],
+						birthH: 0.2,
+						mergeH: 1.0,
+						persistence: null,
+						spillOutTileId: null,
+						minH: 0.1,
+						maxH: 0.3,
+						size: 2,
+						bbox: { minX: 0, minY: 0, maxX: 1, maxY: 0 },
+						tileIds: [1],
+					},
+				],
+				tileFeatureIds: [["b_child", "b_parent"], ["b_parent"], []],
+			},
+			{
+				hydrology: {
+					sinkMode: "strict_local",
+					faThreshold: 1,
+					lakeFill: { wetnessScale: 0.2 },
+				},
+			},
+		);
+
+		const child = result.lakeAccounting.byId.get("b_child");
+		const parent = result.lakeAccounting.byId.get("b_parent");
+		expect(child).toBeDefined();
+		expect(parent).toBeDefined();
+		expect(child.waterSurfaceH).toBeTypeOf("number");
+		expect(parent.waterSurfaceH).toBeTypeOf("number");
+		expect(child.isFilled).toBe(true);
+		expect(parent.isFilled).toBe(false);
+		expect(parent.waterSurfaceH).toBeGreaterThan(child.waterSurfaceH);
+		expect(result.lakeAccounting.tileLakeBasinId[0]).toBe("b_parent");
+		expect(result.lakeAccounting.tileLakeDepth[0]).toBeCloseTo(
+			parent.waterSurfaceH - h[0],
+			6,
+		);
+		expect(result.maps.waterSurfaceH[0]).toBeCloseTo(parent.waterSurfaceH, 6);
+	});
+
+	it("falls back to the highest wet basin when the full self-to-root chain is filled", () => {
 		const shape = createGridShape(3, 1);
 		const h = new Float32Array([0.1, 0.3, 0.9]);
 		const result = deriveHydrology(
@@ -279,15 +348,14 @@ describe("derive-hydrology", () => {
 		const parent = result.lakeAccounting.byId.get("b_parent");
 		expect(child).toBeDefined();
 		expect(parent).toBeDefined();
-		expect(child.waterSurfaceH).toBeTypeOf("number");
-		expect(parent.waterSurfaceH).toBeTypeOf("number");
-		// Parent surface is intentionally much higher; governance must still pick deepest basin.
+		expect(child.isFilled).toBe(true);
+		expect(parent.isFilled).toBe(true);
 		expect(parent.waterSurfaceH).toBeGreaterThan(child.waterSurfaceH);
-		expect(result.lakeAccounting.tileLakeBasinId[0]).toBe("b_child");
+		expect(result.lakeAccounting.tileLakeBasinId[0]).toBe("b_parent");
 		expect(result.lakeAccounting.tileLakeDepth[0]).toBeCloseTo(
-			child.waterSurfaceH - h[0],
+			parent.waterSurfaceH - h[0],
 			6,
 		);
-		expect(result.maps.waterSurfaceH[0]).toBeCloseTo(child.waterSurfaceH, 6);
+		expect(result.maps.waterSurfaceH[0]).toBeCloseTo(parent.waterSurfaceH, 6);
 	});
 });

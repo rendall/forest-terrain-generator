@@ -148,12 +148,14 @@ A tile may be associated with multiple basins through nesting, but exactly one b
 
 Normative rule:
 
-* A tile’s `waterDepth` must be derived from the **deepest active basin that currently governs that tile**, where “active” means the basin has emitted `waterSurfaceH`.
+* A tile’s `waterDepth` must be derived by traversing that tile's **self-to-root chain**, starting with the tile's **self basin** and then following parent, grandparent, and so on.
+* The tile's governing basin is the **first not-fully-filled basin** on that chain.
+* "Not fully filled" includes both dry basins and partially filled basins. A non-root basin is fully filled when it has reached its spill/connection level.
+* If every basin on the chain is fully filled, the governing basin falls back to the **highest wet basin** on that chain.
 
 Determinism rule:
 
-* If multiple candidate basins could govern a tile, the tie-break must be deterministic and documented.
-* The default rule is: choose the most specific nested basin first; if still ambiguous, choose by stable basin id ordering.
+* The default rule is: start from the tile's self basin, then follow that basin's `parentId` chain upward.
 
 ---
 
@@ -206,6 +208,7 @@ The implementation is not conformant unless tests cover all of the following cas
 5. **Nested basin governance**
 
    * overlapping membership resolves deterministically
+   * governance is taken from the first not-fully-filled basin on the tile's self-to-root chain
    * emitted tile depth comes from the governing basin only
 
 6. **Negative depth case**
@@ -226,4 +229,5 @@ The following patterns violate this model:
 * deriving tile depth only when `isFilled === true`
 * keeping basin water state only in internal accounting with no basin-level emission
 * treating basin membership as equivalent to positive standing water
+* governing tile depth by deepest active basin instead of first not-fully-filled basin on the self-to-root chain
 * allowing partial-fill intent in docs without a volume-to-surface solver

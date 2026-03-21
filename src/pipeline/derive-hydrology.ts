@@ -407,7 +407,10 @@ export const deriveHydrology = (
 		baseFd,
 		baseAccumulation.fa,
 		topographicStructure.basinFeatures,
-		{ wetnessScale: cfg.wetnessScale },
+		{
+			wetnessScale: cfg.wetnessScale,
+			tileFeatureIds: topographicStructure.tileFeatureIds,
+		},
 	);
 	const lakeAccountingById = lakeAccounting.byId;
 
