@@ -186,17 +186,36 @@ const computeSubmergedStorageAtLevel = (
 	return sum;
 };
 
+const computeIncrementalStorageAboveLevel = (
+	h: Float32Array,
+	tiles: Set<number>,
+	baseLevel: number,
+	level: number,
+): number => {
+	let sum = 0;
+	for (const tileId of tiles) {
+		const floor = Math.max(baseLevel, h[tileId] ?? 0);
+		sum += Math.max(0, level - floor);
+	}
+	return sum;
+};
+
 const computeSpillCapacity = (
 	h: Float32Array,
 	tiles: Set<number>,
 	spillSurfaceH: number,
-): number => computeSubmergedStorageAtLevel(h, tiles, spillSurfaceH);
+	baseLevel?: number,
+): number =>
+	typeof baseLevel === "number" && Number.isFinite(baseLevel)
+		? computeIncrementalStorageAboveLevel(h, tiles, baseLevel, spillSurfaceH)
+		: computeSubmergedStorageAtLevel(h, tiles, spillSurfaceH);
 
 const solvePartialWaterSurface = (
 	h: Float32Array,
 	tiles: Set<number>,
 	targetVolume: number,
 	spillSurfaceH: number,
+	baseLevel?: number,
 ): number => {
 	let minTileH = Number.POSITIVE_INFINITY;
 	for (const tileId of tiles) {
@@ -205,11 +224,18 @@ const solvePartialWaterSurface = (
 	if (!Number.isFinite(minTileH)) {
 		return spillSurfaceH;
 	}
-	let lo = minTileH;
+	const lowerBound =
+		typeof baseLevel === "number" && Number.isFinite(baseLevel)
+			? Math.max(baseLevel, minTileH)
+			: minTileH;
+	let lo = lowerBound;
 	let hi = spillSurfaceH;
 	for (let i = 0; i < WATER_SURFACE_SOLVE_STEPS; i += 1) {
 		const mid = (lo + hi) / 2;
-		const storageAtMid = computeSubmergedStorageAtLevel(h, tiles, mid);
+		const storageAtMid =
+			typeof baseLevel === "number" && Number.isFinite(baseLevel)
+				? computeIncrementalStorageAboveLevel(h, tiles, lowerBound, mid)
+				: computeSubmergedStorageAtLevel(h, tiles, mid);
 		if (storageAtMid >= targetVolume) {
 			hi = mid;
 		} else {
@@ -428,8 +454,29 @@ export const deriveLakeAccounting = (
 			typeof basin.mergeH === "number" && Number.isFinite(basin.mergeH)
 				? basin.mergeH
 				: 1;
+		const childMergeFloorH =
+			childIds.length === 0
+				? undefined
+				: childIds.reduce<number | undefined>((floor, childId) => {
+						const childMergeH = basinsById.get(childId)?.mergeH;
+						if (
+							typeof childMergeH !== "number" ||
+							!Number.isFinite(childMergeH)
+						) {
+							return floor;
+						}
+						if (typeof floor !== "number") {
+							return childMergeH;
+						}
+						return Math.max(floor, childMergeH);
+					}, undefined);
 		const basinTiles = expandedTileSets.get(basinId) ?? new Set<number>();
-		const spillCapacity = computeSpillCapacity(h, basinTiles, mergeH);
+		const spillCapacity = computeSpillCapacity(
+			h,
+			basinTiles,
+			mergeH,
+			childMergeFloorH,
+		);
 		// allocatedVolume is retained/capped basin volume only.
 		const allocatedVolume = Math.min(
 			presentedVolume,
@@ -450,6 +497,7 @@ export const deriveLakeAccounting = (
 					basinTiles,
 					allocatedVolume,
 					mergeH,
+					childMergeFloorH,
 				);
 			}
 		}
