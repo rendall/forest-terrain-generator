@@ -454,12 +454,12 @@ export const deriveHydrology = (
 	maps.inDeg.set(finalAccumulation.inDeg);
 
 	for (let i = 0; i < shape.size; i += 1) {
-		const depth = lakeAccounting.tileLakeDepth[i] ?? 0;
+		const depth = lakeAccounting.tileLakeDepth[i];
 		const lakeBasinId = lakeAccounting.tileLakeBasinId[i] ?? "";
-		if (lakeBasinId !== "") {
+		if (lakeBasinId !== "" && typeof depth === "number") {
 			maps.waterSurfaceH[i] = (topographyH[i] ?? 0) + depth;
 		}
-		if (depth > 0) {
+		if (typeof depth === "number" && depth > 0) {
 			maps.lakeMask[i] = 1;
 		}
 	}

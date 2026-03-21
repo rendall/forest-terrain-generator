@@ -29,7 +29,7 @@ export interface BasinLakeAccounting {
 export interface LakeAccountingResult {
 	basins: BasinLakeAccounting[];
 	byId: Map<string, BasinLakeAccounting>;
-	tileLakeDepth: Float32Array;
+	tileLakeDepth: Array<number | undefined>;
 	tileLakeBasinId: string[];
 	lakeTileCount: number;
 }
@@ -568,7 +568,7 @@ export const deriveLakeAccounting = (
 		});
 	}
 
-	const tileLakeDepth = new Float32Array(shape.size);
+	const tileLakeDepth = new Array<number | undefined>(shape.size).fill(undefined);
 	const tileLakeBasinId = new Array<string>(shape.size).fill("");
 	const hasTileWaterSurface = new Uint8Array(shape.size);
 	for (let tileId = 0; tileId < shape.size; tileId += 1) {
@@ -608,7 +608,12 @@ export const deriveLakeAccounting = (
 	}
 	let lakeTileCount = 0;
 	for (let tileId = 0; tileId < shape.size; tileId += 1) {
-		if (hasTileWaterSurface[tileId] === 1 && tileLakeDepth[tileId] > 0) {
+		const depth = tileLakeDepth[tileId];
+		if (
+			hasTileWaterSurface[tileId] === 1 &&
+			typeof depth === "number" &&
+			depth > 0
+		) {
 			lakeTileCount += 1;
 		}
 	}

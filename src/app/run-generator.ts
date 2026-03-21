@@ -227,8 +227,9 @@ function buildTileHydrologyPayload(
 		tileStreamGeometry.incomingDirections.length > 0;
 	const lakeMask = hydrology.maps.lakeMask[index] === 1;
 	const lakeBasinId = hydrology.lakeAccounting.tileLakeBasinId[index] || null;
-	const waterDepth = hydrology.lakeAccounting.tileLakeDepth[index] ?? 0;
-	const hasWaterSurface = lakeBasinId !== null;
+	const waterDepth = hydrology.lakeAccounting.tileLakeDepth[index];
+	const hasWaterSurface =
+		lakeBasinId !== null && typeof waterDepth === "number";
 	return {
 		fd: hydrology.maps.fd[index],
 		fa: hydrology.maps.fa[index],

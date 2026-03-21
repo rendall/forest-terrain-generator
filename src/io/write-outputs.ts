@@ -109,9 +109,10 @@ function buildHydrologyDebugTiles(
 				: null;
 		const waterDepth =
 			inRange && lakeAccounting
-				? (lakeAccounting.tileLakeDepth[index] ?? 0)
-				: 0;
-		const hasWaterSurface = inRange && lakeBasinId !== null;
+				? lakeAccounting.tileLakeDepth[index]
+				: undefined;
+		const hasWaterSurface =
+			inRange && lakeBasinId !== null && typeof waterDepth === "number";
 		const hydrology = {
 			fd: inRange ? hydrologyMaps.fd[index] : null,
 			fa: inRange ? hydrologyMaps.fa[index] : null,
