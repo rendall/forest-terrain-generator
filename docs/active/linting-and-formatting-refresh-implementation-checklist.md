@@ -60,7 +60,7 @@ Source plan: `docs/active/linting-and-formatting-refresh-plan.md`
     - "Lint- and format-driven cleanup in this plan does not change observable generator or CLI behavior" (`Binding Invariants`)
   - Validation: `npm run lint`; targeted existing tests for touched source when needed
 
-- [ ] `LFR-TST-01` [test] Resolve remaining manual Biome diagnostics in `test/unit/**` and `test/integration/**` with behavior-preserving test-file cleanup only, without changing test intent or expanding scope.
+- [x] `LFR-TST-01` [test] Resolve remaining manual Biome diagnostics in `test/unit/**` and `test/integration/**` with behavior-preserving test-file cleanup only, without changing test intent or expanding scope.
   - Depends on: `LFR-LINT-01`.
   - Trace:
     - "Apply behavior-preserving source cleanups required to make the scoped Biome lint pass meaningful and green." (`In Scope`)

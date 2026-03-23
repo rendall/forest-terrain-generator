@@ -41,7 +41,7 @@ const runByK = () => {
 describe("lake fill ordering characterization", () => {
 	it("captures current accounting contract and partial multi-level behavior", () => {
 		const results = runByK();
-		results.forEach(({ k, byId }) => {
+		results.forEach(({ k: _k, byId }) => {
 			const basins = Array.from(byId.values());
 			basins.forEach((basin) => {
 				const childOverflow = basin.childIds.reduce(
