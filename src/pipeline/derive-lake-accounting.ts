@@ -578,7 +578,9 @@ export const deriveLakeAccounting = (
 		while (candidateBasinId !== "") {
 			const accounting = byId.get(candidateBasinId);
 			if (!accounting) {
-				break;
+				throw new Error(
+					`Lake accounting input error: tile ${tileId} references self basin "${candidateBasinId}", but that basin is not present in basinFeatures. This usually means the replay tile featureIds are stale relative to the basin topology.`,
+				);
 			}
 			if (
 				typeof accounting.waterSurfaceH === "number" &&
