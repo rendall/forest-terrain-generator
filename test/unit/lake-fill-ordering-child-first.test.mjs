@@ -7,10 +7,7 @@ const run = (k) => {
 	return deriveHydrology(
 		fixture.shape,
 		fixture.h,
-		{
-			basinFeatures: fixture.basinFeatures,
-			tileFeatureIds: fixture.tileFeatureIds,
-		},
+		{ basinFeatures: fixture.basinFeatures, tileFeatureIds: fixture.tileFeatureIds },
 		{
 			hydrology: {
 				sinkMode: "strict_local",

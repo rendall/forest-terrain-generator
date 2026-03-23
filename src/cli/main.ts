@@ -132,9 +132,7 @@ const assertHydrologyVizMode = (
 const program = new Command();
 program
 	.name("forest-terrain-generator")
-	.description(
-		"Deterministic wilderness terrain and location-description pipeline CLI",
-	)
+	.description("Deterministic wilderness terrain and location-description pipeline CLI")
 	.version("1.0.0")
 	.showSuggestionAfterError(true)
 	.showHelpAfterError()
@@ -202,10 +200,7 @@ program
 		"Render a topography image from terrain envelope JSON (PGM by default; PPM when overlays are used)",
 	)
 	.requiredOption("--input-file <path>", "Path to source terrain envelope JSON")
-	.requiredOption(
-		"--output-file <path>",
-		"Path to output image file (.pgm or .ppm)",
-	)
+	.requiredOption("--output-file <path>", "Path to output image file (.pgm or .ppm)")
 	.option(
 		"--layer <layer>",
 		"Topography layer to render (h|r|v|landforms)",

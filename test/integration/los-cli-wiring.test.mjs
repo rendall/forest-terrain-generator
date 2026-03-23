@@ -38,9 +38,7 @@ function runCli(entry, args = []) {
 }
 
 async function makeTempDir() {
-	const dir = await mkdtemp(
-		join(tmpdir(), "forest-terrain-generator-los-cli-"),
-	);
+	const dir = await mkdtemp(join(tmpdir(), "forest-terrain-generator-los-cli-"));
 	tempDirs.push(dir);
 	return dir;
 }

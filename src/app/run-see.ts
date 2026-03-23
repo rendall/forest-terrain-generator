@@ -131,10 +131,7 @@ interface SeeGridData {
 }
 
 function blendChannel(base: number, tint: number, alpha: number): number {
-	return Math.max(
-		0,
-		Math.min(255, Math.round(base * (1 - alpha) + tint * alpha)),
-	);
+	return Math.max(0, Math.min(255, Math.round(base * (1 - alpha) + tint * alpha)));
 }
 
 function hasOverlay(
@@ -239,22 +236,25 @@ function buildSeeGridData(
 			const structure = isJsonObject(topography.structure)
 				? topography.structure
 				: null;
-			const hasModernFeatureSignals = hasActiveFeatureArray || hasFeatureArray;
+			const hasModernFeatureSignals =
+				hasActiveFeatureArray || hasFeatureArray;
 			if (!hasModernFeatureSignals && !structure) {
 				throw new InputValidationError(
 					`Tile (${x},${y}) is missing required feature IDs for --layer landforms (expected tile.activeFeatureIds/featureIds; legacy fallback: topography.structure).`,
 				);
 			}
-			const basinLike = hasActiveFeatureArray
-				? activeFeatureIds.some((id) => id.startsWith("b_"))
-				: hasFeatureArray
-					? featureIds.some((id) => id.startsWith("b_"))
-					: structure?.basinLike === true;
-			const ridgeLike = hasActiveFeatureArray
-				? activeFeatureIds.some((id) => id.startsWith("p_"))
-				: hasFeatureArray
-					? featureIds.some((id) => id.startsWith("p_"))
-					: structure?.ridgeLike === true;
+			const basinLike =
+				hasActiveFeatureArray
+					? activeFeatureIds.some((id) => id.startsWith("b_"))
+					: hasFeatureArray
+						? featureIds.some((id) => id.startsWith("b_"))
+						: structure?.basinLike === true;
+			const ridgeLike =
+				hasActiveFeatureArray
+					? activeFeatureIds.some((id) => id.startsWith("p_"))
+					: hasFeatureArray
+						? featureIds.some((id) => id.startsWith("p_"))
+						: structure?.ridgeLike === true;
 			if (basinLike && ridgeLike) {
 				basePixels[index] = 160;
 			} else if (basinLike) {
@@ -276,9 +276,7 @@ function buildSeeGridData(
 
 		const hydrology = isJsonObject(tile.hydrology) ? tile.hydrology : null;
 		if (hydrology && hasOverlay(overlays, "water")) {
-			waterDepthByIndex[index] = clamp01(
-				readFiniteNumber(hydrology.waterDepth) ?? 0,
-			);
+			waterDepthByIndex[index] = clamp01(readFiniteNumber(hydrology.waterDepth) ?? 0);
 		}
 		if (hydrology && hasOverlay(overlays, "stream")) {
 			const stream = isJsonObject(hydrology.stream) ? hydrology.stream : null;
@@ -287,8 +285,12 @@ function buildSeeGridData(
 				? stream.incomingDirections
 				: [];
 			const hasOutgoingDirection =
-				outgoingDirection !== null && typeof outgoingDirection !== "undefined";
-			if (hasOutgoingDirection || incomingDirections.length > 0) {
+				outgoingDirection !== null &&
+				typeof outgoingDirection !== "undefined";
+			if (
+				hasOutgoingDirection ||
+				incomingDirections.length > 0
+			) {
 				streamMask[index] = 1;
 			}
 		}
@@ -349,8 +351,7 @@ export async function runSee(request: SeeRequest): Promise<void> {
 	}
 
 	assertLayer(request.args.layer);
-	const layer =
-		request.args.layer === "landscape" ? "landforms" : request.args.layer;
+	const layer = request.args.layer === "landscape" ? "landforms" : request.args.layer;
 	const overlays = request.args.overlays;
 
 	const envelope = await readTerrainEnvelopeFile(inputFilePath);

@@ -18,16 +18,7 @@ afterEach(() => {
 
 describe("derive-passages scaffolding", () => {
 	it("exports stable 8-direction ordering and geometry deltas", () => {
-		expect(DIRECTION8_ORDER).toEqual([
-			"E",
-			"SE",
-			"S",
-			"SW",
-			"W",
-			"NW",
-			"N",
-			"NE",
-		]);
+		expect(DIRECTION8_ORDER).toEqual(["E", "SE", "S", "SW", "W", "NW", "N", "NE"]);
 		expect(DIRECTION8_DELTAS.N).toEqual({ dx: 0, dy: -1 });
 		expect(DIRECTION8_DELTAS.SE).toEqual({ dx: 1, dy: 1 });
 		expect(PASSAGE_MAX_STEP_UP).toBe(0.05);
@@ -121,9 +112,7 @@ describe("derive-passages scaffolding", () => {
 
 	it("resolves neighbors without scanning the full tile array", () => {
 		vi.spyOn(Array.prototype, "find").mockImplementation(() => {
-			throw new Error(
-				"derivePassages must not use Array.prototype.find for neighbor lookup",
-			);
+			throw new Error("derivePassages must not use Array.prototype.find for neighbor lookup");
 		});
 
 		const shape = createGridShape(2, 2);
@@ -131,4 +120,5 @@ describe("derive-passages scaffolding", () => {
 
 		expect(() => derivePassages(shape, h)).not.toThrow();
 	});
+
 });

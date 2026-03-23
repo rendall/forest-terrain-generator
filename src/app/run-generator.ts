@@ -308,9 +308,7 @@ function buildReplayEnvelope(
 				elevationMeters: elevation.h0 + replayH[index] * elevationSpan,
 			},
 			hydrology: tileHydrology,
-			...(Object.values(passagesByTile[index]).some(
-				(reason) => reason !== "out_of_bounds",
-			)
+			...(Object.values(passagesByTile[index]).some((reason) => reason !== "out_of_bounds")
 				? { passages: passagesByTile[index] }
 				: {}),
 		});
@@ -493,9 +491,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 				v: topography.v[i],
 			},
 			hydrology: buildTileHydrologyPayload(hydrology, streamNetwork, i),
-			...(Object.values(passages[i]).some(
-				(reason) => reason !== "out_of_bounds",
-			)
+			...(Object.values(passages[i]).some((reason) => reason !== "out_of_bounds")
 				? { passages: passages[i] }
 				: {}),
 		});

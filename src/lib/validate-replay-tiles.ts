@@ -123,7 +123,9 @@ export const validateReplayTopographyGrid = (
 		const missingX =
 			missingGridIndex >= 0 ? missingGridIndex % shape.width : -1;
 		const missingY =
-			missingGridIndex >= 0 ? Math.floor(missingGridIndex / shape.width) : -1;
+			missingGridIndex >= 0
+				? Math.floor(missingGridIndex / shape.width)
+				: -1;
 		const missingHint =
 			missingGridIndex >= 0
 				? `, missingCoordinate=(${missingX},${missingY})`

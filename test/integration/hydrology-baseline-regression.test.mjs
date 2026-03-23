@@ -58,13 +58,13 @@ describe("hydrology baseline regression", () => {
 
 		expect(result.code).toBe(0);
 		const payload = JSON.parse(result.stdout);
-		expect(payload.stats).toMatchObject({
-			hydrologyMapsSource: "debug_artifacts",
-			tileCount: 1024,
-			sinkCount: 23,
-			fa: {
-				max: 130,
-				p95: 27,
+			expect(payload.stats).toMatchObject({
+				hydrologyMapsSource: "debug_artifacts",
+				tileCount: 1024,
+				sinkCount: 23,
+				fa: {
+					max: 130,
+					p95: 27,
 			},
 			fdHistogram: {
 				255: 23,
@@ -78,11 +78,11 @@ describe("hydrology baseline regression", () => {
 		});
 		expect(payload.statsFilePath).toBe(statsFile);
 		await expect(stat(statsFile)).resolves.toBeDefined();
-		const writtenStats = JSON.parse(await readFile(statsFile, "utf8"));
-		expect(writtenStats).toMatchObject({
-			hydrologyMapsSource: "debug_artifacts",
-			tileCount: 1024,
-			sinkCount: 23,
+			const writtenStats = JSON.parse(await readFile(statsFile, "utf8"));
+			expect(writtenStats).toMatchObject({
+				hydrologyMapsSource: "debug_artifacts",
+				tileCount: 1024,
+				sinkCount: 23,
+			});
 		});
-	});
 });

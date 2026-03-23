@@ -85,8 +85,11 @@ const makeMembership = (size, basinFeatures) => {
 export const buildNestedSiblingBasinFixture = () => {
 	const shape = createGridShape(5, 5);
 	const h = new Float32Array([
-		0.95, 0.9, 0.88, 0.92, 0.95, 0.85, 0.2, 0.25, 0.45, 0.85, 0.83, 0.22, 0.35,
-		0.42, 0.84, 0.82, 0.18, 0.33, 0.38, 0.83, 0.81, 0.16, 0.19, 0.8, 0.81,
+		0.95, 0.9, 0.88, 0.92, 0.95,
+		0.85, 0.2, 0.25, 0.45, 0.85,
+		0.83, 0.22, 0.35, 0.42, 0.84,
+		0.82, 0.18, 0.33, 0.38, 0.83,
+		0.81, 0.16, 0.19, 0.8, 0.81,
 	]);
 
 	const basinFeatures = [
@@ -254,12 +257,8 @@ export const assertFixtureMembershipInvariants = (
 		}
 	}
 	const sameSize = expandedRoot.size === allTiles.size;
-	const sameMembers = Array.from(expandedRoot).every((tileId) =>
-		allTiles.has(tileId),
-	);
+	const sameMembers = Array.from(expandedRoot).every((tileId) => allTiles.has(tileId));
 	if (!sameSize || !sameMembers) {
-		throw new Error(
-			"root expanded coverage does not match fixture membership scope",
-		);
+		throw new Error("root expanded coverage does not match fixture membership scope");
 	}
 };

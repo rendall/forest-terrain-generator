@@ -78,9 +78,7 @@ describe("lake fill ordering characterization", () => {
 				return false;
 			}
 			const hasUnfilledChild = children.some((child) => !child.isFilled);
-			return (
-				hasUnfilledChild && parent.totalInflow > 0 && parent.fillRatio === 0
-			);
+			return hasUnfilledChild && parent.totalInflow > 0 && parent.fillRatio === 0;
 		});
 		expect(hasParentBlockedByUnfilledChild).toBe(true);
 	});

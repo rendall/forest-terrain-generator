@@ -103,9 +103,7 @@ try {
 			overflowConnectorTileIds: options.overflow
 				? trace.overflowConnectorTileIds
 				: [],
-			overflowCrossingEdges: options.overflow
-				? trace.overflowCrossingEdges
-				: [],
+			overflowCrossingEdges: options.overflow ? trace.overflowCrossingEdges : [],
 		});
 	}
 } catch (error: unknown) {

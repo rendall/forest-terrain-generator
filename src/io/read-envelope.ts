@@ -259,19 +259,19 @@ export async function readTerrainEnvelopeFile(
 		assertTileShape(tile, inputFilePath, i);
 	}
 
-	return {
-		meta: {
-			specVersion: parsed.meta.specVersion,
-		},
-		...(hasRegions
-			? { regions: parsedRegions as unknown as RegionSummary[] }
-			: {}),
-		...(hasFeatures
-			? { features: parsedFeatures as unknown as TerrainFeatureCollection }
-			: {}),
-		tiles: parsed.tiles as TerrainTile[],
-		...(hasParamOverrides
-			? { paramOverrides: parsedParamOverrides as JsonObject }
-			: {}),
-	};
+		return {
+			meta: {
+				specVersion: parsed.meta.specVersion,
+			},
+			...(hasRegions
+				? { regions: parsedRegions as unknown as RegionSummary[] }
+				: {}),
+			...(hasFeatures
+				? { features: parsedFeatures as unknown as TerrainFeatureCollection }
+				: {}),
+			tiles: parsed.tiles as TerrainTile[],
+			...(hasParamOverrides
+				? { paramOverrides: parsedParamOverrides as JsonObject }
+				: {}),
+		};
 }

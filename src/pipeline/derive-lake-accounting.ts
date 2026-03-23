@@ -449,9 +449,7 @@ export const deriveLakeAccounting = (
 		// presentedVolume is the incoming/pre-spill volume that reaches this basin
 		// once strict child-connect gating is applied.
 		const presentedVolume =
-			excessWetnessScale > CHILD_CONNECT_EPS
-				? excessWetnessScale * upwardRate
-				: 0;
+			excessWetnessScale > CHILD_CONNECT_EPS ? excessWetnessScale * upwardRate : 0;
 		const mergeH =
 			typeof basin.mergeH === "number" && Number.isFinite(basin.mergeH)
 				? basin.mergeH
@@ -570,9 +568,7 @@ export const deriveLakeAccounting = (
 		});
 	}
 
-	const tileLakeDepth = new Array<number | undefined>(shape.size).fill(
-		undefined,
-	);
+	const tileLakeDepth = new Array<number | undefined>(shape.size).fill(undefined);
 	const tileLakeBasinId = new Array<string>(shape.size).fill("");
 	const hasTileWaterSurface = new Uint8Array(shape.size);
 	for (let tileId = 0; tileId < shape.size; tileId += 1) {
@@ -606,18 +602,14 @@ export const deriveLakeAccounting = (
 		}
 		let governingLevel = byId.get(governingBasinId)?.waterSurfaceH;
 		if (
-			(typeof governingLevel !== "number" ||
-				!Number.isFinite(governingLevel)) &&
+			(typeof governingLevel !== "number" || !Number.isFinite(governingLevel)) &&
 			highestWetBasinId !== "" &&
 			highestWetBasinId !== governingBasinId
 		) {
 			governingBasinId = highestWetBasinId;
 			governingLevel = byId.get(governingBasinId)?.waterSurfaceH;
 		}
-		if (
-			typeof governingLevel !== "number" ||
-			!Number.isFinite(governingLevel)
-		) {
+		if (typeof governingLevel !== "number" || !Number.isFinite(governingLevel)) {
 			continue;
 		}
 		tileLakeDepth[tileId] = governingLevel - (h[tileId] ?? 0);

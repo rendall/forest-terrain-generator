@@ -11,12 +11,8 @@ import {
 const buildSyntheticLakeCase = () => {
 	const shape = createGridShape(3, 2);
 	const h = new Float32Array([
-		0.1,
-		0.3,
-		0.05, // y=0
-		0.15,
-		0.35,
-		0.4, // y=1
+		0.1, 0.3, 0.05, // y=0
+		0.15, 0.35, 0.4, // y=1
 	]);
 	const basinFeatures = [
 		makeBasinNode({
@@ -203,7 +199,13 @@ const assertLessThan = (actual, threshold, label, details = {}) => {
 	}
 };
 
-const assertCloseTo = (actual, expected, tolerance, label, details = {}) => {
+const assertCloseTo = (
+	actual,
+	expected,
+	tolerance,
+	label,
+	details = {},
+) => {
 	if (Math.abs(actual - expected) > tolerance) {
 		throw new Error(
 			`${label} expected ${expected} +/- ${tolerance}, received ${String(actual)}.\n${formatDetails(details)}`,
@@ -216,8 +218,7 @@ const compareDepthForMonotonicity = (depth) =>
 
 describe("lake accounting from production hydrology pipeline", () => {
 	it("ignores out-of-range direct and child basin tileIds in accounting", () => {
-		const { shape, h, basinFeatures, tileFeatureIds } =
-			buildSyntheticLakeCase();
+		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
 		const baseline = deriveHydrology(
 			shape,
 			h,
@@ -264,10 +265,7 @@ describe("lake accounting from production hydrology pipeline", () => {
 			baselineChild.spillCapacity,
 			6,
 		);
-		expect(withOutOfRangeChild.fillRatio).toBeCloseTo(
-			baselineChild.fillRatio,
-			6,
-		);
+		expect(withOutOfRangeChild.fillRatio).toBeCloseTo(baselineChild.fillRatio, 6);
 		expect(withOutOfRangeChild.role).toBe(baselineChild.role);
 		expect(withOutOfRangeParent.totalInflow).toBeCloseTo(
 			baselineParent.totalInflow,
@@ -276,8 +274,7 @@ describe("lake accounting from production hydrology pipeline", () => {
 	});
 
 	it("keeps deterministic behavior with out-of-range basin tileIds", () => {
-		const { shape, h, basinFeatures, tileFeatureIds } =
-			buildSyntheticLakeCase();
+		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
 		const invalidFeatures = basinFeatures.map((basin) =>
 			basin.id === "b_child"
 				? { ...basin, tileIds: [0, 99999] }
@@ -310,8 +307,7 @@ describe("lake accounting from production hydrology pipeline", () => {
 	});
 
 	it("classifies a supplied leaf basin as overflow carrier and computes accounting", () => {
-		const { shape, h, basinFeatures, tileFeatureIds } =
-			buildSyntheticLakeCase();
+		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
 		const result = deriveHydrology(
 			shape,
 			h,
@@ -357,8 +353,7 @@ describe("lake accounting from production hydrology pipeline", () => {
 	});
 
 	it("keeps the same basin as a sink when wetnessScale is zero", () => {
-		const { shape, h, basinFeatures, tileFeatureIds } =
-			buildSyntheticLakeCase();
+		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
 		const result = deriveHydrology(
 			shape,
 			h,
@@ -392,8 +387,7 @@ describe("lake accounting from production hydrology pipeline", () => {
 	});
 
 	it("throws when a basin references an unknown child id", () => {
-		const { shape, h, basinFeatures, tileFeatureIds } =
-			buildSyntheticLakeCase();
+		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
 		const parent = basinFeatures.find((basin) => basin.id === "b_parent");
 		expect(parent).toBeDefined();
 		parent.childIds = ["b_child", "b_missing"];
@@ -416,11 +410,8 @@ describe("lake accounting from production hydrology pipeline", () => {
 	});
 
 	it("throws a friendly error when tile self-basin metadata is stale", () => {
-		const { shape, h, basinFeatures, tileFeatureIds } =
-			buildSyntheticLakeCase();
-		const staleTileFeatureIds = tileFeatureIds.map((featureIds) => [
-			...featureIds,
-		]);
+		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
+		const staleTileFeatureIds = tileFeatureIds.map((featureIds) => [...featureIds]);
 		staleTileFeatureIds[0] = ["b_missing"];
 
 		expect(() =>
@@ -475,10 +466,8 @@ describe("lake accounting from production hydrology pipeline", () => {
 	it("keeps parent dry at child-connect threshold even with parent external inflow", () => {
 		const shape = createGridShape(2, 2);
 		const h = new Float32Array([
-			0.6,
-			0.6, // y=0
-			0.1,
-			0.2, // y=1
+			0.6, 0.6, // y=0
+			0.1, 0.2, // y=1
 		]);
 		const basinFeatures = [
 			makeBasinNode({
@@ -580,10 +569,8 @@ describe("lake accounting from production hydrology pipeline", () => {
 	it("starts parent volume from strict excess beyond child-connect threshold", () => {
 		const shape = createGridShape(2, 2);
 		const h = new Float32Array([
-			0.6,
-			0.6, // y=0
-			0.1,
-			0.2, // y=1
+			0.6, 0.6, // y=0
+			0.1, 0.2, // y=1
 		]);
 		const basinFeatures = [
 			makeBasinNode({
@@ -648,8 +635,7 @@ describe("lake accounting from production hydrology pipeline", () => {
 		expect(parent).toBeDefined();
 		const deltaK = kAboveConnect - kAtConnect;
 		// In this fixture, parent upward rate is parent external (2) + child external (1).
-		const expectedParentV =
-			deltaK * (parent.externalInflow + child.externalInflow);
+		const expectedParentV = deltaK * (parent.externalInflow + child.externalInflow);
 		expect(parent.allocatedVolume).toBeCloseTo(expectedParentV, 6);
 		const legacyFullOnsetVolume =
 			kAboveConnect * parent.externalInflow + child.overflowExcess;
@@ -664,8 +650,7 @@ describe("lake accounting from production hydrology pipeline", () => {
 	});
 
 	it("keeps retained basin volume capped while overflow tracks excess", () => {
-		const { shape, h, basinFeatures, tileFeatureIds } =
-			buildSyntheticLakeCase();
+		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
 		const result = deriveHydrology(
 			shape,
 			h,
@@ -679,9 +664,7 @@ describe("lake accounting from production hydrology pipeline", () => {
 		);
 		result.lakeAccounting.basins.forEach((basin) => {
 			expect(basin.allocatedVolume).toBeGreaterThanOrEqual(0);
-			expect(basin.allocatedVolume).toBeLessThanOrEqual(
-				basin.spillCapacity + 1e-9,
-			);
+			expect(basin.allocatedVolume).toBeLessThanOrEqual(basin.spillCapacity + 1e-9);
 			expect(basin.fillRatio).toBeGreaterThanOrEqual(0);
 			expect(basin.fillRatio).toBeLessThanOrEqual(1 + 1e-9);
 			if (basin.spillCapacity > 0) {
@@ -834,18 +817,12 @@ describe("lake accounting from production hydrology pipeline", () => {
 				waterSurfaceH: parent.waterSurfaceH ?? null,
 				mergeH: parent.mergeH,
 			});
-			assertCloseTo(
-				parent.waterSurfaceH,
-				parent.mergeH,
-				1e-6,
-				"b_A.waterSurfaceH",
-				{
-					wetnessScale: 0.11,
-					basinId: parent.id,
-					isFilled: parent.isFilled,
-					fillRatio: parent.fillRatio,
-				},
-			);
+			assertCloseTo(parent.waterSurfaceH, parent.mergeH, 1e-6, "b_A.waterSurfaceH", {
+				wetnessScale: 0.11,
+				basinId: parent.id,
+				isFilled: parent.isFilled,
+				fillRatio: parent.fillRatio,
+			});
 		});
 	});
 
@@ -894,7 +871,8 @@ describe("lake accounting from production hydrology pipeline", () => {
 					if (
 						basin.isFilled &&
 						typeof basin.mergeH === "number" &&
-						Math.abs((basin.waterSurfaceH ?? Number.NaN) - basin.mergeH) > 1e-6
+						Math.abs((basin.waterSurfaceH ?? Number.NaN) - basin.mergeH) >
+							1e-6
 					) {
 						fullViolations.push({
 							wetnessScale,
@@ -990,8 +968,7 @@ describe("lake accounting from production hydrology pipeline", () => {
 				basins
 					.filter(
 						(basin) =>
-							typeof basin.waterSurfaceH === "number" &&
-							basin.isFilled === false,
+							typeof basin.waterSurfaceH === "number" && basin.isFilled === false,
 					)
 					.forEach((basin) => {
 						descendantsOf(basin.id).forEach((descendantId) => {
@@ -1127,11 +1104,7 @@ describe("lake accounting from production hydrology pipeline", () => {
 				for (let tileId = 0; tileId < fixture.shape.size; tileId += 1) {
 					const prevBasinId = previous.tileLakeBasinId[tileId] ?? "";
 					const currBasinId = current.tileLakeBasinId[tileId] ?? "";
-					if (
-						prevBasinId === "" ||
-						currBasinId === "" ||
-						prevBasinId === currBasinId
-					) {
+					if (prevBasinId === "" || currBasinId === "" || prevBasinId === currBasinId) {
 						continue;
 					}
 					if (!isAncestorOrSame(currBasinId, prevBasinId)) {
@@ -1182,10 +1155,7 @@ describe("lake accounting from production hydrology pipeline", () => {
 						});
 					}
 				}
-				if (
-					current.totalStandingWater + TEST_EPS <
-					previous.totalStandingWater
-				) {
+				if (current.totalStandingWater + TEST_EPS < previous.totalStandingWater) {
 					totalViolations.push({
 						fromWetnessScale: previous.wetnessScale,
 						toWetnessScale: current.wetnessScale,

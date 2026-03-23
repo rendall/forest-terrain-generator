@@ -149,7 +149,9 @@ const parsePassability = (value: unknown): PassabilityByDir | null => {
 	return out as PassabilityByDir;
 };
 
-const parseFlowDirection = (value: unknown): Direction | "NONE" | null => {
+const parseFlowDirection = (
+	value: unknown,
+): Direction | "NONE" | null => {
 	const code = asInteger(value);
 	if (code === null) {
 		return null;
@@ -164,7 +166,10 @@ const collectObstacles = (featureFlags: unknown): Obstacle[] => {
 
 	const out: Obstacle[] = [];
 	for (const entry of featureFlags) {
-		if (typeof entry === "string" && VALID_OBSTACLES.has(entry as Obstacle)) {
+		if (
+			typeof entry === "string" &&
+			VALID_OBSTACLES.has(entry as Obstacle)
+		) {
 			out.push(entry as Obstacle);
 		}
 	}
@@ -214,11 +219,7 @@ const collectMaxLeafTileId = (
 			continue;
 		}
 		for (const tileId of node.tileIds) {
-			if (
-				typeof tileId === "number" &&
-				Number.isInteger(tileId) &&
-				tileId >= 0
-			) {
+			if (typeof tileId === "number" && Number.isInteger(tileId) && tileId >= 0) {
 				maxTileId = Math.max(maxTileId, tileId);
 			}
 		}
@@ -299,13 +300,17 @@ export const buildDescriptionFacts = (
 			? tile.featureIds.filter((id): id is string => typeof id === "string")
 			: [];
 		if (peakLeafByIndex[tileIndex] === "") {
-			const peakId = featureIds.filter((id) => id.startsWith("p_")).sort()[0];
+			const peakId = featureIds
+				.filter((id) => id.startsWith("p_"))
+				.sort()[0];
 			if (peakId) {
 				peakLeafByIndex[tileIndex] = peakId;
 			}
 		}
 		if (basinLeafByIndex[tileIndex] === "") {
-			const basinId = featureIds.filter((id) => id.startsWith("b_")).sort()[0];
+			const basinId = featureIds
+				.filter((id) => id.startsWith("b_"))
+				.sort()[0];
 			if (basinId) {
 				basinLeafByIndex[tileIndex] = basinId;
 			}
@@ -320,7 +325,10 @@ export const buildDescriptionFacts = (
 			continue;
 		}
 		const topography = isJsonObject(tile.topography) ? tile.topography : {};
-		elevationByCoord.set(tileKey(x, y), asFiniteNumber(topography.h, 0));
+		elevationByCoord.set(
+			tileKey(x, y),
+			asFiniteNumber(topography.h, 0),
+		);
 	}
 
 	return envelope.tiles.map((tile, fallbackIndex) => {
@@ -363,8 +371,7 @@ export const buildDescriptionFacts = (
 		const basinLeafId = basinLeafIdRaw.length > 0 ? basinLeafIdRaw : null;
 
 		const lakeBasinIdRaw =
-			typeof hydrology.lakeBasinId === "string" &&
-			hydrology.lakeBasinId.length > 0
+			typeof hydrology.lakeBasinId === "string" && hydrology.lakeBasinId.length > 0
 				? hydrology.lakeBasinId
 				: "";
 		const lakeBasinId = lakeBasinIdRaw.length > 0 ? lakeBasinIdRaw : null;

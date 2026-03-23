@@ -47,7 +47,10 @@ async function makeTempDir() {
 	return dir;
 }
 
-function createReplaySourceEnvelope({ tiles, paramOverrides } = {}) {
+function createReplaySourceEnvelope({
+	tiles,
+	paramOverrides,
+} = {}) {
 	return {
 		meta: { specVersion: "forest-terrain-v1" },
 		features: {
@@ -170,9 +173,7 @@ function parseNetpbm(imageBuffer) {
 	expect(headerEnd).toBeGreaterThan(0);
 	const header = imageBuffer.subarray(0, headerEnd + 5).toString("ascii");
 	const [magic, dimensions] = header.trim().split("\n");
-	const [width, height] = dimensions
-		.split(" ")
-		.map((raw) => Number.parseInt(raw, 10));
+	const [width, height] = dimensions.split(" ").map((raw) => Number.parseInt(raw, 10));
 	return {
 		magic,
 		width,
@@ -237,46 +238,46 @@ describe("CLI command wiring and contract failures", () => {
 				{
 					meta: { specVersion: "forest-terrain-v1" },
 					tiles: [
-						{
-							x: 0,
-							y: 0,
-							activeFeatureIds: ["b_00001"],
-							topography: {
-								h: 0.1,
-								r: 0.2,
-								v: 0.3,
+							{
+								x: 0,
+								y: 0,
+								activeFeatureIds: ["b_00001"],
+								topography: {
+									h: 0.1,
+									r: 0.2,
+									v: 0.3,
+								},
 							},
-						},
-						{
-							x: 1,
-							y: 0,
-							activeFeatureIds: ["p_00001"],
-							topography: {
-								h: 0.2,
-								r: 0.3,
-								v: 0.4,
+							{
+								x: 1,
+								y: 0,
+								activeFeatureIds: ["p_00001"],
+								topography: {
+									h: 0.2,
+									r: 0.3,
+									v: 0.4,
+								},
 							},
-						},
-						{
-							x: 0,
-							y: 1,
-							activeFeatureIds: [],
-							topography: {
-								h: 0.3,
-								r: 0.4,
-								v: 0.5,
+							{
+								x: 0,
+								y: 1,
+								activeFeatureIds: [],
+								topography: {
+									h: 0.3,
+									r: 0.4,
+									v: 0.5,
+								},
 							},
-						},
-						{
-							x: 1,
-							y: 1,
-							activeFeatureIds: ["b_00002", "p_00002"],
-							topography: {
-								h: 0.4,
-								r: 0.5,
-								v: 0.6,
+							{
+								x: 1,
+								y: 1,
+								activeFeatureIds: ["b_00002", "p_00002"],
+								topography: {
+									h: 0.4,
+									r: 0.5,
+									v: 0.6,
+								},
 							},
-						},
 					],
 				},
 				null,
@@ -381,7 +382,18 @@ describe("CLI command wiring and contract failures", () => {
 		expect(image.width).toBe(2);
 		expect(image.height).toBe(2);
 		expect(image.pixels).toEqual([
-			51, 51, 51, 51, 51, 179, 0, 0, 255, 204, 204, 204,
+			51,
+			51,
+			51,
+			51,
+			51,
+			179,
+			0,
+			0,
+			255,
+			204,
+			204,
+			204,
 		]);
 	});
 
@@ -409,7 +421,18 @@ describe("CLI command wiring and contract failures", () => {
 		const image = parseNetpbm(await readFile(imageFile));
 		expect(image.magic).toBe("P6");
 		expect(image.pixels).toEqual([
-			153, 153, 26, 179, 179, 51, 153, 153, 153, 204, 204, 204,
+			153,
+			153,
+			26,
+			179,
+			179,
+			51,
+			153,
+			153,
+			153,
+			204,
+			204,
+			204,
 		]);
 	});
 
@@ -437,7 +460,18 @@ describe("CLI command wiring and contract failures", () => {
 		const image = parseNetpbm(await readFile(imageFile));
 		expect(image.magic).toBe("P6");
 		expect(image.pixels).toEqual([
-			153, 153, 26, 153, 153, 90, 0, 0, 255, 204, 204, 204,
+			153,
+			153,
+			26,
+			153,
+			153,
+			90,
+			0,
+			0,
+			255,
+			204,
+			204,
+			204,
 		]);
 	});
 
@@ -787,15 +821,11 @@ describe("CLI command wiring and contract failures", () => {
 		expect(replayEnvelope.features.basins.length).toBeGreaterThan(0);
 		expect(Array.isArray(replayEnvelope.features.peaks)).toBe(true);
 		expect(
-			replayEnvelope.features.basins.some(
-				(basin) => basin.id === "stale_basin",
-			),
+			replayEnvelope.features.basins.some((basin) => basin.id === "stale_basin"),
 		).toBe(false);
 		expect(
 			replayEnvelope.tiles.every(
-				(tile) =>
-					Array.isArray(tile.featureIds) &&
-					!tile.featureIds.includes("stale_basin"),
+				(tile) => Array.isArray(tile.featureIds) && !tile.featureIds.includes("stale_basin"),
 			),
 		).toBe(true);
 		expect(replayEnvelope.paramOverrides).toEqual({
@@ -827,14 +857,10 @@ describe("CLI command wiring and contract failures", () => {
 			await readFile(join(outputDir, "topography.json"), "utf8"),
 		);
 		expect(
-			debugTopography.features.basins.some(
-				(basin) => basin.id === "stale_basin",
-			),
+			debugTopography.features.basins.some((basin) => basin.id === "stale_basin"),
 		).toBe(false);
 		expect(
-			debugTopography.tiles.every(
-				(tile) => tile.topography?.structure === undefined,
-			),
+			debugTopography.tiles.every((tile) => tile.topography?.structure === undefined),
 		).toBe(true);
 	});
 
@@ -936,9 +962,7 @@ describe("CLI command wiring and contract failures", () => {
 		const dir = await makeTempDir();
 		const sourceFile = join(dir, "source-envelope.json");
 		const outputDir = join(dir, "debug");
-		const tiles = createReplaySourceEnvelope().tiles.map((tile) => ({
-			...tile,
-		}));
+		const tiles = createReplaySourceEnvelope().tiles.map((tile) => ({ ...tile }));
 		delete tiles[3].topography.h;
 		await writeFile(
 			sourceFile,

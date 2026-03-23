@@ -7,9 +7,7 @@ import { readTerrainEnvelopeFile } from "../../src/io/read-envelope.js";
 const tempDirs = [];
 
 async function makeTempDir() {
-	const dir = await mkdtemp(
-		join(tmpdir(), "forest-terrain-generator-envelope-"),
-	);
+	const dir = await mkdtemp(join(tmpdir(), "forest-terrain-generator-envelope-"));
 	tempDirs.push(dir);
 	return dir;
 }

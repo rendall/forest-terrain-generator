@@ -35,10 +35,7 @@ function coordKey(x: number, y: number): string {
 	return `${x},${y}`;
 }
 
-function readTileCoordBiome(
-	tile: JsonObject,
-	tileIndex: number,
-): TileCoordBiome {
+function readTileCoordBiome(tile: JsonObject, tileIndex: number): TileCoordBiome {
 	const x = tile.x;
 	const y = tile.y;
 	if (
@@ -221,10 +218,7 @@ export function summarizeBiomeRegions(
 				`Region summary ${summary.id} has zero tiles, which violates determinism invariants.`,
 			);
 		}
-		if (
-			!touchesBoundary[summary.id] &&
-			externalNeighborIds[summary.id].size === 1
-		) {
+		if (!touchesBoundary[summary.id] && externalNeighborIds[summary.id].size === 1) {
 			const [parentRegionId] = [...externalNeighborIds[summary.id]];
 			summary.parentRegionId = parentRegionId;
 		}
