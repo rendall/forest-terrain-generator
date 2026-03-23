@@ -560,7 +560,10 @@ const buildContextFromEnvelope = async (
 			maps: derived.maps,
 			lakeAccountingBasins: derived.lakeAccounting.basins,
 			tileLakeBasinId: derived.lakeAccounting.tileLakeBasinId,
-			tileWaterDepth: Float32Array.from(derived.lakeAccounting.tileLakeDepth),
+			tileWaterDepth: Float32Array.from(
+				derived.lakeAccounting.tileLakeDepth,
+				(depth) => (typeof depth === "number" ? depth : Number.NaN),
+			),
 			tileHasWaterDepth: Uint8Array.from(
 				derived.lakeAccounting.tileLakeBasinId,
 				(id) => (id.length > 0 ? 1 : 0),
