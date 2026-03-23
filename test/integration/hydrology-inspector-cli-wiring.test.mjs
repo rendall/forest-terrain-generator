@@ -142,10 +142,11 @@ describe("hydrology-inspector CLI", () => {
 		expect(payload.hydrologyMapsSource).toBe("recomputed");
 		expect(payload.stats).toMatchObject({
 			sinkCount: expect.any(Number),
-			lakeTileCount: expect.any(Number),
+			standingSurfaceWaterTileCount: 0,
+			lakeTileCount: 0,
 			lakeDepth: {
-				max: expect.any(Number),
-				mean: expect.any(Number),
+				max: 0,
+				mean: 0,
 			},
 			basins: {
 				total: expect.any(Number),
