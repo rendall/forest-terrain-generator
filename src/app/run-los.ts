@@ -208,10 +208,7 @@ export async function runLos(request: LosRequest): Promise<LosResult> {
 		return [p.x, p.y, h[idx]];
 	});
 	for (let i = 1; i < line.length - 1; i += 1) {
-		const p = line[i];
-		if (!p) {
-			continue;
-		}
+		const p = line[i]!;
 		const distance = Math.hypot(p.x - x0, p.y - y0);
 		if (distance <= 0) {
 			continue;

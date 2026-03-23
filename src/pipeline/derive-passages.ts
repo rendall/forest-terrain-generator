@@ -140,7 +140,10 @@ export const derivePassages = (
 		DIRECTION8_ORDER.reduce<TilePassages>((passages, direction) => {
 			const reason = evaluateDirectionBlockReason(tile, direction, tiles);
 			if (reason !== null) {
-				passages[direction] = reason;
+				return {
+					...passages,
+					[direction]: reason,
+				};
 			}
 			return passages;
 		}, {}),

@@ -162,28 +162,19 @@ function assignMergeToChild(
 	if (node.mergeH === null) {
 		node.mergeH = mergeH;
 		node.persistence = Math.max(0, mergeH - node.birthH);
-		if (
-			typeof spillOutTileId === "number" &&
-			Number.isInteger(spillOutTileId)
-		) {
-			node.spillOutTileId = spillOutTileId;
+		if (Number.isInteger(spillOutTileId)) {
+			node.spillOutTileId = spillOutTileId!;
 		}
-		if (
-			typeof childSpillFromTileId === "number" &&
-			Number.isInteger(childSpillFromTileId)
-		) {
-			node.childSpillFromTileId = childSpillFromTileId;
+		if (Number.isInteger(childSpillFromTileId)) {
+			node.childSpillFromTileId = childSpillFromTileId!;
 		}
-		if (
-			typeof parentContactTileId === "number" &&
-			Number.isInteger(parentContactTileId)
-		) {
-			node.parentContactTileId = parentContactTileId;
+		if (Number.isInteger(parentContactTileId)) {
+			node.parentContactTileId = parentContactTileId!;
 		}
 	}
 }
 
-function _buildBasinFeatureTree(
+function buildBasinFeatureTree(
 	shape: GridShape,
 	h: Float32Array,
 	tileBasinMin: Int32Array,
@@ -501,17 +492,16 @@ function trimLeafNodesAtFirstMerge(
 	hEps: number,
 ): TopographicFeatureNode[] {
 	return nodes.map((node) => {
-		const mergeH = node.mergeH;
-		if (node.kind !== "leaf" || !node.tileIds || mergeH === null) {
+		if (node.kind !== "leaf" || !node.tileIds || node.mergeH === null) {
 			return cloneNode(node);
 		}
 
 		const filteredTileIds = node.tileIds.filter((tileIndex) => {
 			const tileH = h[tileIndex];
 			if (isBasin) {
-				return tileH + hEps < mergeH;
+				return tileH + hEps < node.mergeH!;
 			}
-			return tileH > mergeH + hEps;
+			return tileH > node.mergeH! + hEps;
 		});
 		const stats = recomputeNodeStatsFromTiles(shape, h, filteredTileIds);
 		return {
@@ -744,10 +734,7 @@ function collectConnectedComponents(
 		visited[start] = 1;
 		const component: number[] = [];
 		while (queue.length > 0) {
-			const tile = queue.pop();
-			if (tile === undefined) {
-				continue;
-			}
+			const tile = queue.pop()!;
 			component.push(tile);
 			const x = tile % shape.width;
 			const y = Math.floor(tile / shape.width);
@@ -1020,21 +1007,13 @@ export function deriveBasinStructure(
 				}
 			}
 
-			const [firstComponent] = component;
-			if (firstComponent === undefined) {
-				continue;
-			}
-			let componentRoot = firstComponent;
+			let componentRoot = component[0]!;
 			for (let i = 1; i < component.length; i += 1) {
-				const componentTile = component[i];
-				if (componentTile === undefined) {
-					continue;
-				}
 				componentRoot = unionBasinRootsNoSpill(
 					parent,
 					rootMeta,
 					componentRoot,
-					componentTile,
+					component[i]!,
 					config.hEps,
 				);
 				ownerByRoot[componentRoot] = ownerId;

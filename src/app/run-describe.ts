@@ -402,8 +402,10 @@ export function attachTileDescriptions(
 						}
 						return neighbor.followable.includes(token);
 					});
-					obj[token] = directionsForToken;
-					return obj;
+					return {
+						...obj,
+						[token]: directionsForToken,
+					};
 				}, {});
 				const adjacency: JsonObject = {};
 				for (const [token, directions] of Object.entries(adjacencyByToken)) {

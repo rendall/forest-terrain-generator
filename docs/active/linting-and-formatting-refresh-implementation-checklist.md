@@ -53,7 +53,7 @@ Source plan: `docs/active/linting-and-formatting-refresh-plan.md`
     - "The result should be a repo where formatting is automatic, lint output is reviewable" (`Plain-Language Intent`)
   - Validation: `npm run lint:fix`
 
-- [x] `LFR-SRC-01` [src] Resolve remaining manual Biome diagnostics in `src/**` with behavior-preserving code edits, including current hotspots such as `src/app/run-describe.ts`, `src/io/read-envelope.ts`, `src/pipeline/derive-topographic-structure.ts`, `src/lib/validate-replay-tiles.ts`, and related in-scope source files still reported after `LFR-LINT-01`.
+- [ ] `LFR-SRC-01` [src] Resolve remaining manual Biome diagnostics in `src/**` with behavior-preserving code edits, including current hotspots such as `src/app/run-describe.ts`, `src/io/read-envelope.ts`, `src/pipeline/derive-topographic-structure.ts`, `src/lib/validate-replay-tiles.ts`, and related in-scope source files still reported after `LFR-LINT-01`.
   - Depends on: `LFR-LINT-01`.
   - Trace:
     - "Any remaining source-level lint failures discovered after the mechanical format pass are fixed with behavior-preserving code changes." (`Acceptance Criteria`)
