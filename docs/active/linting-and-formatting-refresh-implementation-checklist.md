@@ -67,7 +67,7 @@ Source plan: `docs/active/linting-and-formatting-refresh-plan.md`
     - "Lint- and format-driven cleanup in this plan does not change observable generator or CLI behavior; existing typecheck and test validations still pass after the cleanup." (`Binding Invariants`)
   - Validation: `npm run lint`; `npm run test`
 
-- [ ] `LFR-SCR-02` [scripts] Resolve remaining manual Biome diagnostics in `scripts/*.mjs` while preserving current script behavior and keeping shell-script tooling out of scope for this pass.
+- [x] `LFR-SCR-02` [scripts] Resolve remaining manual Biome diagnostics in `scripts/*.mjs` while preserving current script behavior and keeping shell-script tooling out of scope for this pass.
   - Depends on: `LFR-LINT-01`.
   - Trace:
     - "Narrow lint and format scope to authored files such as `src`, `test`, `scripts`, and selected root config files." (`In Scope`)
