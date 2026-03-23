@@ -5,7 +5,10 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "biome check .",
+    "format": "biome format --write src scripts test/unit test/integration package.json tsconfig.json biome.json",
+    "format:check": "biome format src scripts test/unit test/integration package.json tsconfig.json biome.json",
+    "lint": "biome check src scripts test/unit test/integration package.json tsconfig.json biome.json",
+    "lint:fix": "biome check --write src scripts test/unit test/integration package.json tsconfig.json biome.json",
     "check": "npm run test",
     "test": "npm run typecheck && vitest run"
   },

@@ -9,7 +9,7 @@ Source plan: `docs/active/linting-and-formatting-refresh-plan.md`
     - "On a clean checkout, `npm run lint` inspects only approved authored files and excludes generated, fixture, and example artifact paths." (`Binding Invariants`)
   - Validation: `biome.json`; `npx biome check src scripts test/unit test/integration package.json tsconfig.json biome.json`
 
-- [ ] `LFR-SCR-01` [tooling] Update the `scripts` block in `package.json` to add explicit `format`, `format:check`, `lint`, and `lint:fix` commands that operate on the same approved in-scope surface.
+- [x] `LFR-SCR-01` [tooling] Update the `scripts` block in `package.json` to add explicit `format`, `format:check`, `lint`, and `lint:fix` commands that operate on the same approved in-scope surface.
   - Depends on: `LFR-CONF-01`.
   - Trace:
     - "Add explicit repo scripts for check-only and write modes: `format`, `format:check`, `lint`, `lint:fix`" (`In Scope`)
