@@ -1,12 +1,12 @@
-import {
-	type BaseMapsSoA,
-	createBaseMaps,
-	type GridShape,
-	indexOf,
-} from "../domain/topography.js";
 import type { JsonObject, JsonValue } from "../domain/types.js";
+import {
+	createBaseMaps,
+	indexOf,
+	type BaseMapsSoA,
+	type GridShape,
+} from "../domain/topography.js";
 import { createPermutationTable, perlinNoise2d } from "../lib/perlin2d.js";
-import { type BaseMapId, subSeed } from "../lib/sub-seed.js";
+import { subSeed, type BaseMapId } from "../lib/sub-seed.js";
 
 interface NoiseParams {
 	octaves: number;

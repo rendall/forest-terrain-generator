@@ -46,7 +46,7 @@ Source plan: `docs/active/linting-and-formatting-refresh-plan.md`
     - "Run `npm run format`, then rerun `npm run format:check` to prove idempotence." (`Validation Strategy`)
   - Validation: `npm run format:check`
 
-- [x] `LFR-LINT-01` [mechanical] Apply Biome safe fixes and import organization across the approved in-scope authored files using the write-mode lint command, keeping this pass limited to automated lint cleanup.
+- [ ] `LFR-LINT-01` [mechanical] Apply Biome safe fixes and import organization across the approved in-scope authored files using the write-mode lint command, keeping this pass limited to automated lint cleanup.
   - Depends on: `LFR-FMT-02`.
   - Trace:
     - "Apply behavior-preserving source cleanups required to make the scoped Biome lint pass meaningful and green." (`In Scope`)

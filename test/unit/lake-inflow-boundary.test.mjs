@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { DIR8_CODE, DIR8_NONE } from "../../src/domain/hydrology.js";
 import { createGridShape } from "../../src/domain/topography.js";
+import { DIR8_CODE, DIR8_NONE } from "../../src/domain/hydrology.js";
 import { deriveHydrology } from "../../src/pipeline/derive-hydrology.js";
 
 describe("lake external inflow boundary accounting", () => {

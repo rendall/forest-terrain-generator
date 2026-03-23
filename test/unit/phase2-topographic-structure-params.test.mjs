@@ -1,6 +1,6 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "vitest";
 import { resolveInputs } from "../../src/app/run-generator.js";
 import { APPENDIX_A_DEFAULTS } from "../../src/lib/default-params.js";

@@ -1,4 +1,4 @@
-import type { BaseMapsSoA, GridShape } from "../domain/topography.js";
+import { type BaseMapsSoA, type GridShape } from "../domain/topography.js";
 import type { JsonObject } from "../domain/types.js";
 import { readAuthoredMapFile } from "../io/read-authored-map.js";
 import { generateBaseMaps } from "./base-map-generation.js";

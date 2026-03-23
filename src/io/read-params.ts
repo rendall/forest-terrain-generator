@@ -1,9 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { dirname, extname, isAbsolute, resolve } from "node:path";
-import { InputValidationError } from "../domain/errors.js";
 import type { BaseInputs, JsonObject } from "../domain/types.js";
-import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
+import { InputValidationError } from "../domain/errors.js";
 import { suggestClosest } from "../lib/suggest.js";
+import { APPENDIX_A_DEFAULTS } from "../lib/default-params.js";
 
 const PARAMS_VALIDATION_SCHEMA: JsonObject = {
 	...APPENDIX_A_DEFAULTS,

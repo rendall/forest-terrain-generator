@@ -95,7 +95,7 @@ function assertRegionSummaryShape(
 	}
 
 	if (
-		Object.hasOwn(region, "parentRegionId") &&
+		Object.prototype.hasOwnProperty.call(region, "parentRegionId") &&
 		!Number.isInteger(region.parentRegionId)
 	) {
 		throw new InputValidationError(
@@ -157,7 +157,10 @@ function assertFeatureNodesShape(
 				`Invalid feature node at index ${i} in "${inputFilePath}" under "features.${kind}". Expected string values in "childIds".`,
 			);
 		}
-		if (kind === "basins" && Object.hasOwn(node, "waterSurfaceH")) {
+		if (
+			kind === "basins" &&
+			Object.prototype.hasOwnProperty.call(node, "waterSurfaceH")
+		) {
 			const waterSurfaceH = node.waterSurfaceH;
 			const validWaterSurface =
 				waterSurfaceH === null ||
@@ -223,17 +226,20 @@ export async function readTerrainEnvelopeFile(
 			`Input terrain file "${inputFilePath}" is missing required envelope array "tiles".`,
 		);
 	}
-	const hasRegions = Object.hasOwn(parsed, "regions");
+	const hasRegions = Object.prototype.hasOwnProperty.call(parsed, "regions");
 	const parsedRegions = hasRegions ? parsed.regions : undefined;
 	if (hasRegions) {
 		assertRegionsShape(parsedRegions, inputFilePath);
 	}
-	const hasFeatures = Object.hasOwn(parsed, "features");
+	const hasFeatures = Object.prototype.hasOwnProperty.call(parsed, "features");
 	const parsedFeatures = hasFeatures ? parsed.features : undefined;
 	if (hasFeatures) {
 		assertFeaturesShape(parsedFeatures, inputFilePath);
 	}
-	const hasParamOverrides = Object.hasOwn(parsed, "paramOverrides");
+	const hasParamOverrides = Object.prototype.hasOwnProperty.call(
+		parsed,
+		"paramOverrides",
+	);
 	const parsedParamOverrides = hasParamOverrides
 		? parsed.paramOverrides
 		: undefined;

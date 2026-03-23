@@ -1,8 +1,8 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { readTerrainEnvelopeFile } from "../../src/io/read-envelope.js";
-import { deepMerge } from "../../src/lib/deep-merge.js";
 import { APPENDIX_A_DEFAULTS } from "../../src/lib/default-params.js";
+import { deepMerge } from "../../src/lib/deep-merge.js";
 import { deriveHydrology } from "../../src/pipeline/derive-hydrology.js";
 import { deriveTopographicStructure } from "../../src/pipeline/derive-topographic-structure.js";
 
