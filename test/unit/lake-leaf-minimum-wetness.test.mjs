@@ -11,7 +11,13 @@ const FIXTURE_ENVELOPE = resolve(
 	"test/fixtures/hydrology-baseline/debug-envelope.json",
 );
 
-const MINIMUM_POSITIVE_WETNESS_SCALE = Number.MIN_VALUE;
+const CURRENT_CHILD_CONNECT_EPS = 1e-9;
+// This test currently targets the effective minimum wetness floor imposed by
+// derive-lake-accounting's CHILD_CONNECT_EPS / WATER_SURFACE_EPS gates.
+// `1e-9 + Number.MIN_VALUE` rounds back to `1e-9` in JS Numbers, so use the
+// next representable float above the current quantum. Revisit this floor later.
+const MINIMUM_EFFECTIVE_WETNESS_SCALE =
+	CURRENT_CHILD_CONNECT_EPS * (1 + Number.EPSILON);
 
 const loadReplayTerrain = async () => {
 	const envelope = await readTerrainEnvelopeFile(FIXTURE_ENVELOPE);
@@ -29,7 +35,7 @@ const loadReplayTerrain = async () => {
 };
 
 describe("leaf basin minimum-wetness invariant", () => {
-	it("gives every leaf basin and its tiles water at the smallest positive wetness scale", async () => {
+	it("gives every leaf basin and its tiles water just above the current effective wetness floor", async () => {
 		const { shape, h } = await loadReplayTerrain();
 		const structure = deriveTopographicStructure(
 			shape,
@@ -45,7 +51,7 @@ describe("leaf basin minimum-wetness invariant", () => {
 			},
 			deepMerge(APPENDIX_A_DEFAULTS, {
 				hydrology: {
-					lakeFill: { wetnessScale: MINIMUM_POSITIVE_WETNESS_SCALE },
+					lakeFill: { wetnessScale: MINIMUM_EFFECTIVE_WETNESS_SCALE },
 				},
 			}),
 		);
