@@ -7,7 +7,7 @@ Source plan: `docs/active/linting-and-formatting-refresh-plan.md`
     - "Add a checked-in Biome config that defines: in-scope file paths, excluded generated/example/fixture paths, formatting policy" (`In Scope`)
     - "Running `npm run lint` checks only the approved authored-code surface and does not report diagnostics from excluded paths like `dist` or large example/fixture JSON files." (`Acceptance Criteria`)
     - "On a clean checkout, `npm run lint` inspects only approved authored files and excludes generated, fixture, and example artifact paths." (`Binding Invariants`)
-  - Validation: `biome.json`; `npm run lint`
+  - Validation: `biome.json`; `npx biome check src scripts test/unit test/integration package.json tsconfig.json biome.json`
 
 - [ ] `LFR-SCR-01` [tooling] Update the `scripts` block in `package.json` to add explicit `format`, `format:check`, `lint`, and `lint:fix` commands that operate on the same approved in-scope surface.
   - Depends on: `LFR-CONF-01`.
