@@ -598,7 +598,15 @@ export const deriveLakeAccounting = (
 		if (governingBasinId === "") {
 			continue;
 		}
-		const governingLevel = byId.get(governingBasinId)?.waterSurfaceH;
+		let governingLevel = byId.get(governingBasinId)?.waterSurfaceH;
+		if (
+			(typeof governingLevel !== "number" || !Number.isFinite(governingLevel)) &&
+			highestWetBasinId !== "" &&
+			highestWetBasinId !== governingBasinId
+		) {
+			governingBasinId = highestWetBasinId;
+			governingLevel = byId.get(governingBasinId)?.waterSurfaceH;
+		}
 		if (typeof governingLevel !== "number" || !Number.isFinite(governingLevel)) {
 			continue;
 		}
