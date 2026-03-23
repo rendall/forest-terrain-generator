@@ -1,9 +1,9 @@
+import type { TopographicFeatureNode } from "../domain/topographic-features.js";
 import {
 	createTopographicStructureMaps,
 	type GridShape,
 	indexOf,
 } from "../domain/topography.js";
-import type { TopographicFeatureNode } from "../domain/topographic-features.js";
 
 export const STRUCTURE_DIR8_NEIGHBORS = [
 	{ dir: 0, dx: 1, dy: 0 }, // E

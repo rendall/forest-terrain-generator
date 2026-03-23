@@ -412,7 +412,7 @@ export function attachTileDescriptions(
 					adjacency[token] = directions;
 				}
 				if (
-					Object.prototype.hasOwnProperty.call(adjacencyByToken, "stream") &&
+					Object.hasOwn(adjacencyByToken, "stream") &&
 					signals.flowDirection !== null
 				) {
 					adjacency.streamFlow = signals.flowDirection;

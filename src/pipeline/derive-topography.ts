@@ -1,6 +1,6 @@
 import {
-	createTopographyMaps,
 	type BaseMapsSoA,
+	createTopographyMaps,
 	type GridShape,
 	type TopographyMapsSoA,
 } from "../domain/topography.js";

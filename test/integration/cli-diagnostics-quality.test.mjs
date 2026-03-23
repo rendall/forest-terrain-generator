@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 const CLI_ENTRY = resolve(process.cwd(), "src/cli/main.ts");
