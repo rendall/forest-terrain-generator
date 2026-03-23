@@ -23,7 +23,7 @@ Source plan: `docs/active/linting-and-formatting-refresh-plan.md`
     - "The repo has one explicit checked-in formatting policy, including the chosen indentation style, rather than relying on tool defaults." (`Acceptance Criteria`)
   - Validation: `.editorconfig` when added; editor policy matches `biome.json`
 
-- [ ] `LFR-VAL-01` [validation] Prove the new lint scope by running `npm run lint` and confirming excluded paths such as `dist`, `test/fixtures`, `docs/example`, `outdir`, and `raw` do not appear in diagnostics.
+- [x] `LFR-VAL-01` [validation] Prove the new lint scope by running `npm run lint` and confirming excluded paths such as `dist`, `test/fixtures`, `docs/example`, `outdir`, and `raw` do not appear in diagnostics.
   - Depends on: `LFR-SCR-01`.
   - Trace:
     - "Exclude generated or high-noise paths such as `dist`, `test/fixtures`, `docs/example`, `outdir`, and `raw`." (`In Scope`)
