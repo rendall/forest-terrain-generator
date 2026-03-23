@@ -379,10 +379,10 @@ export function attachTileDescriptions(
 				{ strict },
 			);
 
-				const outputTile: TerrainTile = {
-				...tile,
-				description: description.text,
-			};
+			const outputTile: TerrainTile = {
+					...tile,
+					description: description.text,
+				};
 
 			if (includeStructured) {
 				const adjacencyByToken = signals.followable.reduce<
