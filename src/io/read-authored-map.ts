@@ -40,8 +40,8 @@ function assertInteger(value: unknown, key: string): asserts value is number {
 
 function parseAuthoredMapJson(
 	parsed: unknown,
-	sourcePath: string,
-	flagName: AuthoredMap["flagName"],
+	_sourcePath: string,
+	_flagName: AuthoredMap["flagName"],
 ): AuthoredMapJson {
 	assertObject(parsed);
 	const { width, height, data } = parsed;

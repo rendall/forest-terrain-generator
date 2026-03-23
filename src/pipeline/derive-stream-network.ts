@@ -342,7 +342,9 @@ export function deriveStreamNetwork(
 			coveredTileIds,
 		);
 		streams.push(stream);
-		stream.pathTileIds.forEach((tileId) => coveredTileIds.add(tileId));
+		for (const tileId of stream.pathTileIds) {
+			coveredTileIds.add(tileId);
+		}
 	}
 
 	void classifyTerminal;

@@ -117,9 +117,7 @@ export const validateReplayTopographyGrid = (
 	});
 
 	if (observedUniqueCoordinates !== expectedSize) {
-		const missingGridIndex = seenSourceIndexByGridIndex.findIndex(
-			(sourceIndex) => sourceIndex === -1,
-		);
+		const missingGridIndex = seenSourceIndexByGridIndex.indexOf(-1);
 		const missingX =
 			missingGridIndex >= 0 ? missingGridIndex % shape.width : -1;
 		const missingY =

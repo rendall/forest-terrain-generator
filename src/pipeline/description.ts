@@ -258,7 +258,7 @@ function eligibleBlockedPhrasesForRun(
 	ctx: BlockageRunContext,
 ): readonly string[] {
 	const lakeRule = BLOCK_RULES[0];
-	if (lakeRule && lakeRule.when(ctx)) {
+	if (lakeRule?.when(ctx)) {
 		return [...lakeRule.phrases];
 	}
 
@@ -615,7 +615,7 @@ const STANDING_WATER_PHRASES = [
 	"Small pools remain where the ground dips.",
 ];
 
-const STREAM_PHRASES = [
+const _STREAM_PHRASES = [
 	"a narrow run of water lies nearby",
 	"running water can be heard close by",
 	"a small stream is close enough to track between the trees",
@@ -682,7 +682,7 @@ const OBSTACLE_PHRASES: Record<Exclude<Obstacle, "root_tangle">, string[]> = {
 	],
 };
 
-const VISIBILITY_PHRASES: Record<Visibility, string[]> = {
+const _VISIBILITY_PHRASES: Record<Visibility, string[]> = {
 	short: [
 		"Sightlines are short between trunks and lower branches.",
 		"The view is cut into short distances by dense growth.",
@@ -698,7 +698,7 @@ const VISIBILITY_PHRASES: Record<Visibility, string[]> = {
 	],
 };
 
-const DIRECTIONAL_CONNECTORS: Record<Direction, string> = {
+const _DIRECTIONAL_CONNECTORS: Record<Direction, string> = {
 	N: "To the north",
 	NE: "To the northeast",
 	E: "To the east",
@@ -1456,7 +1456,7 @@ function isContiguousDirectionSet(directions: readonly Direction[]): boolean {
 	return false;
 }
 
-function formatDirectionArc(directions: readonly Direction[]): string {
+function _formatDirectionArc(directions: readonly Direction[]): string {
 	const first = directions[0] as Direction;
 	const last = directions[directions.length - 1] as Direction;
 	return `from the ${DIR_LOWER[first]} to the ${DIR_LOWER[last]}`;
@@ -1862,7 +1862,7 @@ function directionalSignalStrength(neighbor: NeighborSignal): number {
 	return score;
 }
 
-function chooseDirectional(input: DescriptionTileInput): Direction | null {
+function _chooseDirectional(input: DescriptionTileInput): Direction | null {
 	let best: { dir: Direction; score: number; water: WaterClass } | null = null;
 
 	for (const dir of CARDINALS) {
@@ -2047,7 +2047,7 @@ function cloneContributors(
 	return { ...contributors };
 }
 
-function directionalMentionsWater(text: string): boolean {
+function _directionalMentionsWater(text: string): boolean {
 	return /\b(water|stream|lake)\b/i.test(text);
 }
 
