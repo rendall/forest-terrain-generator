@@ -409,6 +409,28 @@ describe("lake accounting from production hydrology pipeline", () => {
 		);
 	});
 
+	it("throws a friendly error when tile self-basin metadata is stale", () => {
+		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
+		const staleTileFeatureIds = tileFeatureIds.map((featureIds) => [...featureIds]);
+		staleTileFeatureIds[0] = ["b_missing"];
+
+		expect(() =>
+			deriveHydrology(
+				shape,
+				h,
+				{ basinFeatures, tileFeatureIds: staleTileFeatureIds },
+				{
+					hydrology: {
+						sinkMode: "strict_local",
+						lakeFill: { wetnessScale: 1.0 },
+					},
+				},
+			),
+		).toThrow(
+			/Tile 0 references self basin "b_missing".*tile featureIds are stale relative to the basin topology/i,
+		);
+	});
+
 	it("throws on impossible ordinary-root full-map fill state", () => {
 		const shape = createGridShape(2, 1);
 		const h = new Float32Array([0.9, 1.0]);
