@@ -48,6 +48,19 @@ The previous name `lakeSurfaceH` is replaced with **`waterSurfaceH`**.
 - A fully filled non-root basin has `waterSurfaceH` at spill surface.
 - In ordinary map operation, root full-map saturation is treated as an impossible state and must raise an error (root spill capacity effectively zero while positive inflow still exists).
 
+### Nested surface invariant
+
+For any parent basin `P`:
+
+- if `P` is dry, it has no `waterSurfaceH`;
+- if `P` is fully filled, `waterSurfaceH(P) = mergeH(P)`;
+- if `P` is partially filled, then `waterSurfaceH(P)` is strictly greater than its immediate children's shared `mergeH`, and strictly less than its own `mergeH`.
+
+Implementation consequence:
+
+- a parent partial-surface solve must treat the immediate-children shared `mergeH` as a strict lower bound;
+- it must not re-solve parent storage from the bottoms of descendant tiles in a way that produces a parent `waterSurfaceH` at or below that child-merge level.
+
 ## Tile water depth
 
 Tile depth is computed directly from basin water surface and terrain elevation.
@@ -73,6 +86,8 @@ This gives one continuous hydrologic variable that supports both open-water clas
 - `waterSurfaceH` is authored/owned at basin level.
 - Per-tile water quantity is `waterDepth`, derived from `waterSurfaceH` and tile `h`.
 - If `waterSurfaceH` is absent, `waterDepth` is also absent.
+- If a tile has no governing basin, that tile emits no `waterDepth`.
+- Numeric `0` must not be used to stand in for absent tile water state.
 - Basin membership alone must not imply that a tile has positive surface water.
 - Positive, zero, and negative `waterDepth` are all meaningful and intentional.
 
@@ -148,12 +163,14 @@ A tile may be associated with multiple basins through nesting, but exactly one b
 
 Normative rule:
 
-* A tile’s `waterDepth` must be derived from the **deepest active basin that currently governs that tile**, where “active” means the basin has emitted `waterSurfaceH`.
+* A tile’s `waterDepth` must be derived by traversing that tile's **self-to-root chain**, starting with the tile's **self basin** and then following parent, grandparent, and so on.
+* The tile's governing basin is the **first not-fully-filled basin** on that chain.
+* "Not fully filled" includes both dry basins and partially filled basins. A non-root basin is fully filled when it has reached its spill/connection level.
+* If every basin on the chain is fully filled, the governing basin falls back to the **highest wet basin** on that chain.
 
 Determinism rule:
 
-* If multiple candidate basins could govern a tile, the tie-break must be deterministic and documented.
-* The default rule is: choose the most specific nested basin first; if still ambiguous, choose by stable basin id ordering.
+* The default rule is: start from the tile's self basin, then follow that basin's `parentId` chain upward.
 
 ---
 
@@ -171,6 +188,7 @@ Normative rules:
 2. No positive-only clamp is applied.
 3. `waterDepth > 0`, `= 0`, and `< 0` are all valid outputs.
 4. If `waterSurfaceH` is absent for the governing basin, `waterDepth` must also be absent.
+5. If no governing basin is resolved for a tile, `waterDepth` must be absent; numeric `0` is not a substitute for absence.
 
 ---
 
@@ -203,12 +221,18 @@ The implementation is not conformant unless tests cover all of the following cas
    * required children fill before parent onset
    * parent has no water before strict post-connect onset
 
-5. **Nested basin governance**
+5. **Nested surface floor**
+
+   * a partially filled parent basin `waterSurfaceH` is strictly greater than its immediate children's shared `mergeH`
+   * a partially filled parent basin `waterSurfaceH` is strictly less than its own `mergeH`
+
+6. **Nested basin governance**
 
    * overlapping membership resolves deterministically
+   * governance is taken from the first not-fully-filled basin on the tile's self-to-root chain
    * emitted tile depth comes from the governing basin only
 
-6. **Negative depth case**
+7. **Negative depth case**
 
    * a governed tile above `waterSurfaceH` emits negative `waterDepth` when the model intends groundwater signal
 
@@ -226,4 +250,6 @@ The following patterns violate this model:
 * deriving tile depth only when `isFilled === true`
 * keeping basin water state only in internal accounting with no basin-level emission
 * treating basin membership as equivalent to positive standing water
+* governing tile depth by deepest active basin instead of first not-fully-filled basin on the self-to-root chain
+* allowing a partially filled parent basin to emit `waterSurfaceH` at or below its immediate-children shared `mergeH`
 * allowing partial-fill intent in docs without a volume-to-surface solver

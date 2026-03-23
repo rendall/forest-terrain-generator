@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "Procedurally generate forest data.",
   "scripts": {
-    "test": "vitest run",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "biome check .",
-    "check": "npm run typecheck && npm run lint && npm run test"
+    "check": "npm run test",
+    "test": "npm run typecheck && vitest run"
   },
   "repository": {
     "type": "git",

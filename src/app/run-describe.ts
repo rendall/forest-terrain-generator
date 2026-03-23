@@ -1,6 +1,6 @@
 import { isAbsolute, resolve } from "node:path";
 import { InputValidationError } from "../domain/errors.js";
-import type { JsonObject, TerrainEnvelope } from "../domain/types.js";
+import type { JsonObject, TerrainEnvelope, TerrainTile } from "../domain/types.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
 import { writeStandardOutput } from "../io/write-outputs.js";
 import {
@@ -128,10 +128,10 @@ function messageFromUnknown(error: unknown): string {
 }
 
 function buildFailureTile(
-	tile: JsonObject,
+	tile: TerrainTile,
 	debug: DescriptionDebug,
 	includeStructured: boolean,
-): JsonObject {
+): TerrainTile {
 	const debugPayload: JsonObject = {
 		code: debug.code,
 		message: debug.message,
@@ -148,7 +148,7 @@ function buildFailureTile(
 		debugPayload.missingSlots = debug.missingSlots;
 	}
 
-	const out: JsonObject = {
+	const out: TerrainTile = {
 		...tile,
 		description: null,
 		descriptionDebug: debugPayload,
@@ -379,10 +379,10 @@ export function attachTileDescriptions(
 				{ strict },
 			);
 
-			const outputTile: JsonObject = {
-				...tile,
-				description: description.text,
-			};
+			const outputTile: TerrainTile = {
+					...tile,
+					description: description.text,
+				};
 
 			if (includeStructured) {
 				const adjacencyByToken = signals.followable.reduce<

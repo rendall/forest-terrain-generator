@@ -119,6 +119,22 @@ For each Binding Invariant:
 
 A change is not complete if the invariant behavior is not validated by tests. Agents must optimize for satisfying system invariants, not merely keeping tests green.
 
+### 7A. Do Not Patch Tests In The Same Pass By Default
+
+By default, implementation changes and test changes must be kept in separate passes.
+
+Requirements:
+
+* Agents must not modify tests in the same pass as an implementation change unless the user explicitly authorizes combined implementation-and-test work.
+* The default implementation pass should change code only, then report which tests fail, which invariants are uncovered, and what test updates are likely needed.
+* After the implementation pass, the agent should propose a separate test pass and wait for approval before changing tests.
+* Agents must not use same-pass test edits to "prove" a behavior change that has not first been observed against the prior tests.
+
+Rationale:
+
+* Tests must remain an external check on behavior rather than being rewritten during the same pass that changes the behavior.
+* This guardrail reduces the risk of accidentally normalizing regressions or masking invariant violations.
+
 ### 8. Status Updates Must Include “What Remains False”
 
 Progress reports must include a section titled:

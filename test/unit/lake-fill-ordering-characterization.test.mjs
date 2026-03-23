@@ -97,12 +97,12 @@ describe("lake fill ordering characterization", () => {
 			})
 			.join("\n");
 		expect(table).toMatchInlineSnapshot(`
-			"k=1: b_A:fill=1.0000;filled=1;overflow=33.4336 | b_A1:fill=1.0000;filled=1;overflow=10.5700 | b_A2:fill=1.0000;filled=1;overflow=8.6500 | b_B:fill=1.0000;filled=1;overflow=4.6000 | b_root:fill=1.0000;filled=1;overflow=28.1217
-			k=0.5: b_A:fill=1.0000;filled=1;overflow=14.9336 | b_A1:fill=1.0000;filled=1;overflow=5.0700 | b_A2:fill=1.0000;filled=1;overflow=4.1500 | b_B:fill=1.0000;filled=1;overflow=2.1000 | b_root:fill=1.0000;filled=1;overflow=7.1217
-			k=0.1: b_A:fill=1.0000;filled=1;overflow=0.1336 | b_A1:fill=1.0000;filled=1;overflow=0.6700 | b_A2:fill=1.0000;filled=1;overflow=0.5500 | b_B:fill=1.0000;filled=1;overflow=0.1000 | b_root:fill=0.0154;filled=0;overflow=0.0000
-			k=0.01: b_A:fill=0.0000;filled=0;overflow=0.0000 | b_A1:fill=0.2558;filled=0;overflow=0.0000 | b_A2:fill=0.2571;filled=0;overflow=0.0000 | b_B:fill=0.1250;filled=0;overflow=0.0000 | b_root:fill=0.0000;filled=0;overflow=0.0000
-			k=0.001: b_A:fill=0.0000;filled=0;overflow=0.0000 | b_A1:fill=0.0256;filled=0;overflow=0.0000 | b_A2:fill=0.0257;filled=0;overflow=0.0000 | b_B:fill=0.0125;filled=0;overflow=0.0000 | b_root:fill=0.0000;filled=0;overflow=0.0000
-			k=0.0001: b_A:fill=0.0000;filled=0;overflow=0.0000 | b_A1:fill=0.0026;filled=0;overflow=0.0000 | b_A2:fill=0.0026;filled=0;overflow=0.0000 | b_B:fill=0.0012;filled=0;overflow=0.0000 | b_root:fill=0.0000;filled=0;overflow=0.0000"
+			"k=1: b_A:fill=1.0000;filled=1;overflow=33.6818 | b_A1:fill=1.0000;filled=1;overflow=10.5100 | b_A2:fill=1.0000;filled=1;overflow=8.6500 | b_B:fill=1.0000;filled=1;overflow=4.6000 | b_root:fill=1.0000;filled=1;overflow=31.3234
+			k=0.5: b_A:fill=1.0000;filled=1;overflow=15.1818 | b_A1:fill=1.0000;filled=1;overflow=5.0100 | b_A2:fill=1.0000;filled=1;overflow=4.1500 | b_B:fill=1.0000;filled=1;overflow=2.1000 | b_root:fill=1.0000;filled=1;overflow=10.3234
+			k=0.1: b_A:fill=1.0000;filled=1;overflow=0.3818 | b_A1:fill=1.0000;filled=1;overflow=0.6100 | b_A2:fill=1.0000;filled=1;overflow=0.5500 | b_B:fill=1.0000;filled=1;overflow=0.1000 | b_root:fill=0.0627;filled=0;overflow=0.0000
+			k=0.01: b_A:fill=0.0000;filled=0;overflow=0.0000 | b_A1:fill=0.2245;filled=0;overflow=0.0000 | b_A2:fill=0.2571;filled=0;overflow=0.0000 | b_B:fill=0.1250;filled=0;overflow=0.0000 | b_root:fill=0.0000;filled=0;overflow=0.0000
+			k=0.001: b_A:fill=0.0000;filled=0;overflow=0.0000 | b_A1:fill=0.0224;filled=0;overflow=0.0000 | b_A2:fill=0.0257;filled=0;overflow=0.0000 | b_B:fill=0.0125;filled=0;overflow=0.0000 | b_root:fill=0.0000;filled=0;overflow=0.0000
+			k=0.0001: b_A:fill=0.0000;filled=0;overflow=0.0000 | b_A1:fill=0.0022;filled=0;overflow=0.0000 | b_A2:fill=0.0026;filled=0;overflow=0.0000 | b_B:fill=0.0012;filled=0;overflow=0.0000 | b_root:fill=0.0000;filled=0;overflow=0.0000"
 		`);
 	});
 });

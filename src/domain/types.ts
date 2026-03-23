@@ -12,6 +12,11 @@ export type JsonValue =
 
 export type JsonObject = Record<string, JsonValue>;
 
+export type TerrainTile = JsonObject & {
+	x: number;
+	y: number;
+};
+
 export interface BaseInputs {
 	seed?: string;
 	width?: number;
@@ -92,6 +97,6 @@ export interface TerrainEnvelope {
 	meta: TerrainEnvelopeMeta;
 	regions?: RegionSummary[];
 	features?: TerrainFeatureCollection;
-	tiles: JsonObject[];
+	tiles: TerrainTile[];
 	paramOverrides?: JsonObject;
 }
