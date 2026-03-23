@@ -1,5 +1,7 @@
 # Linting And Formatting Refresh Plan
 
+Archived note: this plan is retained as the historical planning record for the lint/format refresh proposal.
+
 ## Goal
 
 Define an approved implementation plan for making linting and formatting reliable, deterministic, and low-noise across authored code in this repository without changing terrain-generation behavior, CLI behavior, or determinism.

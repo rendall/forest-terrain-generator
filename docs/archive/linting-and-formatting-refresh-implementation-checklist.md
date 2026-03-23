@@ -1,6 +1,8 @@
 # Linting And Formatting Refresh Implementation Checklist
 
-Source plan: `docs/active/linting-and-formatting-refresh-plan.md`
+Archived note: this checklist is retained as the historical implementation record for the lint/format refresh proposal.
+
+Source plan: `docs/archive/linting-and-formatting-refresh-plan.md`
 
 - [x] `LFR-CONF-01` [tooling] Add `biome.json` at repo root to define the approved authored-code scope, excluded generated/example/fixture paths, and the explicit formatting policy for `src`, `test`, `scripts`, `package.json`, and `tsconfig.json`.
   - Trace:
