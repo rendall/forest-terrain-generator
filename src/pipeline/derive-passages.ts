@@ -110,12 +110,15 @@ const evaluateDirectionBlockReason = (
 	tiles: readonly Tile[],
 ): PassageBlockReason | null => {
 	const neighbor = getNeighborTile(tile, direction, tiles);
-	return PASSAGE_PREDICATES.reduce<PassageBlockReason | null>((reason, predicate) => {
-		if (reason !== null) {
-			return reason;
-		}
-		return predicate(tile, neighbor, tiles);
-	}, null);
+	return PASSAGE_PREDICATES.reduce<PassageBlockReason | null>(
+		(reason, predicate) => {
+			if (reason !== null) {
+				return reason;
+			}
+			return predicate(tile, neighbor, tiles);
+		},
+		null,
+	);
 };
 
 export const evaluatePassageBlockReason = (
@@ -129,7 +132,10 @@ export const evaluatePassageBlockReason = (
 	return evaluateDirectionBlockReason(tile, context.direction, tiles);
 };
 
-export const derivePassages = (shape: GridShape, h: Float32Array): TilePassages[] =>
+export const derivePassages = (
+	shape: GridShape,
+	h: Float32Array,
+): TilePassages[] =>
 	buildTiles(shape, h).map((tile, _tileIndex, tiles) =>
 		DIRECTION8_ORDER.reduce<TilePassages>((passages, direction) => {
 			const reason = evaluateDirectionBlockReason(tile, direction, tiles);

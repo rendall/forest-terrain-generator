@@ -1,6 +1,10 @@
 import { isAbsolute, resolve } from "node:path";
 import { InputValidationError } from "../domain/errors.js";
-import type { JsonObject, TerrainEnvelope, TerrainTile } from "../domain/types.js";
+import type {
+	JsonObject,
+	TerrainEnvelope,
+	TerrainTile,
+} from "../domain/types.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
 import { writeStandardOutput } from "../io/write-outputs.js";
 import {
@@ -380,9 +384,9 @@ export function attachTileDescriptions(
 			);
 
 			const outputTile: TerrainTile = {
-					...tile,
-					description: description.text,
-				};
+				...tile,
+				description: description.text,
+			};
 
 			if (includeStructured) {
 				const adjacencyByToken = signals.followable.reduce<
@@ -439,8 +443,7 @@ export function attachTileDescriptions(
 							out.movement = sentence.movement.map((run) => ({
 								type: run.type,
 								directions: [...run.directions],
-								...(run.type === "blockage" &&
-								typeof run.blockedBy === "string"
+								...(run.type === "blockage" && typeof run.blockedBy === "string"
 									? { blockedBy: run.blockedBy }
 									: {}),
 							}));

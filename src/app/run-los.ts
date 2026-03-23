@@ -47,7 +47,9 @@ function isJsonObject(value: unknown): value is JsonObject {
 
 function assertInt(name: string, value: number | undefined): number {
 	if (typeof value !== "number" || !Number.isInteger(value)) {
-		throw new InputValidationError(`Missing or invalid required integer --${name}.`);
+		throw new InputValidationError(
+			`Missing or invalid required integer --${name}.`,
+		);
 	}
 	return value;
 }

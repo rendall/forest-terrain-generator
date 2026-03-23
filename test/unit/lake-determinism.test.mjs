@@ -5,8 +5,12 @@ import { deriveHydrology } from "../../src/pipeline/derive-hydrology.js";
 const buildCase = () => {
 	const shape = createGridShape(3, 2);
 	const h = new Float32Array([
-		0.1, 0.3, 0.05, // y=0
-		0.15, 0.35, 0.4, // y=1
+		0.1,
+		0.3,
+		0.05, // y=0
+		0.15,
+		0.35,
+		0.4, // y=1
 	]);
 	const basinFeatures = [
 		{
@@ -76,7 +80,9 @@ describe("lake accounting determinism", () => {
 		);
 
 		expect(Array.from(first.maps.fd)).toEqual(Array.from(second.maps.fd));
-		expect(Array.from(first.maps.lakeMask)).toEqual(Array.from(second.maps.lakeMask));
+		expect(Array.from(first.maps.lakeMask)).toEqual(
+			Array.from(second.maps.lakeMask),
+		);
 		expect(first.lakeAccounting.basins).toEqual(second.lakeAccounting.basins);
 		expect(first.lakeAccounting.tileLakeBasinId).toEqual(
 			second.lakeAccounting.tileLakeBasinId,
@@ -141,7 +147,9 @@ describe("lake accounting determinism", () => {
 			params,
 		);
 
-		expect(first.lakeAccounting.byId.get("b_zzz")?.waterSurfaceH).toBeGreaterThan(
+		expect(
+			first.lakeAccounting.byId.get("b_zzz")?.waterSurfaceH,
+		).toBeGreaterThan(
 			first.lakeAccounting.byId.get("b_aaa")?.waterSurfaceH ?? -Infinity,
 		);
 		expect(first.lakeAccounting.tileLakeBasinId[0]).toBe("b_aaa");

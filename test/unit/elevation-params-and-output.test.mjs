@@ -7,7 +7,9 @@ import { resolveInputs, runGenerator } from "../../src/app/run-generator.js";
 const tempDirs = [];
 
 async function makeTempDir() {
-	const dir = await mkdtemp(join(tmpdir(), "forest-terrain-generator-elevation-"));
+	const dir = await mkdtemp(
+		join(tmpdir(), "forest-terrain-generator-elevation-"),
+	);
 	tempDirs.push(dir);
 	return dir;
 }

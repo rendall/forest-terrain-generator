@@ -8,7 +8,9 @@ import { PASSAGE_MAX_STEP_UP } from "../../src/pipeline/derive-passages.js";
 const tempDirs = [];
 
 const makeTempDir = async () => {
-	const dir = await mkdtemp(join(tmpdir(), "forest-terrain-generator-passages-"));
+	const dir = await mkdtemp(
+		join(tmpdir(), "forest-terrain-generator-passages-"),
+	);
 	tempDirs.push(dir);
 	return dir;
 };

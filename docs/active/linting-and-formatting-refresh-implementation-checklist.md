@@ -31,7 +31,7 @@ Source plan: `docs/active/linting-and-formatting-refresh-plan.md`
     - "Add or update repo scripts and config first, then prove scope correctness by running `npm run lint` and confirming excluded paths do not appear in diagnostics." (`Validation Strategy`)
   - Validation: `npm run lint`
 
-- [ ] `LFR-FMT-01` [mechanical] Run one mechanical Biome formatting pass across the approved in-scope authored files and selected root config files without touching excluded generated/example/fixture artifacts.
+- [x] `LFR-FMT-01` [mechanical] Run one mechanical Biome formatting pass across the approved in-scope authored files and selected root config files without touching excluded generated/example/fixture artifacts.
   - Depends on: `LFR-VAL-01`.
   - Trace:
     - "Apply one mechanical formatting pass to in-scope files." (`In Scope`)

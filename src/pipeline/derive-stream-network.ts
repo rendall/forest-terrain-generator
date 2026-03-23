@@ -167,13 +167,20 @@ function traceFromOrigin(
 ): StreamFeature {
 	const pathTileIds = [origin.tileId];
 	const visited = new Set(pathTileIds);
-	const candidateState = new Map<number, { candidates: RankedNeighbor[]; index: number }>();
+	const candidateState = new Map<
+		number,
+		{ candidates: RankedNeighbor[]; index: number }
+	>();
 	let terminalKind: StreamTerminalKind = "error";
 	let terminalTileId = origin.tileId;
 	let resolved = false;
 	let guard = 0;
 
-	while (!resolved && pathTileIds.length > 0 && guard < params.shape.size * params.shape.size) {
+	while (
+		!resolved &&
+		pathTileIds.length > 0 &&
+		guard < params.shape.size * params.shape.size
+	) {
 		guard += 1;
 		const currentTileId = pathTileIds[pathTileIds.length - 1];
 		const previousTileId = pathTileIds[pathTileIds.length - 2] ?? null;
@@ -181,11 +188,14 @@ function traceFromOrigin(
 			previousTileId === null
 				? null
 				: directionBetween(params.shape, previousTileId, currentTileId);
-		const state =
-			candidateState.get(currentTileId) ?? {
-				candidates: gatherDownhillNeighbors(params, currentTileId, previousDirection),
-				index: 0,
-			};
+		const state = candidateState.get(currentTileId) ?? {
+			candidates: gatherDownhillNeighbors(
+				params,
+				currentTileId,
+				previousDirection,
+			),
+			index: 0,
+		};
 		candidateState.set(currentTileId, state);
 
 		if (state.candidates.length === 0) {
@@ -275,7 +285,8 @@ function deriveTileGeometry(
 	}
 	for (const tile of geometry) {
 		tile.incomingDirections = [...new Set(tile.incomingDirections)].sort(
-			(left, right) => canonicalDirectionIndex(left) - canonicalDirectionIndex(right),
+			(left, right) =>
+				canonicalDirectionIndex(left) - canonicalDirectionIndex(right),
 		);
 	}
 	return geometry;
@@ -324,7 +335,12 @@ export function deriveStreamNetwork(
 		if (coveredTileIds.has(origin.tileId)) {
 			continue;
 		}
-		const stream = traceFromOrigin(params, origin, streams.length, coveredTileIds);
+		const stream = traceFromOrigin(
+			params,
+			origin,
+			streams.length,
+			coveredTileIds,
+		);
 		streams.push(stream);
 		stream.pathTileIds.forEach((tileId) => coveredTileIds.add(tileId));
 	}

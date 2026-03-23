@@ -51,4 +51,3 @@ try {
 		process.exitCode = exitCodeForCategory(normalizedError.category);
 	}
 }
-
