@@ -2,7 +2,12 @@ import { readFile } from "node:fs/promises";
 import { extname } from "node:path";
 import { InputValidationError } from "../domain/errors.js";
 import type { TerrainFeatureCollection } from "../domain/topographic-features.js";
-import type { JsonObject, RegionSummary, TerrainEnvelope } from "../domain/types.js";
+import type {
+	JsonObject,
+	RegionSummary,
+	TerrainEnvelope,
+	TerrainTile,
+} from "../domain/types.js";
 
 function isJsonObject(value: unknown): value is JsonObject {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -19,7 +24,7 @@ function assertTileShape(
 	tile: JsonObject,
 	inputFilePath: string,
 	index: number,
-): void {
+): asserts tile is TerrainTile {
 	if (!Number.isInteger(tile.x) || !Number.isInteger(tile.y)) {
 		throw new InputValidationError(
 			`Invalid tile at index ${index} in "${inputFilePath}". Expected integer "x" and "y".`,
@@ -264,7 +269,7 @@ export async function readTerrainEnvelopeFile(
 		...(hasFeatures
 			? { features: parsedFeatures as unknown as TerrainFeatureCollection }
 			: {}),
-		tiles: parsed.tiles as JsonObject[],
+			tiles: parsed.tiles as TerrainTile[],
 		...(hasParamOverrides
 			? { paramOverrides: parsedParamOverrides as JsonObject }
 			: {}),

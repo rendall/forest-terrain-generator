@@ -8,6 +8,7 @@ import type {
 	ResolvedInputs,
 	RunRequest,
 	TerrainEnvelope,
+	TerrainTile,
 } from "../domain/types.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
 import {
@@ -277,7 +278,7 @@ function buildReplayEnvelope(
 ): TerrainEnvelope {
 	const elevation = buildElevationParams(replayParams);
 	const elevationSpan = elevation.h1 - elevation.h0;
-	const tiles: JsonObject[] = [];
+	const tiles: TerrainTile[] = [];
 	const shape = hydrology.maps.shape;
 
 	for (let index = 0; index < shape.size; index += 1) {
@@ -473,7 +474,7 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		streams: streamNetwork.streams,
 	};
 
-	const tiles: JsonObject[] = [];
+	const tiles: TerrainTile[] = [];
 	for (let i = 0; i < shape.size; i += 1) {
 		const x = i % shape.width;
 		const y = Math.floor(i / shape.width);

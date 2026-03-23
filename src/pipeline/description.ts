@@ -1315,7 +1315,7 @@ function groupNeighborLandformSignals(
 }
 
 function collapseMergedNeighborBand(
-	bands: readonly Array<"same" | "gentle" | "none" | "steep">,
+	bands: ReadonlyArray<"same" | "gentle" | "none" | "steep">,
 ): "same" | "gentle" | "none" | "steep" {
 	const unique = [...new Set(bands)];
 	if (unique.length === 0) {
@@ -1329,7 +1329,7 @@ function collapseMergedNeighborBand(
 }
 
 function collapseBandForSameMode(
-	bands: readonly Array<"same" | "gentle" | "none" | "steep">,
+	bands: ReadonlyArray<"same" | "gentle" | "none" | "steep">,
 ): "gentle" | "none" | "steep" {
 	const unique = [
 		...new Set(
