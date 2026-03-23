@@ -38,7 +38,7 @@ Source plan: `docs/active/linting-and-formatting-refresh-plan.md`
     - "In-scope source files, tests, scripts, and selected root config files are reformatted to the approved policy." (`Acceptance Criteria`)
   - Validation: `npm run format`
 
-- [x] `LFR-FMT-02` [validation] Prove formatting idempotence by rerunning the check-only formatter immediately after the mechanical formatting pass and confirming there are no further formatting changes required.
+- [ ] `LFR-FMT-02` [validation] Prove formatting idempotence by rerunning the check-only formatter immediately after the mechanical formatting pass and confirming there are no further formatting changes required.
   - Depends on: `LFR-FMT-01`.
   - Trace:
     - "Running `npm run format` twice produces no additional file changes on the second run." (`Acceptance Criteria`)
