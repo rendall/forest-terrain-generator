@@ -213,6 +213,9 @@ const assertCloseTo = (
 	}
 };
 
+const compareDepthForMonotonicity = (depth) =>
+	typeof depth === "number" ? depth : Number.NEGATIVE_INFINITY;
+
 describe("lake accounting from production hydrology pipeline", () => {
 	it("ignores out-of-range direct and child basin tileIds in accounting", () => {
 		const { shape, h, basinFeatures, tileFeatureIds } = buildSyntheticLakeCase();
@@ -1107,8 +1110,12 @@ describe("lake accounting from production hydrology pipeline", () => {
 				const previous = snapshots[i - 1];
 				const current = snapshots[i];
 				for (let tileId = 0; tileId < fixture.shape.size; tileId += 1) {
-					const prevDepth = previous.tileLakeDepth[tileId] ?? 0;
-					const currDepth = current.tileLakeDepth[tileId] ?? 0;
+					const prevDepth = compareDepthForMonotonicity(
+						previous.tileLakeDepth[tileId],
+					);
+					const currDepth = compareDepthForMonotonicity(
+						current.tileLakeDepth[tileId],
+					);
 					if (currDepth + TEST_EPS < prevDepth) {
 						depthViolations.push({
 							tileId,
