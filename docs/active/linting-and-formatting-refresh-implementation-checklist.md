@@ -2,7 +2,7 @@
 
 Source plan: `docs/active/linting-and-formatting-refresh-plan.md`
 
-- [ ] `LFR-CONF-01` [tooling] Add `biome.json` at repo root to define the approved authored-code scope, excluded generated/example/fixture paths, and the explicit formatting policy for `src`, `test`, `scripts`, `package.json`, and `tsconfig.json`.
+- [x] `LFR-CONF-01` [tooling] Add `biome.json` at repo root to define the approved authored-code scope, excluded generated/example/fixture paths, and the explicit formatting policy for `src`, `test`, `scripts`, `package.json`, and `tsconfig.json`.
   - Trace:
     - "Add a checked-in Biome config that defines: in-scope file paths, excluded generated/example/fixture paths, formatting policy" (`In Scope`)
     - "Running `npm run lint` checks only the approved authored-code surface and does not report diagnostics from excluded paths like `dist` or large example/fixture JSON files." (`Acceptance Criteria`)
