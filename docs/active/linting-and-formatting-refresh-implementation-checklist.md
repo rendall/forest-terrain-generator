@@ -16,7 +16,7 @@ Source plan: `docs/active/linting-and-formatting-refresh-plan.md`
     - "Contributors can run distinct check-only and write-mode repo scripts without manually supplying file paths." (`Binding Invariants`)
   - Validation: `package.json`; `npm run lint`; `npm run format:check`
 
-- [ ] `LFR-EDT-01` [tooling] Add `.editorconfig` only if needed to align editor defaults with the approved indentation and newline policy already defined for in-scope files.
+- [x] `LFR-EDT-01` [tooling] Add `.editorconfig` only if needed to align editor defaults with the approved indentation and newline policy already defined for in-scope files.
   - Depends on: `LFR-CONF-01`.
   - Trace:
     - "Add a checked-in editor policy file if needed to align editor defaults with repo formatting behavior." (`In Scope`)
