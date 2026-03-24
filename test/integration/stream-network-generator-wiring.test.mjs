@@ -103,8 +103,9 @@ describe("stream-network generator wiring", () => {
 		expect(emittedStreamCount).toBeGreaterThan(0);
 		expect(omittedStreamCount).toBeGreaterThan(0);
 		if (nonNullOutgoingCount === 0) {
-			const observedSummary = envelope.tiles
-				.map((tile) => tile.hydrology.stream?.outgoingDirection ?? null);
+			const observedSummary = envelope.tiles.map(
+				(tile) => tile.hydrology.stream?.outgoingDirection ?? null,
+			);
 			throw new Error(
 				`expected at least one non-null outgoing stream direction, observed outgoingDirection values: ${JSON.stringify(observedSummary)}`,
 			);

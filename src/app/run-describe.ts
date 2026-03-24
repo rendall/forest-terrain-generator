@@ -1,6 +1,10 @@
 import { isAbsolute, resolve } from "node:path";
 import { InputValidationError } from "../domain/errors.js";
-import type { JsonObject, TerrainEnvelope, TerrainTile } from "../domain/types.js";
+import type {
+	JsonObject,
+	TerrainEnvelope,
+	TerrainTile,
+} from "../domain/types.js";
 import { readTerrainEnvelopeFile } from "../io/read-envelope.js";
 import { writeStandardOutput } from "../io/write-outputs.js";
 import {
@@ -380,14 +384,13 @@ export function attachTileDescriptions(
 			);
 
 			const outputTile: TerrainTile = {
-					...tile,
-					description: description.text,
-				};
+				...tile,
+				description: description.text,
+			};
 
 			if (includeStructured) {
-				const adjacencyByToken = signals.followable.reduce<
-					Record<string, Direction[]>
-				>((obj, token) => {
+				const adjacencyByToken: Record<string, Direction[]> = {};
+				for (const token of signals.followable) {
 					const directionsForToken = DIRECTION_ORDER.filter((direction) => {
 						const delta = DIRECTION_DELTAS[direction];
 						const nx = signals.x + delta.dx;
@@ -398,17 +401,14 @@ export function attachTileDescriptions(
 						}
 						return neighbor.followable.includes(token);
 					});
-					return {
-						...obj,
-						[token]: directionsForToken,
-					};
-				}, {});
+					adjacencyByToken[token] = directionsForToken;
+				}
 				const adjacency: JsonObject = {};
 				for (const [token, directions] of Object.entries(adjacencyByToken)) {
 					adjacency[token] = directions;
 				}
 				if (
-					Object.prototype.hasOwnProperty.call(adjacencyByToken, "stream") &&
+					Object.hasOwn(adjacencyByToken, "stream") &&
 					signals.flowDirection !== null
 				) {
 					adjacency.streamFlow = signals.flowDirection;
@@ -439,8 +439,7 @@ export function attachTileDescriptions(
 							out.movement = sentence.movement.map((run) => ({
 								type: run.type,
 								directions: [...run.directions],
-								...(run.type === "blockage" &&
-								typeof run.blockedBy === "string"
+								...(run.type === "blockage" && typeof run.blockedBy === "string"
 									? { blockedBy: run.blockedBy }
 									: {}),
 							}));

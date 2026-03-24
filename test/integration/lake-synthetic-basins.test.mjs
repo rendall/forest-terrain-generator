@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createGridShape } from "../../src/domain/topography.js";
 import { DIR8_CODE } from "../../src/domain/hydrology.js";
+import { createGridShape } from "../../src/domain/topography.js";
 import { deriveHydrology } from "../../src/pipeline/derive-hydrology.js";
 import { makeBasinNode } from "../unit/helpers/lake-fixtures.mjs";
 
@@ -8,8 +8,12 @@ describe("lake synthetic basin integration smoke", () => {
 	it("routes overflow only through childSpillFrom -> parentContact and not spillOutTileId", () => {
 		const shape = createGridShape(3, 2);
 		const h = new Float32Array([
-			0.1, 0.3, 0.05, // y=0
-			0.15, 0.35, 0.4, // y=1
+			0.1,
+			0.3,
+			0.05, // y=0
+			0.15,
+			0.35,
+			0.4, // y=1
 		]);
 		const basinFeatures = [
 			makeBasinNode({
