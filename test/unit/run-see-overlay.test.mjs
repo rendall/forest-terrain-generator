@@ -14,17 +14,7 @@ describe("run-see overlay composition", () => {
 			["water"],
 		);
 
-		expect(Array.from(pixels)).toEqual([
-			100,
-			100,
-			100,
-			50,
-			50,
-			178,
-			0,
-			0,
-			255,
-		]);
+		expect(Array.from(pixels)).toEqual([100, 100, 100, 50, 50, 178, 0, 0, 255]);
 	});
 
 	it("applies stream tiles as yellow at 50% alpha", () => {

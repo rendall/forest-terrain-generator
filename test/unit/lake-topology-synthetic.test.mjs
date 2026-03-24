@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createGridShape } from "../../src/domain/topography.js";
 import { DIR8_NONE } from "../../src/domain/hydrology.js";
+import { createGridShape } from "../../src/domain/topography.js";
 import { deriveHydrology } from "../../src/pipeline/derive-hydrology.js";
 import { deriveTopographicStructure } from "../../src/pipeline/derive-topographic-structure.js";
 import { makeBasinNode } from "./helpers/lake-fixtures.mjs";

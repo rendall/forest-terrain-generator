@@ -197,8 +197,7 @@ const BLOCK_RULES: readonly BlockedPhraseRule[] = [
 	},
 	{
 		id: "dense_stand",
-		when: (ctx) =>
-			ctx.biome === "spruce_swamp" || ctx.biome === "mixed_forest",
+		when: (ctx) => ctx.biome === "spruce_swamp" || ctx.biome === "mixed_forest",
 		phrases: ["a dense stand of trees", "close-set trunks", "thick forest"],
 	},
 ];
@@ -246,16 +245,20 @@ function buildBlockageRunContext(
 		slopeStrength: input.slopeStrength,
 		followable: input.followable,
 		runDirections: [...run.directions],
-		neighborWater: run.directions.map((direction) => input.neighbors[direction].water),
+		neighborWater: run.directions.map(
+			(direction) => input.neighbors[direction].water,
+		),
 		neighborElevDelta: run.directions.map(
 			(direction) => input.neighbors[direction].elevDelta,
 		),
 	};
 }
 
-function eligibleBlockedPhrasesForRun(ctx: BlockageRunContext): readonly string[] {
+function eligibleBlockedPhrasesForRun(
+	ctx: BlockageRunContext,
+): readonly string[] {
 	const lakeRule = BLOCK_RULES[0];
-	if (lakeRule && lakeRule.when(ctx)) {
+	if (lakeRule?.when(ctx)) {
 		return [...lakeRule.phrases];
 	}
 
@@ -410,9 +413,9 @@ function renderTransformedMovementStructure(
 			isLakeOverride && sharedLakePhrase
 				? sharedLakePhrase
 				: pickDeterministic(
-					eligiblePhrases,
-					`${seedKey}:movement_structure:blockage:${runIndex}:phrase`,
-				);
+						eligiblePhrases,
+						`${seedKey}:movement_structure:blockage:${runIndex}:phrase`,
+					);
 		if (isLakeOverride && sharedLakePhrase === null) {
 			sharedLakePhrase = phrase;
 		}
@@ -443,14 +446,14 @@ function renderTransformedMovementStructure(
 
 export interface DescriptionSentence {
 	slot:
-	| "landform"
-	| "biome"
-	| "hydrology"
-	| "obstacle"
-	| "followable"
-	| "movement_structure"
-	| "visibility"
-	| "directional";
+		| "landform"
+		| "biome"
+		| "hydrology"
+		| "obstacle"
+		| "followable"
+		| "movement_structure"
+		| "visibility"
+		| "directional";
 	text?: string;
 	basicText?: string;
 	contributorKeys: Partial<Record<DescriptionSentence["slot"], string>>;
@@ -514,7 +517,7 @@ const BIOME_PHRASES: Partial<Record<KnownBiome, string[]>> = {
 		"Spruce roots twist through soaked ground and patches of open water.",
 		"Low ground holds stagnant water among the trunks of dense spruce.",
 		"Spruce press together above dark, saturated earth.",
-		"The terrain dips and holds water beneath a tight stand of spruce."
+		"The terrain dips and holds water beneath a tight stand of spruce.",
 	],
 	pine_heath: [
 		"Scattered pine rise from dry, sandy ground covered in heather and lichen.",
@@ -554,7 +557,7 @@ const BIOME_PHRASES: Partial<Record<KnownBiome, string[]>> = {
 		"The terrain carries both dry leaf scatter and darker, needle-covered soil.",
 		"Spruce pockets narrow the space before birch open it again.",
 		"The canopy breaks unevenly, with mixed shade and filtered light.",
-		"Birch and spruce interlock, creating alternating bands of brightness and shadow."
+		"Birch and spruce interlock, creating alternating bands of brightness and shadow.",
 	],
 	esker_pine: [
 		"A narrow sandy ridge rises here, lined with scattered pine.",
@@ -571,7 +574,7 @@ const BIOME_PHRASES: Partial<Record<KnownBiome, string[]>> = {
 		"The terrain slopes away on either side of this pine-lined height.",
 		"An elevated band of sandy ground supports sparse pine.",
 		"The crest remains dry and firm beneath widely spaced pine.",
-		"Pine trace the higher line of land through otherwise lower forest."
+		"Pine trace the higher line of land through otherwise lower forest.",
 	],
 	lake: ["Lake surface."], // Lake surface is not reachable here
 
@@ -590,7 +593,7 @@ const BIOME_PHRASES: Partial<Record<KnownBiome, string[]>> = {
 		"The bog spreads wide here, with little cover and soft footing.",
 		"Water stands in shallow depressions across the peat.",
 		"The ground remains open and wet, with only low plants interrupting it.",
-		"Flat, saturated land extends outward with scattered bog growth."
+		"Flat, saturated land extends outward with scattered bog growth.",
 	],
 	stream_bank: [
 		"Trees line the edge of a nearby stream.",
@@ -610,14 +613,6 @@ const STANDING_WATER_PHRASES = [
 	"The low ground holds water in scattered patches.",
 	"Thin sheets of water cover parts of the surface.",
 	"Small pools remain where the ground dips.",
-];
-
-const STREAM_PHRASES = [
-	"a narrow run of water lies nearby",
-	"running water can be heard close by",
-	"a small stream is close enough to track between the trees",
-	"a thread of moving water passes nearby through the low ground",
-	"the sound of a stream carries from a short distance away",
 ];
 
 const LAKE_PHRASES = [
@@ -679,33 +674,6 @@ const OBSTACLE_PHRASES: Record<Exclude<Obstacle, "root_tangle">, string[]> = {
 	],
 };
 
-const VISIBILITY_PHRASES: Record<Visibility, string[]> = {
-	short: [
-		"Sightlines are short between trunks and lower branches.",
-		"The view is cut into short distances by dense growth.",
-		"Close trees and undergrowth limit visibility here.",
-		"The ground is cluttered enough to slow a direct line.",
-	],
-	medium: [],
-	long: [
-		"The trees are spaced enough for long sightlines.",
-		"The stand is open, with clear lines between trunks.",
-		"Visibility runs well through this patch of forest.",
-		"The ground is open enough for a direct route.",
-	],
-};
-
-const DIRECTIONAL_CONNECTORS: Record<Direction, string> = {
-	N: "To the north",
-	NE: "To the northeast",
-	E: "To the east",
-	SE: "To the southeast",
-	S: "To the south",
-	SW: "To the southwest",
-	W: "To the west",
-	NW: "To the northwest",
-};
-
 const CARDINALS: Direction[] = ["N", "E", "S", "W"];
 const DIAGONALS: Direction[] = ["NE", "SE", "SW", "NW"];
 const RING: Direction[] = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
@@ -745,7 +713,9 @@ function oppositeDirection(direction: Direction): Direction {
 	return RING[(index + 4) % RING.length] as Direction;
 }
 
-function movementTypeForPassability(passability: Passability): MovementRun["type"] {
+function movementTypeForPassability(
+	passability: Passability,
+): MovementRun["type"] {
 	return passability === "passable" ? "passage" : "blockage";
 }
 
@@ -824,16 +794,16 @@ function formatDirectionNames(directions: readonly Direction[]): string {
 	return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
 }
 
-function cardinalSidesForDirections(directions: readonly Direction[]): Direction[] {
+function cardinalSidesForDirections(
+	directions: readonly Direction[],
+): Direction[] {
 	if (directions.length < 2) {
 		return [];
 	}
 	const directionSet = new Set(directions);
 	const includesDirection = (direction: Direction): boolean =>
 		directionSet.has(direction);
-	const includesCardinalSide = (
-		cardinal: "N" | "E" | "S" | "W",
-	): boolean => {
+	const includesCardinalSide = (cardinal: "N" | "E" | "S" | "W"): boolean => {
 		if (cardinal === "N") {
 			return (
 				includesDirection("N") ||
@@ -863,7 +833,9 @@ function cardinalSidesForDirections(directions: readonly Direction[]): Direction
 	);
 }
 
-function formatLandformSideLabel(directions: readonly Direction[]): string | null {
+function formatLandformSideLabel(
+	directions: readonly Direction[],
+): string | null {
 	const sides = cardinalSidesForDirections(directions);
 	if (sides.length === 0) {
 		return null;
@@ -935,7 +907,9 @@ function collectFollowableDirections(
 	});
 }
 
-function renderGameTrailSentence(directions: readonly Direction[]): string | null {
+function renderGameTrailSentence(
+	directions: readonly Direction[],
+): string | null {
 	if (directions.length === 0) {
 		return null;
 	}
@@ -980,11 +954,12 @@ function renderStreamSentence(
 		if (directions.includes(flowDirection)) {
 			const fromDirection =
 				directions.length === 2
-					? (directions.find((direction) => direction !== flowDirection) ?? null)
+					? (directions.find((direction) => direction !== flowDirection) ??
+						null)
 					: farthestDirectionFrom(
-						directions.filter((direction) => direction !== flowDirection),
-						flowDirection,
-					);
+							directions.filter((direction) => direction !== flowDirection),
+							flowDirection,
+						);
 			if (fromDirection) {
 				return `A stream flows from ${DIR_LOWER[fromDirection]} to the ${DIR_LOWER[flowDirection]}.`;
 			}
@@ -1082,13 +1057,13 @@ function renderBlockageText(blockages: readonly BlockageRun[]): string {
 
 /**
  * Produces the baseline movement_structure sentence and structured run arcs.
- * 
+ *
  * Describe each passage in terms of direction, e.g. "passage to the north, northwest and west"
- * 
+ *
  * or
- * 
+ *
  * Describe each blockage in terms of direction, e.g. "passage is blocked to the north, northwest and west"
- * 
+ *
  *
  * Mode selection:
  * - If number of open exits are 0..4: describe each passage arc.
@@ -1097,9 +1072,10 @@ function renderBlockageText(blockages: readonly BlockageRun[]): string {
  * Returned `movement` always contains the full ring run breakdown used by structured output.
  * Returned `text` is the baseline sentence (later exposed as `basicText` in structured output).
  */
-function renderMovementStructureSentence(
-	input: DescriptionTileInput,
-): { text: string; movement: MovementRun[] } {
+function renderMovementStructureSentence(input: DescriptionTileInput): {
+	text: string;
+	movement: MovementRun[];
+} {
 	const passableExitCount = countPassableExits(input.passability);
 	const movementRuns = collectMovementRuns(input.passability);
 	const passages = movementRuns.filter(isPassageRun);
@@ -1238,9 +1214,7 @@ function renderLocalLandformSentence(
 	};
 }
 
-function classifyNeighborDelta(
-	elevDelta: number,
-): {
+function classifyNeighborDelta(elevDelta: number): {
 	mode: "rise" | "descend" | "same";
 	band: "same" | "gentle" | "none" | "steep";
 } {
@@ -1365,7 +1339,10 @@ function mergeNeighborLandformGroups(
 		};
 		const previous = merged[merged.length - 1];
 		if (previous && previous.mode === current.mode) {
-			const nextBands = [...(previous.mergeBands ?? [previous.band]), ...(current.mergeBands ?? [current.band])];
+			const nextBands = [
+				...(previous.mergeBands ?? [previous.band]),
+				...(current.mergeBands ?? [current.band]),
+			];
 			previous.directions.push(...current.directions);
 			previous.mergeBands = nextBands;
 			previous.mergedFromCount =
@@ -1383,7 +1360,10 @@ function mergeNeighborLandformGroups(
 			break;
 		}
 
-		const nextBands = [...(last.mergeBands ?? [last.band]), ...(first.mergeBands ?? [first.band])];
+		const nextBands = [
+			...(last.mergeBands ?? [last.band]),
+			...(first.mergeBands ?? [first.band]),
+		];
 		const mergedWrap: NeighborLandformGroup = {
 			directions: [...last.directions, ...first.directions],
 			mode: first.mode,
@@ -1419,7 +1399,9 @@ function isContiguousDirectionSet(directions: readonly Direction[]): boolean {
 		return true;
 	}
 	const indexSet = new Set(
-		directions.map((direction) => RING.indexOf(direction)).filter((idx) => idx >= 0),
+		directions
+			.map((direction) => RING.indexOf(direction))
+			.filter((idx) => idx >= 0),
 	);
 	if (indexSet.size !== directions.length) {
 		return false;
@@ -1439,12 +1421,6 @@ function isContiguousDirectionSet(directions: readonly Direction[]): boolean {
 	return false;
 }
 
-function formatDirectionArc(directions: readonly Direction[]): string {
-	const first = directions[0] as Direction;
-	const last = directions[directions.length - 1] as Direction;
-	return `from the ${DIR_LOWER[first]} to the ${DIR_LOWER[last]}`;
-}
-
 function formatBroadDirectionForTriple(
 	directions: readonly Direction[],
 ): string | null {
@@ -1457,14 +1433,18 @@ function formatBroadDirectionForTriple(
 		return `broadly ${DIR_LOWER[center]}`;
 	}
 
-	const pairByIntercardinal: Record<Extract<Direction, "NE" | "SE" | "SW" | "NW">, string> =
-	{
+	const pairByIntercardinal: Record<
+		Extract<Direction, "NE" | "SE" | "SW" | "NW">,
+		string
+	> = {
 		NE: "broadly north and east",
 		SE: "broadly east and south",
 		SW: "broadly south and west",
 		NW: "broadly west and north",
 	};
-	return pairByIntercardinal[center as Extract<Direction, "NE" | "SE" | "SW" | "NW">];
+	return pairByIntercardinal[
+		center as Extract<Direction, "NE" | "SE" | "SW" | "NW">
+	];
 }
 
 function qualifierForBand(
@@ -1542,7 +1522,8 @@ function renderMajorityNeighborLandformSentence(
 	const descendCount = descendDirections.length;
 	const majorMode: "rise" | "descend" =
 		riseCount >= descendCount ? "rise" : "descend";
-	const majorDirections = majorMode === "rise" ? riseDirections : descendDirections;
+	const majorDirections =
+		majorMode === "rise" ? riseDirections : descendDirections;
 	const majorCount = majorDirections.length;
 	if (majorCount < 5 || !isContiguousDirectionSet(majorDirections)) {
 		return null;
@@ -1561,7 +1542,8 @@ function renderMajorityNeighborLandformSentence(
 		majorCount >= 6 ? "in nearly every direction" : "in most directions";
 	const majorScopeWithMinority =
 		majorCount >= 6 ? "on nearly every side" : "on most sides";
-	const minorDirections = majorMode === "rise" ? descendDirections : riseDirections;
+	const minorDirections =
+		majorMode === "rise" ? descendDirections : riseDirections;
 	if (minorDirections.length === 0) {
 		return sanitizeSentence(
 			`The land ${majorQualifier}${majorVerb} ${majorScope}.`,
@@ -1609,8 +1591,7 @@ function renderTwoGroupLandformSentence(
 		if (!text) {
 			return null;
 		}
-		const strategy =
-			first.band === second.band ? "same_mode" : "mixed_band";
+		const strategy = first.band === second.band ? "same_mode" : "mixed_band";
 		return { text, strategy };
 	}
 
@@ -1654,9 +1635,10 @@ function filterNeighborGroupsToPassableDirections(
 	return filtered;
 }
 
-function shouldEmitNeighborLandformGroup(
-	group: NeighborLandformGroup,
-): { emitted: boolean; suppressedBy?: "same_filtered" | "single_gentle_filtered" } {
+function shouldEmitNeighborLandformGroup(group: NeighborLandformGroup): {
+	emitted: boolean;
+	suppressedBy?: "same_filtered" | "single_gentle_filtered";
+} {
 	if (group.mode === "same") {
 		return { emitted: false, suppressedBy: "same_filtered" };
 	}
@@ -1670,9 +1652,10 @@ function shouldEmitNeighborLandformGroup(
 	return { emitted: true };
 }
 
-function renderDerivedLandform(
-	input: DescriptionTileInput,
-): { basicText: string; contributors: Record<string, unknown> } {
+function renderDerivedLandform(input: DescriptionTileInput): {
+	basicText: string;
+	contributors: Record<string, unknown>;
+} {
 	const local = renderLocalLandformSentence(input);
 	const riseDirection = oppositeDirection(input.slopeDirection);
 	const riseNeighborDelta = input.neighbors[riseDirection]?.elevDelta ?? 0;
@@ -1684,9 +1667,10 @@ function renderDerivedLandform(
 		neighborGroups,
 		input.passability,
 	);
-	const neighborSentences = renderNeighborLandformSentences(proseNeighborGroups);
-	const neighborContributions: NeighborLandformContribution[] = neighborGroups.map(
-		(group) => {
+	const neighborSentences =
+		renderNeighborLandformSentences(proseNeighborGroups);
+	const neighborContributions: NeighborLandformContribution[] =
+		neighborGroups.map((group) => {
 			const deltas = group.directions.map((direction) =>
 				Math.abs(input.neighbors[direction].elevDelta),
 			);
@@ -1707,8 +1691,7 @@ function renderDerivedLandform(
 					? { suppressedBy: emission.suppressedBy }
 					: {}),
 			};
-		},
-	);
+		});
 	const emittedNeighborContributions = proseNeighborGroups
 		.map((group, index) => {
 			const emission = shouldEmitNeighborLandformGroup(group);
@@ -1745,8 +1728,8 @@ function renderDerivedLandform(
 	const localOverlapsNeighbor =
 		local.mode !== "flat" &&
 		local.direction !== null &&
-		emittedNeighborContributions.some(
-			(group) => group.directions.includes(local.direction as Direction),
+		emittedNeighborContributions.some((group) =>
+			group.directions.includes(local.direction as Direction),
 		);
 	const localSuppressedBy:
 		| "flat_filtered"
@@ -1824,60 +1807,6 @@ function renderDerivedLandform(
 	return { basicText, contributors };
 }
 
-function directionalSignalStrength(neighbor: NeighborSignal): number {
-	let score = 0;
-	if (neighbor.water === "lake") {
-		score += 1.4;
-	} else if (neighbor.water === "stream") {
-		score += 1.2;
-	} else if (neighbor.water === "marsh") {
-		score += 0.7;
-	}
-	score += Math.abs(neighbor.elevDelta) * 3;
-	score += Math.abs(neighbor.densityDelta) * 2;
-	return score;
-}
-
-function chooseDirectional(input: DescriptionTileInput): Direction | null {
-	let best: { dir: Direction; score: number; water: WaterClass } | null = null;
-
-	for (const dir of CARDINALS) {
-		const neighbor = input.neighbors[dir];
-		const score = directionalSignalStrength(neighbor);
-		if (!best || score > best.score) {
-			best = { dir, score, water: neighbor.water };
-		}
-	}
-
-	let bestDiagonal: {
-		dir: Direction;
-		score: number;
-		water: WaterClass;
-	} | null = null;
-	for (const dir of DIAGONALS) {
-		const neighbor = input.neighbors[dir];
-		const score = directionalSignalStrength(neighbor);
-		if (!bestDiagonal || score > bestDiagonal.score) {
-			bestDiagonal = { dir, score, water: neighbor.water };
-		}
-	}
-
-	if (!best) {
-		return null;
-	}
-
-	const diagonalCanOverride =
-		bestDiagonal !== null &&
-		(input.visibility === "long" || bestDiagonal.score >= best.score * 1.2) &&
-		bestDiagonal.score > 0.5;
-
-	if (diagonalCanOverride && bestDiagonal) {
-		return bestDiagonal.dir;
-	}
-
-	return best.score > 0.5 ? best.dir : null;
-}
-
 function renderLakeSentence(
 	direction: Direction,
 	seedKey: string,
@@ -1891,15 +1820,14 @@ function renderLakeSentence(
 	if (!options) {
 		return null;
 	}
-	const phrase = pickDeterministic(
-		options,
-		`${seedKey}:dir:lake:${direction}`,
-	);
+	const phrase = pickDeterministic(options, `${seedKey}:dir:lake:${direction}`);
 
 	return phrase.replace(/\$?\{dir\}/g, DIR_LOWER[direction]);
 }
 
-function chooseLakeSentenceDirection(input: DescriptionTileInput): Direction | null {
+function chooseLakeSentenceDirection(
+	input: DescriptionTileInput,
+): Direction | null {
 	const lakeDirections = RING.filter(
 		(direction) => input.neighbors[direction].water === "lake",
 	);
@@ -1909,7 +1837,7 @@ function chooseLakeSentenceDirection(input: DescriptionTileInput): Direction | n
 	const preferredCardinal = lakeDirections.find((direction) =>
 		CARDINALS.includes(direction),
 	);
-	return (preferredCardinal ?? lakeDirections[0]) ?? null;
+	return preferredCardinal ?? lakeDirections[0] ?? null;
 }
 
 function obstaclePriority(obstacle: Obstacle): number {
@@ -1939,7 +1867,10 @@ function obstacleSelectionWeightByRank(rank: number): number {
 	return 1;
 }
 
-function chooseObstacle(input: DescriptionTileInput, seedKey: string): Obstacle | null {
+function chooseObstacle(
+	input: DescriptionTileInput,
+	seedKey: string,
+): Obstacle | null {
 	if (input.obstacles.length === 0) {
 		return null;
 	}
@@ -2019,10 +1950,6 @@ function cloneContributors(
 		return undefined;
 	}
 	return { ...contributors };
-}
-
-function directionalMentionsWater(text: string): boolean {
-	return /\b(water|stream|lake)\b/i.test(text);
 }
 
 export function generateRawDescription(
@@ -2192,8 +2119,8 @@ export function generateRawDescription(
 					: {}),
 				...(sentence.movement
 					? {
-						movement: sentence.movement.map((run) => cloneMovementRun(run)),
-					}
+							movement: sentence.movement.map((run) => cloneMovementRun(run)),
+						}
 					: {}),
 			});
 			continue;
@@ -2220,7 +2147,9 @@ export function generateRawDescription(
 				existing.contributors = cloneContributors(sentence.contributors);
 			}
 			if (!existing.movement && sentence.movement) {
-				existing.movement = sentence.movement.map((run) => cloneMovementRun(run));
+				existing.movement = sentence.movement.map((run) =>
+					cloneMovementRun(run),
+				);
 			}
 			continue;
 		}
@@ -2237,8 +2166,8 @@ export function generateRawDescription(
 				: {}),
 			...(sentence.movement
 				? {
-					movement: sentence.movement.map((run) => cloneMovementRun(run)),
-				}
+						movement: sentence.movement.map((run) => cloneMovementRun(run)),
+					}
 				: {}),
 		});
 	}
@@ -2264,7 +2193,8 @@ export function generateRawDescription(
 	const movementForProse = selected.find(
 		(sentence) =>
 			sentence.slot === "movement_structure" &&
-			(sentence.contributors as { emit?: boolean } | undefined)?.emit !== false &&
+			(sentence.contributors as { emit?: boolean } | undefined)?.emit !==
+				false &&
 			((typeof sentence.text === "string" &&
 				sanitizeSentence(sentence.text).length > 0) ||
 				(typeof sentence.basicText === "string" &&

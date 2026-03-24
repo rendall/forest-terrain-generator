@@ -51,7 +51,7 @@ async function pathExists(path: string): Promise<boolean> {
 }
 
 async function prepareOutputFile(path: string, force: boolean): Promise<void> {
-	if (await pathExists(path) && !force) {
+	if ((await pathExists(path)) && !force) {
 		throw new InputValidationError(
 			`Output file already exists: "${path}". Re-run with --force to overwrite.`,
 		);
@@ -62,7 +62,10 @@ async function prepareOutputFile(path: string, force: boolean): Promise<void> {
 export async function runMap(request: MapRequest): Promise<void> {
 	const layer = request.args.layer ?? "h";
 	if (layer === "structure-leaves") {
-		const inputFilePath = resolveFromCwd(request.cwd, request.args.inputJsonPath);
+		const inputFilePath = resolveFromCwd(
+			request.cwd,
+			request.args.inputJsonPath,
+		);
 		const outputFile = resolveFromCwd(request.cwd, request.args.outputPgmPath);
 		if (!inputFilePath) {
 			throw new InputValidationError("Missing required input: --input-json.");
@@ -79,7 +82,11 @@ export async function runMap(request: MapRequest): Promise<void> {
 		}
 
 		const features = envelope.features;
-		if (!features || !Array.isArray(features.basins) || !Array.isArray(features.peaks)) {
+		if (
+			!features ||
+			!Array.isArray(features.basins) ||
+			!Array.isArray(features.peaks)
+		) {
 			throw new InputValidationError(
 				`Input terrain file "${inputFilePath}" is missing required top-level "features.basins"/"features.peaks" arrays for layer "structure-leaves".`,
 			);
@@ -94,9 +101,8 @@ export async function runMap(request: MapRequest): Promise<void> {
 		const collectLeafTiles = (
 			nodesIn: unknown[],
 		): { leafIds: Set<string>; leafTileIds: Set<number> } => {
-			const nodes = nodesIn.filter(
-				(feature): feature is StructureNode =>
-					Boolean(feature && typeof (feature as StructureNode).id === "string"),
+			const nodes = nodesIn.filter((feature): feature is StructureNode =>
+				Boolean(feature && typeof (feature as StructureNode).id === "string"),
 			);
 			const leaves = nodes.filter(
 				(node) => Array.isArray(node.childIds) && node.childIds.length === 0,
@@ -108,7 +114,11 @@ export async function runMap(request: MapRequest): Promise<void> {
 					continue;
 				}
 				for (const tileId of leaf.tileIds) {
-					if (typeof tileId === "number" && Number.isInteger(tileId) && tileId >= 0) {
+					if (
+						typeof tileId === "number" &&
+						Number.isInteger(tileId) &&
+						tileId >= 0
+					) {
 						leafTileIds.add(tileId);
 					}
 				}
@@ -177,12 +187,16 @@ export async function runMap(request: MapRequest): Promise<void> {
 			seen[index] = 1;
 
 			const featureIds = Array.isArray(tile.featureIds)
-				? tile.featureIds.filter((value): value is string => typeof value === "string")
+				? tile.featureIds.filter(
+						(value): value is string => typeof value === "string",
+					)
 				: [];
 			const hasBasinLeaf =
-				basinInfo.leafTileIds.has(index) || featureIds.some((id) => basinInfo.leafIds.has(id));
+				basinInfo.leafTileIds.has(index) ||
+				featureIds.some((id) => basinInfo.leafIds.has(id));
 			const hasPeakLeaf =
-				peakInfo.leafTileIds.has(index) || featureIds.some((id) => peakInfo.leafIds.has(id));
+				peakInfo.leafTileIds.has(index) ||
+				featureIds.some((id) => peakInfo.leafIds.has(id));
 
 			pixels[index] = 128;
 			if (hasBasinLeaf) {
@@ -206,7 +220,8 @@ export async function runMap(request: MapRequest): Promise<void> {
 		return;
 	}
 
-	const useThresholdMode = request.args.threshold !== undefined || layer === "h";
+	const useThresholdMode =
+		request.args.threshold !== undefined || layer === "h";
 	if (useThresholdMode) {
 		const threshold = request.args.threshold ?? 0.1;
 		if (
@@ -216,7 +231,7 @@ export async function runMap(request: MapRequest): Promise<void> {
 			threshold > 0.5
 		) {
 			throw new InputValidationError(
-				'Invalid --threshold value. Expected a finite number in [0, 0.5].',
+				"Invalid --threshold value. Expected a finite number in [0, 0.5].",
 			);
 		}
 		if (layer !== "h") {
@@ -225,7 +240,10 @@ export async function runMap(request: MapRequest): Promise<void> {
 			);
 		}
 
-		const inputFilePath = resolveFromCwd(request.cwd, request.args.inputJsonPath);
+		const inputFilePath = resolveFromCwd(
+			request.cwd,
+			request.args.inputJsonPath,
+		);
 		const outputFile = resolveFromCwd(request.cwd, request.args.outputPgmPath);
 		if (!inputFilePath) {
 			throw new InputValidationError("Missing required input: --input-json.");

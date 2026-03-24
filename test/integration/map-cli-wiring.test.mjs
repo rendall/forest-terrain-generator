@@ -39,7 +39,9 @@ function runCli(entry, args = []) {
 }
 
 async function makeTempDir() {
-	const dir = await mkdtemp(join(tmpdir(), "forest-terrain-generator-map-cli-"));
+	const dir = await mkdtemp(
+		join(tmpdir(), "forest-terrain-generator-map-cli-"),
+	);
 	tempDirs.push(dir);
 	return dir;
 }
@@ -177,7 +179,12 @@ describe("map CLI wiring", () => {
 					meta: { specVersion: "forest-terrain-v1" },
 					features: {
 						basins: [
-							{ id: "b_00000", parentId: "b_00001", childIds: [], tileIds: [0] },
+							{
+								id: "b_00000",
+								parentId: "b_00001",
+								childIds: [],
+								tileIds: [0],
+							},
 							{ id: "b_00001", childIds: ["b_00000"], tileIds: [1] },
 						],
 						peaks: [{ id: "p_00000", childIds: [] }],
@@ -189,7 +196,12 @@ describe("map CLI wiring", () => {
 							featureIds: ["b_00000"],
 							topography: { h: 0.1, r: 0.0, v: 0.0 },
 						},
-						{ x: 1, y: 0, featureIds: [], topography: { h: 0.1, r: 0.0, v: 0.0 } },
+						{
+							x: 1,
+							y: 0,
+							featureIds: [],
+							topography: { h: 0.1, r: 0.0, v: 0.0 },
+						},
 						{
 							x: 2,
 							y: 0,

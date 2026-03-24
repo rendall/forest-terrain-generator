@@ -171,13 +171,17 @@ describe("hydrology debug artifacts", () => {
 		const topography = JSON.parse(
 			await readFile(join(outDir, "topography.json"), "utf8"),
 		);
-		const hydrology = JSON.parse(await readFile(join(outDir, "hydrology.json"), "utf8"));
+		const hydrology = JSON.parse(
+			await readFile(join(outDir, "hydrology.json"), "utf8"),
+		);
 		const featureBasins = topography.features.basins;
 		const accountingBasins = hydrology.lakeAccounting.basins;
 		expect(featureBasins.length).toBeGreaterThan(0);
 		expect(accountingBasins.length).toBeGreaterThan(0);
 
-		const featureById = new Map(featureBasins.map((basin) => [basin.id, basin]));
+		const featureById = new Map(
+			featureBasins.map((basin) => [basin.id, basin]),
+		);
 		accountingBasins.forEach((basin) => {
 			const featureBasin = featureById.get(basin.id);
 			expect(featureBasin).toBeDefined();
@@ -234,13 +238,17 @@ describe("hydrology debug artifacts", () => {
 		const topography = JSON.parse(
 			await readFile(join(outDir, "topography.json"), "utf8"),
 		);
-		const hydrology = JSON.parse(await readFile(join(outDir, "hydrology.json"), "utf8"));
+		const hydrology = JSON.parse(
+			await readFile(join(outDir, "hydrology.json"), "utf8"),
+		);
 		const featureBasins = topography.features.basins;
 		const accountingBasins = hydrology.lakeAccounting.basins;
 		expect(featureBasins.length).toBeGreaterThan(0);
 		expect(accountingBasins.length).toBeGreaterThan(0);
 
-		const featureById = new Map(featureBasins.map((basin) => [basin.id, basin]));
+		const featureById = new Map(
+			featureBasins.map((basin) => [basin.id, basin]),
+		);
 		let wetBasinCount = 0;
 		accountingBasins.forEach((basin) => {
 			const featureBasin = featureById.get(basin.id);

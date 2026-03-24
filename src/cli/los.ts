@@ -20,10 +20,18 @@ program
 	.showHelpAfterError()
 	.exitOverride()
 	.requiredOption("--input-json <path>", "Path to source terrain envelope JSON")
-	.requiredOption("--x0 <number>", "Source x coordinate", (raw) => Number.parseInt(raw, 10))
-	.requiredOption("--y0 <number>", "Source y coordinate", (raw) => Number.parseInt(raw, 10))
-	.requiredOption("--x1 <number>", "Target x coordinate", (raw) => Number.parseInt(raw, 10))
-	.requiredOption("--y1 <number>", "Target y coordinate", (raw) => Number.parseInt(raw, 10))
+	.requiredOption("--x0 <number>", "Source x coordinate", (raw) =>
+		Number.parseInt(raw, 10),
+	)
+	.requiredOption("--y0 <number>", "Source y coordinate", (raw) =>
+		Number.parseInt(raw, 10),
+	)
+	.requiredOption("--x1 <number>", "Target x coordinate", (raw) =>
+		Number.parseInt(raw, 10),
+	)
+	.requiredOption("--y1 <number>", "Target y coordinate", (raw) =>
+		Number.parseInt(raw, 10),
+	)
 	.option("--debug", "Print LOS debug details", false);
 
 try {
