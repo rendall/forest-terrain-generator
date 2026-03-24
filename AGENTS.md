@@ -205,6 +205,22 @@ This helps ensure that requirements remain connected to tests and code.
 
 ---
 
+## Hydrology Protected Subsystem
+
+The hydrology core is a protected subsystem:
+
+* `src/pipeline/derive-hydrology.ts`
+* `src/pipeline/derive-lake-accounting.ts`
+
+Requirements:
+
+* Agent-driven changes to these files require explicit, strictly scoped approval.
+* “cleanup”, “refactor”, “simplify”, “normalize”, or “optimize” do not count as approval for hydrology changes.
+* Changes outside these files must not reinterpret, remap, suppress, or redefine hydrology semantics without the same explicit approval.
+* Downstream systems such as biome logic, passage blocking, and maze/location generation may consume hydrology outputs, but they must not silently change the meaning of those outputs.
+
+---
+
 ## Implementation Style
 
 * TypeScript-first

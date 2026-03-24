@@ -15,6 +15,10 @@ import {
 	type LakeAccountingResult,
 } from "./derive-lake-accounting.js";
 
+// Hydrology core protection note:
+// Agent-driven changes in this file require explicit, strictly scoped approval.
+// Downstream systems may consume hydrology outputs, but must not redefine their semantics indirectly.
+
 export interface StreamCoherenceMetrics {
 	enabled: boolean;
 	streamTiles: number;

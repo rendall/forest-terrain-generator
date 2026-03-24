@@ -70,6 +70,14 @@ For work explicitly scoped to hydrology reset:
 - Do not add compatibility patches only to satisfy legacy baselines.
 - Treat non-hydrology regressions as blockers unless explicitly accepted.
 
+## Hydrology Governance Note
+
+For work that touches hydrology:
+
+- `src/pipeline/derive-hydrology.ts` and `src/pipeline/derive-lake-accounting.ts` are protected hydrology-core files.
+- Agent-driven changes to those files require explicit, strictly scoped approval.
+- Downstream systems may consume hydrology outputs, but must not reinterpret hydrology semantics without the same approval.
+
 ## Stop Conditions
 
 Pause and confirm direction when:

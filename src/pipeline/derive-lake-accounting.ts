@@ -2,6 +2,10 @@ import { DIR8_CODE, DIR8_NONE } from "../domain/hydrology.js";
 import type { TopographicFeatureNode } from "../domain/topographic-features.js";
 import type { GridShape } from "../domain/topography.js";
 
+// Hydrology core protection note:
+// Agent-driven changes in this file require explicit, strictly scoped approval.
+// Downstream systems may consume hydrology outputs, but must not redefine their semantics indirectly.
+
 export interface LakeAccountingParams {
 	wetnessScale: number;
 	tileFeatureIds?: string[][];

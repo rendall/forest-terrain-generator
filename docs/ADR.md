@@ -2,6 +2,36 @@
 
 This document is a living ledger of significant technical decisions made within this project. Each entry captures the context in which a decision was made, the options considered, the decision itself, and its consequences. The purpose is not to justify past choices defensively, but to preserve intent and reasoning so future contributors can understand why the system is shaped the way it is. Over time, this file forms a chronological record of trade-offs, constraints, and design direction, providing continuity as the codebase and team evolve.
 
+## Hydrology Governance Freeze
+
+**Timestamp:** 2026-03-24 00:00 (UTC)
+
+### Decision
+
+The hydrology core is treated as a protected subsystem.
+
+Protected files:
+
+* `src/pipeline/derive-hydrology.ts`
+* `src/pipeline/derive-lake-accounting.ts`
+
+Until explicitly approved otherwise:
+
+* Agent-driven changes to the protected hydrology core require explicit, strictly scoped approval.
+* Changes outside the protected files must not reinterpret or redefine hydrology semantics.
+* Downstream systems such as biome logic, passage blocking, and maze/location generation may consume hydrology outputs, but they must not silently change the meaning of those outputs.
+* “cleanup”, “refactor”, “simplify”, “normalize”, and “optimize” are not sufficient authorization for hydrology-core changes.
+
+### Rationale
+
+Hydrology behavior has been unusually difficult to stabilize, and preserving current working semantics is more important than local structural improvement. The current priority is to make hydrology safe to depend on so downstream work can proceed without reopening hydrology internals.
+
+### Consequences
+
+* Hydrology-core work defaults to analysis unless a narrowly scoped change is explicitly approved.
+* Downstream feature work remains free to consume hydrology outputs.
+* Architectural reshaping of hydrology must be deliberate, explicit, and human-owned when the risk is high.
+
 ## Hydrology Public Schema Gate (Phase D)
 
 **Timestamp:** 2026-03-02 08:09 (UTC)
