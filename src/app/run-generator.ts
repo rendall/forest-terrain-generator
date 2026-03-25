@@ -226,7 +226,6 @@ function buildTileHydrologyPayload(
 	const hasStreamGeometry =
 		tileStreamGeometry.outgoingDirection !== null ||
 		tileStreamGeometry.incomingDirections.length > 0;
-	const lakeMask = hydrology.maps.lakeMask[index] === 1;
 	const lakeBasinId = hydrology.lakeAccounting.tileLakeBasinId[index] || null;
 	const waterDepth = hydrology.lakeAccounting.tileLakeDepth[index];
 	const hasWaterSurface =
@@ -235,7 +234,6 @@ function buildTileHydrologyPayload(
 		fd: hydrology.maps.fd[index],
 		fa: hydrology.maps.fa[index],
 		faN: hydrology.maps.faN[index],
-		lakeMask,
 		lakeBasinId,
 		...(hasWaterSurface
 			? { waterSurfaceH: hydrology.maps.waterSurfaceH[index] }
@@ -243,11 +241,11 @@ function buildTileHydrologyPayload(
 		...(hasWaterSurface ? { waterDepth } : {}),
 		...(hasStreamGeometry
 			? {
-					stream: {
-						outgoingDirection: tileStreamGeometry.outgoingDirection,
-						incomingDirections: [...tileStreamGeometry.incomingDirections],
-					},
-				}
+				stream: {
+					outgoingDirection: tileStreamGeometry.outgoingDirection,
+					incomingDirections: [...tileStreamGeometry.incomingDirections],
+				},
+			}
 			: {}),
 	};
 }
@@ -343,9 +341,9 @@ export async function runGenerator(request: RunRequest): Promise<void> {
 		const envelope = await readTerrainEnvelopeFile(validated.inputFilePath);
 		const envelopeParamOverrides = isJsonObject(envelope.paramOverrides)
 			? normalizeAndValidateParamsObject(
-					deepMerge({}, envelope.paramOverrides),
-					"envelope.paramOverrides",
-				)
+				deepMerge({}, envelope.paramOverrides),
+				"envelope.paramOverrides",
+			)
 			: undefined;
 		const replayBase = deepMerge(
 			APPENDIX_A_DEFAULTS,

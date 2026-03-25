@@ -101,8 +101,8 @@ const readHydrologyParams = (params: JsonObject): HydrologyParams => {
 	const faThresholdRaw = hydrology.faThreshold;
 	const faThreshold =
 		typeof faThresholdRaw === "number" &&
-		Number.isFinite(faThresholdRaw) &&
-		faThresholdRaw >= 0
+			Number.isFinite(faThresholdRaw) &&
+			faThresholdRaw >= 0
 			? Math.floor(faThresholdRaw)
 			: 16;
 	const quantileRaw = hydrology.faQuantileThreshold;
@@ -116,8 +116,8 @@ const readHydrologyParams = (params: JsonObject): HydrologyParams => {
 	const wetnessScaleRaw = lakeFill.wetnessScale;
 	const wetnessScale =
 		typeof wetnessScaleRaw === "number" &&
-		Number.isFinite(wetnessScaleRaw) &&
-		wetnessScaleRaw >= 0
+			Number.isFinite(wetnessScaleRaw) &&
+			wetnessScaleRaw >= 0
 			? wetnessScaleRaw
 			: 1;
 	return { sinkMode, faThreshold, quantileThreshold, wetnessScale };
@@ -203,17 +203,17 @@ const collectBasinTileSets = (
 		const tileSet = new Set<number>(
 			Array.isArray(basin?.tileIds)
 				? basin.tileIds.filter(
-						(value): value is number =>
-							typeof value === "number" &&
-							Number.isInteger(value) &&
-							value >= 0,
-					)
+					(value): value is number =>
+						typeof value === "number" &&
+						Number.isInteger(value) &&
+						value >= 0,
+				)
 				: [],
 		);
 		const childIds = Array.isArray(basin?.childIds)
 			? basin.childIds.filter(
-					(value): value is string => typeof value === "string",
-				)
+				(value): value is string => typeof value === "string",
+			)
 			: [];
 		for (const childId of childIds) {
 			for (const tileId of resolve(childId, visiting)) {
@@ -462,9 +462,6 @@ export const deriveHydrology = (
 		const lakeBasinId = lakeAccounting.tileLakeBasinId[i] ?? "";
 		if (lakeBasinId !== "" && typeof depth === "number") {
 			maps.waterSurfaceH[i] = (topographyH[i] ?? 0) + depth;
-		}
-		if (typeof depth === "number" && depth > 0) {
-			maps.lakeMask[i] = 1;
 		}
 	}
 
