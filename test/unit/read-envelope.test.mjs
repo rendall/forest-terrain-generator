@@ -23,7 +23,6 @@ function makeValidTile() {
 			fd: 255,
 			fa: 1,
 			faN: 0,
-			lakeMask: false,
 			distWater: 0,
 			moisture: 0,
 		},

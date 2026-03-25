@@ -510,7 +510,6 @@ describe("CLI command wiring and contract failures", () => {
 				fd: expect.any(Number),
 				fa: expect.any(Number),
 				faN: expect.any(Number),
-				lakeMask: expect.any(Boolean),
 			});
 			expect(tile.hydrology).not.toHaveProperty("isStream");
 			expect(tile.hydrology).not.toHaveProperty("waterClass");
@@ -811,7 +810,6 @@ describe("CLI command wiring and contract failures", () => {
 				fd: expect.any(Number),
 				fa: expect.any(Number),
 				faN: expect.any(Number),
-				lakeMask: expect.any(Boolean),
 			});
 			expect(tile.hydrology).not.toHaveProperty("isStream");
 			expect(tile.hydrology).not.toHaveProperty("waterClass");

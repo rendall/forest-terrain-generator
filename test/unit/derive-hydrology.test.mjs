@@ -220,7 +220,6 @@ describe("derive-hydrology", () => {
 
 		expect(result.maps.waterSurfaceH[1]).toBeCloseTo(0.425, 6);
 		expect(result.maps.waterSurfaceH[3]).toBeCloseTo(0.425, 6);
-		expect(result.maps.lakeMask[3]).toBe(0);
 	});
 
 	it("uses the first not-fully-filled basin on the self-to-root chain as tile governor", () => {

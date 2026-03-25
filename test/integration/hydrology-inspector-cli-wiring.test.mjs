@@ -194,67 +194,6 @@ describe("hydrology-inspector CLI", () => {
 		expect(payload.stats.fa.max).toBe(4);
 	});
 
-	it("uses waterDepth as standing-water authority even when lakeMask is false", async () => {
-		const dir = await makeTempDir();
-		const sourceFile = join(dir, "source-water-depth-authority.json");
-		const statsFile = join(dir, "stats.json");
-		await writeFile(
-			sourceFile,
-			`${JSON.stringify({
-				meta: { specVersion: "forest-terrain-v1" },
-				tiles: [
-					{
-						x: 0,
-						y: 0,
-						topography: { h: 0.4, r: 0, v: 0 },
-						hydrology: {
-							fd: 255,
-							fa: 1,
-							faN: 0,
-							lakeMask: false,
-							waterSurfaceH: 0.5,
-							waterDepth: 0.1,
-							lakeBasinId: "b1",
-						},
-					},
-					{
-						x: 1,
-						y: 0,
-						topography: { h: 0.6, r: 0, v: 0 },
-						hydrology: {
-							fd: 255,
-							fa: 1,
-							faN: 0,
-							lakeMask: true,
-							waterSurfaceH: 0.4,
-							waterDepth: -0.2,
-							lakeBasinId: "b1",
-						},
-					},
-				],
-				features: { basins: [], peaks: [] },
-			})}\n`,
-			"utf8",
-		);
-
-		const result = await runCli([
-			"--input-json",
-			sourceFile,
-			"--stats",
-			"--stats-file",
-			statsFile,
-		]);
-		expect(result.code).toBe(0);
-		const payload = JSON.parse(result.stdout.trim());
-		expect(payload.stats.standingSurfaceWaterTileCount).toBe(1);
-		expect(payload.stats.lakeTileCount).toBe(1);
-		expect(payload.stats.lakeDepth.max).toBeCloseTo(0.1, 6);
-		expect(payload.stats.lakeDepth.mean).toBeCloseTo(0.1, 6);
-		expect(payload.stats.subsurfaceInfluenceTileCount).toBe(1);
-		expect(payload.stats.waterGovernedTileCount).toBe(2);
-		expect(payload.stats.depthDerivedFromSurfaceCount).toBe(0);
-	});
-
 	it("derives governed and subsurface stats from basin/surface signals without lakeMask", async () => {
 		const dir = await makeTempDir();
 		const sourceFile = join(dir, "source-governed-signals.json");

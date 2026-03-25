@@ -190,35 +190,6 @@ describe("hydrology debug artifacts", () => {
 		});
 	});
 
-	it("emits waterSurfaceH and waterDepth on tiles with basin surface even when lakeMask is false", async () => {
-		const dir = await makeTempDir();
-		const outDir = join(dir, "debug");
-		const result = await runCli([
-			"debug",
-			"--seed",
-			"42",
-			"--width",
-			"16",
-			"--height",
-			"16",
-			"--output-dir",
-			outDir,
-		]);
-		expect(result.code).toBe(0);
-		const hydrologyRaw = await readFile(join(outDir, "hydrology.json"), "utf8");
-		const hydrology = JSON.parse(hydrologyRaw);
-		const subsurfaceTiles = hydrology.tiles.filter(
-			(tile) =>
-				tile?.hydrology?.lakeMask === false &&
-				tile?.hydrology?.lakeBasinId !== null &&
-				Object.hasOwn(tile.hydrology, "waterSurfaceH"),
-		);
-		expect(subsurfaceTiles.length).toBeGreaterThan(0);
-		subsurfaceTiles.forEach((tile) => {
-			expect(tile.hydrology).toHaveProperty("waterDepth");
-		});
-	});
-
 	it("emits basin-level waterSurfaceH for wet basins without drift between features and lake accounting", async () => {
 		const dir = await makeTempDir();
 		const outDir = join(dir, "debug");

@@ -80,9 +80,6 @@ describe("lake accounting determinism", () => {
 		);
 
 		expect(Array.from(first.maps.fd)).toEqual(Array.from(second.maps.fd));
-		expect(Array.from(first.maps.lakeMask)).toEqual(
-			Array.from(second.maps.lakeMask),
-		);
 		expect(first.lakeAccounting.basins).toEqual(second.lakeAccounting.basins);
 		expect(first.lakeAccounting.tileLakeBasinId).toEqual(
 			second.lakeAccounting.tileLakeBasinId,
